@@ -31,6 +31,20 @@ const paths: Record<string, ReactElement> = {
     </>
   ),
   close: <path d="M6 6l12 12M18 6L6 18" />,
+  flow: (
+    <>
+      <rect x="3" y="4" width="7" height="6" rx="1.5" />
+      <rect x="14" y="14" width="7" height="6" rx="1.5" />
+      <path d="M10 7h3a3 3 0 0 1 3 3v4" />
+    </>
+  ),
+  table: (
+    <>
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <path d="M3 10h18M9 10v10" />
+    </>
+  ),
+  shield: <path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z" />,
   spinner: <path d="M12 3a9 9 0 1 0 9 9" />,
 };
 

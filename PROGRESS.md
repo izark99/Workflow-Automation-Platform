@@ -51,7 +51,7 @@ before it passes, except where a task says otherwise.
 - [x] T2.4 Checkbox, Tabs, Dialog, Toast, Skeleton, Empty state, Error state.
 - [x] T2.5 `/dev/components` route that matches screen 7.
 - [x] T2.6 `DataStore` interface, `LocalStore`, and seed data that matches the screens.
-- [ ] T2.7 App shell: sidebar, page header, routing, strings module.
+- [x] T2.7 App shell: sidebar, page header, routing, strings module.
 - [ ] T2.8 Flows screen: list, filters, search, delete with confirm, loading and empty states.
 - [ ] T2.9 Builder, part 1: canvas with React Flow, step cards, add by drag from the step list, connect, select, delete, zoom controls.
 - [ ] T2.10 Builder, part 2: settings panel shell with Setup, Configure and Test tabs, step preview table.
@@ -100,6 +100,14 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T2.7 App shell
+Changed: src/ui/{shell.tsx,shell.module.css,store-context.tsx,app.tsx,strings.ts}, screens/placeholder.tsx, components/screen-frame.tsx, flow/table/shield icons, e2e/{smoke,shell}.spec.ts (6 tests), ui-rules route list (five sidebar routes).
+How: `Shell` = sidebar 232 px (brand, cta "Create flow", Flows, Reference tables, Admin for admins only, user card) plus the main column (32 px 40 px, 24 px gap). `StoreProvider`, `useStore` and `useLoad` give screens the store. "Create flow" opens a dialog (name, scope for the admin), shows an error panel for an empty name, then makes the flow and opens `/flows/:id/versions/1`. Routes: `/` redirects to `/flows`; `/flows`, `/flows/:id/run`, `/flows/:id/versions`, `/reference-tables`, `/admin` are placeholders with the real header and first block; the builder route is a placeholder without sidebar (T2.9). All UI text is in `strings.ts`.
+First browser run of `IndexedDbAdapter`: a flow created in the UI is found in IndexedDB (open item of T2.6 closed).
+Mistake of mine caught by the e2e test: the create-flow navigation went to a route that did not exist yet, so the wildcard sent the user back; added the builder placeholder route.
+Gates run: check PASS (462 tests), test:e2e PASS (19 tests), test:ui-rules PASS (98 tests: 49 per width, 7 routes).
+Next: T2.8 (Flows screen).
 
 ### 2026-11-17 T2.6 DataStore, LocalStore, seed data
 Changed: src/store/{types,local-store,seed,indexeddb-adapter,index}.ts, local-store.test.ts (30 tests), docs/DECISIONS.md (D37).

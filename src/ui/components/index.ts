@@ -21,3 +21,4 @@ export type { TabItem } from './tabs';
 export { ToastProvider, useToast } from './toast';
 export { ProgressBar } from './progress';
 export { PageHeader } from './page-header';
+export { ScreenFrame } from './screen-frame';

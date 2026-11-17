@@ -8,6 +8,10 @@ export interface RuleRoute {
 }
 
 export const ROUTES: RuleRoute[] = [
-  { path: '/', sidebar: false },
+  { path: '/flows', sidebar: true },
+  { path: '/reference-tables', sidebar: true },
+  { path: '/admin', sidebar: true },
+  { path: '/flows/flow-timesheet/run', sidebar: true },
+  { path: '/flows/flow-timesheet/versions', sidebar: true },
   { path: '/dev/components', sidebar: true },
 ];
