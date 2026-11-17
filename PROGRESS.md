@@ -59,7 +59,8 @@ before it passes, except where a task says otherwise.
 - [x] T2.11a Settings forms, part 1: the Configure tab renders the form of the step type; forms for Input file (name, sheet, header row, rows to skip, fill down, row number column) and Filter (condition formula with syntax check).
 - [x] T2.11b Settings form: Column mapping, a grid of one row per source column (keep, new name, type) that accepts a paste from Excel and can load the source columns from a test file.
 - [x] T2.12 Settings forms: Formula column with editor, function list, validation message.
-- [ ] T2.13 Settings forms: Lookup / Join, Group by, Unpivot, Pivot.
+- [x] T2.13a Settings forms, part 3: Lookup / Join (source, key pairs, brought columns, no-match behaviour) and Group by (group columns, aggregations), with a shared column picker.
+- [ ] T2.13b Settings forms, part 4: Unpivot (keep and unpivot columns, name and value columns, skip blanks) and Pivot (row keys, column source, value, aggregation, column list from the data or a reference table, fill value, name prefix and suffix, name case).
 - [ ] T2.14 Settings forms: Append, Output, SQL.
 - [ ] T2.15 Builder, part 3: version dropdown, save draft, publish, read-only mode for published versions.
 - [ ] T2.16 Run screen: effective date, resolved versions, file inputs, progress, result tabs, download, error state. A file above the size limit shows `strings.xlsxTooLarge` instead of starting a run; the e2e test uses a sparse file just over `MAX_SAFE_XLSX_BYTES`, as `checkGuard` in `scripts/spike.ts` does.
@@ -102,6 +103,13 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T2.13a Settings forms, part 3: Lookup / Join and Group by (T2.13 split into T2.13a and T2.13b)
+Changed: src/ui/builder/forms/{column-pickers.tsx(+css),lookup-form.tsx,group-by-form.tsx,lookup-logic.ts(+8 tests)}, `loadSourceColumns` and `useSourceColumns` take an input handle, default settings for both step types, `pickerStrings`, `joinStrings`, `groupStrings`, e2e/joins.spec.ts (8 tests), two UI-rules states, docs/DECISIONS.md (D45). PROGRESS: T2.13 split into T2.13a and T2.13b (Unpivot, Pivot).
+How: Lookup / Join form (source: another step or a reference table; key pairs; columns to bring with new names; no-match behaviour) and Group by form (group column chips; aggregations with function, column, result name). Column choices are dropdowns once the columns are loaded and text fields before; each form says what is still missing in words.
+Checked by effect on real previews: reference-table lookup brings 16 and 40 and a blank for no match; Drop the row gives 2 rows; Stop with an error names YEAR; Group by gives sum 5 and count 2 for A and count 1 for B; a sum of a text column shows the engine's message.
+Gates run: check PASS (544 tests), test:e2e PASS (84 tests), test:ui-rules PASS (196 tests: 98 per width, 15 route states), test:acceptance PASS (7 tests).
+Next: T2.13b (Unpivot and Pivot forms).
 
 ### 2026-11-17 T2.12 Settings form: Formula column with editor, function list, validation message
 Changed: src/ui/builder/forms/{formula-editor.tsx,formula-column-form.tsx,filter-form.tsx,formula-logic.ts,function-docs.ts,use-source-columns.ts,load-columns.ts (now returns types)}, TextAreaField `textareaRef`, `formulaStrings`, 20 unit tests (formula logic, function list), e2e/formula.spec.ts (10 tests), two UI-rules states (editor, function list open), docs/DECISIONS.md (D44). The old syntax-only check was replaced by the shared editor.

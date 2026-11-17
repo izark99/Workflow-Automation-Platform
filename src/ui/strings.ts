@@ -211,3 +211,54 @@ export const formulaStrings = {
   insertShort: 'Insert',
   insertFunctionLabel: (name: string): string => `Insert ${name}`,
 };
+
+export const pickerStrings = {
+  choose: 'Choose a column',
+  none: 'No column chosen yet.',
+  addColumn: 'Add a column',
+  addTo: (label: string): string => `Add to ${label}`,
+  columnName: 'Column name',
+  add: 'Add',
+  remove: (name: string, label: string): string => `Remove ${name} from ${label}`,
+  load: 'Load columns from test file',
+  reload: 'Reload columns',
+  loadFailed: 'The columns could not be loaded.',
+};
+
+export const joinStrings = {
+  source: 'Look up in',
+  sourceNode: 'Another step (right input)',
+  sourceTable: (name: string): string => `Reference table: ${name}`,
+  nodeHint: 'The step to read from goes to the right input. Choose it on the Setup tab.',
+  keys: 'Keys',
+  keysHint: 'Rows match when the key columns are equal. Text ignores upper and lower case.',
+  keyLeft: 'Column in your data',
+  keyRight: 'Column in the source',
+  addKey: 'Add key pair',
+  removeKey: (n: number): string => `Remove key pair ${n}`,
+  bring: 'Columns to bring',
+  bringColumn: 'Column to bring',
+  bringAs: 'New name',
+  addBring: 'Add column to bring',
+  removeBring: (n: number): string => `Remove brought column ${n}`,
+  onNoMatch: 'When no row matches',
+  noMatchOptions: { blank: 'Leave the new columns blank', drop: 'Drop the row', fail: 'Stop with an error' },
+  loadLeft: 'Load columns of your data',
+  loadRight: 'Load columns of the source',
+  stillMissing: 'Still missing:',
+  complete: 'The lookup is complete. Preview the step to check it.',
+};
+
+export const groupStrings = {
+  groupColumns: 'Group columns',
+  aggregations: 'Aggregations',
+  hint: 'One result row for each combination of the group columns. Rows are sorted by the group columns.',
+  fn: 'Function',
+  column: 'Column',
+  resultName: 'Result name',
+  add: 'Add aggregation',
+  remove: (n: number): string => `Remove aggregation ${n}`,
+  fnLabels: { sum: 'sum', count: 'count', min: 'min', max: 'max', average: 'average' },
+  stillMissing: 'Still missing:',
+  complete: 'The grouping is complete. Preview the step to check it.',
+};

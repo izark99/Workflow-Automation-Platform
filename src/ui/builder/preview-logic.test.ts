@@ -27,6 +27,8 @@ describe('defaults and sub-flows', () => {
     expect(defaultSettings('column_mapping', 'x')).toEqual({ columns: [] });
     expect(defaultSettings('filter', 'x')).toEqual({});
     expect(defaultSettings('formula_column', 'x')).toEqual({ name: 'New column', expression: '' });
+    expect(defaultSettings('group_by', 'x')).toEqual({ groupBy: [], aggregations: [] });
+    expect(defaultSettings('lookup_join', 'x')).toEqual({ source: { kind: 'node' }, keys: [], bring: [], onNoMatch: 'blank' });
   });
   it('upstreamOf keeps the step and everything before it, and the connections between them', () => {
     const def = chain(['input_file', 'column_mapping', 'column_mapping']);

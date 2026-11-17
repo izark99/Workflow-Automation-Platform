@@ -119,6 +119,10 @@ export function defaultSettings(type: NodeType, id: string): Record<string, unkn
       return { columns: [] };
     case 'formula_column':
       return { name: 'New column', expression: '' };
+    case 'lookup_join':
+      return { source: { kind: 'node' }, keys: [], bring: [], onNoMatch: 'blank' };
+    case 'group_by':
+      return { groupBy: [], aggregations: [] };
     default:
       return {};
   }

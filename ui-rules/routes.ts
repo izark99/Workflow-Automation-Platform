@@ -94,4 +94,33 @@ export const ROUTES: RuleRoute[] = [
       await page.getByRole('dialog', { name: 'All functions' }).getByRole('button', { name: 'Insert IF', exact: true }).waitFor();
     },
   },
+  {
+    path: '/flows/flow-timesheet/versions/4',
+    name: '/flows/flow-timesheet/versions/4 (Lookup form)',
+    sidebar: false,
+    // A Lookup / Join step with a key pair and a brought column: dropdowns, text fields and remove buttons.
+    prepare: async (page) => {
+      await page.getByRole('button', { name: 'Add step Lookup / Join' }).click();
+      const panel = page.getByRole('complementary', { name: 'Step settings' });
+      await panel.getByRole('tab', { name: 'Configure' }).click();
+      await panel.getByRole('button', { name: 'Add key pair' }).click();
+      await panel.getByRole('button', { name: 'Add column to bring' }).click();
+      await panel.getByRole('button', { name: 'Remove brought column 1' }).waitFor();
+    },
+  },
+  {
+    path: '/flows/flow-timesheet/versions/4',
+    name: '/flows/flow-timesheet/versions/4 (Group by form)',
+    sidebar: false,
+    // A Group by step with an aggregation row and a group column chip.
+    prepare: async (page) => {
+      await page.getByRole('button', { name: 'Add step Group by' }).click();
+      const panel = page.getByRole('complementary', { name: 'Step settings' });
+      await panel.getByRole('tab', { name: 'Configure' }).click();
+      await panel.getByRole('textbox', { name: 'Column name' }).fill('dept');
+      await panel.getByRole('button', { name: 'Add', exact: true }).click();
+      await panel.getByRole('button', { name: 'Add aggregation' }).click();
+      await panel.getByRole('button', { name: 'Remove aggregation 1' }).waitFor();
+    },
+  },
 ];

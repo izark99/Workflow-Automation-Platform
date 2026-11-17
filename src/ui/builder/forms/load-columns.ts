@@ -9,10 +9,10 @@ import { runPreview } from '../preview-runner';
 
 /**
  * The columns (names and types) that arrive at the first input of a step: the steps before it run on the test files, and the columns of
- * the table that feeds the step are read. Throws a message that says what to do when an input or a test file is missing.
+ * the table that feeds the step are read. `inputHandle` picks the input (Lookup has `left` and `right`); by default it is the first connection into the step. Throws a message that says what to do when an input or a test file is missing.
  */
-export async function loadSourceColumns(def: FlowDefinition, step: FlowNode, files: Record<string, File>, refTables: RefTable[], effectiveDate: string): Promise<Column[]> {
-  const feed = resolvedEdges(def).find((e) => e.target === step.id);
+export async function loadSourceColumns(def: FlowDefinition, step: FlowNode, files: Record<string, File>, refTables: RefTable[], effectiveDate: string, inputHandle?: string): Promise<Column[]> {
+  const feed = resolvedEdges(def).find((e) => e.target === step.id && (inputHandle === undefined || e.targetHandle === inputHandle));
   if (!feed) throw new Error(t.mapping.loadNeedsInput);
   const sub = upstreamOf(def, [feed.source]);
   const sources: Record<string, FileSource> = {};
