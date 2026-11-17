@@ -1,0 +1,40 @@
+{
+  "name": "data-flow-webapp",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test:unit": "vitest run",
+    "check": "npm run typecheck && npm run lint && npm run test:unit",
+    "spike": "node scripts/not-implemented.mjs spike T0.3",
+    "test:acceptance": "node scripts/not-implemented.mjs test:acceptance T1.17",
+    "test:e2e": "node scripts/not-implemented.mjs test:e2e T2.20",
+    "test:ui-rules": "node scripts/not-implemented.mjs test:ui-rules T2.21",
+    "test:db": "node scripts/not-implemented.mjs test:db T3.1",
+    "gates": "npm run check && npm run spike && npm run test:acceptance && npm run test:e2e && npm run test:ui-rules && npm run test:db"
+  },
+  "dependencies": {
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "react-router-dom": "7.18.5"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@playwright/test": "1.63.0",
+    "@types/node": "26.6.6",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.3.0",
+    "eslint": "10.15.0",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "globals": "17.14.0",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.73.0",
+    "vite": "8.3.8",
+    "vitest": "5.1.0"
+  }
+}

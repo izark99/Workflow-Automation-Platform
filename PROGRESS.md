@@ -8,7 +8,7 @@ before it passes, except where a task says otherwise.
 
 ## Phase 0: Spike (gate G0)
 
-- [ ] T0.1 Scaffold the app (Vite, React, TypeScript strict, React Router, ESLint, Vitest, Playwright) and create every npm script named in `CLAUDE.md`. Scripts for later phases may fail with "not implemented" for now.
+- [x] T0.1 Scaffold the app (Vite, React, TypeScript strict, React Router, ESLint, Vitest, Playwright) and create every npm script named in `CLAUDE.md`. Scripts for later phases may fail with "not implemented" for now.
 - [ ] T0.2 Script that generates the six benchmark files of SPEC section 8 into a temporary folder (not committed).
 - [ ] T0.3 Benchmark page and Playwright runner: load each file with SheetJS into DuckDB-WASM in a worker, run one group-by query, record load time, peak memory, run time, and whether the tab survived.
 - [ ] T0.4 Try at least two xlsx reading strategies for the large files (for example whole-workbook parse, and a row-streaming or chunked path). Write `docs/SPIKE_RESULTS.md` with the numbers and the chosen strategy.
@@ -94,3 +94,8 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T0.1 Scaffold
+Changed: package.json, .npmrc, tsconfig, vite/vitest/playwright/eslint configs, src/ skeleton, one unit test, one Playwright smoke spec, scripts/not-implemented.mjs, docs/DECISIONS.md.
+Gates run: check PASS (1 unit test); Playwright smoke PASS (1 test, bundled Chromium); build PASS. spike, test:acceptance, test:e2e, test:ui-rules, test:db exit 1 as designed.
+Next: T0.2.

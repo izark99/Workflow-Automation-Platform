@@ -10,3 +10,4 @@ playwright-report/
 bench-data/
 __pycache__/
 .DS_Store
+*.tsbuildinfo
