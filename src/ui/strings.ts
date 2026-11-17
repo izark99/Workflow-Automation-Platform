@@ -188,3 +188,26 @@ export const formStrings = {
     valid: 'The formula is written correctly. Preview the step to check the column names and the result type.',
   },
 };
+
+export const formulaStrings = {
+  name: 'New column name',
+  nameHint: 'A name that is already a column replaces that column.',
+  emptyName: 'The column has no name.',
+  emptyNameNext: 'Type a name. The old name stays until you do.',
+  formula: 'Formula',
+  formulaHint: 'Write column names in square brackets, for example [OT hours] > 4.',
+  insertFunction: 'Insert a function',
+  allFunctions: 'All functions',
+  functionsTitle: 'All functions',
+  searchFunctions: 'Search functions',
+  searchPlaceholder: 'Name or what it does',
+  noFunctions: 'No function matches. Try another word.',
+  insertColumn: 'Insert a column',
+  loadColumns: 'Load columns from test file',
+  loadingColumns: 'Loading the columns',
+  columnsLoaded: (n: number): string => `${n} ${n === 1 ? 'column' : 'columns'} loaded from the test file.`,
+  loadFailed: 'The columns could not be loaded.',
+  close: 'Close',
+  insertShort: 'Insert',
+  insertFunctionLabel: (name: string): string => `Insert ${name}`,
+};

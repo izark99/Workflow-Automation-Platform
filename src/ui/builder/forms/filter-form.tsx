@@ -1,28 +1,28 @@
 import { useState } from 'react';
-import { TextAreaField } from '../../components';
 import { formStrings as t } from '../../strings';
-import { checkFormulaSyntax } from './formula-check';
+import { FormulaEditor } from './formula-editor';
 import type { FormProps } from './types';
+import { useSourceColumns } from './use-source-columns';
 import styles from '../settings-panel.module.css';
 
-/** Settings of a Filter step: the condition. The text is saved as typed; the check below it says if it is written correctly. */
-export function FilterForm({ step, onSettings, readOnly }: FormProps) {
+/** Settings of a Filter step: the condition, which must give true or false. The text is saved as typed. */
+export function FilterForm(props: FormProps) {
+  const { step, onSettings, readOnly } = props;
   const [text, setText] = useState(typeof step.settings.condition === 'string' ? step.settings.condition : '');
-  const check = checkFormulaSyntax(text);
+  const source = useSourceColumns(props);
   return (
     <div className={styles.stack} style={{ paddingTop: 0 }}>
-      <TextAreaField
+      <FormulaEditor
         label={t.filter.condition}
         hint={t.filter.conditionHint}
-        mono
-        rows={6}
         value={text}
-        disabled={readOnly}
-        error={check.ok ? undefined : check.message}
-        status={check.ok ? t.filter.valid : undefined}
-        onChange={(e) => {
-          setText(e.target.value);
-          onSettings({ ...step.settings, condition: e.target.value });
+        readOnly={readOnly}
+        source={source}
+        expect="boolean"
+        rows={6}
+        onChange={(next) => {
+          setText(next);
+          onSettings({ ...step.settings, condition: next });
         }}
       />
     </div>

@@ -41,7 +41,7 @@ export function ColumnMappingForm({ step, definition, onSettings, readOnly, cont
     setLoading(true);
     setInfo(null);
     try {
-      const names = await loadSourceColumns(definition, step, context.testFiles, context.refTables, todayIso());
+      const names = (await loadSourceColumns(definition, step, context.testFiles, context.refTables, todayIso())).map((c) => c.name);
       const merged = mergeColumns(rows, names);
       apply(merged.rows);
       setError(null);

@@ -1,5 +1,5 @@
 import { useId } from 'react';
-import type { InputHTMLAttributes, TextareaHTMLAttributes } from 'react';
+import type { InputHTMLAttributes, Ref, TextareaHTMLAttributes } from 'react';
 import { Icon } from './icons';
 import styles from './field.module.css';
 
@@ -56,10 +56,12 @@ export interface TextAreaFieldProps extends Omit<TextareaHTMLAttributes<HTMLText
   /** A positive message, announced politely (for example "Formula is valid"). */
   status?: string;
   mono?: boolean;
+  /** For code that moves the caret, such as inserting a function at the cursor. */
+  textareaRef?: Ref<HTMLTextAreaElement>;
 }
 
 /** A labelled multi-line text field. It cannot be resized by the user. */
-export function TextAreaField({ label, hint, error, status, mono = false, rows = 4, ...rest }: TextAreaFieldProps) {
+export function TextAreaField({ label, hint, error, status, mono = false, rows = 4, textareaRef, ...rest }: TextAreaFieldProps) {
   const id = useId();
   const noteId = `${id}-note`;
   const describedBy = hint || error || status ? noteId : undefined;
@@ -67,7 +69,7 @@ export function TextAreaField({ label, hint, error, status, mono = false, rows =
     <div>
       <label className={styles.label} htmlFor={id}>
         {label}
-        <textarea {...rest} id={id} rows={rows} className={`${styles.textarea} ${mono ? styles.mono : ''}`} aria-invalid={error ? 'true' : undefined} aria-describedby={describedBy} />
+        <textarea {...rest} ref={textareaRef} id={id} rows={rows} className={`${styles.textarea} ${mono ? styles.mono : ''}`} aria-invalid={error ? 'true' : undefined} aria-describedby={describedBy} />
       </label>
       <span id={noteId}>
         {hint ? <span className={styles.hint}>{hint}</span> : null}

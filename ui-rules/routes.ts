@@ -69,4 +69,29 @@ export const ROUTES: RuleRoute[] = [
       await panel.getByRole('list', { name: 'Column mapping rows' }).getByRole('listitem').waitFor();
     },
   },
+  {
+    path: '/flows/flow-timesheet/versions/4',
+    name: '/flows/flow-timesheet/versions/4 (Formula editor)',
+    sidebar: false,
+    // A new Formula column step: name field, formula text, message, function buttons, load columns.
+    prepare: async (page) => {
+      await page.getByRole('button', { name: 'Add step Formula column' }).click();
+      const panel = page.getByRole('complementary', { name: 'Step settings' });
+      await panel.getByRole('tab', { name: 'Configure' }).click();
+      await panel.getByRole('textbox', { name: 'Formula' }).waitFor();
+    },
+  },
+  {
+    path: '/flows/flow-timesheet/versions/4',
+    name: '/flows/flow-timesheet/versions/4 (function list open)',
+    sidebar: false,
+    // The dialog with the searchable list of all functions.
+    prepare: async (page) => {
+      await page.getByRole('button', { name: 'Add step Formula column' }).click();
+      const panel = page.getByRole('complementary', { name: 'Step settings' });
+      await panel.getByRole('tab', { name: 'Configure' }).click();
+      await panel.getByRole('button', { name: 'All functions' }).click();
+      await page.getByRole('dialog', { name: 'All functions' }).getByRole('button', { name: 'Insert IF', exact: true }).waitFor();
+    },
+  },
 ];

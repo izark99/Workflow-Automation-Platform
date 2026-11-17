@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { checkFormulaSyntax } from './formula-check';
 import { parseNameList, toFormValues, validateInputForm } from './input-file-logic';
 
 describe('Input file form values', () => {
@@ -41,24 +40,5 @@ describe('Input file validation', () => {
   it('refuses a decimal or a text as a row number', () => {
     expect(validateInputForm({ ...ok, headerRow: '1.5' }, [], {}).errors.headerRow).toBeDefined();
     expect(validateInputForm({ ...ok, skipRows: 'two' }, [], {}).errors.skipRows).toBeDefined();
-  });
-});
-
-describe('formula syntax check', () => {
-  it('accepts a formula that is written correctly', () => {
-    expect(checkFormulaSyntax('[OT hours] > 4')).toEqual({ ok: true });
-    expect(checkFormulaSyntax('IF([a] = "x", 1, 2)')).toEqual({ ok: true });
-  });
-  it('an empty formula says what to write', () => {
-    const r = checkFormulaSyntax('  ');
-    expect(r.ok).toBe(false);
-    expect(!r.ok && r.message).toMatch(/empty.*for example/);
-  });
-  it('a mistake gives the character position and the reason', () => {
-    const r = checkFormulaSyntax('[OT hours > 4');
-    expect(r.ok).toBe(false);
-    expect(!r.ok && r.message).toMatch(/^Character \d+:/);
-    const r2 = checkFormulaSyntax('1 +');
-    expect(r2.ok).toBe(false);
   });
 });

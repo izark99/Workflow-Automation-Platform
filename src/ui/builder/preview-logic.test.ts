@@ -26,6 +26,7 @@ describe('defaults and sub-flows', () => {
     expect(defaultSettings('input_file', 'input_file-2')).toEqual({ key: 'input_file-2', headerRow: 1 });
     expect(defaultSettings('column_mapping', 'x')).toEqual({ columns: [] });
     expect(defaultSettings('filter', 'x')).toEqual({});
+    expect(defaultSettings('formula_column', 'x')).toEqual({ name: 'New column', expression: '' });
   });
   it('upstreamOf keeps the step and everything before it, and the connections between them', () => {
     const def = chain(['input_file', 'column_mapping', 'column_mapping']);

@@ -58,7 +58,7 @@ before it passes, except where a task says otherwise.
 - [x] T2.10b Builder, part 2b: step preview. Test tab runs the steps upstream of the selected step in the browser on test files chosen by the user, and shows the first 100 rows in a table, with loading, error and empty states.
 - [x] T2.11a Settings forms, part 1: the Configure tab renders the form of the step type; forms for Input file (name, sheet, header row, rows to skip, fill down, row number column) and Filter (condition formula with syntax check).
 - [x] T2.11b Settings form: Column mapping, a grid of one row per source column (keep, new name, type) that accepts a paste from Excel and can load the source columns from a test file.
-- [ ] T2.12 Settings forms: Formula column with editor, function list, validation message.
+- [x] T2.12 Settings forms: Formula column with editor, function list, validation message.
 - [ ] T2.13 Settings forms: Lookup / Join, Group by, Unpivot, Pivot.
 - [ ] T2.14 Settings forms: Append, Output, SQL.
 - [ ] T2.15 Builder, part 3: version dropdown, save draft, publish, read-only mode for published versions.
@@ -102,6 +102,15 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T2.12 Settings form: Formula column with editor, function list, validation message
+Changed: src/ui/builder/forms/{formula-editor.tsx,formula-column-form.tsx,filter-form.tsx,formula-logic.ts,function-docs.ts,use-source-columns.ts,load-columns.ts (now returns types)}, TextAreaField `textareaRef`, `formulaStrings`, 20 unit tests (formula logic, function list), e2e/formula.spec.ts (10 tests), two UI-rules states (editor, function list open), docs/DECISIONS.md (D44). The old syntax-only check was replaced by the shared editor.
+How: Formula column form (name, formula, message, function buttons, All functions dialog with search, Insert a column, Load columns). The message gives the result type once the columns are loaded and the engine's own compile message for a wrong column or type. The Filter form uses the same editor and also demands true or false.
+Checked by effect: a formula adds a column to a real preview (62 and 84); inserts land at the cursor; an unknown column gives "Character 1: ... agee"; a Filter with a number result is refused once columns are loaded; controls are disabled for a published version.
+Test mistakes of mine, fixed: I counted 48 functions, the registry has 50 (the e2e test now reads the list); a second insert goes where the cursor is, not at the end; the seed has no Formula column step, so the read-only test injects one.
+UI rules found three real defects in the open function list, all fixed: item buttons were two-line variable-height buttons (only 36 and 40 px exist), their accessible names did not contain their visible text, and the group headers were invalid list items. Each row is now text plus a 36 px "Insert" button. A flaky e2e test (insert, then fast typing) exposed a real race: the caret was restored in `requestAnimationFrame` after the new text; it is now restored in a layout effect in the same commit.
+Gates run: check PASS (536 tests), test:e2e PASS (76 tests), test:ui-rules PASS (172 tests: 86 per width, 13 route states), test:acceptance PASS (7 tests).
+Next: T2.13 (Lookup / Join, Group by, Unpivot, Pivot forms).
 
 ### 2026-11-17 T2.11b Settings form: Column mapping grid with paste from Excel
 Changed: src/ui/builder/forms/{column-mapping-logic.ts(+10 tests),column-mapping-form.tsx,column-mapping-form.module.css,load-columns.ts}, form `context` (test files, reference tables), Checkbox `label`, `formStrings.mapping`, e2e/mapping.spec.ts (8 tests), ui-rules grid state, docs/DECISIONS.md (D43).

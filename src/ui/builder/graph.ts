@@ -117,6 +117,8 @@ export function defaultSettings(type: NodeType, id: string): Record<string, unkn
       return { key: id, headerRow: 1 };
     case 'column_mapping':
       return { columns: [] };
+    case 'formula_column':
+      return { name: 'New column', expression: '' };
     default:
       return {};
   }
