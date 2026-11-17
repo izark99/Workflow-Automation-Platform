@@ -21,7 +21,7 @@ before it passes, except where a task says otherwise.
 - [x] T1.1 Flow definition schema: TypeScript types, JSON schema, validation with clear errors (unknown node type, missing input, cycle).
 - [x] T1.2 Engine core: DuckDB-WASM worker, load input tables, topological order, one view per node, preview of 100 rows, cancel.
 - [x] T1.3 Input file node: sheet, header row, rows to skip, fill down merged cells, row number column, csv. Call `checkFileSize` (`src/engine/size-guard.ts`) before reading and surface `strings.xlsxTooLarge`; read xlsx with `src/engine/xlsx-stream/` and csv with DuckDB `read_csv` (decisions D9, D10).
-- [ ] T1.4 Column mapping node.
+- [x] T1.4 Column mapping node.
 - [ ] T1.5 Filter node with a second output for the rows that do not match.
 - [ ] T1.6 Formula parser: tokens, precedence, column references in square brackets, strings, numbers, function calls, error positions.
 - [ ] T1.7 Formula functions, logic and math groups of Tier 1, each with unit tests.
@@ -96,6 +96,12 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T1.4 Column mapping node
+Changed: src/engine/nodes/{column-mapping,test-helpers}.ts, registry, 10 tests, docs/DECISIONS.md (D16).
+How: grid rows keep/drop, rename, retype; unlisted columns stay; strict conversions with a clear failure; case-only name clashes refused. Paste from Excel is a UI task (T2.11).
+Gates run: check PASS (119 unit tests).
+Next: T1.5 (filter node with second output).
 
 ### 2026-11-17 T1.3 Input file node
 Changed: src/engine/input/load.ts (+ 18 tests), src/engine/nodes/input-file.ts, registry, `runFlow` option `files`, `SqlRunner.registerFile` (Node and browser runners), sql.ts insert helpers, error codes, docs/DECISIONS.md (D15). One T1.2 test got a `key` on its input step, because an input step without a key is now rejected.

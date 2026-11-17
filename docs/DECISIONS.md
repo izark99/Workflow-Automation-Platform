@@ -146,3 +146,14 @@ Open design points to settle in the task that needs them, each recorded here whe
 - Known limit: rows are staged with SQL INSERT in batches of 2,000. This is correct but slower than an Arrow insert.
   Throughput on a 1,000,000-row xlsx is not measured; measure it in T2.16 and switch the staging step if needed.
 - Dates read from xlsx are built from UTC milliseconds, so they do not move with the time zone of the browser.
+
+## D16 Column mapping node (T1.4)
+
+- Settings: `columns: [{source, keep?, name?, type?}]`, one row per source column, in output order. `keep` defaults to
+  true. Columns the grid does not list stay unchanged and follow the listed ones, so a flow keeps working when a file
+  gains a column. Drop a column explicitly with `keep: false`.
+- Conversions: any type to text (numbers without a trailing `.0`, dates as ISO text); text to number, date or boolean
+  (empty text becomes NULL, a bad value fails the step and names the value); boolean to number; number to boolean
+  (non-zero). Number to date and date to number are refused with a hint to use a Formula column.
+- Two output names that differ only by case are refused, since one DuckDB table cannot hold both (see D14).
+- `src/engine/nodes/test-helpers.ts` runs one node on in-memory tables through `runFlow`, for node unit tests.
