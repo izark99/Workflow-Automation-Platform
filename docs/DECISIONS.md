@@ -501,3 +501,15 @@ blank or mixed column in one month cannot change the types of another month.
 - The store adds `ownerName` and `groupNames` to the flows it returns, because a user may not read the profile or group lists (SPEC section 7) but the Flows screen shows the owner and the groups.
 - The shell passes `openCreateFlow` to its screens through the router's outlet context, so the empty state can open the same dialog. The empty-state action is `primary`, not `cta` (one cta per screen, D36).
 - Skeleton test: `dfw.loadDelayMs` delays the store; the UI rules check `aria-busy` during the delay and compare the skeleton heights with the real table. Routes that load data set `skeleton: true` in `ui-rules/routes.ts`.
+
+## D39 Builder canvas (T2.9)
+
+- Library: `@xyflow/react` 13.0.1 (the package was renamed from `reactflow`). Checked in its type definitions and the current docs: in this version `onNodesChange` and `onEdgesChange` receive a `NodeChangeset` / `EdgeChangeset` (iterable), not an array.
+- The canvas is controlled by the flow definition: React Flow nodes and edges are derived from the definition on every render, and every change (move, add, connect, delete) is a pure function on the definition in `src/ui/builder/graph.ts` (18 unit tests). There is no second format. Positions are stored in `node.position`; selection is UI state and not saved.
+- Connections are validated in `connectSteps`, not by React Flow: no self loop, only real handles, one input per port, no loops (a step is reachable from the target). A refusal shows an error panel on the canvas that says what failed and what to do. Append and SQL show their connected inputs plus one free port (`in1..inN`); deleting an input closes the gap.
+- Adding a step has two paths: drag from the list (mouse) and Enter or click on the list button (keyboard); the step is placed below the lowest one. Dragging uses the Button itself as the drag source (a `display: contents` wrapper does not start a drag).
+- Own zoom controls (36 px buttons, zoom percent, fit to screen): the built-in React Flow controls are about 26 px. The React Flow attribution link stays (license).
+- `elevateNodesOnSelect={false}`: a selected card used to be raised, which raised its edges above the handles of the cards the edge passes (default vertical layout), so the next connection could not start there. Found by the e2e test. The selected look is the 2 px accent border.
+- Accessible names: `aria-label` on a div without a role is an axe violation (22 nodes found by the UI rules). The step name is set through React Flow's `ariaLabel` on the node wrapper (`role="group"`); handles carry no label. The builder has a `<main>` (canvas area). Connecting by keyboard (select handles) is not offered by React Flow's handles in this build; the keyboard path for inputs comes with the settings panel in T2.10 (an "Input from" choice per step). Open point.
+- Read-only: the canvas takes `readOnly` (published versions): no move, add, connect or delete. T2.15 adds the notice, Save draft and Publish.
+- Edits are held in memory in the builder screen and are not saved yet; Save draft is T2.15.

@@ -15,5 +15,7 @@ export const ROUTES: RuleRoute[] = [
   { path: '/admin', sidebar: true },
   { path: '/flows/flow-timesheet/run', sidebar: true },
   { path: '/flows/flow-timesheet/versions', sidebar: true },
+  // The builder has no sidebar and no page header.
+  { path: '/flows/flow-timesheet/versions/4', sidebar: false },
   { path: '/dev/components', sidebar: true },
 ];

@@ -53,7 +53,7 @@ before it passes, except where a task says otherwise.
 - [x] T2.6 `DataStore` interface, `LocalStore`, and seed data that matches the screens.
 - [x] T2.7 App shell: sidebar, page header, routing, strings module.
 - [x] T2.8 Flows screen: list, filters, search, delete with confirm, loading and empty states.
-- [ ] T2.9 Builder, part 1: canvas with React Flow, step cards, add by drag from the step list, connect, select, delete, zoom controls.
+- [x] T2.9 Builder, part 1: canvas with React Flow, step cards, add by drag from the step list, connect, select, delete, zoom controls.
 - [ ] T2.10 Builder, part 2: settings panel shell with Setup, Configure and Test tabs, step preview table.
 - [ ] T2.11 Settings forms: Input file, Column mapping (with paste from Excel), Filter.
 - [ ] T2.12 Settings forms: Formula column with editor, function list, validation message.
@@ -100,6 +100,14 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T2.9 Builder, part 1: canvas
+Changed: src/ui/builder/{graph.ts(+18 tests),step-card,step-list,zoom-controls,canvas,builder-screen}.tsx, builder.module.css, Button `block` prop, `builder` strings, route `/flows/:id/versions/:versionNo`, dependency `@xyflow/react` 13.0.1, e2e/builder.spec.ts (9 tests), ui-rules route for the builder, docs/DECISIONS.md (D39).
+How: header bar 64 px (Flows link, name, status badge, Run cta), step list 184 px with the groups Files, Shape, Combine, Advanced (36 px buttons, draggable, Enter adds), canvas with 240 x 56 step cards (number, name, type; inputs on top, outputs at the bottom; Filter has match and no match, Lookup left and right), connect by dragging handles, select with a 2 px accent border, delete with Backspace or Delete, own zoom controls and a step summary. Published versions are read-only.
+Found by the tests: (1) a selected card was raised, so its edge covered the handles of other cards and blocked the next connection; fixed with `elevateNodesOnSelect={false}`. (2) axe: `aria-label` on role-less divs (22 nodes); fixed with the node `ariaLabel`. (3) header bar measured 65 px; fixed to 64. (4) a `display: contents` wrapper does not start a drag; the Button is the drag source now. (5) landmark: the builder needed a `<main>`.
+Open: keyboard connection of handles (planned with the settings panel, T2.10); Save draft and Publish (T2.15).
+Gates run: check PASS (489 tests), test:ui-rules PASS (112 tests: 56 per width, 8 routes incl. the builder), test:e2e PASS (36 tests, rerun after the last edits), test:acceptance PASS (see the Evidence block of this turn).
+Next: T2.10 (settings panel shell with Setup, Configure and Test tabs, step preview table).
 
 ### 2026-11-17 T2.8 Flows screen
 Changed: src/ui/screens/{flows.tsx,flows.module.css,flows-logic.ts(+9 tests)}, ButtonLink component, `flowsScreen` strings, shell outlet context and ToastProvider, store `ownerName`/`groupNames`, table CSS, e2e/flows.spec.ts (8 tests), ui-rules skeleton test, docs/DECISIONS.md (D38).

@@ -60,3 +60,8 @@
     transform: rotate(360deg);
   }
 }
+
+.block {
+  width: 100%;
+  justify-content: flex-start;
+}

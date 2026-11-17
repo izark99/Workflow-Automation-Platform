@@ -10,11 +10,13 @@ export interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement
   compact?: boolean;
   /** Shows a spinner and sets aria-busy. The button does not react to clicks while busy. */
   busy?: boolean;
+  /** Full width of its container, label at the start (the step list). */
+  block?: boolean;
   children: ReactNode;
 }
 
-export function Button({ variant = 'secondary', compact = false, busy = false, children, onClick, type = 'button', ...rest }: ButtonProps) {
-  const classes = [styles.button, styles[variant], compact ? styles.compact : ''].filter(Boolean).join(' ');
+export function Button({ variant = 'secondary', compact = false, busy = false, block = false, children, onClick, type = 'button', ...rest }: ButtonProps) {
+  const classes = [styles.button, styles[variant], compact ? styles.compact : '', block ? styles.block : ''].filter(Boolean).join(' ');
   return (
     <button
       {...rest}
