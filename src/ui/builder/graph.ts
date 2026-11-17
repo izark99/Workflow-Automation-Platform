@@ -123,6 +123,13 @@ export function defaultSettings(type: NodeType, id: string): Record<string, unkn
       return { source: { kind: 'node' }, keys: [], bring: [], onNoMatch: 'blank' };
     case 'group_by':
       return { groupBy: [], aggregations: [] };
+    case 'append':
+      return { match: 'name' };
+    case 'sql':
+      return { sql: '' };
+    case 'output':
+      // One sheet name per Output step: Sheet1, Sheet2, ... from the number in the step id.
+      return { file: 'Result', format: 'xlsx', sheet: `Sheet${/(\d+)$/.exec(id)?.[1] ?? '1'}` };
     case 'unpivot':
       return { keep: [], unpivot: [], nameColumn: 'name', valueColumn: 'value' };
     case 'pivot':

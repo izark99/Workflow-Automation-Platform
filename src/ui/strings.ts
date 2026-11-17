@@ -114,7 +114,6 @@ export const settingsStrings = {
   readOnly: 'This version is published and read-only. Create a new version to change it.',
   deleteStep: 'Delete step',
   noInputs: 'This step starts the flow, so it has no input.',
-  noForm: 'The settings form for this step type is not available yet.',
   connectFailed: 'The input could not be set.',
 };
 
@@ -299,4 +298,42 @@ export const reshapeStrings = {
   cases: { keep: 'As in the data', lower: 'lower case', upper: 'UPPER CASE' },
   fnLabels: { sum: 'sum', count: 'count', min: 'min', max: 'max', average: 'average' },
   clash: 'The list was not changed.',
+};
+
+export const outputStrings = {
+  file: 'File name',
+  fileHint: 'Steps with the same file name write sheets of one workbook.',
+  format: 'File type',
+  formats: { xlsx: 'Excel workbook (.xlsx)', csv: 'csv file (.csv)' },
+  sheet: 'Sheet name',
+  sheetHint: 'Up to 31 characters. Each Output step of a workbook needs its own sheet name.',
+  allColumns: 'Write all columns',
+  columns: 'Columns to write, in this order',
+  columnsHint: 'To change the order, remove a column and add it again.',
+  sort: 'Sort rows by',
+  sortHint: 'Rows are sorted by the first key, then by the next. Blanks come last. Rows that tie keep their order.',
+  kinds: { column: 'Column', formula: 'Formula' },
+  kind: 'Sort key type',
+  sortColumn: 'Sort column',
+  sortFormula: 'Sort formula',
+  directions: { asc: 'Ascending', desc: 'Descending' },
+  direction: 'Direction',
+  addSort: 'Add sort key',
+  removeSort: (n: number): string => `Remove sort key ${n}`,
+  numberLike: 'Text columns written as numbers',
+  numberLikeHint: 'A text column whose values are plain numbers (such as 007 or 12) is written as numbers when it is listed here.',
+  clash: 'This Output step clashes with another one.',
+  stillMissing: 'To finish:',
+};
+
+export const appendStrings = {
+  match: 'Match columns',
+  hint: 'Stacks the inputs one under the other. Choose the inputs on the Setup tab: Input 1, Input 2, and more.',
+  byName: 'By name (a column that an input lacks stays blank)',
+  byPosition: 'By position (every input needs the same number of columns)',
+};
+
+export const sqlStrings = {
+  query: 'SQL query',
+  hint: 'One SELECT query. The inputs are tables called in1, in2, ... in the order of the input ports on the Setup tab.',
 };

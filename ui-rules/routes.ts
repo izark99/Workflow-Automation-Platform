@@ -152,4 +152,40 @@ export const ROUTES: RuleRoute[] = [
       await panel.getByRole('button', { name: /^Reference table/ }).waitFor();
     },
   },
+  {
+    path: '/flows/flow-timesheet/versions/4',
+    name: '/flows/flow-timesheet/versions/4 (Output form)',
+    sidebar: false,
+    // An Output step with a column sort key and the column list switched on.
+    prepare: async (page) => {
+      await page.getByRole('button', { name: 'Add step Output' }).click();
+      const panel = page.getByRole('complementary', { name: 'Step settings' });
+      await panel.getByRole('tab', { name: 'Configure' }).click();
+      await panel.getByRole('button', { name: 'Add sort key' }).click();
+      await panel.getByRole('checkbox', { name: 'Write all columns' }).click();
+      await panel.getByRole('button', { name: 'Remove sort key 1' }).waitFor();
+    },
+  },
+  {
+    path: '/flows/flow-timesheet/versions/4',
+    name: '/flows/flow-timesheet/versions/4 (Append form)',
+    sidebar: false,
+    prepare: async (page) => {
+      await page.getByRole('button', { name: 'Add step Append' }).click();
+      const panel = page.getByRole('complementary', { name: 'Step settings' });
+      await panel.getByRole('tab', { name: 'Configure' }).click();
+      await panel.getByRole('button', { name: /^Match columns/ }).waitFor();
+    },
+  },
+  {
+    path: '/flows/flow-timesheet/versions/4',
+    name: '/flows/flow-timesheet/versions/4 (SQL form)',
+    sidebar: false,
+    prepare: async (page) => {
+      await page.getByRole('button', { name: 'Add step SQL' }).click();
+      const panel = page.getByRole('complementary', { name: 'Step settings' });
+      await panel.getByRole('tab', { name: 'Configure' }).click();
+      await panel.getByRole('textbox', { name: 'SQL query' }).fill('SELECT * FROM in1');
+    },
+  },
 ];

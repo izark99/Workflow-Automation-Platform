@@ -9,7 +9,8 @@ export type PreviewTarget =
 
 /**
  * What a preview shows for a step and what it has to run. A step with outputs shows its own first output (Filter: match or
- * no match). An Output step has no output table, so it shows what it will write: the table of the step that feeds it.
+ * no match). An Output step shows its `result` table: what it will write, with its sort and its column list applied. An
+ * Output step with no input has nothing to show and says so.
  */
 export function previewTarget(def: FlowDefinition, step: FlowNode, handle?: string): PreviewTarget {
   const outs = outputHandlesOf(step.type);
@@ -20,7 +21,7 @@ export function previewTarget(def: FlowDefinition, step: FlowNode, handle?: stri
   if (!feed) {
     return { kind: 'needs_input', message: 'This step has no input yet. Choose the step it reads from on the Setup tab, then preview again.' };
   }
-  return { kind: 'ready', definition: upstreamOf(def, [feed.source]), nodeId: feed.source, handle: feed.sourceHandle, handles: [feed.sourceHandle] };
+  return { kind: 'ready', definition: upstreamOf(def, [step.id]), nodeId: step.id, handle: 'result', handles: ['result'] };
 }
 
 export interface NeededFile {

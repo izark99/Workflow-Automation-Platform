@@ -130,6 +130,5 @@ function SetupTab({ definition, step, onChange, readOnly, error, setError }: { d
 
 function ConfigureTab({ step, definition, onChange, readOnly, context }: { step: FlowNode; definition: FlowDefinition; onChange: (d: FlowDefinition) => void; readOnly: boolean; context: FormContext }) {
   const Form = FORMS[step.type];
-  if (!Form) return <p className={styles.hint}>{t.noForm}</p>;
   return <Form key={step.id} step={step} definition={definition} readOnly={readOnly} context={context} onSettings={(settings) => onChange(updateSettings(definition, step.id, settings))} />;
 }

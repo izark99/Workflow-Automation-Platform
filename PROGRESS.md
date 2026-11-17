@@ -61,7 +61,7 @@ before it passes, except where a task says otherwise.
 - [x] T2.12 Settings forms: Formula column with editor, function list, validation message.
 - [x] T2.13a Settings forms, part 3: Lookup / Join (source, key pairs, brought columns, no-match behaviour) and Group by (group columns, aggregations), with a shared column picker.
 - [x] T2.13b Settings forms, part 4: Unpivot (keep and unpivot columns, name and value columns, skip blanks) and Pivot (row keys, column source, value, aggregation, column list from the data or a reference table, fill value, name prefix and suffix, name case).
-- [ ] T2.14 Settings forms: Append, Output, SQL.
+- [x] T2.14 Settings forms: Append, Output, SQL.
 - [ ] T2.15 Builder, part 3: version dropdown, save draft, publish, read-only mode for published versions.
 - [ ] T2.16 Run screen: effective date, resolved versions, file inputs, progress, result tabs, download, error state. A file above the size limit shows `strings.xlsxTooLarge` instead of starting a run; the e2e test uses a sparse file just over `MAX_SAFE_XLSX_BYTES`, as `checkGuard` in `scripts/spike.ts` does.
 - [ ] T2.17 Versions screen: timeline, table, new version from copy, no-overlap check, date checker.
@@ -103,6 +103,13 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T2.14 Settings forms: Append, Output, SQL (every step type has a form now)
+Changed: src/ui/builder/forms/{output-logic.ts(+9 tests),output-form.tsx,append-form.tsx,sql-form.tsx}, default settings (Append, SQL, Output with `Sheet<n>`), the Output preview shows the step's own result table, `FORMS` is a complete record (no fallback text), `outputStrings`, `appendStrings`, `sqlStrings`, e2e/output.spec.ts (12 tests), three UI-rules states, docs/DECISIONS.md (D47).
+How: Append (by name or by position), SQL (text with an engine safety check), Output (file, type, sheet, all columns or a list, sort keys by column or formula, number-like text columns, clash message from the engine's own cross-step check).
+Checked by effect on real previews: descending sort puts blanks last; a formula sort keeps the order of ties (Cy, Bob, Ann); a column list limits the columns; Append by name gives blanks, by position ignores names; a SQL group-by gives 5 for department A; a bad query shows the engine message; the second Output step starts with the sheet Sheet2 and a clash with Sheet1 names the sheet.
+Gates run: check PASS (561 tests), test:e2e PASS (105 tests), test:ui-rules PASS (256 tests: 128 per width, 20 route states), test:acceptance PASS (7 tests).
+Next: T2.15 (builder part 3: version dropdown, save draft, publish, read-only mode).
 
 ### 2026-11-17 T2.13b Settings forms, part 4: Unpivot and Pivot
 Changed: src/ui/builder/forms/{reshape-logic.ts(+8 tests),unpivot-form.tsx,pivot-form.tsx}, default settings for both types, `reshapeStrings`, e2e/reshape.spec.ts (9 tests), two UI-rules states, docs/DECISIONS.md (D46).

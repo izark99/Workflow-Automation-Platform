@@ -18,4 +18,5 @@ export interface FormProps {
 }
 
 export type FormComponent = ComponentType<FormProps>;
-export type FormRegistry = Partial<Record<NodeType, FormComponent>>;
+/** One form for every step type: the compiler refuses a missing one. */
+export type FormRegistry = Record<NodeType, FormComponent>;

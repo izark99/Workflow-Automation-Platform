@@ -29,6 +29,9 @@ describe('defaults and sub-flows', () => {
     expect(defaultSettings('formula_column', 'x')).toEqual({ name: 'New column', expression: '' });
     expect(defaultSettings('group_by', 'x')).toEqual({ groupBy: [], aggregations: [] });
     expect(defaultSettings('unpivot', 'x')).toEqual({ keep: [], unpivot: [], nameColumn: 'name', valueColumn: 'value' });
+    expect(defaultSettings('append', 'x')).toEqual({ match: 'name' });
+    expect(defaultSettings('sql', 'x')).toEqual({ sql: '' });
+    expect(defaultSettings('output', 'output-2')).toEqual({ file: 'Result', format: 'xlsx', sheet: 'Sheet2' });
     expect(defaultSettings('pivot', 'x')).toEqual({ rowKeys: [], aggregation: 'sum', columns: { from: 'data' } });
     expect(defaultSettings('lookup_join', 'x')).toEqual({ source: { kind: 'node' }, keys: [], bring: [], onNoMatch: 'blank' });
   });
@@ -48,9 +51,9 @@ describe('previewTarget', () => {
     expect(previewTarget(def, def.nodes[1]!, 'nomatch')).toMatchObject({ handle: 'nomatch' });
     expect(previewTarget(def, def.nodes[1]!, 'bogus')).toMatchObject({ handle: 'match' });
   });
-  it('an Output step previews what feeds it, and asks for an input when nothing does', () => {
+  it('an Output step previews its own result table (sort and columns applied), and asks for an input when nothing feeds it', () => {
     const def = chain(['input_file', 'column_mapping', 'output']);
-    expect(previewTarget(def, def.nodes[2]!)).toMatchObject({ kind: 'ready', nodeId: 'column_mapping-1', handle: 'out' });
+    expect(previewTarget(def, def.nodes[2]!)).toMatchObject({ kind: 'ready', nodeId: 'output-1', handle: 'result', handles: ['result'] });
     const lone = addStep(emptyDefinition(), 'output', { x: 0, y: 0 }).definition;
     const t = previewTarget(lone, lone.nodes[0]!);
     expect(t.kind).toBe('needs_input');
