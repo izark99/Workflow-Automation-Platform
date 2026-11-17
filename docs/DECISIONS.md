@@ -84,3 +84,32 @@ about 10 GB of renderer memory for the 1M row csv.
   in memory, and this was not measured. Re-measure with real data when it is available.
 - If a later spike run fails on the 1,048,576-row xlsx, `npm run check` turns red through the
   limit test. That is intended: re-measure and set the limit again. Do not loosen the test.
+
+## D12 Flow definition envelope and ports (T1.1)
+
+- The flow JSON follows React Flow: `nodes[{id, type, label?, position?, settings}]` and
+  `edges[{source, sourceHandle?, target, targetHandle?}]`, plus `schemaVersion: 1`. Phase 2 needs no conversion.
+- Ports live in one registry (`NODE_PORTS` in `src/engine/flow/types.ts`). Filter has outputs `match` and
+  `nomatch`. Lookup has inputs `left` (required) and `right` (only for a lookup on another node; a reference
+  table is named in the settings, never by version). Append and SQL take `in1`, `in2`, ... with no gap, and the
+  number gives the order, not the position of the edge in the array. Missing handles default to the first one.
+- The validator is hand-written (`src/engine/flow/validate.ts`), not `ajv`, so no dependency outside the stack
+  is added. `flowJsonSchema` documents the envelope and a test keeps its node type list equal to `NODE_TYPES`.
+  Settings of each node type are validated by the module of that type, task by task.
+- Input nodes will bind to files by a logical key in their settings (for example "Timesheet"), not a file name,
+  because file names differ per dataset.
+
+## D13 Plan notes for the engine tasks (T1.1)
+
+Open design points to settle in the task that needs them, each recorded here when decided:
+
+- Row order (R12): DuckDB does not keep order through joins and group-bys. Sorting is a setting of the Output
+  node (T1.15), not a separate node.
+- Summary header (R10): the `*_days` and `ot_*_hours` columns follow reference table order, including zero
+  columns, so Pivot (T1.13) needs a column list taken from a reference table, a fill value and a suffix.
+- Input typing (R8): a mixed OT column keeps text such as `2h` as text. Type inference must not turn it into NULL.
+- Identifiers are always quoted. Check whether DuckDB treats quoted names as case-insensitive and record what
+  the engine enforces (CLAUDE.md wants case-sensitive column names).
+- Dates leave the engine as UTC-safe values, and the acceptance spec runs with a UTC+7 time zone, so that a
+  date does not move by one day.
+- Fixture employee IDs must not appear in any `src/` file, tests included. The acceptance harness lives outside `src/`.

@@ -18,7 +18,7 @@ before it passes, except where a task says otherwise.
 
 ## Phase 1: Engine (gates G1, G2)
 
-- [ ] T1.1 Flow definition schema: TypeScript types, JSON schema, validation with clear errors (unknown node type, missing input, cycle).
+- [x] T1.1 Flow definition schema: TypeScript types, JSON schema, validation with clear errors (unknown node type, missing input, cycle).
 - [ ] T1.2 Engine core: DuckDB-WASM worker, load input tables, topological order, one view per node, preview of 100 rows, cancel.
 - [ ] T1.3 Input file node: sheet, header row, rows to skip, fill down merged cells, row number column, csv. Call `checkFileSize` (`src/engine/size-guard.ts`) before reading and surface `strings.xlsxTooLarge`; read xlsx with `src/engine/xlsx-stream/` and csv with DuckDB `read_csv` (decisions D9, D10).
 - [ ] T1.4 Column mapping node.
@@ -96,6 +96,14 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T1.1 Flow definition schema
+Changed: src/engine/flow/{types,validate}.ts, validate.test.ts (26 tests), docs/DECISIONS.md (D12, D13).
+How: envelope shaped like React Flow, port registry for all 11 node types (Filter match/nomatch, Lookup left/right, Append and SQL in1..n), hand-written validator with codes for shape, schema version, duplicate id, unknown type, unknown node, unknown handle, missing input, doubled input and cycle (path named), `topologicalOrder` and `resolveEdgeHandles` for T1.2. No `ajv`.
+Orientation: expected Summary header lists categories in reference-table order including zero columns; both datasets share identical reference tables, so T1.16 is not on the acceptance path.
+Gates run: check PASS (79 unit tests).
+Advisor consulted at the start of Phase 1; its schema and engine notes are in D13.
+Next: T1.2 (engine core). First check that DuckDB-WASM runs under Vitest in Node, otherwise record the fallback.
 
 ### 2026-11-17 T0.5 Size guard (Phase 0 complete)
 Changed: src/engine/size-guard.ts (`checkFileSize`, `MAX_SAFE_XLSX_BYTES` = 300,002,342), src/ui/strings.ts (`xlsxTooLarge`), bench page enforces the guard (`?guard=off` bypasses it for the raw measurements), `npm run spike` loads a sparse xlsx just above the limit with the guard on and fails if the warning does not appear, report section "Size guard", raw results now store `fileBytes`. Tests: 5 for the guard, 1 for the message, 2 for the report section, and a test that fails when the limit is above the largest xlsx that loaded in docs/spike-raw.json.
