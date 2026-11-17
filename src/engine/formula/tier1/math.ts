@@ -13,6 +13,11 @@ function multiple(ctx: FunctionContext): { x: string; s: string } {
   return { x: ctx.arg(0, 'number'), s: ctx.args[1] ? ctx.arg(1, 'number') : '(1::DOUBLE)' };
 }
 
+/** ROUND as SQL, shared with TEXT: decimal rounding, with a DOUBLE fallback for huge or tiny values. */
+export function roundSql(x: string, d: string): string {
+  return `COALESCE(CAST(round(${dec(x)}, ${d}) AS DOUBLE), round(${x}, ${d}))`;
+}
+
 export const mathFunctions: FunctionRegistry = {
   ROUND: {
     min: 2,
@@ -21,7 +26,7 @@ export const mathFunctions: FunctionRegistry = {
       const x = ctx.arg(0, 'number');
       const d = digits(ctx.arg(1, 'number'));
       // Decimal rounding gives Excel's 2.68 for 2.675 and 1.01 for 1.005; huge or tiny values fall back to DOUBLE.
-      return num(`COALESCE(CAST(round(${dec(x)}, ${d}) AS DOUBLE), round(${x}, ${d}))`);
+      return num(roundSql(x, d));
     },
   },
   ROUNDDOWN: {

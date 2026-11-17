@@ -1,9 +1,9 @@
 import { requireColumn } from '../nodes/columns';
-import { numberToTextSql, quoteIdent, quoteString } from '../sql';
+import { quoteIdent, quoteString } from '../sql';
 import { EngineError, type Column, type ColumnType } from '../types';
 import type { Expr } from './ast';
 import type { Compiled, FunctionContext, FunctionRegistry } from './functions';
-import { withBlankRule } from './ops';
+import { toText, withBlankRule } from './ops';
 import { defaultFunctions } from './tier1';
 import { FormulaError, parseFormula } from './parse';
 
@@ -26,21 +26,6 @@ function expect(c: Compiled, type: ColumnType, e: Expr, what: string, hint: stri
 }
 
 const HINT_NUMBER = 'Use VALUE() to turn text into a number.';
-
-/** Text of a value for `&`. A blank stays NULL, and `concat` reads NULL as empty text. */
-function toText(c: Compiled): string {
-  const sql = c.sql;
-  switch (c.type) {
-    case 'text':
-      return sql;
-    case 'number':
-      return numberToTextSql(sql);
-    case 'date':
-      return `strftime(${sql}, '%Y-%m-%d')`;
-    case 'boolean':
-      return `CASE WHEN ${sql} THEN 'TRUE' WHEN NOT ${sql} THEN 'FALSE' END`;
-  }
-}
 
 function compileBinary(e: Extract<Expr, { kind: 'binary' }>, l: Compiled, r: Compiled): Compiled {
   const { op } = e;
@@ -123,7 +108,12 @@ function compileCall(
     const c = args[i]!;
     if (c.type !== type) {
       const name = (t: ColumnType) => (t === 'number' ? 'a number' : `a ${t}`);
-      const hint = c.type === 'text' && type === 'number' ? HINT_NUMBER : 'Change the argument, or convert it first.';
+      const hint =
+        c.type === 'text' && type === 'number'
+          ? HINT_NUMBER
+          : c.type === 'number' && type === 'text'
+            ? 'Use TEXT() to turn a number into text, for example TEXT([x], "0").'
+            : 'Change the argument, or convert it first.';
       fail(`Argument ${i + 1} of ${e.name} must be ${name(type)}, but it is ${name(c.type)}. ${hint}`, e.args[i]!);
     }
     return c;

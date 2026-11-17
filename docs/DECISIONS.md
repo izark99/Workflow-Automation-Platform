@@ -201,3 +201,21 @@ blank or mixed column in one month cannot change the types of another month.
   blank cell; ISBLANK of an error is TRUE; POWER of a negative base with a fractional exponent, SQRT of a negative
   number and MOD by zero give a blank (Excel #NUM! and #DIV/0!).
 - MIN and MAX ignore blank cells and also accept dates. SUM counts a blank as 0. AND and OR ignore blanks.
+
+## D20 Tier 1 text functions (T1.8)
+
+- Text functions need text arguments: a number is refused with a hint to use `TEXT()`. `CONCAT`, `TEXTJOIN` and `&`
+  are the exceptions and write numbers, dates and booleans with the same helper (numbers without `.0`, dates as ISO
+  text, booleans as TRUE and FALSE). A blank cell is empty text.
+- `LEFT`, `RIGHT` and `MID` give a blank for a negative length or a start below 1 (Excel #VALUE!). `FIND` and `SEARCH`
+  give a blank when nothing is found or the start is outside the text. `SEARCH` supports `?`, `*` and `~` as Excel
+  does, by building a regular expression in SQL.
+- `TRIM` removes outer spaces and collapses inner runs. `PROPER` upper-cases a letter at the start or after any
+  non-letter, as Excel does (`o'neil` gives `O'Neil`, `2nd` gives `2Nd`).
+- `VALUE` keeps a number, reads text such as `12`, ` 2.5 `, `1,234.5`, `1e3` and `12%` (dot is the decimal mark, commas
+  are thousands marks), and gives a blank for anything else, so `ISNUMBER(VALUE(x))` is the number check (rule R8).
+  Dates and booleans are refused.
+- `TEXT` needs its format in quotes, because it is translated when the flow is compiled. Number formats: `0`, `0.00`,
+  `#,##0`, `#,##0.00`, `0%`, `0.0%`, `000` (rounding as ROUND). Date formats: yyyy, yy, mmmm, mmm, mm, m, dddd, ddd, dd, d
+  with any other characters kept. Other formats are refused with the list of supported ones. Time formats and
+  optional-digit decimals (`0.##`) are not supported.

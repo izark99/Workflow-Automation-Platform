@@ -26,7 +26,7 @@ before it passes, except where a task says otherwise.
 - [x] T1.6a Formula parser: tokens, Excel precedence, column references in square brackets, strings, numbers, function calls, error positions (no SQL yet).
 - [x] T1.6b Formula compiler core: typed AST to DuckDB SQL for literals, column references, operators and blank rules, plus a function registry with arity and argument types.
 - [x] T1.7 Formula functions, logic and math groups of Tier 1, each with unit tests.
-- [ ] T1.8 Formula functions, text group of Tier 1, each with unit tests.
+- [x] T1.8 Formula functions, text group of Tier 1, each with unit tests.
 - [ ] T1.9 Formula functions, date group of Tier 1 and EFFECTIVE_DATE, each with unit tests.
 - [ ] T1.10 Formula column node.
 - [ ] T1.11 Lookup / Join node: from another node and from a reference table, behaviour when no match is found.
@@ -97,6 +97,12 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T1.8 Formula functions: text group
+Changed: src/engine/formula/tier1/text.ts (LEFT RIGHT MID LEN TRIM UPPER LOWER PROPER CONCAT TEXTJOIN SUBSTITUTE REPLACE FIND SEARCH TEXT VALUE), text.test.ts (20 tests on real DuckDB), `toText` moved to ops.ts, `roundSql` shared with TEXT, argument hint to use TEXT() for a number given as text, docs/DECISIONS.md (D20).
+Probed DuckDB before writing: PROPER via a correlated subquery, SEARCH wildcards via regular expressions, `format()` for TEXT, list slices for SUBSTITUTE with an instance number.
+Gates run: check PASS (221 unit tests). One first-run failure: the error for a number given to a text argument lacked the TEXT() hint; fixed.
+Next: T1.9 (date functions and EFFECTIVE_DATE).
 
 ### 2026-11-17 T1.7 Formula functions: logic and math
 Changed: src/engine/formula/tier1/{helpers,logic,math,index}.ts, ops.ts (blank rule and equality shared), test-helpers.ts, logic.test.ts (28 assertions groups, 9 describe blocks incl. IF IFS AND OR NOT IFERROR SWITCH ISBLANK ISNUMBER) and math.test.ts (ROUND ROUNDUP ROUNDDOWN INT ABS MOD MIN MAX SUM CEILING FLOOR POWER SQRT), `ctx.raw`, docs/DECISIONS.md (D19). One compile test changed from `ABS(1)` to `VLOOKUP(1)` as the example of an unsupported function, since ABS now exists.
