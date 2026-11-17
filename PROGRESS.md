@@ -24,7 +24,7 @@ before it passes, except where a task says otherwise.
 - [x] T1.4 Column mapping node.
 - [ ] T1.5 Filter node with a second output for the rows that do not match. Depends on T1.6b (the condition is a formula); do it after T1.6b.
 - [x] T1.6a Formula parser: tokens, Excel precedence, column references in square brackets, strings, numbers, function calls, error positions (no SQL yet).
-- [ ] T1.6b Formula compiler core: typed AST to DuckDB SQL for literals, column references, operators and blank rules, plus a function registry with arity and argument types.
+- [x] T1.6b Formula compiler core: typed AST to DuckDB SQL for literals, column references, operators and blank rules, plus a function registry with arity and argument types.
 - [ ] T1.7 Formula functions, logic and math groups of Tier 1, each with unit tests.
 - [ ] T1.8 Formula functions, text group of Tier 1, each with unit tests.
 - [ ] T1.9 Formula functions, date group of Tier 1 and EFFECTIVE_DATE, each with unit tests.
@@ -97,6 +97,13 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T1.6b Formula compiler core
+Changed: src/engine/formula/{compile,functions}.ts, compile.test.ts (19 tests, SQL run on real DuckDB), `numberToTextSql` in sql.ts (shared with Column mapping).
+How: `compileFormula(source, {columns, effectiveDate}, registry)` returns `{sql, type}`. Typed literals (DOUBLE), exact-case column references, arithmetic with blank-cell-is-0 (bare references only), `/` and `^` give a blank instead of an error, `&` via `concat` with one number-to-text helper, text comparison ignoring case, date +/- days and date - date, type errors with positions. Function registry with arity checks and `ctx.arg(i, type)` for T1.7 to T1.9; the default registry is empty, so every call is "not supported" for now.
+Bug caught by a test: in `&` a blank number gave `0x`; it now gives `x`.
+Gates run: check PASS (157 unit tests).
+Next: T1.5 (filter node, now that formulas compile).
 
 ### 2026-11-17 T1.6a Formula parser (T1.6 split, T1.5 moved after T1.6b)
 Changed: src/engine/formula/{ast,parse}.ts, parse.test.ts (19 tests), docs/DECISIONS.md (D17 formula typing, blanks and errors; D18 open point on mixed text and number output cells). PROGRESS: T1.6 split into T1.6a and T1.6b; T1.5 now waits for T1.6b because a Filter condition is a formula.

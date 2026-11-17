@@ -59,3 +59,8 @@ export function boundarySelectList(columns: Column[]): string {
     })
     .join(', ');
 }
+
+/** One way to write a number as text everywhere (Column mapping, `&`, TEXT, Unpivot): 8, not 8.0. */
+export function numberToTextSql(sql: string): string {
+  return `regexp_replace(CAST(${sql} AS VARCHAR), '\\.0$', '')`;
+}

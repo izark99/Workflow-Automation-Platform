@@ -1,4 +1,4 @@
-import { quoteIdent } from '../sql';
+import { numberToTextSql, quoteIdent } from '../sql';
 import { EngineError, type Column, type ColumnType } from '../types';
 import { requireColumn } from './columns';
 import type { NodeModule } from './types';
@@ -52,7 +52,7 @@ function convert(id: string, from: ColumnType, to: ColumnType, nodeId: string, n
   };
   switch (to) {
     case 'text':
-      if (from === 'number') return `regexp_replace(CAST(${id} AS VARCHAR), '\\.0$', '')`;
+      if (from === 'number') return numberToTextSql(id);
       if (from === 'date') return `strftime(${id}, '%Y-%m-%d')`;
       return `lower(CAST(${id} AS VARCHAR))`;
     case 'number':
