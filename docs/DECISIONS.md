@@ -345,3 +345,21 @@ blank or mixed column in one month cannot change the types of another month.
 - csv: UTF-8 with a byte order mark (so Excel reads accents), `\r\n` line ends, fields with a comma, quote or line
   break are quoted, dates as ISO text, booleans as TRUE and FALSE, blanks empty.
 - The browser run screen (T2.16) turns the bytes into a download.
+
+## D29 Effective date and version resolution (T1.16)
+
+- `src/engine/versions.ts` holds pure functions with no data store. A version has `versionNo`, `validFrom`, `validTo`
+  (null means still in effect) and `status`. Both ends of the range are included. Dates are ISO text and must be real
+  calendar dates.
+- `resolveVersion` returns the one version that covers the date. It never picks the nearest one. With no match it
+  stops with `no_version` and a message that lists the published periods in the form `1 Jan 2026 to 31 Aug 2026` or
+  `from 1 Oct 2026`, and says to pick another date or add a version. Two versions that cover one date are
+  `invalid_versions` (the server forbids this too, T3.2).
+- Drafts do not take effect in a run (SPEC: a published version is read-only, and a run uses what is published).
+  `includeDrafts` exists for the builder's test runs in phase 2. When only a draft covers the date, the message says to
+  publish it.
+- `prepareRun` resolves the flow version, then the version of each reference table that the flow reads (Lookup with a
+  reference table, Pivot with a reference column list), and returns the definition, the tables for `runFlow`, and the
+  version numbers used. Tables that the flow does not read are ignored. A table that is read but does not exist is
+  `missing_reference_table`.
+- `findOverlaps` lists pairs of overlapping versions, for the versions screen (T2.17) and the server tests.

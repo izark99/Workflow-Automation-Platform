@@ -36,7 +36,7 @@ before it passes, except where a task says otherwise.
 - [x] T1.14 Append node and SQL node.
 - [x] T1.15a Output node: sort (columns or a formula), column list, several Output steps per workbook, consistency checks.
 - [x] T1.15b File writer: workbook with several sheets and csv from the Output steps; date, number and boolean cells typed, blank cells absent, `numberLikeText` columns, UTC-safe dates.
-- [ ] T1.16 Effective date: resolve flow version and reference table versions, stop with a clear message when no version covers the date.
+- [x] T1.16 Effective date: resolve flow version and reference table versions, stop with a clear message when no version covers the date.
 - [ ] T1.17 Acceptance harness: Playwright test that runs a flow file on a dataset folder and compares workbooks cell by cell. Prove it fails on a wrong workbook.
 - [ ] T1.18 `flows/monthly-timesheet.flow.json`, part 1: reading, unpivot, dates, employment window, Exceptions sheet (rules R1 to R9).
 - [ ] T1.19 `flows/monthly-timesheet.flow.json`, part 2: Summary sheet (R10) and OT_breaches sheet (R11), sort order (R12).
@@ -99,6 +99,12 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T1.16 Effective date and version resolution
+Changed: src/engine/versions.ts (`resolveVersion`, `prepareRun`, `findOverlaps`, `referencedTables`, `isIsoDate`, `formatDate`), versions.test.ts (15 tests), error codes `no_version` and `invalid_versions`, docs/DECISIONS.md (D29).
+How: inclusive ranges, open end, one match or a clear stop that lists the existing periods in `30 Sep 2026` form; drafts ignored; overlap and bad dates reported; `prepareRun` picks the flow version and the versions of the reference tables the flow reads. One test runs the same flow and data on two dates and gets two different limits from two table versions.
+Gates run: check PASS (361 unit tests).
+Next: T1.17 (acceptance harness: Playwright test that runs a flow file on a dataset folder and compares workbooks cell by cell; prove it fails on a wrong workbook).
 
 ### 2026-11-17 T1.15b File writer
 Changed: src/engine/output/export.ts (`buildOutputFiles`), export.test.ts (11 tests that read the files back with SheetJS), docs/DECISIONS.md (D28).
