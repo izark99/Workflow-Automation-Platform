@@ -30,7 +30,7 @@ before it passes, except where a task says otherwise.
 - [x] T1.9 Formula functions, date group of Tier 1 and EFFECTIVE_DATE, each with unit tests.
 - [x] T1.10 Formula column node.
 - [x] T1.11 Lookup / Join node: from another node and from a reference table, behaviour when no match is found.
-- [ ] T1.12 Group by node.
+- [x] T1.12 Group by node.
 - [ ] T1.13 Unpivot node and Pivot node.
 - [ ] T1.14 Append node and SQL node.
 - [ ] T1.15 Output node: several sheets in one workbook, csv, date and number types preserved.
@@ -97,6 +97,12 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T1.12 Group by node
+Changed: src/engine/nodes/group-by.ts, group-by.test.ts (10 tests), registry, docs/DECISIONS.md (D23).
+How: group columns plus sum, count, min, max, average; blanks ignored, sum of blanks is 0, blank key is one group, result sorted by the group columns; type rules and name clashes (also by case) refused with the step id.
+Gates run: check PASS (283 unit tests).
+Next: T1.13 (unpivot and pivot nodes). Decide D18 (mixed text and number cells) before T1.15; pivot needs a column list from a reference table (D13).
 
 ### 2026-11-17 T1.11 Lookup / Join node
 Changed: src/engine/nodes/lookup-join.ts, lookup-join.test.ts (17 tests), registry, docs/DECISIONS.md (D22).

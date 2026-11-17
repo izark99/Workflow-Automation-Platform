@@ -251,3 +251,14 @@ blank or mixed column in one month cannot change the types of another month.
 - A brought column whose name equals an input column, also by case only, must be renamed with `as`.
 - A reference table is named, never a version. The caller (T1.16) passes the version valid on the effective date;
   a name without a version is `missing_reference_table`.
+
+## D23 Group by node (T1.12)
+
+- Settings: `groupBy` (column names) and `aggregations` (`[{fn, column?, as?}]`, `fn` is sum, count, min, max or
+  average). `as` defaults to `sum_Hours` or `count`. The result has the group columns, then the aggregations.
+- `sum` and `average` need a number column. `min` and `max` also take dates and text, and keep the type. `count` without
+  a column counts rows, with a column it counts filled cells. Blanks are ignored by every function; a sum of blanks is
+  0 (as Excel), an average of blanks is blank.
+- Group keys match exactly, text included (unlike Lookup, which ignores case). A blank key is one group. The result is
+  sorted by the group columns, blanks last, so it is deterministic. Without group columns the result is one row.
+- Group columns without aggregations give a list of distinct values. A step with neither is refused.
