@@ -262,3 +262,15 @@ blank or mixed column in one month cannot change the types of another month.
 - Group keys match exactly, text included (unlike Lookup, which ignores case). A blank key is one group. The result is
   sorted by the group columns, blanks last, so it is deterministic. Without group columns the result is one row.
 - Group columns without aggregations give a list of distinct values. A step with neither is refused.
+
+## D24 Unpivot node (T1.13a)
+
+- Settings: `keep` (columns that stay), `unpivot` (columns that become rows, in order), `nameColumn`, `valueColumn`,
+  `skipBlank` (default false). Columns that are neither kept nor unpivoted are dropped.
+- Output order is the input row order, then the order of `unpivot`. The name column holds the source column name as
+  text (`1`, `2`, ...).
+- The value column is always text. Numbers are written with the shared number format (8, not 8.0), dates as ISO text,
+  booleans as TRUE or FALSE. Reason: the type of an unpivoted column would otherwise follow the data (all-blank day
+  columns, a month with a text value), and one flow must give the same column types for every dataset. A Column
+  mapping step or VALUE() turns it back into numbers. Text such as `2h` therefore stays visible to rule R8.
+- Blank cells stay as rows with a blank value, because rules R6 and R8 report a missing value.

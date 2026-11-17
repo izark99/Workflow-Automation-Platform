@@ -31,7 +31,8 @@ before it passes, except where a task says otherwise.
 - [x] T1.10 Formula column node.
 - [x] T1.11 Lookup / Join node: from another node and from a reference table, behaviour when no match is found.
 - [x] T1.12 Group by node.
-- [ ] T1.13 Unpivot node and Pivot node.
+- [x] T1.13a Unpivot node.
+- [ ] T1.13b Pivot node, with a column list taken from a reference table, a fill value and a name suffix (D13), so zero-count columns appear in reference-table order.
 - [ ] T1.14 Append node and SQL node.
 - [ ] T1.15 Output node: several sheets in one workbook, csv, date and number types preserved.
 - [ ] T1.16 Effective date: resolve flow version and reference table versions, stop with a clear message when no version covers the date.
@@ -97,6 +98,13 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T1.13a Unpivot node (T1.13 split into T1.13a and T1.13b)
+Changed: src/engine/nodes/unpivot.ts, unpivot.test.ts (8 tests), registry, test helper option `limit`, docs/DECISIONS.md (D24). PROGRESS: T1.13 split into Unpivot and Pivot (one concern each).
+How: keep and unpivot lists, name and value columns, optional `skipBlank`; row-major order guaranteed by an explicit sort; the value column is always text through the shared formatter, so the types do not change with the data (tested with an all-blank dataset); 31 columns x 20 rows checked.
+First failure was my test reading only the 100 preview rows; fixed with a `limit` option in the helper, no change to the node.
+Gates run: check PASS (291 unit tests).
+Next: T1.13b (pivot node).
 
 ### 2026-11-17 T1.12 Group by node
 Changed: src/engine/nodes/group-by.ts, group-by.test.ts (10 tests), registry, docs/DECISIONS.md (D23).

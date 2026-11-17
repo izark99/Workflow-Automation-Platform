@@ -11,6 +11,8 @@ export interface NodeRun {
   effectiveDate?: string;
   /** Output handle to read. Defaults to the first output. */
   handle?: string;
+  /** Rows to read back. Defaults to the 100 rows of a preview. */
+  limit?: number;
 }
 
 /** Wires each input table to its own input step, runs the node, and returns the rows of one output. */
@@ -28,7 +30,7 @@ export async function runNode(runner: SqlRunner, type: NodeType, run: NodeRun): 
     refTables: run.refTables ?? {},
   });
   try {
-    return await result.preview('under_test', run.handle);
+    return await result.preview('under_test', run.handle, run.limit);
   } finally {
     await result.dispose();
   }
