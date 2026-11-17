@@ -3,7 +3,7 @@ import { formatDate } from '../../engine/versions';
 import { addMonths, dayLabel, monthCells, monthOf, monthTitle, moveDate, WEEKDAYS } from './date-logic';
 import type { DateKey } from './date-logic';
 import { Icon } from './icons';
-import { useOpensUp, useOutsideClose } from './popover';
+import { opensUp, useOutsideClose } from './popover';
 import styles from './popover.module.css';
 
 export interface DatePickerProps {
@@ -30,7 +30,7 @@ export function DatePicker({ label, value, onChange, width = 180, disabled = fal
   const triggerRef = useRef<HTMLButtonElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const dialogId = useId();
-  const up = useOpensUp(rootRef, open, 330);
+  const [up, setUp] = useState(false);
 
   const close = useCallback((returnFocus: boolean) => {
     setOpen(false);
@@ -52,6 +52,7 @@ export function DatePicker({ label, value, onChange, width = 180, disabled = fal
     setShown(monthOf(iso));
   };
   const openPicker = (): void => {
+    setUp(opensUp(rootRef.current, 330));
     show(value);
     setOpen(true);
   };

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { Icon } from './icons';
 import { isTypeAheadKey, moveIndex, typeAhead } from './list-keys';
 import type { ListKey } from './list-keys';
-import { useOpensUp, useOutsideClose } from './popover';
+import { opensUp, useOutsideClose } from './popover';
 import styles from './popover.module.css';
 
 export interface DropdownOption {
@@ -33,7 +33,7 @@ export function Dropdown({ label, options, value, onChange, width = 260, disable
   const typed = useRef({ text: '', timer: 0 });
   const listId = useId();
   const selected = options.findIndex((o) => o.value === value);
-  const up = useOpensUp(rootRef, open, options.length * 38 + 12);
+  const [up, setUp] = useState(false);
 
   const close = useCallback((returnFocus: boolean) => {
     setOpen(false);
@@ -50,6 +50,7 @@ export function Dropdown({ label, options, value, onChange, width = 260, disable
   }, [open, active]);
 
   const openList = (): void => {
+    setUp(opensUp(rootRef.current, options.length * 38 + 12));
     setActive(selected >= 0 ? selected : 0);
     setOpen(true);
   };

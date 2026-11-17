@@ -1,0 +1,45 @@
+.panel {
+  flex: 0 0 var(--size-settings);
+  box-sizing: border-box;
+  padding: 20px;
+  background: var(--color-card);
+  border-left: 1px solid var(--color-line);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hint {
+  margin: 0;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--color-muted);
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fieldLabel {
+  font-weight: 700;
+}
+
+.footer {
+  margin-top: auto;
+}

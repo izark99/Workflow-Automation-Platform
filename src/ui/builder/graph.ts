@@ -191,3 +191,48 @@ function compactVariadic(def: FlowDefinition): FlowDefinition {
 export function renameStep(def: FlowDefinition, id: string, label: string): FlowDefinition {
   return { ...def, nodes: def.nodes.map((n) => (n.id === id ? { ...n, label } : n)) };
 }
+
+export interface SourceOption {
+  /** `stepId:handle`, or an empty text for no input. */
+  value: string;
+  label: string;
+}
+
+const HANDLE_TITLES: Record<string, string> = { in: 'Input', left: 'Left input', right: 'Right input', match: 'match', nomatch: 'no match' };
+
+/** The name of an input port for a person: `Input`, `Left input`, `Input 2`. */
+export const inputTitle = (handle: string): string => HANDLE_TITLES[handle] ?? (/^in(\d+)$/.test(handle) ? `Input ${handle.slice(2)}` : handle);
+
+/** The value of the connection into an input port, or an empty text. */
+export function currentSource(def: FlowDefinition, targetId: string, handle: string): string {
+  const e = resolvedEdges(def).find((x) => x.target === targetId && x.targetHandle === handle);
+  return e ? `${e.source}:${e.sourceHandle}` : '';
+}
+
+/**
+ * The steps that an input port can read from: every other step that has an output and is not downstream of this step
+ * (that would be a loop). A step with two outputs, like Filter, is offered once per output.
+ */
+export function sourceOptions(def: FlowDefinition, targetId: string): SourceOption[] {
+  const numbers = stepNumbers(def);
+  const options: SourceOption[] = [{ value: '', label: 'None' }];
+  for (const n of def.nodes) {
+    if (n.id === targetId || reaches(def, targetId, n.id)) continue;
+    const outs = outputHandlesOf(n.type);
+    for (const h of outs) options.push({ value: `${n.id}:${h}`, label: `${numbers.get(n.id)}. ${n.label ?? n.id}${outs.length > 1 ? ` (${HANDLE_TITLES[h] ?? h})` : ''}` });
+  }
+  return options;
+}
+
+/** Sets or clears what feeds one input port. Replacing keeps the port, so Append and SQL are not renumbered. */
+export function setInput(def: FlowDefinition, targetId: string, handle: string, value: string): ConnectResult {
+  if (value === '') {
+    const existing = resolvedEdges(def).find((e) => e.target === targetId && e.targetHandle === handle);
+    return { ok: true, definition: existing ? deleteEdges(def, [existing.id]) : def };
+  }
+  const sep = value.lastIndexOf(':');
+  const source = value.slice(0, sep);
+  const sourceHandle = value.slice(sep + 1);
+  const without: FlowDefinition = { ...def, edges: resolvedEdges(def).filter((e) => !(e.target === targetId && e.targetHandle === handle)) };
+  return connectSteps(without, { source, sourceHandle, target: targetId, targetHandle: handle });
+}

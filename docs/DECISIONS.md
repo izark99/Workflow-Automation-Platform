@@ -513,3 +513,14 @@ blank or mixed column in one month cannot change the types of another month.
 - Accessible names: `aria-label` on a div without a role is an axe violation (22 nodes found by the UI rules). The step name is set through React Flow's `ariaLabel` on the node wrapper (`role="group"`); handles carry no label. The builder has a `<main>` (canvas area). Connecting by keyboard (select handles) is not offered by React Flow's handles in this build; the keyboard path for inputs comes with the settings panel in T2.10 (an "Input from" choice per step). Open point.
 - Read-only: the canvas takes `readOnly` (published versions): no move, add, connect or delete. T2.15 adds the notice, Save draft and Publish.
 - Edits are held in memory in the builder screen and are not saved yet; Save draft is T2.15.
+
+## D40 Settings panel shell (T2.10a) and a popover fix
+
+- T2.10 was split into T2.10a (panel shell) and T2.10b (step preview): the preview needs a browser engine run, test file choosers, error and loading states, which is a second concern.
+- The panel is 380 px, `aside` named "Step settings", with the heading `n. Name`, the step type and its hint, and the tabs Setup, Configure, Test. With no step or several steps selected it shows a one-line hint.
+- Setup: step name (an empty name shows an error and keeps the old name), and "Input from" for each input port. The choice lists every other step with its number, once per output (Filter: match and no match), and leaves out steps downstream of this one. This is also the keyboard way to connect steps, which closes the open point of D39. `setInput` replaces the source in place, so Append and SQL ports are not renumbered; clearing removes the connection.
+- Configure shows "The settings form for this step type is not available yet." until T2.11 to T2.14 add the forms; all 11 types get a form in those tasks.
+- Test shows an empty state until T2.10b.
+- Delete step is in the panel footer (danger button), disabled for a published version, as are the name and the choices.
+- UI rules: a route can have a `prepare` step. The builder route selects a card first, so the rules and axe also run with the panel populated.
+- Popover fix: the open-upward decision is measured in the click handler (`opensUp`), before the first render. Before, the popover opened downward, took focus (the page scrolled) and flipped later; the e2e test "opens upward" failed once in a full run (it passed alone). Three solo runs and two full runs pass now.

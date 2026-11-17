@@ -8,6 +8,7 @@ for (const route of ROUTES) {
       test(name, async ({ page }) => {
         await page.goto(route.path);
         await page.waitForLoadState('networkidle');
+        await route.prepare?.(page);
         expect(await rule(page)).toEqual([]);
       });
     }

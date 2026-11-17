@@ -54,7 +54,8 @@ before it passes, except where a task says otherwise.
 - [x] T2.7 App shell: sidebar, page header, routing, strings module.
 - [x] T2.8 Flows screen: list, filters, search, delete with confirm, loading and empty states.
 - [x] T2.9 Builder, part 1: canvas with React Flow, step cards, add by drag from the step list, connect, select, delete, zoom controls.
-- [ ] T2.10 Builder, part 2: settings panel shell with Setup, Configure and Test tabs, step preview table.
+- [x] T2.10a Builder, part 2a: settings panel shell (380 px) with Setup, Configure and Test tabs; Setup has the step name, "Input from" for each input (the keyboard way to connect, open point of T2.9) and Delete step.
+- [ ] T2.10b Builder, part 2b: step preview. Test tab runs the steps upstream of the selected step in the browser on test files chosen by the user, and shows the first 100 rows in a table, with loading, error and empty states.
 - [ ] T2.11 Settings forms: Input file, Column mapping (with paste from Excel), Filter.
 - [ ] T2.12 Settings forms: Formula column with editor, function list, validation message.
 - [ ] T2.13 Settings forms: Lookup / Join, Group by, Unpivot, Pivot.
@@ -100,6 +101,13 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T2.10a Builder, part 2a: settings panel shell (T2.10 split into T2.10a and T2.10b)
+Changed: src/ui/builder/{settings-panel.tsx,settings-panel.module.css}, graph.ts (`sourceOptions`, `currentSource`, `setInput`, `inputTitle`; +6 tests), `settingsStrings`, builder screen layout, e2e/settings-panel.spec.ts (7 tests), ui-rules `prepare` hook (builder route selects a card), popover `opensUp` fix, docs/DECISIONS.md (D40). PROGRESS: T2.10 split into T2.10a and T2.10b (preview).
+How: 380 px panel with the selected step's number, name, type and hint, tabs Setup / Configure / Test; Setup has the step name and "Input from" per input port (keyboard way to connect, closes the open point of T2.9), Delete step in the footer; read-only for published versions.
+Flaky test found and fixed: the date picker "opens upward" test failed once in a full run. Cause was real: the popover first opened downward, took focus (page scrolled) and flipped later. The decision is now taken in the click handler.
+Gates run: check PASS (495 tests), test:e2e PASS (43 tests, two full runs), test:ui-rules PASS (112 tests, builder checked with a step selected), test:acceptance PASS (7 tests).
+Next: T2.10b (step preview).
 
 ### 2026-11-17 T2.9 Builder, part 1: canvas
 Changed: src/ui/builder/{graph.ts(+18 tests),step-card,step-list,zoom-controls,canvas,builder-screen}.tsx, builder.module.css, Button `block` prop, `builder` strings, route `/flows/:id/versions/:versionNo`, dependency `@xyflow/react` 13.0.1, e2e/builder.spec.ts (9 tests), ui-rules route for the builder, docs/DECISIONS.md (D39).

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { validateFlow } from '../../engine/flow/validate';
-import { addStep, connectSteps, deleteEdges, deleteSteps, emptyDefinition, inputHandlesOf, moveStep, nextFreePosition, stepNumbers, STEP_CATALOG, STEP_GROUPS } from './graph';
+import { addStep, connectSteps, currentSource, deleteEdges, deleteSteps, emptyDefinition, inputHandlesOf, inputTitle, moveStep, nextFreePosition, setInput, sourceOptions, stepNumbers, STEP_CATALOG, STEP_GROUPS } from './graph';
 import type { FlowDefinition } from '../../engine/flow/types';
 import { NODE_TYPES } from '../../engine/flow/types';
 
@@ -137,5 +137,50 @@ describe('delete and numbering', () => {
   it('nextFreePosition starts at the origin and goes 96 px below the lowest step', () => {
     expect(nextFreePosition(emptyDefinition())).toEqual({ x: 0, y: 0 });
     expect(nextFreePosition(build(['sql', 'sql']).def)).toEqual({ x: 0, y: 192 });
+  });
+});
+
+describe('input choices (the keyboard way to connect)', () => {
+  it('lists None first, then each other step with its number, once per output, and never a step downstream of this one', () => {
+    const { def } = build(['input_file', 'filter', 'output']);
+    const d = link(def, 'input_file-1', 'filter-1');
+    const forOutput = sourceOptions(d, 'output-1').map((o) => o.label);
+    expect(forOutput).toEqual(['None', '1. Input file', '3. Filter (match)', '3. Filter (no match)']);
+    // The output is downstream of nothing yet; the filter's own options must not offer itself or what comes after it.
+    const chain = link(d, 'filter-1', 'output-1', 'match');
+    expect(sourceOptions(chain, 'filter-1').map((o) => o.label)).toEqual(['None', '1. Input file']);
+  });
+  it('reads the current source of a port', () => {
+    const { def } = build(['input_file', 'filter']);
+    const d = link(def, 'input_file-1', 'filter-1');
+    expect(currentSource(d, 'filter-1', 'in')).toBe('input_file-1:out');
+    expect(currentSource(def, 'filter-1', 'in')).toBe('');
+  });
+  it('sets, replaces and clears an input', () => {
+    const { def } = build(['input_file', 'input_file', 'filter']);
+    const a = setInput(def, 'filter-1', 'in', 'input_file-1:out');
+    expect(a.ok && a.definition.edges).toHaveLength(1);
+    const b = setInput((a as { definition: FlowDefinition }).definition, 'filter-1', 'in', 'input_file-2:out');
+    expect(b.ok && b.definition.edges.map((e) => e.source)).toEqual(['input_file-2']);
+    const c = setInput((b as { definition: FlowDefinition }).definition, 'filter-1', 'in', '');
+    expect(c.ok && c.definition.edges).toEqual([]);
+    expect(setInput(def, 'filter-1', 'in', '')).toMatchObject({ ok: true });
+  });
+  it('replacing an input of Append keeps the port numbers', () => {
+    const { def } = build(['input_file', 'input_file', 'input_file', 'append']);
+    let d = setInput(def, 'append-1', 'in1', 'input_file-1:out') as { definition: FlowDefinition };
+    d = setInput(d.definition, 'append-1', 'in2', 'input_file-2:out') as { definition: FlowDefinition };
+    const r = setInput(d.definition, 'append-1', 'in1', 'input_file-3:out') as { definition: FlowDefinition };
+    expect(r.definition.edges.map((e) => [e.source, e.targetHandle]).sort()).toEqual([['input_file-2', 'in2'], ['input_file-3', 'in1']]);
+  });
+  it('refuses a loop with the reason, and keeps the old input', () => {
+    const { def } = build(['filter', 'column_mapping']);
+    const d = link(def, 'filter-1', 'column_mapping-1', 'match');
+    const r = setInput(d, 'filter-1', 'in', 'column_mapping-1:out');
+    expect(r).toMatchObject({ ok: false });
+    expect((r as { reason: string }).reason).toMatch(/loop/);
+  });
+  it('names ports for people', () => {
+    expect([inputTitle('in'), inputTitle('left'), inputTitle('right'), inputTitle('in3')]).toEqual(['Input', 'Left input', 'Right input', 'Input 3']);
   });
 });

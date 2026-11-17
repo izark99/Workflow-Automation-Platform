@@ -7,6 +7,7 @@ import { strings } from '../strings';
 import { Canvas } from './canvas';
 import type { Selection } from './canvas';
 import { emptyDefinition } from './graph';
+import { SettingsPanel } from './settings-panel';
 import { StepList } from './step-list';
 import styles from './builder.module.css';
 
@@ -68,6 +69,13 @@ export function BuilderScreen() {
           onMessage={setMessage}
           readOnly={readOnly}
           addRequest={addRequest}
+        />
+        <SettingsPanel
+          definition={definition}
+          step={selection.nodes.length === 1 ? definition.nodes.find((n) => n.id === selection.nodes[0]) : undefined}
+          onChange={setDefinition}
+          onDeleted={() => setSelection({ nodes: [], edges: [] })}
+          readOnly={readOnly}
         />
       </main>
     </div>

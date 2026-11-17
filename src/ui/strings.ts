@@ -100,3 +100,22 @@ export const devStrings = {
   error: 'Error state',
   confirm: 'Confirm before delete',
 };
+
+export const settingsStrings = {
+  panel: 'Step settings',
+  none: 'Select a step on the canvas to see its settings.',
+  tabsLabel: 'Settings sections',
+  tabs: { setup: 'Setup', configure: 'Configure', test: 'Test' },
+  stepName: 'Step name',
+  stepNameHint: 'Shown on the card and in messages.',
+  emptyStepName: 'The step has no name.',
+  emptyStepNameNext: 'Type a name. The old name stays until you do.',
+  inputFrom: 'Input from',
+  readOnly: 'This version is published and read-only. Create a new version to change it.',
+  deleteStep: 'Delete step',
+  noInputs: 'This step starts the flow, so it has no input.',
+  noForm: 'The settings form for this step type is not available yet.',
+  noPreview: 'No preview yet',
+  noPreviewText: 'Choose a test file for the Input file step to see the first rows of this step.',
+  connectFailed: 'The input could not be set.',
+};
