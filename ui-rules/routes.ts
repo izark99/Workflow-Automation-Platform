@@ -1,5 +1,6 @@
 // Every route that the UI rules run on. A route added to the app is added here in the same task, so it is checked at once.
 import type { Page } from '@playwright/test';
+import { seedRunnableFlow } from '../e2e/runnable-flow';
 
 export interface RuleRoute {
   path: string;
@@ -11,6 +12,8 @@ export interface RuleRoute {
   table?: boolean;
   /** The route loads data from the store, so a delayed load must show the skeleton. */
   skeleton?: boolean;
+  /** Runs before the page loads, for example to put data into the store. */
+  before?: (page: Page) => Promise<void>;
   /** Puts the page in the state to check after it has loaded, for example by selecting a step. */
   prepare?: (page: Page) => Promise<void>;
 }
@@ -215,6 +218,19 @@ export const ROUTES: RuleRoute[] = [
     prepare: async (page) => {
       await page.getByRole('button', { name: 'New version from this' }).click();
       await page.getByRole('dialog', { name: 'New version from v3' }).waitFor();
+    },
+  },
+  {
+    path: '/flows/flow-run/run',
+    name: '/flows/flow-run/run (a finished run)',
+    sidebar: true,
+    table: true,
+    before: seedRunnableFlow,
+    // The three cards with a file chosen, the progress gone, the result tab and its table.
+    prepare: async (page) => {
+      await page.locator('input[type=file]').setInputFiles({ name: 'people.csv', mimeType: 'text/csv', buffer: Buffer.from('name,kind\nAnn,WEEK\nBob,MONTH\n') });
+      await page.getByRole('button', { name: 'Run flow' }).click();
+      await page.getByRole('heading', { name: 'Result: run finished' }).waitFor({ timeout: 60_000 });
     },
   },
 ];

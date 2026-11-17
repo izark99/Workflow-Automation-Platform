@@ -5,6 +5,7 @@ import type { DataStore } from '../store/types';
 import { BuilderScreen } from './builder/builder-screen';
 import { FlowsScreen } from './screens/flows';
 import { Placeholder } from './screens/placeholder';
+import { RunScreen } from './screens/run';
 import { DevComponents } from './screens/dev-components';
 import { Shell } from './shell';
 import { StoreProvider } from './store-context';
@@ -20,7 +21,7 @@ export function App({ store }: { store?: DataStore }) {
         <Routes>
           <Route element={<Shell />}>
             <Route path="/flows" element={<FlowsScreen />} />
-            <Route path="/flows/:id/run" element={<Placeholder screen="run" />} />
+            <Route path="/flows/:id/run" element={<RunScreen />} />
             <Route path="/flows/:id/versions" element={<Placeholder screen="versions" />} />
             <Route path="/reference-tables" element={<Placeholder screen="refTables" />} />
             <Route path="/admin" element={<Placeholder screen="admin" />} />

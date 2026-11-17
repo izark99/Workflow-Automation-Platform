@@ -6,6 +6,7 @@ for (const route of ROUTES) {
   test.describe(`route ${route.name ?? route.path}`, () => {
     for (const [name, rule] of Object.entries(COMMON_RULES)) {
       test(name, async ({ page }) => {
+        await route.before?.(page);
         await page.goto(route.path);
         await page.waitForLoadState('networkidle');
         await route.prepare?.(page);
@@ -14,6 +15,7 @@ for (const route of ROUTES) {
     }
     if (route.skeleton) {
       test('skeleton with aria-busy during a delayed load, same row heights as the table', async ({ page }) => {
+        await route.before?.(page);
         await page.addInitScript(() => localStorage.setItem('dfw.loadDelayMs', '1500'));
         await page.goto(route.path);
         const busy = page.locator('[role="status"][aria-busy="true"]');
@@ -34,6 +36,7 @@ for (const route of ROUTES) {
     }
     if (route.sidebar) {
       test('title and first block position', async ({ page }) => {
+        await route.before?.(page);
         await page.goto(route.path);
         await page.waitForLoadState('networkidle');
         expect(await headerPosition(page)).toEqual([]);

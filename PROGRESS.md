@@ -63,7 +63,7 @@ before it passes, except where a task says otherwise.
 - [x] T2.13b Settings forms, part 4: Unpivot (keep and unpivot columns, name and value columns, skip blanks) and Pivot (row keys, column source, value, aggregation, column list from the data or a reference table, fill value, name prefix and suffix, name case).
 - [x] T2.14 Settings forms: Append, Output, SQL.
 - [x] T2.15 Builder, part 3: version dropdown, save draft, publish, read-only mode for published versions.
-- [ ] T2.16 Run screen: effective date, resolved versions, file inputs, progress, result tabs, download, error state. A file above the size limit shows `strings.xlsxTooLarge` instead of starting a run; the e2e test uses a sparse file just over `MAX_SAFE_XLSX_BYTES`, as `checkGuard` in `scripts/spike.ts` does.
+- [x] T2.16 Run screen: effective date, resolved versions, file inputs, progress, result tabs, download, error state. A file above the size limit shows `strings.xlsxTooLarge` instead of starting a run; the e2e test uses a sparse file just over `MAX_SAFE_XLSX_BYTES`, as `checkGuard` in `scripts/spike.ts` does.
 - [ ] T2.17 Versions screen: timeline, table, new version from copy, no-overlap check, date checker.
 - [ ] T2.18 Reference tables screen: list, versions, grid with paste from Excel, read-only published versions.
 - [ ] T2.19 Admin screen: users, groups, access to shared flows, deleted flows with restore.
@@ -103,6 +103,14 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T2.16 Run screen
+Changed: src/ui/screens/{run.tsx,run.module.css,run-logic.ts(+5 tests),run-engine.ts}, route `/flows/:id/run`, `runStrings`, e2e/run.spec.ts (8 tests) and e2e/runnable-flow.ts, ui-rules `before` hook and a finished-run state, docs/DECISIONS.md (D49).
+How: effective date and the versions it uses (flow and reference tables, with ranges); one file row for each Input file key with a hidden file input and a size guard that refuses an xlsx above the safe size with the "save as csv" message; Run flow with progress ("Step n of m: name"), Cancel run, result card with tabs for the output sheets, a preview table and Download buttons; an error panel with the engine's message; a counts-only run log.
+Checked in the browser: a real run of a published flow with a reference-table lookup (16, 40 and a blank); the downloaded Result.xlsx read back with SheetJS has the sheet People and the same cells; no version for a date shows the engine message; an engine error shows next to the run and Run again works; the 301 MB sparse xlsx is refused with the warning and nothing starts; a marker text appears in no request; the stored run log has only ids and counts.
+Not covered by a browser test: cancelling a run in progress (see D49).
+Gates run: check PASS (578 tests), test:e2e PASS (120 tests), test:ui-rules PASS (306 tests: 153 per width, 24 route states), test:acceptance PASS (7 tests).
+Next: T2.17 (versions screen).
 
 ### 2026-11-17 T2.15 Builder, part 3: versions, save draft, publish, read-only
 Changed: src/ui/builder/{builder-screen.tsx (rewritten),builder-dialogs.tsx,version-logic.ts(+7 tests)}, `planPublish`, `dayBefore`, `dayAfter` in src/engine/versions.ts (+5 tests; `LocalStore.publish` uses `planPublish`), ButtonLink `onClick`, `builder` strings, e2e/versioning.spec.ts (7 tests), three UI-rules states, docs/DECISIONS.md (D48).
