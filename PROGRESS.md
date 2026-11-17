@@ -33,7 +33,7 @@ before it passes, except where a task says otherwise.
 - [x] T1.12 Group by node.
 - [x] T1.13a Unpivot node.
 - [x] T1.13b Pivot node, with a column list taken from a reference table, a fill value and a name suffix (D13), so zero-count columns appear in reference-table order.
-- [ ] T1.14 Append node and SQL node.
+- [x] T1.14 Append node and SQL node.
 - [ ] T1.15 Output node: several sheets in one workbook, csv, date and number types preserved.
 - [ ] T1.16 Effective date: resolve flow version and reference table versions, stop with a clear message when no version covers the date.
 - [ ] T1.17 Acceptance harness: Playwright test that runs a flow file on a dataset folder and compares workbooks cell by cell. Prove it fails on a wrong workbook.
@@ -98,6 +98,14 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T1.14 Append and SQL nodes
+Changed: src/engine/nodes/{append,sql-node}.ts, append.test.ts (7 tests), sql-node.test.ts (11 tests incl. the safety check), registry, docs/DECISIONS.md (D26).
+Append: by name (default, blanks for missing columns) or by position; type and case clashes refused; row order of every input kept.
+SQL node: one read-only SELECT/WITH query on in1, in2, ...; result types mapped to the engine's four types (numbers cast to DOUBLE); safety check blocks write/attach/copy statements, file and address readers and dynamic SQL (best effort, limits in D26).
+Two first-run failures: my test regex for an Append message, and duplicate result columns that DuckDB hides when the query is wrapped (renamed to `a_1`); the query now runs at top level so DESCRIBE sees the real names.
+Gates run: check PASS (322 unit tests).
+Next: T1.15 (output node). First settle D18: mixed text and number cells in an output column.
 
 ### 2026-11-17 T1.13b Pivot node
 Changed: src/engine/nodes/pivot.ts, pivot.test.ts (13 tests), `NodeModule.compile` may be async and gets `query(sql)` in its context (engine awaits it), registry, docs/DECISIONS.md (D25).

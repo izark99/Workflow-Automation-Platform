@@ -293,3 +293,22 @@ blank or mixed column in one month cannot change the types of another month.
   refused.
 - The order of the columns is the order of the list. A flow that needs another header order ends with a Column mapping
   step, which also gives the final names.
+
+## D26 Append and SQL nodes (T1.14)
+
+- Append: inputs `in1`, `in2`, ... in that order, each in its own row order. `match` is `name` (default) or `position`.
+  By name the result has every column of every input in order of first appearance, and an input without a column
+  leaves it blank. By position all inputs need the same number of columns, the first input names them. A column name
+  with two types, or two names that differ only by case, is refused with a hint to use a Column mapping step.
+- SQL node: the setting is `sql`, one read-only query. Inputs are called `in1`, `in2`, ... The query runs as the top
+  statement of a `WITH in1 AS (...)` block (merged into the query's own WITH), so the result column names are the ones
+  the user wrote. Result types: text, date, boolean and every numeric type (cast to DOUBLE, as everywhere else); any
+  other type is refused with a hint to CAST it. A duplicate column name (also by case) is refused.
+- Safety check (`checkSqlText`), run before the query: one statement only, starting with SELECT or WITH; words that
+  write or change state (INSERT, UPDATE, DELETE, CREATE, DROP, ALTER, ATTACH, DETACH, COPY, INSTALL, LOAD, PRAGMA,
+  EXPORT, IMPORT, CHECKPOINT, VACUUM); file and address readers (`read_*`, `*_scan`, `glob`, `sniff_csv`, `http_*`, a
+  text value right after FROM or JOIN); and functions that run text as SQL (`query`, `query_table`). Comments, text
+  values and quoted names are ignored by the check. This is best-effort defence in depth, not a sandbox: a flow can
+  be shared between colleagues, and the check exists so that a shared SQL step cannot read local files, call an
+  address or build SQL from data. The real guarantees are that all processing runs in the user's own browser and that
+  the app sends no file content over the network (tested in T1.20).
