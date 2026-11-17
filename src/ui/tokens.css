@@ -30,3 +30,11 @@
   --size-settings: 380px;
   --size-builder-header: 64px;
 }
+
+/* Extra tokens taken from the screens: text on soft fills, error panel, popover shadow. */
+:root {
+  --color-badge-ink: #115e59;
+  --color-danger-soft: #fef2f2;
+  --color-danger-ink: #7f1d1d;
+  --shadow-popover: 0 8px 24px rgb(19 78 74 / 14%);
+}

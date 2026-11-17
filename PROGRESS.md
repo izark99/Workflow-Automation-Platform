@@ -46,7 +46,7 @@ before it passes, except where a task says otherwise.
 ## Phase 2: Canvas and screens (gates G3, G4)
 
 - [x] T2.1 Design tokens, global styles, font, and the UI-rules test skeleton.
-- [ ] T2.2 Base components: Button, Badge, Card, Table, Field, Search field.
+- [x] T2.2 Base components: Button, Badge, Card, Table, Field, Search field.
 - [ ] T2.3 Dropdown and Date picker, with keyboard support and tests.
 - [ ] T2.4 Checkbox, Tabs, Dialog, Toast, Skeleton, Empty state, Error state.
 - [ ] T2.5 `/dev/components` route that matches screen 7.
@@ -100,6 +100,13 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T2.2 Base components
+Changed: src/ui/components/{button,badge,card,table,field,icons}.tsx with CSS modules, index.ts, base.test.tsx (12 tests, server-rendered markup), three extra tokens (badge ink, danger soft and ink, popover shadow).
+How: Button has variants cta/primary/secondary/danger, 40 px or compact 36 px, `busy` (spinner, `aria-busy`, no click); the variant is exposed as `data-variant` for the one-cta rule. Table: 10/16 px header, 56 px rows plus 1 px divider, right-aligned numbers, `label` as accessible name. Field ties label, hint and error with `aria-describedby`; SearchField is `type="text"` with an inner icon. Own line icons, no icon library.
+Not yet measured in a browser: row height 57 and button heights on a real page; that happens when T2.5 puts the components on `/dev/components` and adds the route to the UI-rules list.
+Gates run: check PASS (402 tests). test:ui-rules not rerun: no route changed.
+Next: T2.3 (Dropdown and Date picker; first check the rendered DOM of any headless library for hidden native inputs).
 
 ### 2026-11-17 T2.1 Design tokens, global styles, font, UI-rules runner
 Changed: src/ui/{tokens,global}.css, src/main.tsx, ui-rules/{routes,rules,routes.spec,rules.selfcheck.spec}.ts, playwright.ui-rules.config.ts, `npm run test:ui-rules` (now real), eslint/tsconfig/.gitignore for `dist-ui-rules`, deps `@fontsource/plus-jakarta-sans` 5.3.0 and `@axe-core/playwright` 4.14.0, docs/DECISIONS.md (D35).
