@@ -13,7 +13,7 @@ before it passes, except where a task says otherwise.
 - [x] T0.3a Benchmark page and worker: `/bench/` page, one module worker per run, SheetJS (whole-workbook) and DuckDB `read_csv` strategies, one group-by query, load and query time. Small-file Playwright spec (`npm run spike:smoke`).
 - [x] T0.3b Spike runner behind `npm run spike`: generate files if missing, serve a production build, one fresh page per file, renderer memory sampled from Node (max RSS), tab-crash and timeout handling, raw results as JSON, files deleted in a `finally`. Exit 0 even when a run crashes.
 - [x] T0.4a Streaming xlsx reader in `src/engine/xlsx-stream/`: zip directory, `DecompressionStream`, shared strings, styles (dates), first sheet, rows as an async generator. Unit tests compare it with SheetJS on small files.
-- [ ] T0.4b Add the streaming reader as a third strategy in the bench worker, run `npm run spike`, and write `docs/SPIKE_RESULTS.md` (six measurements, strategies compared, chosen xlsx reading strategy) from `docs/spike-raw.json` with a script, so the file is regenerated on every run.
+- [x] T0.4b Add the streaming reader as a third strategy in the bench worker, run `npm run spike`, and write `docs/SPIKE_RESULTS.md` (six measurements, strategies compared, chosen xlsx reading strategy) from `docs/spike-raw.json` with a script, so the file is regenerated on every run.
 - [ ] T0.5 Implement the size guard: when a file is above the measured safe size, show the "save as csv" warning instead of loading.
 
 ## Phase 1: Engine (gates G1, G2)
@@ -96,6 +96,12 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T0.4b Streaming strategy in the benchmark, SPIKE_RESULTS.md
+Changed: bench worker and page (`xlsx-stream` strategy), run plan (two strategies per file, 12 runs), scripts/lib/spike-report.ts (+ 9 tests) that renders docs/SPIKE_RESULTS.md from docs/spike-raw.json with a rule to choose the strategy, `npm run spike` writes both files (partial `--sizes` runs write nothing unless `--write`), small-file browser spec for the new strategy.
+Full `npm run spike`: 12 runs, exit 0, no crash, no timeout. Chosen xlsx strategy: `xlsx-stream` (3 of 3 sizes; SheetJS whole-sheet 1 of 3). xlsx-stream: 100k 8.4 s / 774 MB, 500k 46.5 s / 1,077 MB, 1M 104.1 s / 1,122 MB. csv with DuckDB read_csv: 0.8 s, 3.1 s, 5.5 s; peak 378, 662, 1,134 MB. Group-by 30 to 76 ms for csv, 37 to 53 ms for xlsx-stream. 200,000-row xlsx target met by estimate only (17.9 s, interpolated); not measured directly.
+Gates run: check PASS (45 unit tests), spike PASS (exit 0), spike:smoke PASS (7 tests).
+Next: T0.5 (size guard). Advisor review before ticking the last Phase 0 task.
 
 ### 2026-11-17 T0.4a Streaming xlsx reader
 Changed: src/engine/xlsx-stream/{errors,zip,parts,sheet,index}.ts and 12 tests (SheetJS as oracle on small workbooks and on a generated 2,001-row benchmark file; chunk sizes down to 1 character; special characters; dates; gaps; unknown sheet; not a zip). PROGRESS: T0.4 split into T0.4a and T0.4b.
