@@ -19,7 +19,7 @@ before it passes, except where a task says otherwise.
 ## Phase 1: Engine (gates G1, G2)
 
 - [x] T1.1 Flow definition schema: TypeScript types, JSON schema, validation with clear errors (unknown node type, missing input, cycle).
-- [ ] T1.2 Engine core: DuckDB-WASM worker, load input tables, topological order, one view per node, preview of 100 rows, cancel.
+- [x] T1.2 Engine core: DuckDB-WASM worker, load input tables, topological order, one view per node, preview of 100 rows, cancel.
 - [ ] T1.3 Input file node: sheet, header row, rows to skip, fill down merged cells, row number column, csv. Call `checkFileSize` (`src/engine/size-guard.ts`) before reading and surface `strings.xlsxTooLarge`; read xlsx with `src/engine/xlsx-stream/` and csv with DuckDB `read_csv` (decisions D9, D10).
 - [ ] T1.4 Column mapping node.
 - [ ] T1.5 Filter node with a second output for the rows that do not match.
@@ -96,6 +96,14 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T1.2 Engine core
+Changed: src/engine/{types,sql,run}.ts, nodes/{types,registry,columns}.ts, runner/{node-runner,browser-runner}.ts, tests (run.test.ts 9, columns.test.ts 3), docs/DECISIONS.md (D14).
+How: `runFlow(runner, options)` validates the flow, loads input and reference tables, runs nodes in topological order, stores every node output as a table, returns `tables`, `preview` (100 rows, typed cells) and `dispose`. Abort signal and per-step progress. Node modules are sync (settings + input columns in, SELECT + columns out); the registry is empty until the node tasks add modules, so the unit tests use test-only modules.
+Checked: DuckDB-WASM runs in Vitest through its Node blocking build; quoted identifiers are case-insensitive in DuckDB, so `requireColumn` enforces exact names (D14).
+Not tested yet: `createBrowserRunner` (Web Worker) compiles and lints but no browser test runs it. It gets its first browser run in T1.17. The Node runner cannot cancel a running query, only between steps.
+Gates run: check PASS (91 unit tests), vite build PASS.
+Next: T1.3 (input file node).
 
 ### 2026-11-17 T1.1 Flow definition schema
 Changed: src/engine/flow/{types,validate}.ts, validate.test.ts (26 tests), docs/DECISIONS.md (D12, D13).

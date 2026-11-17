@@ -113,3 +113,19 @@ Open design points to settle in the task that needs them, each recorded here whe
 - Dates leave the engine as UTC-safe values, and the acceptance spec runs with a UTC+7 time zone, so that a
   date does not move by one day.
 - Fixture employee IDs must not appear in any `src/` file, tests included. The acceptance harness lives outside `src/`.
+
+## D14 Engine core: runner, tables, column names (T1.2)
+
+- The engine talks to DuckDB only through `SqlRunner` (`exec`, `query`, `cancel`, `close`). Two builds of the
+  same DuckDB-WASM: `createNodeRunner` (Node blocking API, used by unit tests, checked to run under Vitest) and
+  `createBrowserRunner` (Web Worker, used by the app). No extra dependency, no `@duckdb/node-api`.
+- Every output of every node is stored as a table (`CREATE TABLE ... AS`), not a view, so a node with two
+  consumers runs once. Tables carry a per-run prefix, and `dispose()` drops them.
+- Node modules are synchronous: settings and input columns in, a SELECT and the exact output columns out. The
+  engine tracks columns in JavaScript. This is how names stay case-sensitive: measured on DuckDB 1.5.4, a quoted
+  `"a"` resolves to a column `"A"`, so `requireColumn` checks names before any SQL is built.
+- Cells leave the engine as numbers (cast to DOUBLE), ISO date text (`strftime`) and text, so a date never goes
+  through a JavaScript Date and cannot move by a day in another time zone.
+- Cancel: the signal is checked between steps and calls `runner.cancel()`. The Node runner cannot stop a query
+  that is already running; the browser runner calls `cancelSent()`.
+- `TRY()` and `try_cast` exist in this DuckDB version (checked for T1.6).
