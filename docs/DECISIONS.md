@@ -524,3 +524,14 @@ blank or mixed column in one month cannot change the types of another month.
 - Delete step is in the panel footer (danger button), disabled for a published version, as are the name and the choices.
 - UI rules: a route can have a `prepare` step. The builder route selects a card first, so the rules and axe also run with the panel populated.
 - Popover fix: the open-upward decision is measured in the click handler (`opensUp`), before the first render. Before, the popover opened downward, took focus (the page scrolled) and flipped later; the e2e test "opens upward" failed once in a full run (it passed alone). Three solo runs and two full runs pass now.
+
+## D41 Step preview (T2.10b)
+
+- The Test tab runs the steps up to the selected step in the browser: `upstreamOf` cuts the flow to the step and everything before it, so an unfinished flow (no Output step, a later step without settings) still previews. The engine validates that part like any flow, so a missing input or a bad setting appears as the engine's own message, shown in an error panel in the tab ("The preview could not run." + what and what to do).
+- What is shown: a step with outputs shows its first output (Filter: chips for Match and No match); an Output step has no table, so it shows what feeds it; an Output step with no input says so.
+- The preview runs on a button ("Preview first rows"), not on every change: a run starts DuckDB work and loads files. The result remembers the sub-flow, the output and the date it was made for; when one of them changes, a note says "Preview again".
+- Test files: chosen in the tab for each Input file step in the part that runs, held in memory by the builder screen under the step's `key`, never saved, never sent. A hidden `input[type=file]` sits behind the "Choose file" button. xlsx files above the safe size are refused with the "save as csv" message before any read (`checkFileSize`). The e2e privacy test puts a marker text in a csv, runs a preview and checks that no request contains it and that all requests are same-origin GETs.
+- The effective date of the preview is a Date picker in the tab (default today). Reference tables are resolved for that date with `prepareRun`, so a missing version stops with the engine's message.
+- One DuckDB worker serves all previews of the page and starts at the first preview; the tables of a run are dropped after the rows are read. Cancelling: leaving the step or the tab aborts a running preview and drops its result.
+- New steps start with valid settings (`defaultSettings`): Input file gets `key` = its step id and `headerRow` 1 (the run screen will show the key as the file's name); Column mapping gets an empty column list. The forms of T2.11 to T2.14 edit these.
+- The date columns show `30 Sep 2026`, numbers are right-aligned, blanks are empty, rows are 57 px, the table scrolls inside the panel, not the page.

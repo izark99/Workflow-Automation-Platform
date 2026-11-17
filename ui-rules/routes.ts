@@ -3,6 +3,8 @@ import type { Page } from '@playwright/test';
 
 export interface RuleRoute {
   path: string;
+  /** Names this state of the route when the same path is listed twice. */
+  name?: string;
   /** Screens with the page header share the title y and the first block y. */
   sidebar: boolean;
   /** The route is expected to show table rows. */
@@ -30,4 +32,16 @@ export const ROUTES: RuleRoute[] = [
     },
   },
   { path: '/dev/components', sidebar: true },
+  {
+    path: '/flows/flow-timesheet/versions/4',
+    name: '/flows/flow-timesheet/versions/4 (Test tab)',
+    sidebar: false,
+    // The Test tab holds the date picker, the file rows, the output chips and the preview button.
+    prepare: async (page) => {
+      await page.locator('.react-flow__node').first().click();
+      const panel = page.getByRole('complementary', { name: 'Step settings' });
+      await panel.getByRole('tab', { name: 'Test' }).click();
+      await panel.getByRole('button', { name: 'Preview first rows' }).waitFor();
+    },
+  },
 ];

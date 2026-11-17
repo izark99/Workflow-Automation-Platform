@@ -109,9 +109,22 @@ function nextLabel(def: FlowDefinition, type: NodeType): string {
   return `${base} ${n}`;
 }
 
+/** Settings that a new step starts with, so that it is valid from the first moment. The forms of T2.11 to T2.14 change them. */
+export function defaultSettings(type: NodeType, id: string): Record<string, unknown> {
+  switch (type) {
+    case 'input_file':
+      // The key is the name that the run screen shows for the file of this step.
+      return { key: id, headerRow: 1 };
+    case 'column_mapping':
+      return { columns: [] };
+    default:
+      return {};
+  }
+}
+
 export function addStep(def: FlowDefinition, type: NodeType, position: { x: number; y: number }): { definition: FlowDefinition; id: string } {
   const id = nextStepId(def, type);
-  const step: FlowNode = { id, type, label: nextLabel(def, type), position: { x: Math.round(position.x), y: Math.round(position.y) }, settings: {} };
+  const step: FlowNode = { id, type, label: nextLabel(def, type), position: { x: Math.round(position.x), y: Math.round(position.y) }, settings: defaultSettings(type, id) };
   return { definition: { ...def, nodes: [...def.nodes, step] }, id };
 }
 
@@ -235,4 +248,18 @@ export function setInput(def: FlowDefinition, targetId: string, handle: string, 
   const sourceHandle = value.slice(sep + 1);
   const without: FlowDefinition = { ...def, edges: resolvedEdges(def).filter((e) => !(e.target === targetId && e.targetHandle === handle)) };
   return connectSteps(without, { source, sourceHandle, target: targetId, targetHandle: handle });
+}
+
+/** The steps in `ids` and every step before them, with the connections between those steps: the part of the flow that a preview runs. */
+export function upstreamOf(def: FlowDefinition, ids: string[]): FlowDefinition {
+  const edges = resolvedEdges(def);
+  const keep = new Set<string>();
+  const stack = [...ids];
+  while (stack.length > 0) {
+    const id = stack.pop() as string;
+    if (keep.has(id)) continue;
+    keep.add(id);
+    for (const e of edges) if (e.target === id) stack.push(e.source);
+  }
+  return { ...def, nodes: def.nodes.filter((n) => keep.has(n.id)), edges: edges.filter((e) => keep.has(e.source) && keep.has(e.target)) };
 }

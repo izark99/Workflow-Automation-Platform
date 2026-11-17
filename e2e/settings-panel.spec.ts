@@ -30,7 +30,8 @@ test('a selected step shows its number, name and description, and the tabs Setup
   await panel(page).getByRole('tab', { name: 'Configure' }).click();
   await expect(panel(page).getByRole('tabpanel')).toContainText('settings form');
   await panel(page).getByRole('tab', { name: 'Test' }).click();
-  await expect(panel(page).getByText('No preview yet')).toBeVisible();
+  await expect(panel(page).getByRole('button', { name: 'Preview first rows' })).toBeVisible();
+  await expect(panel(page).getByRole('group', { name: 'Output of the step' })).toBeVisible();
 });
 
 test('renaming the step updates the card; an empty name shows an error and keeps the old name', async ({ page }) => {

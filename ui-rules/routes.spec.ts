@@ -3,7 +3,7 @@ import { ROUTES } from './routes';
 import { COMMON_RULES, headerPosition } from './rules';
 
 for (const route of ROUTES) {
-  test.describe(`route ${route.path}`, () => {
+  test.describe(`route ${route.name ?? route.path}`, () => {
     for (const [name, rule] of Object.entries(COMMON_RULES)) {
       test(name, async ({ page }) => {
         await page.goto(route.path);

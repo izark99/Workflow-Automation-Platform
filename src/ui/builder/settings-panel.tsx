@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import type { FlowDefinition, FlowNode } from '../../engine/flow/types';
 import { NODE_PORTS } from '../../engine/flow/types';
-import { Button, Dropdown, EmptyState, ErrorState, Field, Tabs } from '../components';
+import type { RefTable } from '../../engine/versions';
+import { Button, Dropdown, ErrorState, Field, Tabs } from '../components';
 import { settingsStrings as t } from '../strings';
 import { currentSource, deleteSteps, inputHandlesOf, inputTitle, renameStep, setInput, sourceOptions, STEP_CATALOG, stepNumbers } from './graph';
+import { StepPreview } from './step-preview';
 import styles from './settings-panel.module.css';
 
 export type SettingsTab = 'setup' | 'configure' | 'test';
@@ -15,10 +17,14 @@ export interface SettingsPanelProps {
   onChange: (next: FlowDefinition) => void;
   onDeleted: () => void;
   readOnly: boolean;
+  /** Test files by input key, and what the preview needs to resolve reference tables. */
+  testFiles: Record<string, File>;
+  onTestFile: (key: string, file: File) => void;
+  refTables: RefTable[];
 }
 
 /** The 380 px panel at the right: the selected step with the tabs Setup, Configure and Test. */
-export function SettingsPanel({ definition, step, onChange, onDeleted, readOnly }: SettingsPanelProps) {
+export function SettingsPanel({ definition, step, onChange, onDeleted, readOnly, testFiles, onTestFile, refTables }: SettingsPanelProps) {
   const [tab, setTab] = useState<SettingsTab>('setup');
   const [error, setError] = useState<string | null>(null);
 
@@ -54,7 +60,7 @@ export function SettingsPanel({ definition, step, onChange, onDeleted, readOnly 
             <SetupTab key={step.id} definition={definition} step={step} onChange={onChange} readOnly={readOnly} error={error} setError={setError} />
           ) : null}
           {tab === 'configure' ? <p className={styles.hint}>{t.noForm}</p> : null}
-          {tab === 'test' ? <EmptyState title={t.noPreview} text={t.noPreviewText} action={null} /> : null}
+          {tab === 'test' ? <StepPreview key={step.id} definition={definition} step={step} files={testFiles} onFile={onTestFile} refTables={refTables} /> : null}
         </div>
       </Tabs>
       <div className={styles.footer}>

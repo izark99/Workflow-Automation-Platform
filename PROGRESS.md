@@ -55,7 +55,7 @@ before it passes, except where a task says otherwise.
 - [x] T2.8 Flows screen: list, filters, search, delete with confirm, loading and empty states.
 - [x] T2.9 Builder, part 1: canvas with React Flow, step cards, add by drag from the step list, connect, select, delete, zoom controls.
 - [x] T2.10a Builder, part 2a: settings panel shell (380 px) with Setup, Configure and Test tabs; Setup has the step name, "Input from" for each input (the keyboard way to connect, open point of T2.9) and Delete step.
-- [ ] T2.10b Builder, part 2b: step preview. Test tab runs the steps upstream of the selected step in the browser on test files chosen by the user, and shows the first 100 rows in a table, with loading, error and empty states.
+- [x] T2.10b Builder, part 2b: step preview. Test tab runs the steps upstream of the selected step in the browser on test files chosen by the user, and shows the first 100 rows in a table, with loading, error and empty states.
 - [ ] T2.11 Settings forms: Input file, Column mapping (with paste from Excel), Filter.
 - [ ] T2.12 Settings forms: Formula column with editor, function list, validation message.
 - [ ] T2.13 Settings forms: Lookup / Join, Group by, Unpivot, Pivot.
@@ -101,6 +101,14 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T2.10b Builder, part 2b: step preview
+Changed: src/ui/builder/{preview-logic.ts,preview-runner.ts,step-preview.tsx,step-preview.module.css,preview-logic.test.ts (14 tests)}, graph.ts (`defaultSettings`, `upstreamOf`), settings panel Test tab, builder screen (test files, reference tables), `previewStrings`, e2e/preview.spec.ts (8 tests), ui-rules (Test tab state, route `name`), docs/DECISIONS.md (D41).
+How: the Test tab has the effective date (date picker), a file row with a hidden file input behind a button for each Input file step in the part that runs, Match/No match chips for a Filter, and "Preview first rows". The steps up to the selected one run in the browser (DuckDB in a worker); the first 100 rows appear in a table with dates as `30 Sep 2026`, numbers right-aligned, rows 57 px, and "Showing the first 100 of N rows." Loading shows a skeleton and a busy button; an engine error shows "The preview could not run." with the engine's message; a changed flow or date marks the result as out of date. An Output step previews what feeds it.
+Browser checks: the real DuckDB run in Chromium (2 rows, 250 rows capped at 100, a date column, a duplicate-header error), a privacy test (a marker text in a csv appears in no request, all requests are same-origin GETs).
+Small bug of mine found by the unit test: the sub-flow version started on `0001-01-01`, which is not a real date in this engine (JavaScript reads year 1 as 1901); now `1900-01-01`.
+Gates run: check PASS (506 tests), test:e2e PASS (51 tests), test:ui-rules PASS (124 tests: 62 per width, 9 route states), test:acceptance PASS (7 tests).
+Next: T2.11 (settings forms: Input file, Column mapping with paste from Excel, Filter).
 
 ### 2026-11-17 T2.10a Builder, part 2a: settings panel shell (T2.10 split into T2.10a and T2.10b)
 Changed: src/ui/builder/{settings-panel.tsx,settings-panel.module.css}, graph.ts (`sourceOptions`, `currentSource`, `setInput`, `inputTitle`; +6 tests), `settingsStrings`, builder screen layout, e2e/settings-panel.spec.ts (7 tests), ui-rules `prepare` hook (builder route selects a card), popover `opensUp` fix, docs/DECISIONS.md (D40). PROGRESS: T2.10 split into T2.10a and T2.10b (preview).

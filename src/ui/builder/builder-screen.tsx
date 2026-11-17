@@ -17,6 +17,8 @@ const t = strings.builder;
 export function BuilderScreen() {
   const { id = '', versionNo = '1' } = useParams();
   const flow = useLoad((s) => s.getFlow(id));
+  const refs = useLoad((s) => s.listRefTables());
+  const [testFiles, setTestFiles] = useState<Record<string, File>>({});
   const version = flow.data?.versions.find((v) => v.versionNo === Number(versionNo));
   const [definition, setDefinition] = useState<FlowDefinition>(emptyDefinition());
   const [selection, setSelection] = useState<Selection>({ nodes: [], edges: [] });
@@ -76,6 +78,9 @@ export function BuilderScreen() {
           onChange={setDefinition}
           onDeleted={() => setSelection({ nodes: [], edges: [] })}
           readOnly={readOnly}
+          testFiles={testFiles}
+          onTestFile={(key, file) => setTestFiles((f) => ({ ...f, [key]: file }))}
+          refTables={refs.data ?? []}
         />
       </main>
     </div>
