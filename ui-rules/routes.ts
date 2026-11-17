@@ -56,4 +56,17 @@ export const ROUTES: RuleRoute[] = [
       await panel.getByRole('textbox', { name: 'Header row' }).waitFor();
     },
   },
+  {
+    path: '/flows/flow-timesheet/versions/4',
+    name: '/flows/flow-timesheet/versions/4 (Column mapping grid)',
+    sidebar: false,
+    // A Column mapping step with one row: checkbox, two text fields, a type dropdown and a remove button.
+    prepare: async (page) => {
+      await page.locator('.react-flow__node').filter({ hasText: 'Column mapping' }).first().click();
+      const panel = page.getByRole('complementary', { name: 'Step settings' });
+      await panel.getByRole('tab', { name: 'Configure' }).click();
+      await panel.getByRole('button', { name: 'Add column' }).click();
+      await panel.getByRole('list', { name: 'Column mapping rows' }).getByRole('listitem').waitFor();
+    },
+  },
 ];

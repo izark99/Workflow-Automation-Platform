@@ -6,6 +6,7 @@ import { Button, Dropdown, ErrorState, Field, Tabs } from '../components';
 import { settingsStrings as t } from '../strings';
 import { currentSource, deleteSteps, updateSettings, inputHandlesOf, inputTitle, renameStep, setInput, sourceOptions, STEP_CATALOG, stepNumbers } from './graph';
 import { FORMS } from './forms';
+import type { FormContext } from './forms/types';
 import { StepPreview } from './step-preview';
 import styles from './settings-panel.module.css';
 
@@ -60,7 +61,7 @@ export function SettingsPanel({ definition, step, onChange, onDeleted, readOnly,
           {tab === 'setup' ? (
             <SetupTab key={step.id} definition={definition} step={step} onChange={onChange} readOnly={readOnly} error={error} setError={setError} />
           ) : null}
-          {tab === 'configure' ? <ConfigureTab step={step} definition={definition} onChange={onChange} readOnly={readOnly} /> : null}
+          {tab === 'configure' ? <ConfigureTab step={step} definition={definition} onChange={onChange} readOnly={readOnly} context={{ testFiles, refTables }} /> : null}
           {tab === 'test' ? <StepPreview key={step.id} definition={definition} step={step} files={testFiles} onFile={onTestFile} refTables={refTables} /> : null}
         </div>
       </Tabs>
@@ -127,8 +128,8 @@ function SetupTab({ definition, step, onChange, readOnly, error, setError }: { d
   );
 }
 
-function ConfigureTab({ step, definition, onChange, readOnly }: { step: FlowNode; definition: FlowDefinition; onChange: (d: FlowDefinition) => void; readOnly: boolean }) {
+function ConfigureTab({ step, definition, onChange, readOnly, context }: { step: FlowNode; definition: FlowDefinition; onChange: (d: FlowDefinition) => void; readOnly: boolean; context: FormContext }) {
   const Form = FORMS[step.type];
   if (!Form) return <p className={styles.hint}>{t.noForm}</p>;
-  return <Form key={step.id} step={step} definition={definition} readOnly={readOnly} onSettings={(settings) => onChange(updateSettings(definition, step.id, settings))} />;
+  return <Form key={step.id} step={step} definition={definition} readOnly={readOnly} context={context} onSettings={(settings) => onChange(updateSettings(definition, step.id, settings))} />;
 }

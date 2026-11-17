@@ -57,7 +57,7 @@ before it passes, except where a task says otherwise.
 - [x] T2.10a Builder, part 2a: settings panel shell (380 px) with Setup, Configure and Test tabs; Setup has the step name, "Input from" for each input (the keyboard way to connect, open point of T2.9) and Delete step.
 - [x] T2.10b Builder, part 2b: step preview. Test tab runs the steps upstream of the selected step in the browser on test files chosen by the user, and shows the first 100 rows in a table, with loading, error and empty states.
 - [x] T2.11a Settings forms, part 1: the Configure tab renders the form of the step type; forms for Input file (name, sheet, header row, rows to skip, fill down, row number column) and Filter (condition formula with syntax check).
-- [ ] T2.11b Settings form: Column mapping, a grid of one row per source column (keep, new name, type) that accepts a paste from Excel and can load the source columns from a test file.
+- [x] T2.11b Settings form: Column mapping, a grid of one row per source column (keep, new name, type) that accepts a paste from Excel and can load the source columns from a test file.
 - [ ] T2.12 Settings forms: Formula column with editor, function list, validation message.
 - [ ] T2.13 Settings forms: Lookup / Join, Group by, Unpivot, Pivot.
 - [ ] T2.14 Settings forms: Append, Output, SQL.
@@ -102,6 +102,13 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T2.11b Settings form: Column mapping grid with paste from Excel
+Changed: src/ui/builder/forms/{column-mapping-logic.ts(+10 tests),column-mapping-form.tsx,column-mapping-form.module.css,load-columns.ts}, form `context` (test files, reference tables), Checkbox `label`, `formStrings.mapping`, e2e/mapping.spec.ts (8 tests), ui-rules grid state, docs/DECISIONS.md (D43).
+How: one labelled row for each column (keep box, source, new name, type dropdown, remove); "Load columns from test file" runs the steps before and adds the missing columns; "Paste from Excel" dialog and a direct paste onto the grid read tab separated cells (source, new name, type, keep), replace the list, and refuse the whole paste with the row and what to do when a cell is wrong; a source listed twice saves nothing and says so.
+Checked by effect in the browser: loaded columns, keep/rename/retype change a real preview, unlisted columns stay, pasted rows drive the preview, a real paste event on the grid, bad paste refused, read-only for a published version. Looked at a screenshot of the panel: layout is clean.
+Gates run: check PASS (526 tests), test:e2e PASS (66 tests), test:ui-rules PASS (148 tests: 74 per width, 11 route states), test:acceptance PASS (7 tests).
+Next: T2.12 (Formula column form with editor, function list, validation message).
 
 ### 2026-11-17 T2.11a Settings forms, part 1: Configure tab, Input file, Filter (T2.11 split into T2.11a and T2.11b)
 Changed: src/ui/builder/forms/{types,index,input-file-logic,input-file-form,filter-form,formula-check}.ts(x), forms.test.ts (11 tests), `TextAreaField` component, `updateSettings`, Configure tab in the settings panel, `formStrings`, e2e/forms.spec.ts (7 tests), ui-rules Configure tab state, docs/DECISIONS.md (D42). PROGRESS: T2.11 split into T2.11a and T2.11b (Column mapping grid).
