@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Spike benchmark</title>
+  </head>
+  <body>
+    <h1>Spike benchmark</h1>
+    <input id="file" type="file" accept=".xlsx,.csv" />
+    <select id="strategy">
+      <option value="sheetjs-whole">sheetjs-whole</option>
+      <option value="duckdb-csv">duckdb-csv</option>
+    </select>
+    <button id="run" type="button">Run</button>
+    <pre id="result"></pre>
+    <script type="module" src="/src/spike/bench-page.ts"></script>
+  </body>
+</html>

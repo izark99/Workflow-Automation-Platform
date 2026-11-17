@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "bench:generate": "node scripts/generate-bench-files.ts bench-data",
+    "spike:smoke": "playwright test -c playwright.spike.config.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test:unit": "vitest run",
@@ -19,9 +20,12 @@
     "gates": "npm run check && npm run spike && npm run test:acceptance && npm run test:e2e && npm run test:ui-rules && npm run test:db"
   },
   "dependencies": {
+    "@duckdb/duckdb-wasm": "1.33.1-dev57.0",
+    "apache-arrow": "17.0.0",
     "react": "19.3.1",
     "react-dom": "19.3.1",
-    "react-router-dom": "7.18.5"
+    "react-router-dom": "7.18.5",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

@@ -10,7 +10,8 @@ before it passes, except where a task says otherwise.
 
 - [x] T0.1 Scaffold the app (Vite, React, TypeScript strict, React Router, ESLint, Vitest, Playwright) and create every npm script named in `CLAUDE.md`. Scripts for later phases may fail with "not implemented" for now.
 - [x] T0.2 Script that generates the six benchmark files of SPEC section 8 into a temporary folder (not committed).
-- [ ] T0.3 Benchmark page and Playwright runner: load each file with SheetJS into DuckDB-WASM in a worker, run one group-by query, record load time, peak memory, run time, and whether the tab survived.
+- [x] T0.3a Benchmark page and worker: `/bench/` page, one module worker per run, SheetJS (whole-workbook) and DuckDB `read_csv` strategies, one group-by query, load and query time. Small-file Playwright spec (`npm run spike:smoke`).
+- [ ] T0.3b Spike runner behind `npm run spike`: generate files if missing, serve a production build, one fresh page per file, renderer memory sampled from Node (max RSS), tab-crash and timeout handling, raw results as JSON, files deleted in a `finally`. Exit 0 even when a run crashes.
 - [ ] T0.4 Try at least two xlsx reading strategies for the large files (for example whole-workbook parse, and a row-streaming or chunked path). Write `docs/SPIKE_RESULTS.md` with the numbers and the chosen strategy.
 - [ ] T0.5 Implement the size guard: when a file is above the measured safe size, show the "save as csv" warning instead of loading.
 
@@ -94,6 +95,11 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T0.3a Benchmark page and worker (T0.3 split in two)
+Changed: bench/index.html, src/spike/{columns.ts,bench-worker.ts,bench-page.ts,bench-types.ts}, 6 unit tests, spike/bench-small.spec.ts, playwright.spike.config.ts, `npm run spike:smoke`. Added deps: xlsx 0.20.3 (SheetJS CDN tarball, newest on the CDN), @duckdb/duckdb-wasm 1.33.1-dev57.0, apache-arrow 17.0.0.
+Gates run: check PASS (13 unit tests); spike:smoke PASS (4 tests on a 2,000-row xlsx and csv, Chromium). The first smoke run failed once when Vite's dev optimizer reloaded the page; the rerun passed. T0.3b will measure a production build instead.
+Next: T0.3b.
 
 ### 2026-11-17 T0.2 Benchmark file generator
 Changed: scripts/generate-bench-files.ts, scripts/lib/bench-data.ts (+ 6 unit tests), vitest include for scripts/, `npm run bench:generate`, tsconfig allowImportingTsExtensions.
