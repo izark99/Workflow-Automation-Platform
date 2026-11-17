@@ -14,13 +14,13 @@ before it passes, except where a task says otherwise.
 - [x] T0.3b Spike runner behind `npm run spike`: generate files if missing, serve a production build, one fresh page per file, renderer memory sampled from Node (max RSS), tab-crash and timeout handling, raw results as JSON, files deleted in a `finally`. Exit 0 even when a run crashes.
 - [x] T0.4a Streaming xlsx reader in `src/engine/xlsx-stream/`: zip directory, `DecompressionStream`, shared strings, styles (dates), first sheet, rows as an async generator. Unit tests compare it with SheetJS on small files.
 - [x] T0.4b Add the streaming reader as a third strategy in the bench worker, run `npm run spike`, and write `docs/SPIKE_RESULTS.md` (six measurements, strategies compared, chosen xlsx reading strategy) from `docs/spike-raw.json` with a script, so the file is regenerated on every run.
-- [ ] T0.5 Implement the size guard: when a file is above the measured safe size, show the "save as csv" warning instead of loading.
+- [x] T0.5 Implement the size guard: when a file is above the measured safe size, show the "save as csv" warning instead of loading.
 
 ## Phase 1: Engine (gates G1, G2)
 
 - [ ] T1.1 Flow definition schema: TypeScript types, JSON schema, validation with clear errors (unknown node type, missing input, cycle).
 - [ ] T1.2 Engine core: DuckDB-WASM worker, load input tables, topological order, one view per node, preview of 100 rows, cancel.
-- [ ] T1.3 Input file node: sheet, header row, rows to skip, fill down merged cells, row number column, csv.
+- [ ] T1.3 Input file node: sheet, header row, rows to skip, fill down merged cells, row number column, csv. Call `checkFileSize` (`src/engine/size-guard.ts`) before reading and surface `strings.xlsxTooLarge`; read xlsx with `src/engine/xlsx-stream/` and csv with DuckDB `read_csv` (decisions D9, D10).
 - [ ] T1.4 Column mapping node.
 - [ ] T1.5 Filter node with a second output for the rows that do not match.
 - [ ] T1.6 Formula parser: tokens, precedence, column references in square brackets, strings, numbers, function calls, error positions.
@@ -56,7 +56,7 @@ before it passes, except where a task says otherwise.
 - [ ] T2.13 Settings forms: Lookup / Join, Group by, Unpivot, Pivot.
 - [ ] T2.14 Settings forms: Append, Output, SQL.
 - [ ] T2.15 Builder, part 3: version dropdown, save draft, publish, read-only mode for published versions.
-- [ ] T2.16 Run screen: effective date, resolved versions, file inputs, progress, result tabs, download, error state.
+- [ ] T2.16 Run screen: effective date, resolved versions, file inputs, progress, result tabs, download, error state. A file above the size limit shows `strings.xlsxTooLarge` instead of starting a run; the e2e test uses a sparse file just over `MAX_SAFE_XLSX_BYTES`, as `checkGuard` in `scripts/spike.ts` does.
 - [ ] T2.17 Versions screen: timeline, table, new version from copy, no-overlap check, date checker.
 - [ ] T2.18 Reference tables screen: list, versions, grid with paste from Excel, read-only published versions.
 - [ ] T2.19 Admin screen: users, groups, access to shared flows, deleted flows with restore.
@@ -96,6 +96,13 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T0.5 Size guard (Phase 0 complete)
+Changed: src/engine/size-guard.ts (`checkFileSize`, `MAX_SAFE_XLSX_BYTES` = 300,002,342), src/ui/strings.ts (`xlsxTooLarge`), bench page enforces the guard (`?guard=off` bypasses it for the raw measurements), `npm run spike` loads a sparse xlsx just above the limit with the guard on and fails if the warning does not appear, report section "Size guard", raw results now store `fileBytes`. Tests: 5 for the guard, 1 for the message, 2 for the report section, and a test that fails when the limit is above the largest xlsx that loaded in docs/spike-raw.json.
+Full `npm run spike` (exit 0, 12 runs + guard check): chosen xlsx strategy `xlsx-stream` (101.8 s and 1,159 MB at 1,048,576 rows); a 301 MB xlsx was refused in 186 ms with the "save the sheet as .csv" message.
+Gates run: check PASS (53 unit tests), spike PASS (exit 0).
+Advisor consulted before ticking the last Phase 0 task: tick approved; guard requirement carried into T1.3 and T2.16 above; limits recorded in D11.
+Next: Phase 1, T1.1. Phase 0 is done; the build is not.
 
 ### 2026-11-17 T0.4b Streaming strategy in the benchmark, SPIKE_RESULTS.md
 Changed: bench worker and page (`xlsx-stream` strategy), run plan (two strategies per file, 12 runs), scripts/lib/spike-report.ts (+ 9 tests) that renders docs/SPIKE_RESULTS.md from docs/spike-raw.json with a rule to choose the strategy, `npm run spike` writes both files (partial `--sizes` runs write nothing unless `--write`), small-file browser spec for the new strategy.

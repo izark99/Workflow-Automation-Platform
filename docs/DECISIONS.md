@@ -69,3 +69,18 @@ On the T0.4b run this gave `xlsx-stream` for xlsx and DuckDB `read_csv` on the f
 for csv. SheetJS whole-workbook parsing stays only for small files and for writing output.
 It returns "no sheet" without an exception for the 500k and 1M row xlsx files, and it needs
 about 10 GB of renderer memory for the 1M row csv.
+
+## D11 Size guard (T0.5)
+
+- The limit `MAX_SAFE_XLSX_BYTES` (300,002,342) is the exact byte size of the largest xlsx that
+  loaded in the spike. Files above it are refused before any parsing, with the "save as csv"
+  message from `src/ui/strings.ts`. A test fails if the limit is above the largest size in
+  `docs/spike-raw.json`.
+- csv is not guarded. DuckDB reads it from the file handle: 378 MB took 1.1 GB of peak memory.
+- Until T1.3 (input node) and T2.16 (run screen) exist, the guard is enforced only on the
+  benchmark page. Both tasks now say they must call it.
+- Known limit: the limit comes from a synthetic file with a pool of 2,000 distinct strings.
+  A real xlsx under the limit with many distinct strings keeps its whole shared-strings table
+  in memory, and this was not measured. Re-measure with real data when it is available.
+- If a later spike run fails on the 1,048,576-row xlsx, `npm run check` turns red through the
+  limit test. That is intended: re-measure and set the limit again. Do not loosen the test.
