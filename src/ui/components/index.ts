@@ -8,3 +8,7 @@ export { Icon } from './icons';
 export type { IconName } from './icons';
 export { Table } from './table';
 export type { Column, TableProps } from './table';
+export { DatePicker } from './date-picker';
+export type { DatePickerProps } from './date-picker';
+export { Dropdown } from './dropdown';
+export type { DropdownOption, DropdownProps } from './dropdown';

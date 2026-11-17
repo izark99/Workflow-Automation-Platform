@@ -47,7 +47,7 @@ before it passes, except where a task says otherwise.
 
 - [x] T2.1 Design tokens, global styles, font, and the UI-rules test skeleton.
 - [x] T2.2 Base components: Button, Badge, Card, Table, Field, Search field.
-- [ ] T2.3 Dropdown and Date picker, with keyboard support and tests.
+- [x] T2.3 Dropdown and Date picker, with keyboard support and tests.
 - [ ] T2.4 Checkbox, Tabs, Dialog, Toast, Skeleton, Empty state, Error state.
 - [ ] T2.5 `/dev/components` route that matches screen 7.
 - [ ] T2.6 `DataStore` interface, `LocalStore`, and seed data that matches the screens.
@@ -100,6 +100,13 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T2.3 Dropdown and Date picker
+Changed: src/ui/components/{dropdown,date-picker,popover,list-keys,date-logic}.ts(x), popover.module.css, calendar icon, tests list-keys (9), date-logic (10), pickers markup (2).
+How: no headless library, so no hidden native `<select>` or checkbox can appear in the DOM. Dropdown: button with chevron, `aria-haspopup=listbox`, popover list of `role=option` buttons with a check on the selected one, arrow keys, Home, End, Enter, Space, Escape (focus returns to the button), Tab closes, type-ahead (700 ms buffer), outside click closes. Date picker: button `30 Sep 2026`, popover dialog with a Monday-first month grid, previous and next month buttons (36 px), arrow keys by day and week, Home/End to Monday/Sunday, PageUp/PageDown by month with day clamping, Escape; day buttons carry `aria-label` like `1 September 2026`. Both open upward when the room below is smaller than the popover and larger above. Key handling and date arithmetic are pure functions (UTC only).
+Not yet tested in a browser: open/close, focus return, opens-upward. T2.5 puts both on `/dev/components` and adds Playwright specs for them there.
+Gates run: check PASS (420 tests).
+Next: T2.4.
 
 ### 2026-11-17 T2.2 Base components
 Changed: src/ui/components/{button,badge,card,table,field,icons}.tsx with CSS modules, index.ts, base.test.tsx (12 tests, server-rendered markup), three extra tokens (badge ink, danger soft and ink, popover shadow).
