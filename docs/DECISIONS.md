@@ -51,3 +51,12 @@ to 17.0.0, the version it depends on.
 On a cold start the Vite dev server re-optimizes dependencies and reloads the page, which
 failed one smoke run. The spike runner (T0.3b) builds the app and serves it with
 `vite preview`. This also removes dev transforms from the measurements.
+
+## D9 Own streaming xlsx reader for large files (T0.4a)
+
+SheetJS whole-workbook parsing returns no sheet for the 500k and 1M row xlsx files (T0.3b).
+`src/engine/xlsx-stream/` reads xlsx as a stream instead: zip directory by slices,
+`DecompressionStream('deflate-raw')` per part, rows parsed in chunks. It adds no dependency.
+Known limits, each reported with a "save as csv" message: zip64 parts and compression
+methods other than stored or deflate. The 1904 date system is not handled. SheetJS stays
+the reader for small files and the writer for output (T1.15).

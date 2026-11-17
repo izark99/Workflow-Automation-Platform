@@ -12,7 +12,8 @@ before it passes, except where a task says otherwise.
 - [x] T0.2 Script that generates the six benchmark files of SPEC section 8 into a temporary folder (not committed).
 - [x] T0.3a Benchmark page and worker: `/bench/` page, one module worker per run, SheetJS (whole-workbook) and DuckDB `read_csv` strategies, one group-by query, load and query time. Small-file Playwright spec (`npm run spike:smoke`).
 - [x] T0.3b Spike runner behind `npm run spike`: generate files if missing, serve a production build, one fresh page per file, renderer memory sampled from Node (max RSS), tab-crash and timeout handling, raw results as JSON, files deleted in a `finally`. Exit 0 even when a run crashes.
-- [ ] T0.4 Try at least two xlsx reading strategies for the large files (for example whole-workbook parse, and a row-streaming or chunked path). Write `docs/SPIKE_RESULTS.md` with the numbers and the chosen strategy.
+- [x] T0.4a Streaming xlsx reader in `src/engine/xlsx-stream/`: zip directory, `DecompressionStream`, shared strings, styles (dates), first sheet, rows as an async generator. Unit tests compare it with SheetJS on small files.
+- [ ] T0.4b Add the streaming reader as a third strategy in the bench worker, run `npm run spike`, and write `docs/SPIKE_RESULTS.md` (six measurements, strategies compared, chosen xlsx reading strategy) from `docs/spike-raw.json` with a script, so the file is regenerated on every run.
 - [ ] T0.5 Implement the size guard: when a file is above the measured safe size, show the "save as csv" warning instead of loading.
 
 ## Phase 1: Engine (gates G1, G2)
@@ -95,6 +96,13 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T0.4a Streaming xlsx reader
+Changed: src/engine/xlsx-stream/{errors,zip,parts,sheet,index}.ts and 12 tests (SheetJS as oracle on small workbooks and on a generated 2,001-row benchmark file; chunk sizes down to 1 character; special characters; dates; gaps; unknown sheet; not a zip). PROGRESS: T0.4 split into T0.4a and T0.4b.
+How: reads the zip directory with small slices, inflates one part at a time with the browser's `DecompressionStream`, parses the sheet XML in chunks row by row, resolves shared strings and date styles. No new dependency.
+Check: three deliberate mutations (no XML unescape, date styles ignored, no tail kept between chunks) each made tests fail, then were reverted. Node sanity run on the 1,048,576 x 40 xlsx that SheetJS could not open: all 1,048,576 rows read in 51.5 s, process RSS 384 MB, last row id 1048575. Browser numbers come in T0.4b.
+Gates run: check PASS (34 unit tests).
+Next: T0.4b.
 
 ### 2026-11-17 T0.3b Spike runner
 Changed: scripts/spike.ts (`npm run spike`), scripts/lib/{spike-runner,proc-memory}.ts (+ 11 unit tests), vite.spike.config.ts, spike/crash-detection.spec.ts, docs/spike-raw.json (raw results of the full run).
