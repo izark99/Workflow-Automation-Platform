@@ -9,7 +9,7 @@ before it passes, except where a task says otherwise.
 ## Phase 0: Spike (gate G0)
 
 - [x] T0.1 Scaffold the app (Vite, React, TypeScript strict, React Router, ESLint, Vitest, Playwright) and create every npm script named in `CLAUDE.md`. Scripts for later phases may fail with "not implemented" for now.
-- [ ] T0.2 Script that generates the six benchmark files of SPEC section 8 into a temporary folder (not committed).
+- [x] T0.2 Script that generates the six benchmark files of SPEC section 8 into a temporary folder (not committed).
 - [ ] T0.3 Benchmark page and Playwright runner: load each file with SheetJS into DuckDB-WASM in a worker, run one group-by query, record load time, peak memory, run time, and whether the tab survived.
 - [ ] T0.4 Try at least two xlsx reading strategies for the large files (for example whole-workbook parse, and a row-streaming or chunked path). Write `docs/SPIKE_RESULTS.md` with the numbers and the chosen strategy.
 - [ ] T0.5 Implement the size guard: when a file is above the measured safe size, show the "save as csv" warning instead of loading.
@@ -94,6 +94,12 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T0.2 Benchmark file generator
+Changed: scripts/generate-bench-files.ts, scripts/lib/bench-data.ts (+ 6 unit tests), vitest include for scripts/, `npm run bench:generate`, tsconfig allowImportingTsExtensions.
+Result: six files written to git-ignored bench-data/ (xlsx: 28.6 / 143 / 300 MB; csv: 36 / 180 / 378 MB) in 61 s total, 40 columns, seeded, shared strings, one 200-value group key, one date column. 1M xlsx sheet XML is 1.49 GB uncompressed. Verified with zipfile.testzip, openpyxl (small file) and wc -l. Files deleted afterwards.
+Gates run: check PASS (7 unit tests).
+Next: T0.3.
 
 ### 2026-11-17 T0.1 Scaffold
 Changed: package.json, .npmrc, tsconfig, vite/vitest/playwright/eslint configs, src/ skeleton, one unit test, one Playwright smoke spec, scripts/not-implemented.mjs, docs/DECISIONS.md.

@@ -24,3 +24,10 @@ reproducible for `npm run gates`.
 `spike`, `test:acceptance`, `test:e2e`, `test:ui-rules` and `test:db` run
 `scripts/not-implemented.mjs`, which exits 1 and names the task that replaces it.
 `vitest` runs only `src/**/*.test.ts(x)`. Playwright specs live in `e2e/`.
+
+## D5 Benchmark files count the header row (T0.2)
+
+"1,048,576 rows" is the Excel limit including the header, so the largest files hold the
+header plus 1,048,575 data rows. The other sizes use the same rule. The generator is
+seeded, writes shared strings like Excel, and runs as TypeScript with Node's built-in type
+stripping (`node scripts/generate-bench-files.ts`), so it needs no extra dependency.
