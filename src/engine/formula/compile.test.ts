@@ -178,8 +178,8 @@ describe('function registry', () => {
     expect(e.message).toContain('NOPE');
     expect(e.message).toMatch(/not supported/);
   });
-  it('has no Tier 1 function yet, so the default registry rejects every call', () => {
-    expect(failure('ABS(1)').message).toMatch(/not supported/);
+  it('rejects a function that is not in the default registry', () => {
+    expect(failure('VLOOKUP(1)').message).toMatch(/not supported/);
   });
   it('checks the number of arguments and says how many were expected', () => {
     const few = failure('DOUBLE()', registry);

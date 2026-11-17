@@ -18,6 +18,8 @@ export interface FunctionContext {
    * A blank column cell becomes 0, empty text or FALSE; a date stays blank.
    */
   arg(i: number, type: ColumnType): string;
+  /** Like `arg`, but a blank stays blank (NULL). For functions that ignore blanks, such as MIN and AND. */
+  raw(i: number, type: ColumnType): string;
   /** Throws a `FormulaError` at argument `i`, or at the whole call when `i` is not given. */
   error(message: string, i?: number): never;
 }
@@ -30,6 +32,3 @@ export interface FunctionSpec {
 }
 
 export type FunctionRegistry = Record<string, FunctionSpec>;
-
-/** Tier 1 functions by upper-case name. Tasks T1.7 to T1.9 fill it. */
-export const defaultFunctions: FunctionRegistry = {};

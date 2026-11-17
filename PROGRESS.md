@@ -25,7 +25,7 @@ before it passes, except where a task says otherwise.
 - [x] T1.5 Filter node with a second output for the rows that do not match. Depends on T1.6b (the condition is a formula); do it after T1.6b.
 - [x] T1.6a Formula parser: tokens, Excel precedence, column references in square brackets, strings, numbers, function calls, error positions (no SQL yet).
 - [x] T1.6b Formula compiler core: typed AST to DuckDB SQL for literals, column references, operators and blank rules, plus a function registry with arity and argument types.
-- [ ] T1.7 Formula functions, logic and math groups of Tier 1, each with unit tests.
+- [x] T1.7 Formula functions, logic and math groups of Tier 1, each with unit tests.
 - [ ] T1.8 Formula functions, text group of Tier 1, each with unit tests.
 - [ ] T1.9 Formula functions, date group of Tier 1 and EFFECTIVE_DATE, each with unit tests.
 - [ ] T1.10 Formula column node.
@@ -97,6 +97,12 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T1.7 Formula functions: logic and math
+Changed: src/engine/formula/tier1/{helpers,logic,math,index}.ts, ops.ts (blank rule and equality shared), test-helpers.ts, logic.test.ts (28 assertions groups, 9 describe blocks incl. IF IFS AND OR NOT IFERROR SWITCH ISBLANK ISNUMBER) and math.test.ts (ROUND ROUNDUP ROUNDDOWN INT ABS MOD MIN MAX SUM CEILING FLOOR POWER SQRT), `ctx.raw`, docs/DECISIONS.md (D19). One compile test changed from `ABS(1)` to `VLOOKUP(1)` as the example of an unsupported function, since ABS now exists.
+Checked first on DuckDB: its `round` differs from Excel (0.285, 1.005), so ROUND* use the 15-digit decimal value; Excel results asserted in tests: ROUND(2.675,2)=2.68, MOD(-3,2)=1, INT(-1.5)=-2, FLOOR(-2.5,2)=-4 and others listed in D19.
+Gates run: check PASS (201 unit tests).
+Next: T1.8 (text functions).
 
 ### 2026-11-17 T1.5 Filter node
 Changed: src/engine/nodes/filter.ts, src/engine/formula/node-formula.ts (`compileStepFormula`: formula mistakes become `EngineError` `invalid_formula` with step id and character), error code `invalid_formula`, filter.test.ts (9 tests), registry.

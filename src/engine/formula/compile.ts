@@ -2,7 +2,9 @@ import { requireColumn } from '../nodes/columns';
 import { numberToTextSql, quoteIdent, quoteString } from '../sql';
 import { EngineError, type Column, type ColumnType } from '../types';
 import type { Expr } from './ast';
-import { defaultFunctions, type Compiled, type FunctionContext, type FunctionRegistry } from './functions';
+import type { Compiled, FunctionContext, FunctionRegistry } from './functions';
+import { withBlankRule } from './ops';
+import { defaultFunctions } from './tier1';
 import { FormulaError, parseFormula } from './parse';
 
 export interface CompileEnv {
@@ -13,14 +15,6 @@ export interface CompileEnv {
 }
 
 export type { Compiled } from './functions';
-
-const BLANK: Partial<Record<ColumnType, string>> = { number: '0', text: "''", boolean: 'FALSE' };
-
-/** A blank column cell counts as 0, empty text or FALSE, as in Excel. A computed blank passes on. */
-export function withBlankRule(c: Compiled): string {
-  const blank = BLANK[c.type];
-  return c.bare && blank !== undefined ? `COALESCE(${c.sql}, ${blank})` : c.sql;
-}
 
 function fail(message: string, e: Expr): never {
   throw new FormulaError(message, e.start, Math.max(1, e.end - e.start));
@@ -125,17 +119,24 @@ function compileCall(
       e.end - e.start,
     );
   }
+  const checked = (i: number, type: ColumnType): Compiled => {
+    const c = args[i]!;
+    if (c.type !== type) {
+      const name = (t: ColumnType) => (t === 'number' ? 'a number' : `a ${t}`);
+      const hint = c.type === 'text' && type === 'number' ? HINT_NUMBER : 'Change the argument, or convert it first.';
+      fail(`Argument ${i + 1} of ${e.name} must be ${name(type)}, but it is ${name(c.type)}. ${hint}`, e.args[i]!);
+    }
+    return c;
+  };
   const ctx: FunctionContext = {
     call: e,
     effectiveDate: env.effectiveDate,
     args,
     arg(i, type) {
-      const c = args[i]!;
-      const where = `Argument ${i + 1} of ${e.name}`;
-      if (c.type !== type) {
-        fail(`${where} must be ${type === 'number' ? 'a number' : `a ${type}`}, but it is ${c.type === 'number' ? 'a number' : `a ${c.type}`}. ${c.type === 'text' && type === 'number' ? HINT_NUMBER : 'Change the argument, or convert it first.'}`, e.args[i]!);
-      }
-      return withBlankRule(c);
+      return withBlankRule(checked(i, type));
+    },
+    raw(i, type) {
+      return checked(i, type).sql;
     },
     error(message, i) {
       return fail(message, i === undefined ? e : e.args[i]!);

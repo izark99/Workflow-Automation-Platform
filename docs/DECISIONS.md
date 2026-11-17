@@ -185,3 +185,19 @@ text as numbers, in the same spirit as the csv typing of D15 (`007` stays text).
 `Exceptions` and `OT_breaches` for both expected workbooks, and check the `date` cell on `Invalid date` rows and the
 `value` cell on `Missing attendance code` rows. In the flow, pin types with a Column mapping after each input, so a
 blank or mixed column in one month cannot change the types of another month.
+
+## D19 Tier 1 logic and math functions (T1.7)
+
+- Registry: `src/engine/formula/tier1/` (`logic.ts`, `math.ts`, `index.ts`). T1.8 and T1.9 add the text and date groups.
+  Functions get `ctx.arg(i, type)` (blank cell becomes 0, empty text or FALSE) or `ctx.raw(i, type)` (blank stays NULL).
+- ROUND, ROUNDUP and ROUNDDOWN work on the number read at 15 significant digits as DECIMAL(38,15), because DuckDB
+  `round` gives `0.285 -> 0.28` and `1.005 -> 1` where Excel gives 0.29 and 1.01. ROUNDUP and ROUNDDOWN give a blank
+  for values that do not fit (above about 1e23 or below 1e-15); ROUND falls back to DOUBLE rounding there.
+- CEILING and FLOOR divide at 9 digits before rounding (`1.1 / 0.1` is not 12). CEILING(x, 0) is 0, FLOOR(x, 0) is blank.
+  A positive number with a negative significance is blank. FLOOR of a negative number with a positive significance
+  rounds away from zero (`FLOOR(-2.5, 2) = -4`), as current Excel does.
+- Known divergences from Excel, all consequences of "errors are NULL" (D17): IF with two values gives a blank when
+  false (Excel gives FALSE); IFS and SWITCH give a blank when nothing matches (Excel #N/A); IFERROR also replaces a
+  blank cell; ISBLANK of an error is TRUE; POWER of a negative base with a fractional exponent, SQRT of a negative
+  number and MOD by zero give a blank (Excel #NUM! and #DIV/0!).
+- MIN and MAX ignore blank cells and also accept dates. SUM counts a blank as 0. AND and OR ignore blanks.
