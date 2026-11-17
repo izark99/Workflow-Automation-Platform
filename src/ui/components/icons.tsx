@@ -18,6 +18,19 @@ const paths: Record<string, ReactElement> = {
       <path d="M4 10h16M9 3v4M15 3v4" />
     </>
   ),
+  alert: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v6M12 16.5v.5" />
+    </>
+  ),
+  inbox: (
+    <>
+      <path d="M4 13l2-7h12l2 7v5H4z" />
+      <path d="M4 13h5l1 2h4l1-2h5" />
+    </>
+  ),
+  close: <path d="M6 6l12 12M18 6L6 18" />,
   spinner: <path d="M12 3a9 9 0 1 0 9 9" />,
 };
 

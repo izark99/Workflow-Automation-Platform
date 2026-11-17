@@ -1,0 +1,42 @@
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 24px;
+  text-align: center;
+}
+
+.empty svg {
+  color: var(--color-muted);
+}
+
+.emptyTitle {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.muted {
+  color: var(--color-muted);
+}
+
+.error {
+  display: flex;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: var(--radius-control);
+  border: 1px solid var(--color-danger);
+  background: var(--color-danger-soft);
+  color: var(--color-danger-ink);
+}
+
+.errorBody {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.errorActions {
+  display: flex;
+  gap: 8px;
+}

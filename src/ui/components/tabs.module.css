@@ -1,0 +1,43 @@
+.list {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--color-line);
+}
+
+.tab {
+  height: var(--size-button);
+  padding: 0 16px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--color-muted);
+  font: 600 14px var(--font-sans);
+  cursor: pointer;
+}
+
+.tab[aria-selected='true'] {
+  color: var(--color-ink);
+  border-bottom-color: var(--color-accent);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  height: var(--size-button-compact);
+  padding: 0 12px;
+  border-radius: var(--radius-control);
+  border: 1px solid var(--color-control);
+  background: var(--color-card);
+  color: var(--color-ink);
+  font: 600 13px var(--font-sans);
+  cursor: pointer;
+}
+
+.chip[aria-pressed='true'] {
+  background: var(--color-primary-soft);
+  border-color: var(--color-primary);
+}

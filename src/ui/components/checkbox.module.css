@@ -1,0 +1,44 @@
+.checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: var(--size-button-compact);
+  padding: 0 8px 0 0;
+  border: 0;
+  background: none;
+  color: var(--color-ink);
+  font: 500 14px var(--font-sans);
+  cursor: pointer;
+}
+
+.checkbox:disabled {
+  color: var(--color-muted);
+  cursor: not-allowed;
+}
+
+.box {
+  flex: none;
+}
+
+.box rect {
+  fill: var(--color-card);
+  stroke: var(--color-control);
+  stroke-width: 1.5;
+}
+
+.checkbox[aria-checked='true'] .box rect {
+  fill: var(--color-primary);
+  stroke: var(--color-primary);
+}
+
+.checkbox:disabled .box rect {
+  fill: var(--color-rule);
+}
+
+.box path {
+  fill: none;
+  stroke: var(--color-on-fill);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}

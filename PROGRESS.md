@@ -48,7 +48,7 @@ before it passes, except where a task says otherwise.
 - [x] T2.1 Design tokens, global styles, font, and the UI-rules test skeleton.
 - [x] T2.2 Base components: Button, Badge, Card, Table, Field, Search field.
 - [x] T2.3 Dropdown and Date picker, with keyboard support and tests.
-- [ ] T2.4 Checkbox, Tabs, Dialog, Toast, Skeleton, Empty state, Error state.
+- [x] T2.4 Checkbox, Tabs, Dialog, Toast, Skeleton, Empty state, Error state.
 - [ ] T2.5 `/dev/components` route that matches screen 7.
 - [ ] T2.6 `DataStore` interface, `LocalStore`, and seed data that matches the screens.
 - [ ] T2.7 App shell: sidebar, page header, routing, strings module.
@@ -100,6 +100,14 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T2.4 Checkbox, Tabs, Dialog, Toast, Skeleton, Empty state, Error state
+Changed: src/ui/components/{checkbox,tabs,tab-keys,dialog,toast,toast-state,skeleton,states}.ts(x) with CSS modules, alert/inbox/close icons, more.test.tsx (12 tests).
+How: Checkbox is a drawn box on a `role=checkbox` button (no input). Tabs: `role=tablist/tab/tabpanel`, roving tabindex, arrows wrap, Home/End, 40 px tabs with a 2 px accent underline; Chip and ChipGroup (36 px, `aria-pressed`). Dialog: modal, focus moves in, Tab wraps (`trapIndex`), Escape calls `onClose`, focus returns to the opener on unmount. Toast: provider with a polite live region, 3 kept, 5 s, dismiss button. Skeleton: `SkeletonTable` with the real heights (header 41, row 57), `aria-busy`, bars `aria-hidden`, pulse that stops with reduced motion; `useDelayedLoading` shows it only after 300 ms. EmptyState (icon, line, action) and ErrorState (`role=alert`, says what failed and what to do next).
+Lint caught a ref written during render in Dialog; moved into an effect.
+Not yet tested in a browser: Dialog focus trap and focus return, Tabs arrows, toast timing. T2.5 adds Playwright specs on `/dev/components`.
+Gates run: check PASS (432 tests).
+Next: T2.5.
 
 ### 2026-11-17 T2.3 Dropdown and Date picker
 Changed: src/ui/components/{dropdown,date-picker,popover,list-keys,date-logic}.ts(x), popover.module.css, calendar icon, tests list-keys (9), date-logic (10), pickers markup (2).
