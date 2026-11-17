@@ -1,0 +1,53 @@
+{
+  "browser": "Chromium 153.0.8010.12",
+  "node": "v22.23.4",
+  "cpus": 4,
+  "ramGb": 16,
+  "runs": [
+    {
+      "file": "rows-100000.xlsx",
+      "format": "xlsx",
+      "totalRows": 100000,
+      "fileMb": 29,
+      "strategy": "sheetjs-whole",
+      "status": "ok",
+      "loadMs": 16991,
+      "queryMs": 44,
+      "wallMs": 18349,
+      "peakRssMb": 1980,
+      "rows": 99999,
+      "rowsMatch": true,
+      "groups": 200
+    },
+    {
+      "file": "rows-100000.csv",
+      "format": "csv",
+      "totalRows": 100000,
+      "fileMb": 36,
+      "strategy": "sheetjs-whole",
+      "status": "ok",
+      "loadMs": 11928,
+      "queryMs": 38,
+      "wallMs": 13358,
+      "peakRssMb": 2004,
+      "rows": 99999,
+      "rowsMatch": true,
+      "groups": 200
+    },
+    {
+      "file": "rows-100000.csv",
+      "format": "csv",
+      "totalRows": 100000,
+      "fileMb": 36,
+      "strategy": "duckdb-csv",
+      "status": "ok",
+      "loadMs": 797,
+      "queryMs": 34,
+      "wallMs": 1953,
+      "peakRssMb": 381,
+      "rows": 99999,
+      "rowsMatch": true,
+      "groups": 200
+    }
+  ]
+}
