@@ -312,3 +312,22 @@ blank or mixed column in one month cannot change the types of another month.
   be shared between colleagues, and the check exists so that a shared SQL step cannot read local files, call an
   address or build SQL from data. The real guarantees are that all processing runs in the user's own browser and that
   the app sends no file content over the network (tested in T1.20).
+
+## D27 Output node (T1.15a) and the answer to D18
+
+- Settings: `file` (logical file name, default `Result`; steps with the same name are sheets of one workbook), `format`
+  (`xlsx` default, or `csv`), `sheet` (needed for xlsx: 1 to 31 characters, none of `[ ] : * ? / \`), `sort`, `columns`,
+  `numberLikeText`. `checkOutputNodes` runs at the start of every run: one format per file, one csv step per file,
+  sheet names unique per workbook (ignoring case).
+- `sort`: a list of `{column}` or `{expression}` (a formula) with `direction` asc (default) or desc. Blanks sort last
+  in both directions, and ties keep the input order. A formula key gives an order that is not alphabetical, for
+  example DAY before WEEK before MONTH (rule R12).
+- `columns`: the columns written, in that order. A sort key does not need to be one of them, so helper columns do not
+  reach the file.
+- Observed in the expected workbooks (both datasets): dates are numeric serials with the format `yyyy-mm-dd`; blank
+  cells are absent; `Exceptions.value` holds text (`X`), numbers (`2`) and text that is not a number (`2h`) in one
+  column. Resolution of D18: the compiler keeps one type per column, and `numberLikeText` names text columns whose
+  plain-number values (`2`, `1.5`, not `007`) the file writer (T1.15b) writes as numbers. The comparison of the
+  acceptance test is not loosened.
+- An Output step returns its table as the handle `result` (the engine now stores every handle a node returns), and
+  `RunResult.rows()` reads all rows for the file writer.

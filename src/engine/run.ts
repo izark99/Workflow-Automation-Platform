@@ -1,6 +1,6 @@
-import { NODE_PORTS } from './flow/types';
 import { resolveEdgeHandles, topologicalOrder, validateFlow } from './flow/validate';
 import { loadInputFile, parseInputSettings, type FileSource } from './input/load';
+import { checkOutputNodes } from './nodes/output';
 import { defaultRegistry } from './nodes/registry';
 import type { NodeRegistry } from './nodes/types';
 import { boundarySelectList, createTableStatements, quoteIdent } from './sql';
@@ -35,6 +35,8 @@ export interface RunResult {
   tables: Map<string, ResultTable>;
   /** First rows of an output as boundary cells: numbers, ISO date text, text, booleans. */
   preview(nodeId: string, handle?: string, limit?: number): Promise<TableData>;
+  /** Every row of an output, in the stored order. For writing files. */
+  rows(nodeId: string, handle?: string): Promise<TableData>;
   /** Drops every table of this run. */
   dispose(): Promise<void>;
 }
@@ -51,6 +53,7 @@ export async function runFlow(runner: SqlRunner, options: RunOptions): Promise<R
     );
   }
   const flow = validation.flow;
+  checkOutputNodes(flow);
   const registry = options.registry ?? defaultRegistry;
   const prefix = `r${++runCounter}_`;
   const created: string[] = [];
@@ -134,9 +137,8 @@ export async function runFlow(runner: SqlRunner, options: RunOptions): Promise<R
         query: (sql) => runner.query(sql),
       });
 
-      for (const handle of NODE_PORTS[node.type].outputs) {
-        const out = outputs[handle];
-        if (!out) continue;
+      // A node returns a table for each of its output handles. An Output step returns its table as `result`.
+      for (const [handle, out] of Object.entries(outputs)) {
         const relation = `${prefix}n${index}_${handle}`;
         try {
           await runner.exec(`CREATE OR REPLACE TABLE ${quoteIdent(relation)} AS ${out.sql}`);
@@ -168,21 +170,21 @@ export async function runFlow(runner: SqlRunner, options: RunOptions): Promise<R
     options.signal?.removeEventListener('abort', onAbort);
   }
 
+  const read = async (nodeId: string, handle: string | undefined, limit: number | undefined): Promise<TableData> => {
+    const table = handle ? tables.get(`${nodeId}/${handle}`) : [...tables.values()].find((t) => t.nodeId === nodeId);
+    if (!table) {
+      throw new EngineError('node_failed', `Step "${nodeId}" has no result to show. Run the flow first.`, nodeId);
+    }
+    const columns: Column[] = table.columns;
+    const cap = limit === undefined ? '' : ` LIMIT ${Math.max(0, Math.floor(limit))}`;
+    const result = await runner.query(`SELECT ${boundarySelectList(columns)} FROM ${quoteIdent(table.relation)}${cap}`);
+    return { columns, rows: result.rows as TableData['rows'] };
+  };
+
   return {
     tables,
     dispose,
-    async preview(nodeId, handle, limit = PREVIEW_ROWS) {
-      const table = handle
-        ? tables.get(`${nodeId}/${handle}`)
-        : [...tables.values()].find((t) => t.nodeId === nodeId);
-      if (!table) {
-        throw new EngineError('node_failed', `Step "${nodeId}" has no result to show. Run the flow first.`, nodeId);
-      }
-      const columns: Column[] = table.columns;
-      const result = await runner.query(
-        `SELECT ${boundarySelectList(columns)} FROM ${quoteIdent(table.relation)} LIMIT ${Math.max(0, Math.floor(limit))}`,
-      );
-      return { columns, rows: result.rows as TableData['rows'] };
-    },
+    preview: (nodeId, handle, limit = PREVIEW_ROWS) => read(nodeId, handle, limit),
+    rows: (nodeId, handle) => read(nodeId, handle, undefined),
   };
 }

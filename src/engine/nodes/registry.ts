@@ -4,6 +4,7 @@ import { formulaColumnNode } from './formula-column';
 import { lookupJoinNode } from './lookup-join';
 import { groupByNode } from './group-by';
 import { appendNode } from './append';
+import { outputNode } from './output';
 import { pivotNode } from './pivot';
 import { sqlNode } from './sql-node';
 import { unpivotNode } from './unpivot';
@@ -22,4 +23,5 @@ export const defaultRegistry: NodeRegistry = {
   pivot: pivotNode,
   append: appendNode,
   sql: sqlNode,
+  output: outputNode,
 };

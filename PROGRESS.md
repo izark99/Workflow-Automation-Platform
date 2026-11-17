@@ -34,7 +34,8 @@ before it passes, except where a task says otherwise.
 - [x] T1.13a Unpivot node.
 - [x] T1.13b Pivot node, with a column list taken from a reference table, a fill value and a name suffix (D13), so zero-count columns appear in reference-table order.
 - [x] T1.14 Append node and SQL node.
-- [ ] T1.15 Output node: several sheets in one workbook, csv, date and number types preserved.
+- [x] T1.15a Output node: sort (columns or a formula), column list, several Output steps per workbook, consistency checks.
+- [ ] T1.15b File writer: workbook with several sheets and csv from the Output steps; date, number and boolean cells typed, blank cells absent, `numberLikeText` columns, UTC-safe dates.
 - [ ] T1.16 Effective date: resolve flow version and reference table versions, stop with a clear message when no version covers the date.
 - [ ] T1.17 Acceptance harness: Playwright test that runs a flow file on a dataset folder and compares workbooks cell by cell. Prove it fails on a wrong workbook.
 - [ ] T1.18 `flows/monthly-timesheet.flow.json`, part 1: reading, unpivot, dates, employment window, Exceptions sheet (rules R1 to R9).
@@ -98,6 +99,14 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T1.15a Output node (T1.15 split into T1.15a and T1.15b)
+Changed: src/engine/nodes/output.ts, output.test.ts (13 tests), run.ts (stores every handle a node returns, `checkOutputNodes` at the start, `RunResult.rows()`), registry, docs/DECISIONS.md (D27 incl. the answer to D18).
+Orientation first: dumped Exceptions and OT_breaches of both expected workbooks. Dates are numeric serials with format yyyy-mm-dd, blank cells are absent, `Exceptions.value` mixes text, numbers and `2h`, `period` is text. These drive the settings.
+How: sort by columns or by a formula (blanks last, ties in input order), `columns` to pick and order, sheet name rules, one format per file, unique sheet names, one csv step per file.
+Two first-run problems: a TypeScript inference slip, and a test that guessed which sheet name the error mentions; the message now names both sheets.
+Gates run: check PASS (335 unit tests).
+Next: T1.15b (the file writer).
 
 ### 2026-11-17 T1.14 Append and SQL nodes
 Changed: src/engine/nodes/{append,sql-node}.ts, append.test.ts (7 tests), sql-node.test.ts (11 tests incl. the safety check), registry, docs/DECISIONS.md (D26).
