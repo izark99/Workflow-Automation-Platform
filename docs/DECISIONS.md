@@ -459,3 +459,6 @@ blank or mixed column in one month cannot change the types of another month.
 - The csv path through `registerFileHandle` on a `File` now runs in Chromium (open item of T1.17).
 - Limit: the audit sees what the page requests from the browser's network layer. It does not cover what a browser
   extension or the hosting server does with the static files.
+- Worker requests: the engine runs in a Web Worker, so the audit has to see worker traffic. Checked, not assumed: the
+  canary test starts a worker from a blob address that fetches `/leak-from-worker?d=<marker>`, and the audit reports it;
+  and a real run's log contains the worker's `/assets/duckdb-*.wasm` request. `page.on('request')` sees both.

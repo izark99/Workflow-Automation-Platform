@@ -41,7 +41,7 @@ before it passes, except where a task says otherwise.
 - [x] T1.18 `flows/monthly-timesheet.flow.json`, part 1: reading, unpivot, dates, employment window, Exceptions sheet (rules R1 to R9).
 - [x] T1.19a `flows/monthly-timesheet.flow.json`, part 2a: OT_breaches sheet (R11), sort order (R12).
 - [x] T1.19b `flows/monthly-timesheet.flow.json`, part 2b: Summary sheet (R10, needs the breach count of T1.19a), sort order (R12). The Summary output step goes first in the flow, so that the sheet is first in the workbook.
-- [ ] T1.20 Both datasets pass `npm run test:acceptance`. Add the test that no network request carries file content.
+- [x] T1.20 Both datasets pass `npm run test:acceptance`. Add the test that no network request carries file content.
 
 ## Phase 2: Canvas and screens (gates G3, G4)
 
@@ -100,6 +100,14 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T1.20 Both datasets pass; no network request carries file content (last task of Phase 1)
+Changed: scripts/lib/request-audit.ts (+ 10 unit tests), acceptance/privacy.spec.ts (3 tests), acceptance/timesheet.spec.ts (audits both real runs, with the names of the employee list as markers), acceptance/helpers.ts (`watchRequests`), acceptance/page.ts (files are `File` objects, as the file picker gives them), docs/DECISIONS.md (D34).
+Result: `npm run test:acceptance` exit 0, 7 tests passed: harness 2, privacy 3, timesheet flow 2 (2026-09: 3 sheets, 282 cells equal; 2026-10: 3 sheets, 336 cells equal; same flows/monthly-timesheet.flow.json). `npm run check` exit 0 (390 unit tests).
+Privacy: a run loads only static assets (same origin, GET, no query, no body); markers placed in an xlsx file and in a csv file reach the output file and appear in no request. The csv input path, which the spike left open, now runs in Chromium (`registerFileHandle` on a `File`). A canary test leaks on purpose (query string, beacon, POST to another address, and a request from a Web Worker) and the audit finds each.
+Advisor consulted before ticking the last task of the phase. Its one open point was that the audit might not see worker requests, where the engine runs; checked: the worker leak is found, and a real run's log contains the worker's wasm request.
+Phase 1 done; the build is not. Gates `spike`, `test:e2e`, `test:ui-rules` and `test:db` have not been run in this phase, and `test:e2e`, `test:ui-rules` and `test:db` exit 1 by design until their tasks exist. STATUS stays IN PROGRESS.
+Next: Phase 2, T2.1, with an advisor plan review at its start.
 
 ### 2026-11-17 T1.19b Timesheet flow, part 2b: Summary sheet
 Changed: flows/monthly-timesheet.flow.json (70 steps, 77 connections; the Summary output is the first Output step), docs/DECISIONS.md (D33).

