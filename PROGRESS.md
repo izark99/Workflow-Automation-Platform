@@ -11,7 +11,7 @@ before it passes, except where a task says otherwise.
 - [x] T0.1 Scaffold the app (Vite, React, TypeScript strict, React Router, ESLint, Vitest, Playwright) and create every npm script named in `CLAUDE.md`. Scripts for later phases may fail with "not implemented" for now.
 - [x] T0.2 Script that generates the six benchmark files of SPEC section 8 into a temporary folder (not committed).
 - [x] T0.3a Benchmark page and worker: `/bench/` page, one module worker per run, SheetJS (whole-workbook) and DuckDB `read_csv` strategies, one group-by query, load and query time. Small-file Playwright spec (`npm run spike:smoke`).
-- [ ] T0.3b Spike runner behind `npm run spike`: generate files if missing, serve a production build, one fresh page per file, renderer memory sampled from Node (max RSS), tab-crash and timeout handling, raw results as JSON, files deleted in a `finally`. Exit 0 even when a run crashes.
+- [x] T0.3b Spike runner behind `npm run spike`: generate files if missing, serve a production build, one fresh page per file, renderer memory sampled from Node (max RSS), tab-crash and timeout handling, raw results as JSON, files deleted in a `finally`. Exit 0 even when a run crashes.
 - [ ] T0.4 Try at least two xlsx reading strategies for the large files (for example whole-workbook parse, and a row-streaming or chunked path). Write `docs/SPIKE_RESULTS.md` with the numbers and the chosen strategy.
 - [ ] T0.5 Implement the size guard: when a file is above the measured safe size, show the "save as csv" warning instead of loading.
 
@@ -95,6 +95,13 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T0.3b Spike runner
+Changed: scripts/spike.ts (`npm run spike`), scripts/lib/{spike-runner,proc-memory}.ts (+ 11 unit tests), vite.spike.config.ts, spike/crash-detection.spec.ts, docs/spike-raw.json (raw results of the full run).
+How it works: generates missing files, builds and serves the bench page, one fresh Chromium per run, peak renderer memory from /proc VmHWM via CDP renderer pids, crash/error/timeout recorded as a status, files and build output deleted in a `finally`, exit 1 only when no run finished.
+Full run, 9 runs, exit 0, about 5.5 min. SheetJS whole-sheet: xlsx 100k ok (16.9 s, 2.2 GB); xlsx 500k and 1M error "no sheet" after 11 s and 21 s (SheetJS returns no sheet, no exception, probably past the string limit; cause not yet confirmed); csv 100k ok (12.0 s, 2.0 GB); csv 500k ok (70.5 s, 9.3 GB); csv 1M ok (148 s, 10.2 GB). DuckDB read_csv: 100k 0.75 s / 379 MB; 500k 2.7 s / 672 MB; 1M 4.6 s / 1.1 GB. Group-by query 32 to 109 ms. No tab crash happened in the full run.
+Gates run: check PASS (22 unit tests); spike PASS (exit 0, 9 runs); spike:smoke crash-detection spec PASS; forced `--timeout-min=0.01` run recorded 3 timeouts, cleaned up, exit 1 as designed.
+Next: T0.4 (xlsx strategies for the large files; whole-workbook fails at 500k and 1M).
 
 ### 2026-11-17 T0.3a Benchmark page and worker (T0.3 split in two)
 Changed: bench/index.html, src/spike/{columns.ts,bench-worker.ts,bench-page.ts,bench-types.ts}, 6 unit tests, spike/bench-small.spec.ts, playwright.spike.config.ts, `npm run spike:smoke`. Added deps: xlsx 0.20.3 (SheetJS CDN tarball, newest on the CDN), @duckdb/duckdb-wasm 1.33.1-dev57.0, apache-arrow 17.0.0.
