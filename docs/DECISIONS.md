@@ -409,3 +409,20 @@ blank or mixed column in one month cannot change the types of another month.
   timesheet` compares a subset of sheets. The gate itself always compares the three sheets.
 - `dist-acceptance` is ignored by ESLint (the build output of the acceptance page made `npm run check` fail once the
   page had been built).
+
+## D32 Timesheet flow, part 2a: the OT_breaches sheet (T1.19a)
+
+- A valid OT row is a day inside the employment window, with a known attendance code that has an OT type, and an OT
+  value above 0 (rules R8 and R9). Three streams start from the valid rows:
+  DAY compares the hours of the row with the `day_limit_hours` of its OT type (reference table `ot_types`); WEEK
+  groups by employee and ISO week and compares with the `WEEK` row of `ot_limits`; MONTH groups by employee and
+  compares with the `MONTH` row of `ot_limits`. Hours equal to a limit are not a breach (strict `>`).
+- The ISO week label is `ISOYEAR-Www`, where the ISO year is the year of the Thursday of that week
+  (`YEAR(date - WEEKDAY(date, 2) + 4)`), so a week that spans New Year gets the right year. All days of a run are in the
+  month of the effective date, so a week only counts those days (rule R11). The month label is
+  `TEXT(EFFECTIVE_DATE(), "yyyy-mm")`.
+- A limit that is missing from the reference table stops the run (`onNoMatch: fail`) with a message that names the
+  row, instead of counting as "no limit". The names `WEEK` and `MONTH` in the flow are the period codes of the
+  reference table `ot_limits`, which the flow has to ask for.
+- Sort (rule R12): employee, then the level in the order DAY, WEEK, MONTH (a formula sort key), then the period text.
+- The sheet order of a workbook is the order of the Output steps in the flow file. T1.19b puts the Summary step first.

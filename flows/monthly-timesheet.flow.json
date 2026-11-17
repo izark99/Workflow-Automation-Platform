@@ -517,6 +517,379 @@
           "value"
         ]
       }
+    },
+    {
+      "id": "ot-ok",
+      "type": "formula_column",
+      "label": "OT row is valid",
+      "position": {
+        "x": 3900,
+        "y": 480
+      },
+      "settings": {
+        "name": "ot_ok",
+        "expression": "IF(AND([inside], NOT(ISBLANK([known_code])), NOT(ISBLANK([code_ot_type])), NOT(ISBLANK([ot_num])), [ot_num] > 0), TRUE, FALSE)"
+      }
+    },
+    {
+      "id": "ot-valid",
+      "type": "filter",
+      "label": "Keep valid OT rows",
+      "position": {
+        "x": 4160,
+        "y": 480
+      },
+      "settings": {
+        "condition": "[ot_ok]"
+      }
+    },
+    {
+      "id": "day-limit",
+      "type": "lookup_join",
+      "label": "Day limit of the OT type",
+      "position": {
+        "x": 4420,
+        "y": 480
+      },
+      "settings": {
+        "source": {
+          "kind": "reference",
+          "table": "ot_types"
+        },
+        "keys": [
+          {
+            "left": "code_ot_type",
+            "right": "ot_type"
+          }
+        ],
+        "bring": [
+          {
+            "column": "day_limit_hours",
+            "as": "limit_hours"
+          }
+        ],
+        "onNoMatch": "fail"
+      }
+    },
+    {
+      "id": "day-over",
+      "type": "filter",
+      "label": "Day hours above the limit",
+      "position": {
+        "x": 4680,
+        "y": 480
+      },
+      "settings": {
+        "condition": "[ot_num] > [limit_hours]"
+      }
+    },
+    {
+      "id": "day-hours",
+      "type": "formula_column",
+      "label": "OT hours",
+      "position": {
+        "x": 4940,
+        "y": 480
+      },
+      "settings": {
+        "name": "ot_hours",
+        "expression": "[ot_num]"
+      }
+    },
+    {
+      "id": "day-level",
+      "type": "formula_column",
+      "label": "Level",
+      "position": {
+        "x": 5200,
+        "y": 480
+      },
+      "settings": {
+        "name": "level",
+        "expression": "\"DAY\""
+      }
+    },
+    {
+      "id": "day-period",
+      "type": "formula_column",
+      "label": "Period",
+      "position": {
+        "x": 5460,
+        "y": 480
+      },
+      "settings": {
+        "name": "period",
+        "expression": "TEXT([date], \"yyyy-mm-dd\")"
+      }
+    },
+    {
+      "id": "day-type",
+      "type": "formula_column",
+      "label": "OT type",
+      "position": {
+        "x": 5720,
+        "y": 480
+      },
+      "settings": {
+        "name": "ot_type",
+        "expression": "[code_ot_type]"
+      }
+    },
+    {
+      "id": "week-label",
+      "type": "formula_column",
+      "label": "ISO week",
+      "position": {
+        "x": 4420,
+        "y": 640
+      },
+      "settings": {
+        "name": "week_label",
+        "expression": "YEAR([date] - WEEKDAY([date], 2) + 4) & \"-W\" & TEXT(ISOWEEKNUM([date]), \"00\")"
+      }
+    },
+    {
+      "id": "week-sum",
+      "type": "group_by",
+      "label": "OT hours per employee and week",
+      "position": {
+        "x": 4680,
+        "y": 640
+      },
+      "settings": {
+        "groupBy": [
+          "employee_id",
+          "week_label"
+        ],
+        "aggregations": [
+          {
+            "fn": "sum",
+            "column": "ot_num",
+            "as": "ot_hours"
+          }
+        ]
+      }
+    },
+    {
+      "id": "week-key",
+      "type": "formula_column",
+      "label": "Limit name",
+      "position": {
+        "x": 4940,
+        "y": 640
+      },
+      "settings": {
+        "name": "period_key",
+        "expression": "\"WEEK\""
+      }
+    },
+    {
+      "id": "week-limit",
+      "type": "lookup_join",
+      "label": "Week limit",
+      "position": {
+        "x": 5200,
+        "y": 640
+      },
+      "settings": {
+        "source": {
+          "kind": "reference",
+          "table": "ot_limits"
+        },
+        "keys": [
+          {
+            "left": "period_key",
+            "right": "period"
+          }
+        ],
+        "bring": [
+          {
+            "column": "limit_hours"
+          }
+        ],
+        "onNoMatch": "fail"
+      }
+    },
+    {
+      "id": "week-over",
+      "type": "filter",
+      "label": "Week hours above the limit",
+      "position": {
+        "x": 5460,
+        "y": 640
+      },
+      "settings": {
+        "condition": "[ot_hours] > [limit_hours]"
+      }
+    },
+    {
+      "id": "week-level",
+      "type": "formula_column",
+      "label": "Level",
+      "position": {
+        "x": 5720,
+        "y": 640
+      },
+      "settings": {
+        "name": "level",
+        "expression": "\"WEEK\""
+      }
+    },
+    {
+      "id": "week-period",
+      "type": "formula_column",
+      "label": "Period",
+      "position": {
+        "x": 5980,
+        "y": 640
+      },
+      "settings": {
+        "name": "period",
+        "expression": "[week_label]"
+      }
+    },
+    {
+      "id": "month-sum",
+      "type": "group_by",
+      "label": "OT hours per employee",
+      "position": {
+        "x": 4420,
+        "y": 800
+      },
+      "settings": {
+        "groupBy": [
+          "employee_id"
+        ],
+        "aggregations": [
+          {
+            "fn": "sum",
+            "column": "ot_num",
+            "as": "ot_hours"
+          }
+        ]
+      }
+    },
+    {
+      "id": "month-key",
+      "type": "formula_column",
+      "label": "Limit name",
+      "position": {
+        "x": 4680,
+        "y": 800
+      },
+      "settings": {
+        "name": "period_key",
+        "expression": "\"MONTH\""
+      }
+    },
+    {
+      "id": "month-limit",
+      "type": "lookup_join",
+      "label": "Month limit",
+      "position": {
+        "x": 4940,
+        "y": 800
+      },
+      "settings": {
+        "source": {
+          "kind": "reference",
+          "table": "ot_limits"
+        },
+        "keys": [
+          {
+            "left": "period_key",
+            "right": "period"
+          }
+        ],
+        "bring": [
+          {
+            "column": "limit_hours"
+          }
+        ],
+        "onNoMatch": "fail"
+      }
+    },
+    {
+      "id": "month-over",
+      "type": "filter",
+      "label": "Month hours above the limit",
+      "position": {
+        "x": 5200,
+        "y": 800
+      },
+      "settings": {
+        "condition": "[ot_hours] > [limit_hours]"
+      }
+    },
+    {
+      "id": "month-level",
+      "type": "formula_column",
+      "label": "Level",
+      "position": {
+        "x": 5460,
+        "y": 800
+      },
+      "settings": {
+        "name": "level",
+        "expression": "\"MONTH\""
+      }
+    },
+    {
+      "id": "month-period",
+      "type": "formula_column",
+      "label": "Period",
+      "position": {
+        "x": 5720,
+        "y": 800
+      },
+      "settings": {
+        "name": "period",
+        "expression": "TEXT(EFFECTIVE_DATE(), \"yyyy-mm\")"
+      }
+    },
+    {
+      "id": "breaches-all",
+      "type": "append",
+      "label": "All breaches",
+      "position": {
+        "x": 6240,
+        "y": 640
+      },
+      "settings": {
+        "match": "name"
+      }
+    },
+    {
+      "id": "out-breaches",
+      "type": "output",
+      "label": "OT_breaches sheet",
+      "position": {
+        "x": 6500,
+        "y": 640
+      },
+      "settings": {
+        "file": "Result",
+        "sheet": "OT_breaches",
+        "columns": [
+          "employee_id",
+          "level",
+          "period",
+          "ot_type",
+          "ot_hours",
+          "limit_hours"
+        ],
+        "sort": [
+          {
+            "column": "employee_id"
+          },
+          {
+            "expression": "IFS([level] = \"DAY\", 1, [level] = \"WEEK\", 2, TRUE, 3)"
+          },
+          {
+            "column": "period"
+          }
+        ]
+      }
     }
   ],
   "edges": [
@@ -652,6 +1025,118 @@
     {
       "source": "exceptions-all",
       "target": "out-exceptions"
+    },
+    {
+      "source": "inside",
+      "target": "ot-ok"
+    },
+    {
+      "source": "ot-ok",
+      "target": "ot-valid"
+    },
+    {
+      "source": "ot-valid",
+      "target": "day-limit",
+      "sourceHandle": "match",
+      "targetHandle": "left"
+    },
+    {
+      "source": "day-limit",
+      "target": "day-over"
+    },
+    {
+      "source": "day-over",
+      "target": "day-hours",
+      "sourceHandle": "match"
+    },
+    {
+      "source": "day-hours",
+      "target": "day-level"
+    },
+    {
+      "source": "day-level",
+      "target": "day-period"
+    },
+    {
+      "source": "day-period",
+      "target": "day-type"
+    },
+    {
+      "source": "ot-valid",
+      "target": "week-label",
+      "sourceHandle": "match"
+    },
+    {
+      "source": "week-label",
+      "target": "week-sum"
+    },
+    {
+      "source": "week-sum",
+      "target": "week-key"
+    },
+    {
+      "source": "week-key",
+      "target": "week-limit",
+      "targetHandle": "left"
+    },
+    {
+      "source": "week-limit",
+      "target": "week-over"
+    },
+    {
+      "source": "week-over",
+      "target": "week-level",
+      "sourceHandle": "match"
+    },
+    {
+      "source": "week-level",
+      "target": "week-period"
+    },
+    {
+      "source": "ot-valid",
+      "target": "month-sum",
+      "sourceHandle": "match"
+    },
+    {
+      "source": "month-sum",
+      "target": "month-key"
+    },
+    {
+      "source": "month-key",
+      "target": "month-limit",
+      "targetHandle": "left"
+    },
+    {
+      "source": "month-limit",
+      "target": "month-over"
+    },
+    {
+      "source": "month-over",
+      "target": "month-level",
+      "sourceHandle": "match"
+    },
+    {
+      "source": "month-level",
+      "target": "month-period"
+    },
+    {
+      "source": "day-type",
+      "target": "breaches-all",
+      "targetHandle": "in1"
+    },
+    {
+      "source": "week-period",
+      "target": "breaches-all",
+      "targetHandle": "in2"
+    },
+    {
+      "source": "month-period",
+      "target": "breaches-all",
+      "targetHandle": "in3"
+    },
+    {
+      "source": "breaches-all",
+      "target": "out-breaches"
     }
   ]
 }

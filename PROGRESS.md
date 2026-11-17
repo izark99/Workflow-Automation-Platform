@@ -39,7 +39,8 @@ before it passes, except where a task says otherwise.
 - [x] T1.16 Effective date: resolve flow version and reference table versions, stop with a clear message when no version covers the date.
 - [x] T1.17 Acceptance harness: Playwright test that runs a flow file on a dataset folder and compares workbooks cell by cell. Prove it fails on a wrong workbook.
 - [x] T1.18 `flows/monthly-timesheet.flow.json`, part 1: reading, unpivot, dates, employment window, Exceptions sheet (rules R1 to R9).
-- [ ] T1.19 `flows/monthly-timesheet.flow.json`, part 2: Summary sheet (R10) and OT_breaches sheet (R11), sort order (R12).
+- [x] T1.19a `flows/monthly-timesheet.flow.json`, part 2a: OT_breaches sheet (R11), sort order (R12).
+- [ ] T1.19b `flows/monthly-timesheet.flow.json`, part 2b: Summary sheet (R10, needs the breach count of T1.19a), sort order (R12). The Summary output step goes first in the flow, so that the sheet is first in the workbook.
 - [ ] T1.20 Both datasets pass `npm run test:acceptance`. Add the test that no network request carries file content.
 
 ## Phase 2: Canvas and screens (gates G3, G4)
@@ -99,6 +100,14 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T1.19a Timesheet flow, part 2a: OT_breaches sheet
+Changed: flows/monthly-timesheet.flow.json (now 53 steps, 56 connections), docs/DECISIONS.md (D32). PROGRESS: T1.19 split into T1.19a (OT_breaches) and T1.19b (Summary), because the Summary needs the breach count.
+Result: with ACCEPTANCE_SHEETS=Exceptions,OT_breaches both sheets equal the expected sheets cell by cell for both datasets with the same flow file: September 102 cells (4 breaches), October 156 cells (5 breaches). The October variant exercises the ISO week 2026-W42 and two DAY breaches for one employee.
+How: valid OT rows, then DAY, WEEK and MONTH streams against limits from the reference tables, Append, Output with a formula sort key for the level order.
+Gates run: no change under src/. check PASS (380 unit tests, run this turn). test:acceptance: the two timesheet specs still fail while the Summary sheet is missing (expected at this stage).
+Search of src/ and flows/ for the fixture employee IDs: no match.
+Next: T1.19b (Summary sheet).
 
 ### 2026-11-17 T1.18 Timesheet flow, part 1 (reading, unpivot, dates, employment window, Exceptions sheet)
 Changed: flows/monthly-timesheet.flow.json (30 steps, 31 connections), acceptance/datasets.ts (`ACCEPTANCE_SHEETS` to compare a subset while the flow is built in parts; the default is still all three sheets), eslint.config.js (ignore `dist-acceptance`), docs/DECISIONS.md (D31).
