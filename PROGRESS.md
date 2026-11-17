@@ -22,7 +22,7 @@ before it passes, except where a task says otherwise.
 - [x] T1.2 Engine core: DuckDB-WASM worker, load input tables, topological order, one view per node, preview of 100 rows, cancel.
 - [x] T1.3 Input file node: sheet, header row, rows to skip, fill down merged cells, row number column, csv. Call `checkFileSize` (`src/engine/size-guard.ts`) before reading and surface `strings.xlsxTooLarge`; read xlsx with `src/engine/xlsx-stream/` and csv with DuckDB `read_csv` (decisions D9, D10).
 - [x] T1.4 Column mapping node.
-- [ ] T1.5 Filter node with a second output for the rows that do not match. Depends on T1.6b (the condition is a formula); do it after T1.6b.
+- [x] T1.5 Filter node with a second output for the rows that do not match. Depends on T1.6b (the condition is a formula); do it after T1.6b.
 - [x] T1.6a Formula parser: tokens, Excel precedence, column references in square brackets, strings, numbers, function calls, error positions (no SQL yet).
 - [x] T1.6b Formula compiler core: typed AST to DuckDB SQL for literals, column references, operators and blank rules, plus a function registry with arity and argument types.
 - [ ] T1.7 Formula functions, logic and math groups of Tier 1, each with unit tests.
@@ -97,6 +97,13 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T1.5 Filter node
+Changed: src/engine/nodes/filter.ts, src/engine/formula/node-formula.ts (`compileStepFormula`: formula mistakes become `EngineError` `invalid_formula` with step id and character), error code `invalid_formula`, filter.test.ts (9 tests), registry.
+How: setting `condition` (a formula). `match` is `cond IS TRUE`, `nomatch` is `cond IS NOT TRUE`, so a blank condition lands in nomatch and the two outputs always add up to the input; input order and columns kept. A non-boolean condition is refused with a hint.
+Note: no Tier 1 function exists yet, so the tests use operators only; function conditions are covered when T1.7 to T1.9 land.
+Gates run: check PASS (166 unit tests).
+Next: T1.7 (logic and math functions).
 
 ### 2026-11-17 T1.6b Formula compiler core
 Changed: src/engine/formula/{compile,functions}.ts, compile.test.ts (19 tests, SQL run on real DuckDB), `numberToTextSql` in sql.ts (shared with Column mapping).

@@ -44,6 +44,7 @@ export type EngineErrorCode =
   | 'missing_input_table'
   | 'missing_reference_table'
   | 'invalid_settings'
+  | 'invalid_formula'
   | 'file_too_large'
   | 'file_read_failed'
   | 'unknown_column'

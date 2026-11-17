@@ -1,4 +1,5 @@
 import { columnMappingNode } from './column-mapping';
+import { filterNode } from './filter';
 import { inputFileNode } from './input-file';
 import type { NodeRegistry } from './types';
 
@@ -6,4 +7,5 @@ import type { NodeRegistry } from './types';
 export const defaultRegistry: NodeRegistry = {
   input_file: inputFileNode,
   column_mapping: columnMappingNode,
+  filter: filterNode,
 };
