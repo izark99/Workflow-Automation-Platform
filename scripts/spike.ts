@@ -8,28 +8,13 @@ import { chromium, type Page } from '@playwright/test';
 import { build, preview } from 'vite';
 import { generateBenchFiles } from './generate-bench-files.ts';
 import { startMemorySampler } from './lib/proc-memory.ts';
-import { classifyOutcome, parseArgs, planRuns, type PlannedRun, type Status } from './lib/spike-runner.ts';
+import { renderSpikeReport } from './lib/spike-report.ts';
+import { classifyOutcome, parseArgs, planRuns, type PlannedRun, type RawResults, type RunRecord } from './lib/spike-runner.ts';
 
 const DATA_DIR = 'bench-data';
 const RAW_RESULTS = 'docs/spike-raw.json';
+const REPORT = 'docs/SPIKE_RESULTS.md';
 const PORT = 4173;
-
-export interface RunRecord {
-  file: string;
-  format: 'xlsx' | 'csv';
-  totalRows: number;
-  fileMb: number;
-  strategy: string;
-  status: Status;
-  loadMs?: number;
-  queryMs?: number;
-  wallMs: number;
-  peakRssMb: number;
-  rows?: number;
-  rowsMatch?: boolean;
-  groups?: number;
-  error?: string;
-}
 
 async function runOne(run: PlannedRun, timeoutMs: number): Promise<RunRecord> {
   const path = join(DATA_DIR, run.name);
@@ -113,15 +98,15 @@ async function main(): Promise<number> {
           (rec.error ? `, error: ${rec.error.slice(0, 120)}` : ''),
       );
     }
-    await mkdir('docs', { recursive: true });
-    await writeFile(
-      RAW_RESULTS,
-      JSON.stringify(
-        { browser: browserVersion, node: process.version, cpus: cpus().length, ramGb: Math.round(totalmem() / 2 ** 30), runs: records },
-        null,
-        2,
-      ) + '\n',
-    );
+    const raw: RawResults = { browser: browserVersion, node: process.version, cpus: cpus().length, ramGb: Math.round(totalmem() / 2 ** 30), runs: records };
+    if (args.write) {
+      await mkdir('docs', { recursive: true });
+      await writeFile(RAW_RESULTS, JSON.stringify(raw, null, 2) + '\n');
+      await writeFile(REPORT, renderSpikeReport(raw));
+      console.log(`wrote ${RAW_RESULTS} and ${REPORT}`);
+    } else {
+      console.log('Partial run: docs were not written. Add --write to write them.');
+    }
   } finally {
     await server?.close();
     await rm('dist-spike', { recursive: true, force: true });

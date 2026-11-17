@@ -7,6 +7,7 @@ import duckdbWasmMvp from '@duckdb/duckdb-wasm/dist/duckdb-mvp.wasm?url';
 import duckdbWorkerMvp from '@duckdb/duckdb-wasm/dist/duckdb-browser-mvp.worker.js?url';
 import duckdbWasmEh from '@duckdb/duckdb-wasm/dist/duckdb-eh.wasm?url';
 import duckdbWorkerEh from '@duckdb/duckdb-wasm/dist/duckdb-browser-eh.worker.js?url';
+import { readXlsx } from '../engine/xlsx-stream';
 import { columnKinds, rowsToColumns, sanitizeHeader, type ColumnKind } from './columns';
 import { GROUP_QUERY, type BenchRequest, type BenchResponse } from './bench-types';
 
@@ -65,6 +66,39 @@ async function loadSheetJsWhole(db: duckdb.AsyncDuckDB, conn: duckdb.AsyncDuckDB
   return header.length;
 }
 
+/** Strategy C (xlsx only): stream the rows out of the zip and insert Arrow chunks as they arrive. */
+async function loadXlsxStream(conn: duckdb.AsyncDuckDBConnection, file: File): Promise<number> {
+  let header: string[] | undefined;
+  let kinds: ColumnKind[] | undefined;
+  let batch: unknown[][] = [];
+  let created = false;
+  const flush = async () => {
+    if (!header || !kinds || batch.length === 0) return;
+    const cols = rowsToColumns(batch, kinds);
+    const data: Record<string, arrow.Vector> = {};
+    header.forEach((name, i) => {
+      data[name] = toVector(cols[i]!, kinds![i]!);
+    });
+    await conn.insertArrowTable(new arrow.Table(data), { name: 'bench', create: !created });
+    created = true;
+    batch = [];
+  };
+  for await (const { cells } of readXlsx(file)) {
+    if (cells.length === 0) continue;
+    if (!header) {
+      header = sanitizeHeader(Array.from(cells));
+      continue;
+    }
+    kinds ??= columnKinds(Array.from(cells, (c) => c));
+    batch.push(cells);
+    if (batch.length >= CHUNK_ROWS) await flush();
+  }
+  await flush();
+  if (!header) throw new Error('The sheet is empty. Check the file and try again.');
+  if (!created) throw new Error('The sheet has a header but no data rows.');
+  return header.length;
+}
+
 /** Strategy B (csv only): let DuckDB read the file handle directly. */
 async function loadDuckDbCsv(db: duckdb.AsyncDuckDB, conn: duckdb.AsyncDuckDBConnection, file: File): Promise<number> {
   if (!file.name.toLowerCase().endsWith('.csv')) throw new Error('duckdb-csv reads csv files only.');
@@ -83,7 +117,11 @@ async function run({ file, strategy }: BenchRequest): Promise<BenchResponse> {
     const conn = await db.connect();
     const t0 = performance.now();
     const columns =
-      strategy === 'duckdb-csv' ? await loadDuckDbCsv(db, conn, file) : await loadSheetJsWhole(db, conn, file);
+      strategy === 'duckdb-csv'
+        ? await loadDuckDbCsv(db, conn, file)
+        : strategy === 'xlsx-stream'
+          ? await loadXlsxStream(conn, file)
+          : await loadSheetJsWhole(db, conn, file);
     const loadMs = performance.now() - t0;
     const rows = Number((await conn.query('SELECT count(*)::INTEGER AS c FROM bench')).getChildAt(0)?.get(0));
     const t1 = performance.now();

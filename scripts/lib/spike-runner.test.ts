@@ -6,6 +6,7 @@ describe('parseArgs', () => {
     const a = parseArgs([]);
     expect(a.sizes).toBeUndefined();
     expect(a.keepFiles).toBe(false);
+    expect(a.write).toBe(true);
     expect(a.timeoutMin).toBe(8);
   });
   it('reads sizes, timeout and keep flag', () => {
@@ -13,6 +14,10 @@ describe('parseArgs', () => {
     expect(a.sizes).toEqual([100000, 500000]);
     expect(a.timeoutMin).toBe(2);
     expect(a.keepFiles).toBe(true);
+  });
+  it('does not write docs for a partial run unless asked', () => {
+    expect(parseArgs(['--sizes=100000']).write).toBe(false);
+    expect(parseArgs(['--sizes=100000', '--write']).write).toBe(true);
   });
   it('rejects an unknown flag with a message that says what to do', () => {
     expect(() => parseArgs(['--nope'])).toThrow(/Unknown option --nope.*--sizes/);
@@ -23,13 +28,14 @@ describe('parseArgs', () => {
 });
 
 describe('planRuns', () => {
-  it('plans sheetjs-whole for every file and duckdb-csv for csv only', () => {
+  it('plans two strategies per xlsx file and two per csv file', () => {
     const runs = planRuns();
     expect(runs.filter((r) => r.format === 'xlsx').map((r) => r.strategy)).toEqual([
-      'sheetjs-whole', 'sheetjs-whole', 'sheetjs-whole',
+      'sheetjs-whole', 'xlsx-stream', 'sheetjs-whole', 'xlsx-stream', 'sheetjs-whole', 'xlsx-stream',
     ]);
     expect(runs.filter((r) => r.format === 'csv' && r.strategy === 'duckdb-csv')).toHaveLength(3);
-    expect(runs).toHaveLength(9);
+    expect(runs.filter((r) => r.format === 'csv' && r.strategy === 'sheetjs-whole')).toHaveLength(3);
+    expect(runs).toHaveLength(12);
   });
   it('filters by size', () => {
     expect(planRuns([100_000]).every((r) => r.totalRows === 100_000)).toBe(true);

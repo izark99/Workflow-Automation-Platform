@@ -1,4 +1,4 @@
-export type Strategy = 'sheetjs-whole' | 'duckdb-csv';
+export type Strategy = 'sheetjs-whole' | 'xlsx-stream' | 'duckdb-csv';
 
 export interface BenchRequest {
   file: File;

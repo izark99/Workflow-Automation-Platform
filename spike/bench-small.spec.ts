@@ -28,6 +28,7 @@ async function runBench(page: import('@playwright/test').Page, file: string, str
 
 for (const [file, strategy] of [
   ['small.xlsx', 'sheetjs-whole'],
+  ['small.xlsx', 'xlsx-stream'],
   ['small.csv', 'sheetjs-whole'],
   ['small.csv', 'duckdb-csv'],
 ] as const) {
@@ -41,6 +42,12 @@ for (const [file, strategy] of [
     expect(r.loadMs).toBeGreaterThan(0);
   });
 }
+
+test('xlsx-stream on a csv file reports an error that says what to do', async ({ page }) => {
+  const r = await runBench(page, 'small.csv', 'xlsx-stream');
+  expect(r.ok).toBe(false);
+  expect(r.error).toMatch(/not a valid \.xlsx.*save/i);
+});
 
 test('duckdb-csv on an xlsx file reports an error that says what to do', async ({ page }) => {
   const r = await runBench(page, 'small.xlsx', 'duckdb-csv');
