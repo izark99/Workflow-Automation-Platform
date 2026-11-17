@@ -263,3 +263,8 @@ export function upstreamOf(def: FlowDefinition, ids: string[]): FlowDefinition {
   }
   return { ...def, nodes: def.nodes.filter((n) => keep.has(n.id)), edges: edges.filter((e) => keep.has(e.source) && keep.has(e.target)) };
 }
+
+/** Replaces the settings of one step. The settings are what the node module of the step type reads. */
+export function updateSettings(def: FlowDefinition, id: string, settings: Record<string, unknown>): FlowDefinition {
+  return { ...def, nodes: def.nodes.map((n) => (n.id === id ? { ...n, settings } : n)) };
+}

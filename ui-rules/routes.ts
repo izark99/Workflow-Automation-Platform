@@ -44,4 +44,16 @@ export const ROUTES: RuleRoute[] = [
       await panel.getByRole('button', { name: 'Preview first rows' }).waitFor();
     },
   },
+  {
+    path: '/flows/flow-timesheet/versions/4',
+    name: '/flows/flow-timesheet/versions/4 (Configure tab)',
+    sidebar: false,
+    // The Configure tab of an Input file step: text fields, a checkbox and hints.
+    prepare: async (page) => {
+      await page.locator('.react-flow__node').first().click();
+      const panel = page.getByRole('complementary', { name: 'Step settings' });
+      await panel.getByRole('tab', { name: 'Configure' }).click();
+      await panel.getByRole('textbox', { name: 'Header row' }).waitFor();
+    },
+  },
 ];

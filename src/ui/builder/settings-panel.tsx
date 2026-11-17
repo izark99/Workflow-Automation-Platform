@@ -4,7 +4,8 @@ import { NODE_PORTS } from '../../engine/flow/types';
 import type { RefTable } from '../../engine/versions';
 import { Button, Dropdown, ErrorState, Field, Tabs } from '../components';
 import { settingsStrings as t } from '../strings';
-import { currentSource, deleteSteps, inputHandlesOf, inputTitle, renameStep, setInput, sourceOptions, STEP_CATALOG, stepNumbers } from './graph';
+import { currentSource, deleteSteps, updateSettings, inputHandlesOf, inputTitle, renameStep, setInput, sourceOptions, STEP_CATALOG, stepNumbers } from './graph';
+import { FORMS } from './forms';
 import { StepPreview } from './step-preview';
 import styles from './settings-panel.module.css';
 
@@ -59,7 +60,7 @@ export function SettingsPanel({ definition, step, onChange, onDeleted, readOnly,
           {tab === 'setup' ? (
             <SetupTab key={step.id} definition={definition} step={step} onChange={onChange} readOnly={readOnly} error={error} setError={setError} />
           ) : null}
-          {tab === 'configure' ? <p className={styles.hint}>{t.noForm}</p> : null}
+          {tab === 'configure' ? <ConfigureTab step={step} definition={definition} onChange={onChange} readOnly={readOnly} /> : null}
           {tab === 'test' ? <StepPreview key={step.id} definition={definition} step={step} files={testFiles} onFile={onTestFile} refTables={refTables} /> : null}
         </div>
       </Tabs>
@@ -124,4 +125,10 @@ function SetupTab({ definition, step, onChange, readOnly, error, setError }: { d
       {error ? <ErrorState what={t.connectFailed} next={error} /> : null}
     </>
   );
+}
+
+function ConfigureTab({ step, definition, onChange, readOnly }: { step: FlowNode; definition: FlowDefinition; onChange: (d: FlowDefinition) => void; readOnly: boolean }) {
+  const Form = FORMS[step.type];
+  if (!Form) return <p className={styles.hint}>{t.noForm}</p>;
+  return <Form key={step.id} step={step} definition={definition} readOnly={readOnly} onSettings={(settings) => onChange(updateSettings(definition, step.id, settings))} />;
 }

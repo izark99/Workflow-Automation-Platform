@@ -1,5 +1,5 @@
 import { useId } from 'react';
-import type { InputHTMLAttributes } from 'react';
+import type { InputHTMLAttributes, TextareaHTMLAttributes } from 'react';
 import { Icon } from './icons';
 import styles from './field.module.css';
 
@@ -45,5 +45,43 @@ export function SearchField({ label, ...rest }: TextProps & { label: string }) {
       <Icon name="search" />
       <input {...rest} type="text" className={styles.searchInput} aria-label={label} />
     </label>
+  );
+}
+
+export interface TextAreaFieldProps extends Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, 'className' | 'style' | 'id'> {
+  label: string;
+  hint?: string;
+  /** What failed and what to do next. */
+  error?: string;
+  /** A positive message, announced politely (for example "Formula is valid"). */
+  status?: string;
+  mono?: boolean;
+}
+
+/** A labelled multi-line text field. It cannot be resized by the user. */
+export function TextAreaField({ label, hint, error, status, mono = false, rows = 4, ...rest }: TextAreaFieldProps) {
+  const id = useId();
+  const noteId = `${id}-note`;
+  const describedBy = hint || error || status ? noteId : undefined;
+  return (
+    <div>
+      <label className={styles.label} htmlFor={id}>
+        {label}
+        <textarea {...rest} id={id} rows={rows} className={`${styles.textarea} ${mono ? styles.mono : ''}`} aria-invalid={error ? 'true' : undefined} aria-describedby={describedBy} />
+      </label>
+      <span id={noteId}>
+        {hint ? <span className={styles.hint}>{hint}</span> : null}
+        {error ? (
+          <span className={styles.error} role="alert" style={{ display: 'block' }}>
+            {error}
+          </span>
+        ) : null}
+        {status && !error ? (
+          <span className={styles.ok} role="status" style={{ display: 'block' }}>
+            {status}
+          </span>
+        ) : null}
+      </span>
+    </div>
   );
 }

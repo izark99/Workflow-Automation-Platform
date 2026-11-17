@@ -139,3 +139,25 @@ export const previewStrings = {
   output: 'Output of the step',
   tooLarge: 'The file is too large to preview',
 };
+
+export const formStrings = {
+  input: {
+    key: 'File name on the run screen',
+    keyHint: 'The run screen asks for a file under this name.',
+    sheet: 'Sheet name',
+    sheetHint: 'Leave empty to read the first sheet. A csv file has no sheets.',
+    headerRow: 'Header row',
+    headerRowHint: 'The row that holds the column names. The first row is 1.',
+    skipRows: 'Rows to skip after the header',
+    skipRowsHint: 'For example a units row under the header.',
+    fillDown: 'Fill down these columns',
+    fillDownHint: 'Column names separated by commas. Use it for merged cells: an empty cell takes the value above it.',
+    addRowNumber: 'Add a row number column',
+    rowNumberColumn: 'Row number column name',
+  },
+  filter: {
+    condition: 'Condition',
+    conditionHint: 'A formula that gives true or false, for example [OT hours] > 4. Rows where it is true go to Match. All other rows go to No match.',
+    valid: 'The formula is written correctly. Preview the step to check the column names and the result type.',
+  },
+};

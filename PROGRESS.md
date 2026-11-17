@@ -56,7 +56,8 @@ before it passes, except where a task says otherwise.
 - [x] T2.9 Builder, part 1: canvas with React Flow, step cards, add by drag from the step list, connect, select, delete, zoom controls.
 - [x] T2.10a Builder, part 2a: settings panel shell (380 px) with Setup, Configure and Test tabs; Setup has the step name, "Input from" for each input (the keyboard way to connect, open point of T2.9) and Delete step.
 - [x] T2.10b Builder, part 2b: step preview. Test tab runs the steps upstream of the selected step in the browser on test files chosen by the user, and shows the first 100 rows in a table, with loading, error and empty states.
-- [ ] T2.11 Settings forms: Input file, Column mapping (with paste from Excel), Filter.
+- [x] T2.11a Settings forms, part 1: the Configure tab renders the form of the step type; forms for Input file (name, sheet, header row, rows to skip, fill down, row number column) and Filter (condition formula with syntax check).
+- [ ] T2.11b Settings form: Column mapping, a grid of one row per source column (keep, new name, type) that accepts a paste from Excel and can load the source columns from a test file.
 - [ ] T2.12 Settings forms: Formula column with editor, function list, validation message.
 - [ ] T2.13 Settings forms: Lookup / Join, Group by, Unpivot, Pivot.
 - [ ] T2.14 Settings forms: Append, Output, SQL.
@@ -101,6 +102,13 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T2.11a Settings forms, part 1: Configure tab, Input file, Filter (T2.11 split into T2.11a and T2.11b)
+Changed: src/ui/builder/forms/{types,index,input-file-logic,input-file-form,filter-form,formula-check}.ts(x), forms.test.ts (11 tests), `TextAreaField` component, `updateSettings`, Configure tab in the settings panel, `formStrings`, e2e/forms.spec.ts (7 tests), ui-rules Configure tab state, docs/DECISIONS.md (D42). PROGRESS: T2.11 split into T2.11a and T2.11b (Column mapping grid).
+How: a registry of forms by step type; Input file form (name, sheet, header row, rows to skip, fill down, row number column) saves only a fully valid form and says what to do for each bad field; Filter form saves the condition as typed and checks its syntax with the engine's parser (position and reason).
+Checked by effect in the browser: header row and rows to skip change a real preview; fill down fills empty cells; the row number column appears; the Filter condition splits a real preview into Match and No match; a condition that is not true or false gives the engine's message; two Input file steps cannot share a name; forms are read-only for a published version.
+Gates run: check PASS (516 tests); test:e2e PASS (58 tests), test:ui-rules PASS (136 tests: 68 per width, 10 route states), test:acceptance PASS (7 tests).
+Next: T2.11b (Column mapping form with paste from Excel).
 
 ### 2026-11-17 T2.10b Builder, part 2b: step preview
 Changed: src/ui/builder/{preview-logic.ts,preview-runner.ts,step-preview.tsx,step-preview.module.css,preview-logic.test.ts (14 tests)}, graph.ts (`defaultSettings`, `upstreamOf`), settings panel Test tab, builder screen (test files, reference tables), `previewStrings`, e2e/preview.spec.ts (8 tests), ui-rules (Test tab state, route `name`), docs/DECISIONS.md (D41).

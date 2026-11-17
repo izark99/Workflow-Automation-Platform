@@ -28,7 +28,7 @@ test('a selected step shows its number, name and description, and the tabs Setup
   await expect(tabs).toHaveText(['Setup', 'Configure', 'Test']);
   await expect(panel(page).getByRole('tab', { name: 'Setup' })).toHaveAttribute('aria-selected', 'true');
   await panel(page).getByRole('tab', { name: 'Configure' }).click();
-  await expect(panel(page).getByRole('tabpanel')).toContainText('settings form');
+  await expect(panel(page).getByRole('textbox', { name: 'Condition' })).toBeVisible();
   await panel(page).getByRole('tab', { name: 'Test' }).click();
   await expect(panel(page).getByRole('button', { name: 'Preview first rows' })).toBeVisible();
   await expect(panel(page).getByRole('group', { name: 'Output of the step' })).toBeVisible();
