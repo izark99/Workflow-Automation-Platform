@@ -168,3 +168,46 @@ export function prepareRun(input: {
   }
   return { definition: flow.definition, refTables, resolved: { flow: flow.versionNo, refTables: resolvedTables } };
 }
+
+const DAY_MS = 86_400_000;
+const shiftDay = (iso: string, days: number): string => new Date(Date.parse(`${iso}T00:00:00Z`) + days * DAY_MS).toISOString().slice(0, 10);
+
+/** The day before an ISO date (`2026-12-31` for `2027-01-01`). */
+export const dayBefore = (iso: string): string => shiftDay(iso, -1);
+
+/** The day after an ISO date. */
+export const dayAfter = (iso: string): string => shiftDay(iso, 1);
+
+export type PublishPlan =
+  | {
+      ok: true;
+      /** The previous open-ended published version that ends the day before this one starts (SPEC section 4, rule 6). */
+      ends?: { versionNo: number; validTo: string };
+    }
+  | { ok: false; kind: 'not_found' | 'already_published' | 'overlap'; message: string };
+
+/**
+ * What publishing a draft would do, without doing it: which published version it ends, or why it cannot be published
+ * (a version that is not there, one already published, a range that would overlap another published version).
+ * `what` names the object in messages, for example `flow "Monthly timesheet"`.
+ */
+export function planPublish(versions: (VersionRange & { status: 'draft' | 'published' })[], versionNo: number, what: string): PublishPlan {
+  const v = versions.find((x) => x.versionNo === versionNo);
+  if (!v) return { ok: false, kind: 'not_found', message: `Version v${versionNo} of ${what} does not exist.` };
+  if (v.status === 'published') return { ok: false, kind: 'already_published', message: `v${versionNo} is already published.` };
+  const trial = versions.map((x) => ({ ...x }));
+  const target = trial.find((x) => x.versionNo === versionNo)!;
+  target.status = 'published';
+  const open = trial.find((x) => x.status === 'published' && x.versionNo !== versionNo && x.validTo === null && x.validFrom < target.validFrom);
+  if (open) open.validTo = dayBefore(target.validFrom);
+  const pairs = findOverlaps(trial.filter((x) => x.status === 'published'));
+  if (pairs.length > 0) {
+    const [a, b] = pairs[0]!;
+    return {
+      ok: false,
+      kind: 'overlap',
+      message: `Publishing v${versionNo} of ${what} would overlap v${a === versionNo ? b : a}. Change the valid-from or valid-to date so the ranges do not share a day.`,
+    };
+  }
+  return { ok: true, ends: open ? { versionNo: open.versionNo, validTo: open.validTo as string } : undefined };
+}

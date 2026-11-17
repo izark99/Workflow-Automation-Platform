@@ -1,4 +1,4 @@
-import { findOverlaps, formatDate, isIsoDate } from '../engine/versions';
+import { formatDate, isIsoDate, planPublish } from '../engine/versions';
 import type { VersionRange } from '../engine/versions';
 import { KEEP_DELETED_DAYS, MAX_REF_ROWS, StoreError } from './types';
 import type {
@@ -51,7 +51,6 @@ export interface LocalStoreOptions {
 }
 
 const DAY = 86_400_000;
-const dayBefore = (iso: string): string => new Date(Date.parse(`${iso}T00:00:00Z`) - DAY).toISOString().slice(0, 10);
 
 const fail = (code: ConstructorParameters<typeof StoreError>[0], message: string): never => {
   throw new StoreError(code, message);
@@ -390,18 +389,8 @@ function checkRange(from: string, to: string | null): void {
  * one starts, and the published versions must not overlap. Nothing changes when the check fails.
  */
 function publish<T extends VersionRange & { status: 'draft' | 'published' }>(versions: T[], versionNo: number, what: string): void {
-  const v = versions.find((x) => x.versionNo === versionNo) ?? fail('not_found', `Version v${versionNo} of ${what} does not exist.`);
-  if (v.status === 'published') fail('conflict', `v${versionNo} is already published.`);
-  const trial = structuredClone(versions);
-  const target = trial.find((x) => x.versionNo === versionNo)!;
-  target.status = 'published';
-  const open = trial.find((x) => x.status === 'published' && x.versionNo !== versionNo && x.validTo === null && x.validFrom < target.validFrom);
-  if (open) open.validTo = dayBefore(target.validFrom);
-  const pairs = findOverlaps(trial.filter((x) => x.status === 'published'));
-  if (pairs.length > 0) {
-    const [a, b] = pairs[0]!;
-    fail('conflict', `Publishing v${versionNo} of ${what} would overlap v${a === versionNo ? b : a}. Change the valid-from or valid-to date so the ranges do not share a day.`);
-  }
-  v.status = 'published';
-  if (open) versions.find((x) => x.versionNo === open.versionNo)!.validTo = open.validTo;
+  const plan = planPublish(versions, versionNo, what);
+  if (!plan.ok) return fail(plan.kind === 'not_found' ? 'not_found' : 'conflict', plan.message);
+  versions.find((x) => x.versionNo === versionNo)!.status = 'published';
+  if (plan.ends) versions.find((x) => x.versionNo === plan.ends!.versionNo)!.validTo = plan.ends.validTo;
 }

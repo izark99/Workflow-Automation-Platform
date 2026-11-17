@@ -188,4 +188,33 @@ export const ROUTES: RuleRoute[] = [
       await panel.getByRole('textbox', { name: 'SQL query' }).fill('SELECT * FROM in1');
     },
   },
+  {
+    path: '/flows/flow-timesheet/versions/3',
+    name: '/flows/flow-timesheet/versions/3 (published, read-only notice)',
+    sidebar: false,
+    // A published version: the version dropdown, the notice with its button, no Save draft or Publish.
+    prepare: async (page) => {
+      await page.getByRole('button', { name: 'New version from this' }).waitFor();
+    },
+  },
+  {
+    path: '/flows/flow-timesheet/versions/4',
+    name: '/flows/flow-timesheet/versions/4 (publish dialog)',
+    sidebar: false,
+    // The confirm dialog that says which version the publish ends.
+    prepare: async (page) => {
+      await page.getByRole('banner').getByRole('button', { name: 'Publish' }).click();
+      await page.getByRole('dialog', { name: 'Publish v4?' }).waitFor();
+    },
+  },
+  {
+    path: '/flows/flow-timesheet/versions/3',
+    name: '/flows/flow-timesheet/versions/3 (new version dialog)',
+    sidebar: false,
+    // The dialog with the date picker for the start of the new version.
+    prepare: async (page) => {
+      await page.getByRole('button', { name: 'New version from this' }).click();
+      await page.getByRole('dialog', { name: 'New version from v3' }).waitFor();
+    },
+  },
 ];

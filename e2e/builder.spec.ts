@@ -34,7 +34,8 @@ test('the layout follows the design: header bar 64 px, step list 184 px, grouped
   for (const group of ['Files', 'Shape', 'Combine', 'Advanced']) await expect(list.getByRole('group', { name: group })).toHaveCount(1);
   await expect(list.getByRole('button')).toHaveCount(11);
   expect(Math.round((await list.getByRole('button').first().boundingBox())!.height)).toBe(36);
-  await expect(page.getByRole('link', { name: 'Run' })).toBeVisible();
+  // The seed flow of this test has only a draft, so Run is off until a version is published (T2.15).
+  await expect(page.getByRole('button', { name: 'Run' })).toBeDisabled();
 });
 
 test('a step is added with the keyboard or a click, as a 240 x 56 card with a number, a name and a type', async ({ page }) => {

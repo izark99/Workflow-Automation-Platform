@@ -62,7 +62,7 @@ before it passes, except where a task says otherwise.
 - [x] T2.13a Settings forms, part 3: Lookup / Join (source, key pairs, brought columns, no-match behaviour) and Group by (group columns, aggregations), with a shared column picker.
 - [x] T2.13b Settings forms, part 4: Unpivot (keep and unpivot columns, name and value columns, skip blanks) and Pivot (row keys, column source, value, aggregation, column list from the data or a reference table, fill value, name prefix and suffix, name case).
 - [x] T2.14 Settings forms: Append, Output, SQL.
-- [ ] T2.15 Builder, part 3: version dropdown, save draft, publish, read-only mode for published versions.
+- [x] T2.15 Builder, part 3: version dropdown, save draft, publish, read-only mode for published versions.
 - [ ] T2.16 Run screen: effective date, resolved versions, file inputs, progress, result tabs, download, error state. A file above the size limit shows `strings.xlsxTooLarge` instead of starting a run; the e2e test uses a sparse file just over `MAX_SAFE_XLSX_BYTES`, as `checkGuard` in `scripts/spike.ts` does.
 - [ ] T2.17 Versions screen: timeline, table, new version from copy, no-overlap check, date checker.
 - [ ] T2.18 Reference tables screen: list, versions, grid with paste from Excel, read-only published versions.
@@ -103,6 +103,15 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T2.15 Builder, part 3: versions, save draft, publish, read-only
+Changed: src/ui/builder/{builder-screen.tsx (rewritten),builder-dialogs.tsx,version-logic.ts(+7 tests)}, `planPublish`, `dayBefore`, `dayAfter` in src/engine/versions.ts (+5 tests; `LocalStore.publish` uses `planPublish`), ButtonLink `onClick`, `builder` strings, e2e/versioning.spec.ts (7 tests), three UI-rules states, docs/DECISIONS.md (D48).
+How: version dropdown, status badge, "Unsaved changes", Save draft (only when changed, toast), Publish with a confirm dialog that says which version it ends (v4 ends v3 on 31 Dec 2026) and refuses an unfinished flow with the validation message, a read-only notice for published versions with "New version from this" (date picker dialog), a no-rights notice with "Copy to a personal flow", a discard prompt when leaving with unsaved changes, Run disabled when nothing is published.
+Real bug found by an e2e test: after "Copy to a personal flow" the builder stayed mounted and showed the old flow (`useLoad` does not reload on a parameter change); fixed by keying the builder on the flow id.
+Checked in the browser: dropdown labels and navigation; save, reload, change kept; discard prompt (keep and discard); publish of a new flow, then a new version from it, then v2 ends v1; unfinished flow refused; Lan can only copy a shared flow and then edits the copy.
+One older test changed on purpose: the builder layout test used a draft-only flow and expected a Run link; Run is now a disabled button there. A first e2e run hit my own 118 s command timeout (the suite has grown) and left a preview server on its port; I stopped that process and ran the suite in the background.
+Gates run: check PASS (573 tests), test:e2e PASS (112 tests, 2.0 min), test:ui-rules PASS (292 tests: 146 per width, 23 route states), test:acceptance PASS (7 tests).
+Next: T2.16 (run screen).
 
 ### 2026-11-17 T2.14 Settings forms: Append, Output, SQL (every step type has a form now)
 Changed: src/ui/builder/forms/{output-logic.ts(+9 tests),output-form.tsx,append-form.tsx,sql-form.tsx}, default settings (Append, SQL, Output with `Sheet<n>`), the Output preview shows the step's own result table, `FORMS` is a complete record (no fallback text), `outputStrings`, `appendStrings`, `sqlStrings`, e2e/output.spec.ts (12 tests), three UI-rules states, docs/DECISIONS.md (D47).

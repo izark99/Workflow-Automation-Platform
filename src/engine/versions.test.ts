@@ -4,9 +4,12 @@ import { createNodeRunner } from './runner/node-runner';
 import { runFlow } from './run';
 import { EngineError, type SqlRunner, type TableData } from './types';
 import {
+  dayAfter,
+  dayBefore,
   findOverlaps,
   formatDate,
   isIsoDate,
+  planPublish,
   prepareRun,
   referencedTables,
   resolveVersion,
@@ -191,5 +194,35 @@ describe('prepareRun', () => {
     const e = failure(() => prepareRun({ flowName: 'Monthly', flowVersions, refTables: [], effectiveDate: '2026-10-31' }));
     expect(e.code).toBe('missing_reference_table');
     expect(e.message).toContain('"limits"');
+  });
+});
+
+describe('planPublish', () => {
+  const v = (versionNo: number, validFrom: string, validTo: string | null, status: 'draft' | 'published') => ({ versionNo, validFrom, validTo, status });
+  it('says which version a publish ends: the previous open-ended one, the day before', () => {
+    const plan = planPublish([v(3, '2026-07-01', null, 'published'), v(4, '2027-01-01', null, 'draft')], 4, 'flow "F"');
+    expect(plan).toEqual({ ok: true, ends: { versionNo: 3, validTo: '2026-12-31' } });
+  });
+  it('a first version or a version after a closed one ends nothing', () => {
+    expect(planPublish([v(1, '2026-01-01', null, 'draft')], 1, 'x')).toEqual({ ok: true, ends: undefined });
+    expect(planPublish([v(1, '2026-01-01', '2026-03-31', 'published'), v(2, '2026-04-01', null, 'draft')], 2, 'x')).toEqual({ ok: true, ends: undefined });
+  });
+  it('refuses a missing version, a published one, and an overlap, with a message that says what to do', () => {
+    expect(planPublish([], 1, 'x')).toMatchObject({ ok: false, kind: 'not_found' });
+    expect(planPublish([v(1, '2026-01-01', null, 'published')], 1, 'x')).toMatchObject({ ok: false, kind: 'already_published' });
+    const overlap = planPublish([v(1, '2026-01-01', '2026-12-31', 'published'), v(2, '2026-06-01', null, 'draft')], 2, 'table "T"');
+    expect(overlap).toMatchObject({ ok: false, kind: 'overlap' });
+    expect((overlap as { message: string }).message).toMatch(/would overlap v1.*Change the valid-from or valid-to/);
+  });
+  it('does not change the versions it is given', () => {
+    const versions = [v(1, '2026-01-01', null, 'published'), v(2, '2026-07-01', null, 'draft')];
+    planPublish(versions, 2, 'x');
+    expect(versions[0]!.validTo).toBeNull();
+    expect(versions[1]!.status).toBe('draft');
+  });
+  it('day arithmetic crosses month and year ends', () => {
+    expect(dayBefore('2027-01-01')).toBe('2026-12-31');
+    expect(dayAfter('2026-02-28')).toBe('2026-03-01');
+    expect(dayAfter('2028-02-28')).toBe('2028-02-29');
   });
 });
