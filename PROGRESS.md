@@ -22,8 +22,9 @@ before it passes, except where a task says otherwise.
 - [x] T1.2 Engine core: DuckDB-WASM worker, load input tables, topological order, one view per node, preview of 100 rows, cancel.
 - [x] T1.3 Input file node: sheet, header row, rows to skip, fill down merged cells, row number column, csv. Call `checkFileSize` (`src/engine/size-guard.ts`) before reading and surface `strings.xlsxTooLarge`; read xlsx with `src/engine/xlsx-stream/` and csv with DuckDB `read_csv` (decisions D9, D10).
 - [x] T1.4 Column mapping node.
-- [ ] T1.5 Filter node with a second output for the rows that do not match.
-- [ ] T1.6 Formula parser: tokens, precedence, column references in square brackets, strings, numbers, function calls, error positions.
+- [ ] T1.5 Filter node with a second output for the rows that do not match. Depends on T1.6b (the condition is a formula); do it after T1.6b.
+- [x] T1.6a Formula parser: tokens, Excel precedence, column references in square brackets, strings, numbers, function calls, error positions (no SQL yet).
+- [ ] T1.6b Formula compiler core: typed AST to DuckDB SQL for literals, column references, operators and blank rules, plus a function registry with arity and argument types.
 - [ ] T1.7 Formula functions, logic and math groups of Tier 1, each with unit tests.
 - [ ] T1.8 Formula functions, text group of Tier 1, each with unit tests.
 - [ ] T1.9 Formula functions, date group of Tier 1 and EFFECTIVE_DATE, each with unit tests.
@@ -96,6 +97,13 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T1.6a Formula parser (T1.6 split, T1.5 moved after T1.6b)
+Changed: src/engine/formula/{ast,parse}.ts, parse.test.ts (19 tests), docs/DECISIONS.md (D17 formula typing, blanks and errors; D18 open point on mixed text and number output cells). PROGRESS: T1.6 split into T1.6a and T1.6b; T1.5 now waits for T1.6b because a Filter condition is a formula.
+How: lexer and recursive-descent parser with Excel precedence (`-2^2 = 4`, `2^3^2 = 64`, `&` below `+`, comparison lowest), column references with `]]` escape, `""` in text, source offsets on every node, `FormulaError` with position and length, depth limit 100.
+Advisor consulted before the parser design (formula parser is a hard-to-undo design); its points are recorded in D17 and D18.
+Gates run: check PASS (138 unit tests).
+Next: T1.6b (typed compiler core and function registry).
 
 ### 2026-11-17 T1.4 Column mapping node
 Changed: src/engine/nodes/{column-mapping,test-helpers}.ts, registry, 10 tests, docs/DECISIONS.md (D16).

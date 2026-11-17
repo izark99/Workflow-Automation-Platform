@@ -157,3 +157,31 @@ Open design points to settle in the task that needs them, each recorded here whe
   (non-zero). Number to date and date to number are refused with a hint to use a Formula column.
 - Two output names that differ only by case are refused, since one DuckDB table cannot hold both (see D14).
 - `src/engine/nodes/test-helpers.ts` runs one node on in-memory tables through `runFlow`, for node unit tests.
+
+## D17 Formula language: typing, blanks and errors (T1.6, advisor-reviewed)
+
+- Pipeline: lexer and parser (`src/engine/formula/parse.ts`) give an AST with source positions. The compiler (T1.6b)
+  turns it into DuckDB SQL plus a type (`text`, `number`, `date`, `boolean`), checked against the input columns.
+  Type mismatches and non-boolean Filter conditions are compile errors with a position.
+- Excel precedence: comparison, then `&`, then `+ -`, then `* /`, then `^` (left-associative: `2^3^2 = 64`), then
+  unary minus (tighter than `^`: `-2^2 = 4`). Function names ignore case. Column references `[name]` do not.
+- Errors are NULL, nothing throws at run time: `/` is `x / NULLIF(y, 0)`, `VALUE` and `DATE` use `TRY_CAST`.
+  `IFERROR(x, alt)` is `COALESCE(x, alt)`. Two divergences from Excel, documented and not tested as Excel results:
+  `IFERROR` on a bare blank reference returns `alt` (Excel gives 0), and `ISBLANK` of an error is TRUE. Use
+  `ISNUMBER(VALUE(x))` to test a number, as `ISNUMBER(text)` is FALSE.
+- Blanks follow Excel: a NULL operand counts as 0 in arithmetic, as empty text in `&` and text comparisons, and as 0
+  in number comparisons. AND and OR ignore blanks. A Filter sends `cond IS TRUE` to `match` and the rest to `nomatch`.
+- Compiler rules: numbers are DOUBLE (`power()` for `^`); `&` compiles to `concat`; text comparison ignores case
+  (`lower()` both sides); one shared number-to-text helper is used by Column mapping, `&`, TEXT and Unpivot.
+- Excel results to reproduce in T1.7 to T1.9: `DATE(2026,9,31)` rolls over to 2026-10-01; `MOD(-3,2) = 1`;
+  `INT(-1.5) = -2`; TRIM collapses inner runs of spaces; WEEKDAY counts Sunday as 1; FIND is case-sensitive, SEARCH is
+  not and accepts wildcards; `VALUE(number)` returns the number.
+
+## D18 Open: mixed text and number cells in an Output column (decide before T1.13 and T1.15)
+
+The expected `Exceptions.value` column holds text (`X`) and numbers (`2`) in one column, while the compiler gives one
+type per column. Do not loosen the comparison. Plan: the Output node gets a per-column opt-in that writes number-like
+text as numbers, in the same spirit as the csv typing of D15 (`007` stays text). Before T1.18, dump every row of
+`Exceptions` and `OT_breaches` for both expected workbooks, and check the `date` cell on `Invalid date` rows and the
+`value` cell on `Missing attendance code` rows. In the flow, pin types with a Column mapping after each input, so a
+blank or mixed column in one month cannot change the types of another month.
