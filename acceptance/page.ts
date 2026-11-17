@@ -61,8 +61,9 @@ async function run(args: RunArgs): Promise<RunReply> {
   try {
     const files = Object.fromEntries(
       Object.entries(args.files).map(([key, f]) => {
-        const blob = new Blob([fromBase64(f.base64)]);
-        return [key, { name: f.name, size: blob.size, blob }];
+        // A File, as the file picker of the app gives it. DuckDB reads a csv from the File without copying it.
+        const file = new File([fromBase64(f.base64)], f.name);
+        return [key, { name: f.name, size: file.size, blob: file }];
       }),
     );
     const refTables = [];

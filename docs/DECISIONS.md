@@ -443,3 +443,19 @@ blank or mixed column in one month cannot change the types of another month.
   `work_days` count column is not brought into the sheet.
 - The Summary Output step is first in the flow file, so the sheets are written as Summary, Exceptions, OT_breaches.
 - Result: `npm run test:acceptance` passes for both datasets with the same flow file (see the log of T1.19b).
+
+## D34 No network request carries file content (T1.20)
+
+- `scripts/lib/request-audit.ts` (10 unit tests) audits the requests that a page makes. A request is allowed only if it
+  is a GET to the same origin for a static asset of the built page (`/acceptance/index.html`, `/assets/<file>`,
+  `/favicon.ico`), with no query, no fragment and no body. `blob:` and `data:` addresses are local and allowed. A web
+  socket, another origin, another method, another path, a body, and any request that contains a marker text (plain,
+  URL-encoded or base64, in the address, the headers or the body) is a violation.
+- Acceptance specs: `privacy.spec.ts` runs an xlsx file and a csv file that hold marker texts, checks that the markers
+  reached the output file (so the data did pass through the engine) and that the audit finds nothing; a third test
+  makes a page leak on purpose (a query string, `sendBeacon`, a POST to another address) and requires the audit to
+  find each, after checking that the requests before the leak were clean. `timesheet.spec.ts` audits the real timesheet
+  run of both datasets, with the names of the employee list as markers.
+- The csv path through `registerFileHandle` on a `File` now runs in Chromium (open item of T1.17).
+- Limit: the audit sees what the page requests from the browser's network layer. It does not cover what a browser
+  extension or the hosting server does with the static files.
