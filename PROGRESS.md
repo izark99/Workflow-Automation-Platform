@@ -50,7 +50,7 @@ before it passes, except where a task says otherwise.
 - [x] T2.3 Dropdown and Date picker, with keyboard support and tests.
 - [x] T2.4 Checkbox, Tabs, Dialog, Toast, Skeleton, Empty state, Error state.
 - [x] T2.5 `/dev/components` route that matches screen 7.
-- [ ] T2.6 `DataStore` interface, `LocalStore`, and seed data that matches the screens.
+- [x] T2.6 `DataStore` interface, `LocalStore`, and seed data that matches the screens.
 - [ ] T2.7 App shell: sidebar, page header, routing, strings module.
 - [ ] T2.8 Flows screen: list, filters, search, delete with confirm, loading and empty states.
 - [ ] T2.9 Builder, part 1: canvas with React Flow, step cards, add by drag from the step list, connect, select, delete, zoom controls.
@@ -100,6 +100,13 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T2.6 DataStore, LocalStore, seed data
+Changed: src/store/{types,local-store,seed,indexeddb-adapter,index}.ts, local-store.test.ts (30 tests), docs/DECISIONS.md (D37).
+How: async `DataStore` interface (flows, versions, copy, group access, soft delete and restore, reference tables and versions, users, groups, run log). `LocalStore` enforces SPEC section 7 in code, the version rules (read-only published, rule 6 end date, no overlap, 50,000-row limit) and the 30-day purge. IndexedDB for persistence (localStorage cannot hold 50,000 rows), memory adapter for tests. Dev and test builds read `dfw.seed` and `dfw.loadDelayMs` from localStorage (inject the real timesheet flow and tables; delay for the skeleton rule). Seed = what the screens show; not copied from `testcase/`.
+Not yet run in a browser: `IndexedDbAdapter` and `createLocalStore` (first use in T2.8).
+Gates run: check PASS (462 tests). No route changed, so test:e2e and test:ui-rules were not rerun.
+Next: T2.7 (app shell: sidebar, page header, routing, strings module).
 
 ### 2026-11-17 T2.5 `/dev/components` route, real e2e runner
 Changed: src/ui/screens/dev-components.{tsx,module.css}, src/ui/app.tsx (route), PageHeader and ProgressBar components, `devStrings` in strings.ts, `defaultOpen` on Dropdown and Date picker, playwright.e2e.config.ts (`npm run test:e2e` is real now; old dev-server config removed), e2e/components.spec.ts (12 tests), ui-rules route list, eslint/.gitignore for `dist-e2e`, docs/DECISIONS.md (D36).
