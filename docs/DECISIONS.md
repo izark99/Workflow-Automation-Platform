@@ -331,3 +331,17 @@ blank or mixed column in one month cannot change the types of another month.
   acceptance test is not loosened.
 - An Output step returns its table as the handle `result` (the engine now stores every handle a node returns), and
   `RunResult.rows()` reads all rows for the file writer.
+
+## D28 File writer (T1.15b)
+
+- `buildOutputFiles(result, flow)` (`src/engine/output/export.ts`) returns one file per `file` name, in order of first
+  appearance: `Name.xlsx` with the sheets of its Output steps in step order, or `Name.csv`. It reads all rows of each
+  Output step, not a preview. A flow without an Output step is an error that says to add one. Characters that a file
+  name cannot hold become `_`.
+- xlsx cells: numbers are numeric cells; dates are numeric serials computed in UTC with the format `yyyy-mm-dd`
+  (never a JavaScript Date, so the time zone cannot shift them); booleans are boolean cells; text is a string cell;
+  a blank value or an empty text is an absent cell. Columns listed in `numberLikeText` write plain numbers (`2`, `-1.5`,
+  not `007`, not `1e3`) as numeric cells. Column widths follow the content (cosmetic).
+- csv: UTF-8 with a byte order mark (so Excel reads accents), `\r\n` line ends, fields with a comma, quote or line
+  break are quoted, dates as ISO text, booleans as TRUE and FALSE, blanks empty.
+- The browser run screen (T2.16) turns the bytes into a download.

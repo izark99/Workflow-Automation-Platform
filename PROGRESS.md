@@ -35,7 +35,7 @@ before it passes, except where a task says otherwise.
 - [x] T1.13b Pivot node, with a column list taken from a reference table, a fill value and a name suffix (D13), so zero-count columns appear in reference-table order.
 - [x] T1.14 Append node and SQL node.
 - [x] T1.15a Output node: sort (columns or a formula), column list, several Output steps per workbook, consistency checks.
-- [ ] T1.15b File writer: workbook with several sheets and csv from the Output steps; date, number and boolean cells typed, blank cells absent, `numberLikeText` columns, UTC-safe dates.
+- [x] T1.15b File writer: workbook with several sheets and csv from the Output steps; date, number and boolean cells typed, blank cells absent, `numberLikeText` columns, UTC-safe dates.
 - [ ] T1.16 Effective date: resolve flow version and reference table versions, stop with a clear message when no version covers the date.
 - [ ] T1.17 Acceptance harness: Playwright test that runs a flow file on a dataset folder and compares workbooks cell by cell. Prove it fails on a wrong workbook.
 - [ ] T1.18 `flows/monthly-timesheet.flow.json`, part 1: reading, unpivot, dates, employment window, Exceptions sheet (rules R1 to R9).
@@ -99,6 +99,13 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T1.15b File writer
+Changed: src/engine/output/export.ts (`buildOutputFiles`), export.test.ts (11 tests that read the files back with SheetJS), docs/DECISIONS.md (D28).
+How: one workbook per file name with the sheets in step order, or a csv; typed cells (number, date serial with `yyyy-mm-dd` built in UTC, boolean, text), blank cells absent, `numberLikeText` columns, all rows (250-row test), csv with BOM, quoting and ISO dates. A read-back with `cellDates` gives the right date in any time zone.
+Two first-run problems, both mine: a literal byte order mark character slipped into the source (lint caught it; now written as an escape), and a test decoded the csv with `TextDecoder`, which drops the BOM; the test now checks the three bytes.
+Gates run: check PASS (346 unit tests).
+Next: T1.16 (effective date: resolve flow and reference table versions).
 
 ### 2026-11-17 T1.15a Output node (T1.15 split into T1.15a and T1.15b)
 Changed: src/engine/nodes/output.ts, output.test.ts (13 tests), run.ts (stores every handle a node returns, `checkOutputNodes` at the start, `RunResult.rows()`), registry, docs/DECISIONS.md (D27 incl. the answer to D18).
