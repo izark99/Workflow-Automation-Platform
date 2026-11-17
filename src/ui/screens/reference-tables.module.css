@@ -1,0 +1,136 @@
+.layout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.list {
+  flex: 0 0 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-sizing: border-box;
+  height: 56px;
+  padding: 0 14px;
+  border: 1px solid var(--color-control);
+  border-radius: var(--radius-control);
+  background: var(--color-card);
+  color: var(--color-ink);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.item[aria-current='true'] {
+  border: 2px solid var(--color-primary);
+  padding: 0 13px;
+}
+
+.itemSub {
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 500;
+  color: var(--color-muted);
+}
+
+.detail {
+  flex: 999 1 480px;
+  min-width: 0;
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 40px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--color-rule);
+}
+
+.headText {
+  display: flex;
+  flex-direction: column;
+}
+
+.headActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 16px 20px;
+}
+
+.notes {
+  padding: 12px 20px;
+  border-top: 1px solid var(--color-rule);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.note {
+  margin: 0;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--color-muted);
+}
+
+.gridWrap {
+  border-top: 1px solid var(--color-rule);
+}
+
+.cellInput {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 90px;
+  height: var(--size-button);
+  padding: 0 10px;
+  border-radius: var(--radius-control);
+  border: 1px solid var(--color-control);
+  background: var(--color-card);
+  color: var(--color-ink);
+  font: 400 14px var(--font-sans);
+}
+
+.cellInput[aria-invalid='true'] {
+  border-color: var(--color-danger);
+}
+
+.pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  border-top: 1px solid var(--color-rule);
+}
+
+.dirty {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-muted);
+}
+
+.dialogBody {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  color: var(--color-ink);
+}

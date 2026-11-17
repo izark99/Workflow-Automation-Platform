@@ -65,7 +65,7 @@ before it passes, except where a task says otherwise.
 - [x] T2.15 Builder, part 3: version dropdown, save draft, publish, read-only mode for published versions.
 - [x] T2.16 Run screen: effective date, resolved versions, file inputs, progress, result tabs, download, error state. A file above the size limit shows `strings.xlsxTooLarge` instead of starting a run; the e2e test uses a sparse file just over `MAX_SAFE_XLSX_BYTES`, as `checkGuard` in `scripts/spike.ts` does.
 - [x] T2.17 Versions screen: timeline, table, new version from copy, no-overlap check, date checker.
-- [ ] T2.18 Reference tables screen: list, versions, grid with paste from Excel, read-only published versions.
+- [x] T2.18 Reference tables screen: list, versions, grid with paste from Excel, read-only published versions.
 - [ ] T2.19 Admin screen: users, groups, access to shared flows, deleted flows with restore.
 - [ ] T2.20 End-to-end journeys for gate G3.
 - [ ] T2.21 UI rules and accessibility tests for gate G4 on every route.
@@ -103,6 +103,14 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T2.18 Reference tables screen
+Changed: src/ui/screens/{reference-tables.tsx,reference-tables.module.css,reftable-logic.ts(+14 tests)}, `refStrings`, generalised `newVersionProblem`/`suggestStart` (`VersionLike`) and `publishSummaryFor`, e2e/reference-tables.spec.ts (15 tests), UI-rules states (table and skeleton, editable draft with pager, paste dialog, new table dialog), docs/DECISIONS.md (D51).
+How: list of tables with row counts and the version in effect (links, selection in the address), version chips with a Published or Draft badge, a paged grid (100 rows), read-only text for published versions and editable cells for a draft, Save changes with cell-by-cell type checks, Add and remove row, Paste from Excel (dialog replaces rows by header or position; a paste at a cell overwrites from there), New table from a pasted header and rows with type inference, New version with the no-overlap check, Publish with the confirm sentence, "Used by" flows, a discard prompt, and a read-only view for users who are not the admin.
+Checked in the browser: summaries `8 rows, v2 in effect`; v1 and v2 rows; a new version v3 is a draft copy of 8 rows, a cell edit shows "Unsaved changes" and turns Publish off, save survives a reload, publish says v3 ends v2 and makes the version read-only; "abc" in a number cell is refused with row 2 and the column; 250 rows in pages of 100 with edits kept across pages; add and remove row; paste by header (VALUE, id), bad paste refused; paste at a cell; New table with a numeric column right-aligned; repeated header refused; discard prompt; "Used by Run test flow."; a user sees every table but no edit control.
+Test mistake of mine, fixed: a locator name `Row 1, day` also matched `Row 1, days` (needed `exact`).
+Gates run: check PASS (601 tests), test:e2e PASS (144 tests), test:ui-rules PASS (366 tests: 183 per width, 28 route states), test:acceptance PASS (7 tests).
+Next: T2.19 (admin screen).
 
 ### 2026-11-17 T2.17 Versions screen
 Changed: src/ui/screens/{versions.tsx,versions.module.css,versions-dialogs.tsx,versions-logic.ts(+10 tests)}, `CrumbLink` (text breadcrumb link; the Run screen now uses it too), `NewVersionDialog` with a start-day check (also in the builder, which now uses `suggestStart` and `newVersionProblem`), design tokens for the timeline notes, `versionsStrings`, title "Versions", e2e/versions-screen.spec.ts (9 tests), UI-rules states (table and skeleton for the route, dialog with a clash), docs/DECISIONS.md (D50).

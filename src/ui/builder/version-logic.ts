@@ -29,9 +29,14 @@ export const canEditFlow = (me: User | undefined, flow: FlowRecord): boolean => 
 
 /** What publishing does, in words, for the confirm dialog; or why it cannot be published. */
 export function publishSummary(flow: FlowRecord, versionNo: number): { ok: true; text: string } | { ok: false; text: string } {
-  const plan = planPublish(flow.versions, versionNo, `flow "${flow.name}"`);
+  return publishSummaryFor(flow.versions, versionNo, `flow "${flow.name}"`);
+}
+
+/** The same for any list of versions: a flow's or a reference table's. */
+export function publishSummaryFor(versions: (Pick<FlowVersionRecord, 'versionNo' | 'validFrom' | 'validTo' | 'status'>)[], versionNo: number, what: string): { ok: true; text: string } | { ok: false; text: string } {
+  const plan = planPublish(versions, versionNo, what);
   if (!plan.ok) return { ok: false, text: plan.message };
-  const v = flow.versions.find((x) => x.versionNo === versionNo)!;
+  const v = versions.find((x) => x.versionNo === versionNo)!;
   const tail = 'A published version cannot be changed. To change it later, create a new version from it.';
   const text = plan.ends
     ? `Publishing v${versionNo} will end v${plan.ends.versionNo} on ${two(plan.ends.validTo)}. v${versionNo} is valid from ${two(v.validFrom)}. ${tail}`

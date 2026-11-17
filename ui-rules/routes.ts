@@ -1,6 +1,19 @@
 // Every route that the UI rules run on. A route added to the app is added here in the same task, so it is checked at once.
 import type { Page } from '@playwright/test';
 import { seedRunnableFlow } from '../e2e/runnable-flow';
+import { seedSnapshot } from '../src/store/seed';
+
+/** A draft reference table of 250 rows, so the editable grid and its pager can be checked. */
+const seedBigDraft = async (page: Page): Promise<void> => {
+  const s = seedSnapshot();
+  s.refTables.push({
+    id: 'ref-big',
+    name: 'Big list',
+    description: 'A long table for paging.',
+    versions: [{ versionNo: 1, validFrom: '2026-01-01', validTo: null, status: 'draft', columns: [{ name: 'id', type: 'text' }, { name: 'value', type: 'number' }], rows: Array.from({ length: 250 }, (_, i) => [`r${i + 1}`, i + 1]) }],
+  });
+  await page.addInitScript((json) => localStorage.setItem('dfw.seed', json), JSON.stringify(s));
+};
 
 export interface RuleRoute {
   path: string;
@@ -20,7 +33,7 @@ export interface RuleRoute {
 
 export const ROUTES: RuleRoute[] = [
   { path: '/flows', sidebar: true, table: true, skeleton: true },
-  { path: '/reference-tables', sidebar: true },
+  { path: '/reference-tables', sidebar: true, table: true, skeleton: true },
   { path: '/admin', sidebar: true },
   { path: '/flows/flow-timesheet/run', sidebar: true },
   { path: '/flows/flow-timesheet/versions', sidebar: true, table: true, skeleton: true },
@@ -245,6 +258,36 @@ export const ROUTES: RuleRoute[] = [
       for (let i = 0; i < 6; i++) await page.keyboard.press('PageUp');
       await page.keyboard.press('Enter');
       await dialog.getByRole('alert').waitFor();
+    },
+  },
+  {
+    path: '/reference-tables?table=ref-big&v=1',
+    name: '/reference-tables (an editable draft with a pager)',
+    sidebar: true,
+    table: true,
+    before: seedBigDraft,
+    // Input cells in 57 px rows, the remove buttons, the pager and the toolbar of a draft.
+    prepare: async (page) => {
+      await page.getByRole('button', { name: 'Next rows' }).waitFor();
+    },
+  },
+  {
+    path: '/reference-tables?table=ref-big&v=1',
+    name: '/reference-tables (paste dialog)',
+    sidebar: true,
+    before: seedBigDraft,
+    prepare: async (page) => {
+      await page.getByRole('button', { name: 'Paste from Excel' }).click();
+      await page.getByRole('dialog', { name: 'Paste from Excel' }).waitFor();
+    },
+  },
+  {
+    path: '/reference-tables',
+    name: '/reference-tables (new table dialog)',
+    sidebar: true,
+    prepare: async (page) => {
+      await page.getByRole('button', { name: 'New table' }).first().click();
+      await page.getByRole('dialog', { name: 'New reference table' }).waitFor();
     },
   },
 ];

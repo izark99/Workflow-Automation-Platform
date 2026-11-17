@@ -5,6 +5,9 @@ const two = (iso: string): string => formatDate(iso).replace(/^(\d) /, '0$1 ');
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const monthYear = (iso: string): string => `${MONTHS[Number(iso.slice(5, 7)) - 1]} ${iso.slice(0, 4)}`;
 
+/** What the checks need of a version: flows and reference tables share it. */
+export type VersionLike = Pick<FlowVersionRecord, 'status' | 'validFrom' | 'validTo'> & { versionNo: number };
+
 export type VersionState = 'draft' | 'in_effect' | 'ended' | 'upcoming';
 
 /** Where a version stands on `today`: a draft, in effect, ended, or published but not yet started. */
@@ -79,7 +82,7 @@ export function timelineNote(versions: FlowVersionRecord[], flowName: string): {
  * Why a new version cannot start on `date`: a new version is open-ended, so it must start after every published version that
  * starts on or after it and after the end of every closed one. Returns a message that says which version and what to do.
  */
-export function newVersionProblem(versions: FlowVersionRecord[], date: string): string | undefined {
+export function newVersionProblem(versions: VersionLike[], date: string): string | undefined {
   for (const p of versions.filter((v) => v.status === 'published')) {
     if (p.validTo !== null && p.validTo >= date) {
       return `${two(date)} is inside v${p.versionNo} (${two(p.validFrom)} to ${two(p.validTo)}). Choose a day after ${two(p.validTo)}.`;
@@ -92,7 +95,7 @@ export function newVersionProblem(versions: FlowVersionRecord[], date: string): 
 }
 
 /** A first suggestion for the start of a new version: after every published start and end. */
-export function suggestStart(versions: FlowVersionRecord[], today: string): string {
+export function suggestStart(versions: VersionLike[], today: string): string {
   const marks = versions.filter((v) => v.status === 'published').map((v) => v.validTo ?? v.validFrom);
   const latest = marks.sort().at(-1);
   return latest !== undefined && latest >= today ? dayAfter(latest) : today;
