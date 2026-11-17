@@ -28,6 +28,8 @@ describe('defaults and sub-flows', () => {
     expect(defaultSettings('filter', 'x')).toEqual({});
     expect(defaultSettings('formula_column', 'x')).toEqual({ name: 'New column', expression: '' });
     expect(defaultSettings('group_by', 'x')).toEqual({ groupBy: [], aggregations: [] });
+    expect(defaultSettings('unpivot', 'x')).toEqual({ keep: [], unpivot: [], nameColumn: 'name', valueColumn: 'value' });
+    expect(defaultSettings('pivot', 'x')).toEqual({ rowKeys: [], aggregation: 'sum', columns: { from: 'data' } });
     expect(defaultSettings('lookup_join', 'x')).toEqual({ source: { kind: 'node' }, keys: [], bring: [], onNoMatch: 'blank' });
   });
   it('upstreamOf keeps the step and everything before it, and the connections between them', () => {

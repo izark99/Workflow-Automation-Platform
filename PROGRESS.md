@@ -60,7 +60,7 @@ before it passes, except where a task says otherwise.
 - [x] T2.11b Settings form: Column mapping, a grid of one row per source column (keep, new name, type) that accepts a paste from Excel and can load the source columns from a test file.
 - [x] T2.12 Settings forms: Formula column with editor, function list, validation message.
 - [x] T2.13a Settings forms, part 3: Lookup / Join (source, key pairs, brought columns, no-match behaviour) and Group by (group columns, aggregations), with a shared column picker.
-- [ ] T2.13b Settings forms, part 4: Unpivot (keep and unpivot columns, name and value columns, skip blanks) and Pivot (row keys, column source, value, aggregation, column list from the data or a reference table, fill value, name prefix and suffix, name case).
+- [x] T2.13b Settings forms, part 4: Unpivot (keep and unpivot columns, name and value columns, skip blanks) and Pivot (row keys, column source, value, aggregation, column list from the data or a reference table, fill value, name prefix and suffix, name case).
 - [ ] T2.14 Settings forms: Append, Output, SQL.
 - [ ] T2.15 Builder, part 3: version dropdown, save draft, publish, read-only mode for published versions.
 - [ ] T2.16 Run screen: effective date, resolved versions, file inputs, progress, result tabs, download, error state. A file above the size limit shows `strings.xlsxTooLarge` instead of starting a run; the e2e test uses a sparse file just over `MAX_SAFE_XLSX_BYTES`, as `checkGuard` in `scripts/spike.ts` does.
@@ -103,6 +103,14 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T2.13b Settings forms, part 4: Unpivot and Pivot
+Changed: src/ui/builder/forms/{reshape-logic.ts(+8 tests),unpivot-form.tsx,pivot-form.tsx}, default settings for both types, `reshapeStrings`, e2e/reshape.spec.ts (9 tests), two UI-rules states, docs/DECISIONS.md (D46).
+How: Unpivot (keep and unpivot lists that cannot overlap, name and value columns, skip blanks, "Unpivot all other columns" once columns are loaded) and Pivot (row keys, column source, value, aggregation, new columns from the data or a reference table, fill value with number / blank / default, prefix, suffix, letter case). Each form says in words what is still missing.
+Checked by effect on real previews: unpivot gives 4 rows with the columns id, day, hours and 3 rows with skip blank; pivot gives mon and tue with 0 for a missing combination, blank or -1 by the fill value; a reference table lists OT_DAY, OT_NIGHT, OT_REST, OT_HOLIDAY in its order; count needs no value; an average of a text column shows the engine message.
+Test mistake of mine: I expected the letter case to change the prefix and suffix; the engine keeps them as typed (D25), so the label and a hint now say so.
+Gates run: check PASS (552 tests), test:e2e PASS (93 tests), test:ui-rules PASS (220 tests: 110 per width, 17 route states), test:acceptance PASS (7 tests).
+Next: T2.14 (Append, Output, SQL forms).
 
 ### 2026-11-17 T2.13a Settings forms, part 3: Lookup / Join and Group by (T2.13 split into T2.13a and T2.13b)
 Changed: src/ui/builder/forms/{column-pickers.tsx(+css),lookup-form.tsx,group-by-form.tsx,lookup-logic.ts(+8 tests)}, `loadSourceColumns` and `useSourceColumns` take an input handle, default settings for both step types, `pickerStrings`, `joinStrings`, `groupStrings`, e2e/joins.spec.ts (8 tests), two UI-rules states, docs/DECISIONS.md (D45). PROGRESS: T2.13 split into T2.13a and T2.13b (Unpivot, Pivot).

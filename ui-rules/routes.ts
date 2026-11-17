@@ -123,4 +123,33 @@ export const ROUTES: RuleRoute[] = [
       await panel.getByRole('button', { name: 'Remove aggregation 1' }).waitFor();
     },
   },
+  {
+    path: '/flows/flow-timesheet/versions/4',
+    name: '/flows/flow-timesheet/versions/4 (Unpivot form)',
+    sidebar: false,
+    // An Unpivot step with a column in each list: chips, text fields, a checkbox.
+    prepare: async (page) => {
+      await page.getByRole('button', { name: 'Add step Unpivot' }).click();
+      const panel = page.getByRole('complementary', { name: 'Step settings' });
+      await panel.getByRole('tab', { name: 'Configure' }).click();
+      const keep = panel.getByRole('group', { name: 'Columns to keep' });
+      await keep.getByRole('textbox', { name: 'Column name' }).fill('id');
+      await keep.getByRole('button', { name: 'Add', exact: true }).click();
+      await keep.getByRole('button', { name: 'Remove id from Columns to keep' }).waitFor();
+    },
+  },
+  {
+    path: '/flows/flow-timesheet/versions/4',
+    name: '/flows/flow-timesheet/versions/4 (Pivot form, reference table)',
+    sidebar: false,
+    // A Pivot step whose new columns come from a reference table: three dropdowns and text fields.
+    prepare: async (page) => {
+      await page.getByRole('button', { name: 'Add step Pivot' }).click();
+      const panel = page.getByRole('complementary', { name: 'Step settings' });
+      await panel.getByRole('tab', { name: 'Configure' }).click();
+      await panel.getByRole('button', { name: /^The new columns come from/ }).click();
+      await page.getByRole('option', { name: /^A reference table/ }).click();
+      await panel.getByRole('button', { name: /^Reference table/ }).waitFor();
+    },
+  },
 ];

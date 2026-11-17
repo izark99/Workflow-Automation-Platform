@@ -123,6 +123,10 @@ export function defaultSettings(type: NodeType, id: string): Record<string, unkn
       return { source: { kind: 'node' }, keys: [], bring: [], onNoMatch: 'blank' };
     case 'group_by':
       return { groupBy: [], aggregations: [] };
+    case 'unpivot':
+      return { keep: [], unpivot: [], nameColumn: 'name', valueColumn: 'value' };
+    case 'pivot':
+      return { rowKeys: [], aggregation: 'sum', columns: { from: 'data' } };
     default:
       return {};
   }
