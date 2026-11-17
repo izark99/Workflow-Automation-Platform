@@ -1,5 +1,6 @@
 import { columnMappingNode } from './column-mapping';
 import { filterNode } from './filter';
+import { formulaColumnNode } from './formula-column';
 import { inputFileNode } from './input-file';
 import type { NodeRegistry } from './types';
 
@@ -8,4 +9,5 @@ export const defaultRegistry: NodeRegistry = {
   input_file: inputFileNode,
   column_mapping: columnMappingNode,
   filter: filterNode,
+  formula_column: formulaColumnNode,
 };

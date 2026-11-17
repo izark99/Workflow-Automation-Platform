@@ -28,7 +28,7 @@ before it passes, except where a task says otherwise.
 - [x] T1.7 Formula functions, logic and math groups of Tier 1, each with unit tests.
 - [x] T1.8 Formula functions, text group of Tier 1, each with unit tests.
 - [x] T1.9 Formula functions, date group of Tier 1 and EFFECTIVE_DATE, each with unit tests.
-- [ ] T1.10 Formula column node.
+- [x] T1.10 Formula column node.
 - [ ] T1.11 Lookup / Join node: from another node and from a reference table, behaviour when no match is found.
 - [ ] T1.12 Group by node.
 - [ ] T1.13 Unpivot node and Pivot node.
@@ -97,6 +97,12 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T1.10 Formula column node
+Changed: src/engine/nodes/formula-column.ts, formula-column.test.ts (10 tests), registry.
+How: settings `name` and `expression`. A new name adds a column at the end; the same exact name replaces that column in place and takes the new type; a name that differs only by case is refused (D14). Chained formula columns work. The effective date of the run reaches EFFECTIVE_DATE (tested with September and October). Formula mistakes name the step, the setting and the character.
+Gates run: check PASS (256 unit tests).
+Next: T1.11 (lookup / join node).
 
 ### 2026-11-17 T1.9 Formula functions: date group and EFFECTIVE_DATE
 Changed: src/engine/formula/tier1/date.ts (DATE YEAR MONTH DAY WEEKDAY WEEKNUM ISOWEEKNUM EOMONTH EDATE DATEDIF DAYS EFFECTIVE_DATE), date.test.ts (23 tests, Excel results checked by hand, e.g. WEEKNUM and ISO week of the week-limit case), coverage.test.ts (registry equals the Tier 1 list of the spec; every function is called in a unit test), hint for text given to a date argument, docs/DECISIONS.md (D21).
