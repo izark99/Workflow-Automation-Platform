@@ -235,3 +235,19 @@ blank or mixed column in one month cannot change the types of another month.
 - Date text such as "2026-09-30" is not a date. Use `DATE()` or retype the column to date in a Column mapping step.
 - `src/engine/formula/tier1/coverage.test.ts` fails when the registry differs from the Tier 1 list of the spec or when
   a Tier 1 function has no call in any unit test (gate G2).
+
+## D22 Lookup / Join node (T1.11)
+
+- Settings: `source` (`{kind: "reference", table}` or `{kind: "node"}`, which reads the `right` input), `keys`
+  (`[{left, right}]`), `bring` (`[{column, as?}]`), `onNoMatch` (`blank` default, `drop`, `fail`).
+- It is a left join that keeps the left rows in their order. When the right side repeats a key, its first row wins
+  (row order of the table), so left rows never multiply. This is VLOOKUP behaviour; the table is a reference table that
+  people edit, so a duplicate is not an error.
+- Text keys match without regard to case, as Excel lookups do; other types match exactly. A blank key never matches.
+  Keys of different types are refused with a hint to use a Column mapping step. Column names are case-sensitive.
+- `onNoMatch`: `blank` leaves the brought columns empty, `drop` keeps only matched rows, `fail` stops the step with
+  a message such as `No match in reference table "codes" for Code = 'zz'` (DuckDB `error()`). The message shows the
+  first unmatched row that the engine meets.
+- A brought column whose name equals an input column, also by case only, must be renamed with `as`.
+- A reference table is named, never a version. The caller (T1.16) passes the version valid on the effective date;
+  a name without a version is `missing_reference_table`.

@@ -29,7 +29,7 @@ before it passes, except where a task says otherwise.
 - [x] T1.8 Formula functions, text group of Tier 1, each with unit tests.
 - [x] T1.9 Formula functions, date group of Tier 1 and EFFECTIVE_DATE, each with unit tests.
 - [x] T1.10 Formula column node.
-- [ ] T1.11 Lookup / Join node: from another node and from a reference table, behaviour when no match is found.
+- [x] T1.11 Lookup / Join node: from another node and from a reference table, behaviour when no match is found.
 - [ ] T1.12 Group by node.
 - [ ] T1.13 Unpivot node and Pivot node.
 - [ ] T1.14 Append node and SQL node.
@@ -97,6 +97,13 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T1.11 Lookup / Join node
+Changed: src/engine/nodes/lookup-join.ts, lookup-join.test.ts (17 tests), registry, docs/DECISIONS.md (D22).
+How: left join from a reference table or from the `right` input; one or more key pairs; brought columns with optional new names and kept types; no-match behaviour `blank`, `drop` or `fail` (message names the key value). Left order kept; the first row wins on repeated keys; text keys ignore case; blank keys never match; mistakes on names, key types and sources reported with the step id.
+Probed first: DuckDB `error()` exists and is lazy inside CASE; `rowid` gives table order.
+Gates run: check PASS (273 unit tests). A first compile error was a string-building slip in the fail message; fixed with `quoteString`.
+Next: T1.12 (group by node).
 
 ### 2026-11-17 T1.10 Formula column node
 Changed: src/engine/nodes/formula-column.ts, formula-column.test.ts (10 tests), registry.
