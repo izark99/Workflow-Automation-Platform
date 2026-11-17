@@ -37,7 +37,7 @@ before it passes, except where a task says otherwise.
 - [x] T1.15a Output node: sort (columns or a formula), column list, several Output steps per workbook, consistency checks.
 - [x] T1.15b File writer: workbook with several sheets and csv from the Output steps; date, number and boolean cells typed, blank cells absent, `numberLikeText` columns, UTC-safe dates.
 - [x] T1.16 Effective date: resolve flow version and reference table versions, stop with a clear message when no version covers the date.
-- [ ] T1.17 Acceptance harness: Playwright test that runs a flow file on a dataset folder and compares workbooks cell by cell. Prove it fails on a wrong workbook.
+- [x] T1.17 Acceptance harness: Playwright test that runs a flow file on a dataset folder and compares workbooks cell by cell. Prove it fails on a wrong workbook.
 - [ ] T1.18 `flows/monthly-timesheet.flow.json`, part 1: reading, unpivot, dates, employment window, Exceptions sheet (rules R1 to R9).
 - [ ] T1.19 `flows/monthly-timesheet.flow.json`, part 2: Summary sheet (R10) and OT_breaches sheet (R11), sort order (R12).
 - [ ] T1.20 Both datasets pass `npm run test:acceptance`. Add the test that no network request carries file content.
@@ -99,6 +99,14 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T1.17 Acceptance harness
+Changed: scripts/lib/compare-workbooks.ts (+ 19 unit tests), acceptance/{index.html,page.ts,helpers.ts,datasets.ts,harness.spec.ts,timesheet.spec.ts}, vite.acceptance.config.ts, playwright.acceptance.config.ts, `npm run test:acceptance`, tsconfig, .gitignore, docs/DECISIONS.md (D30).
+First browser run of the engine: `createBrowserRunner` (DuckDB-WASM in a Web Worker), the xlsx input path, version resolution, the Output node and the file writer all ran in Chromium at UTC+7. A pass-through flow gave a workbook equal to its input, and seven kinds of damage were each found (changed text, renamed header, missing row, date moved a day, date as number, filled cell, renamed sheet).
+First-run problems: a TypeScript typing slip in the page, and the browser names UTC+7 `Asia/Saigon`, so the zone check tests the offset.
+Not yet exercised in a browser: the csv path of the input node (`registerFileHandle`). T1.18 and T1.19 use xlsx inputs only; this stays open for T1.20 or the run screen.
+Gates run: check PASS (380 unit tests). test:acceptance FAIL (2 passed: harness; 2 failed: the timesheet specs, because flows/monthly-timesheet.flow.json does not exist yet; expected at this stage).
+Next: T1.18 (flow file part 1: reading, unpivot, dates, employment window, Exceptions sheet, rules R1 to R9).
 
 ### 2026-11-17 T1.16 Effective date and version resolution
 Changed: src/engine/versions.ts (`resolveVersion`, `prepareRun`, `findOverlaps`, `referencedTables`, `isIsoDate`, `formatDate`), versions.test.ts (15 tests), error codes `no_version` and `invalid_versions`, docs/DECISIONS.md (D29).

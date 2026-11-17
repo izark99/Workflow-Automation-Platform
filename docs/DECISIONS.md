@@ -363,3 +363,25 @@ blank or mixed column in one month cannot change the types of another month.
   version numbers used. Tables that the flow does not read are ignored. A table that is read but does not exist is
   `missing_reference_table`.
 - `findOverlaps` lists pairs of overlapping versions, for the versions screen (T2.17) and the server tests.
+
+## D30 Acceptance harness (T1.17)
+
+- Layout, all outside `src/`: `acceptance/page.ts` (browser side: runs the real engine with the browser runner and
+  returns the output files), `acceptance/helpers.ts` and `datasets.ts` (which file feeds which Input step, effective
+  dates, expected files: configuration of the test, never of the flow), `acceptance/*.spec.ts`, and the comparison in
+  `scripts/lib/compare-workbooks.ts` with its own unit tests. `npm run test:acceptance` builds the page
+  (`vite.acceptance.config.ts`, a production build as in D8), serves it on port 4176 and runs Playwright.
+- The harness takes the flow as data and resolves versions the way the app does: `prepareRun` with one flow version
+  and the reference workbook as table versions valid from 2026-01-01 with no end date (as its Notes sheet says).
+  Reference tables are read from the workbook by the page, with number columns typed from their cells.
+- Comparison rules: the named sheets must exist in both workbooks and in the same order; same size; every cell has the
+  same type and value. Numbers are equal within 1e-9, dates are compared as dates, text exactly (case and spaces
+  count), an absent cell equals an empty cell, and an empty text is not an empty cell. Sheets that are not named
+  (the expected workbook's `Notes`) are ignored.
+- Proof that it can fail: `acceptance/harness.spec.ts` runs a pass-through flow in the browser, finds the output equal
+  to the input workbook (read by another route), and then damages the output seven ways (changed text, renamed header,
+  missing row, date moved by one day, date turned into a number, a cell filled, renamed sheet). Each must be found.
+- The browser runs in UTC+7 (`Asia/Ho_Chi_Minh`; the browser reports it as `Asia/Saigon`, so the test checks the offset
+  of -420 minutes). A date that depends on the time zone fails here.
+- `timesheet.spec.ts` runs `flows/monthly-timesheet.flow.json` for both datasets. Until T1.18 and T1.19 create the
+  file it fails with a message that says so.
