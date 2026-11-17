@@ -11,7 +11,7 @@ export const strings = {
     refTables: { crumb: 'Workspace', title: 'Reference tables', subtitle: 'Shared rules that flows look up. Each table keeps versions with an effective date range.' },
     admin: { crumb: 'Workspace', title: 'Admin', subtitle: 'Users, groups, access to shared flows, and deleted flows.' },
     run: { crumb: 'Flows', title: 'Run a flow', subtitle: 'Pick the effective date and the files, then run the flow in this browser.' },
-    versions: { crumb: 'Flows', title: 'Flow versions', subtitle: 'Each version is valid for a date range. A run uses the version valid on its effective date.' },
+    versions: { crumb: 'Flows', title: 'Versions', subtitle: 'Each version is valid for a date range. A run uses the version valid on its effective date.' },
     notBuilt: 'This screen is not built yet.',
   },
   createFlowDialog: {
@@ -73,6 +73,7 @@ export const strings = {
     copyName: 'Name of the copy',
     copyCreate: 'Create copy',
     versionFailed: 'The version could not be created.',
+    startClash: 'That start day cannot be used.',
     copyFailed: 'The flow could not be copied.',
     emptyCopyName: 'The copy has no name.',
     emptyCopyNameNext: 'Type a name and create the copy again.',
@@ -410,4 +411,26 @@ export const runStrings = {
   loadFailed: 'The flow could not be opened.',
   loadFailedNext: 'Go back to the Flows list and open it from there.',
   files: 'Input files',
+};
+
+export const versionsStrings = {
+  newVersion: 'New version',
+  timeline: 'Version timeline',
+  axis: 'Start of each version',
+  table: 'Versions',
+  cols: { version: 'Version', status: 'Status', from: 'Valid from', to: 'Valid to', note: 'Change note', actions: 'Actions' },
+  edit: 'Edit',
+  view: 'View',
+  publish: 'Publish',
+  copy: 'Copy to new version',
+  checkerTitle: 'Check which version a date uses',
+  checkerDate: 'Date to check',
+  loadFailed: 'The versions could not be loaded.',
+  loadFailedNext: 'Go back to the Flows list and open the flow from there.',
+  newTitle: 'New version',
+  published: (n: number): string => `v${n} published.`,
+  created: (n: number): string => `v${n} created as a draft.`,
+  publishFailed: 'The version could not be published.',
+  cannotPublish: 'Fix it, then publish again:',
+  inEffectBadge: 'In effect',
 };

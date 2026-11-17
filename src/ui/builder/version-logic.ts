@@ -1,6 +1,6 @@
 import type { FlowDefinition } from '../../engine/flow/types';
 import { validateFlow } from '../../engine/flow/validate';
-import { dayAfter, formatDate, planPublish } from '../../engine/versions';
+import { formatDate, planPublish } from '../../engine/versions';
 import type { FlowRecord, FlowVersionRecord, User } from '../../store/types';
 
 const two = (iso: string): string => formatDate(iso).replace(/^(\d) /, '0$1 ');
@@ -26,12 +26,6 @@ export const isDirty = (current: FlowDefinition, saved: unknown): boolean => can
 
 /** The user may change a flow when they are the admin, or the owner of a personal flow (SPEC section 7). */
 export const canEditFlow = (me: User | undefined, flow: FlowRecord): boolean => !!me && (me.role === 'admin' || (flow.scope === 'personal' && flow.ownerId === me.id));
-
-/** A start date for a new version: today, or the day after the latest start of the existing versions when that is later (versions cannot overlap). */
-export function suggestValidFrom(versions: Pick<FlowVersionRecord, 'validFrom'>[], today: string): string {
-  const latest = versions.map((v) => v.validFrom).sort().at(-1);
-  return latest !== undefined && latest >= today ? dayAfter(latest) : today;
-}
 
 /** What publishing does, in words, for the confirm dialog; or why it cannot be published. */
 export function publishSummary(flow: FlowRecord, versionNo: number): { ok: true; text: string } | { ok: false; text: string } {

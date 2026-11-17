@@ -12,7 +12,8 @@ import type { Selection } from './canvas';
 import { emptyDefinition } from './graph';
 import { SettingsPanel } from './settings-panel';
 import { StepList } from './step-list';
-import { canEditFlow, isDirty, publishBlockers, publishSummary, suggestValidFrom, versionOptionLabel } from './version-logic';
+import { newVersionProblem, suggestStart } from '../screens/versions-logic';
+import { canEditFlow, isDirty, publishBlockers, publishSummary, versionOptionLabel } from './version-logic';
 import styles from './builder.module.css';
 
 const t = strings.builder;
@@ -274,7 +275,7 @@ function Builder() {
         />
       ) : null}
       {dialog === 'newVersion' && version && flow.data ? (
-        <NewVersionDialog fromNo={version.versionNo} suggested={suggestValidFrom(flow.data.versions, todayIso())} busy={busy === 'version'} error={dialogError} onCreate={(d) => void createVersion(d)} onCancel={() => setDialog(null)} />
+        <NewVersionDialog fromNo={version.versionNo} suggested={suggestStart(flow.data.versions, todayIso())} check={(d) => newVersionProblem(flow.data!.versions, d)} busy={busy === 'version'} error={dialogError} onCreate={(d) => void createVersion(d)} onCancel={() => setDialog(null)} />
       ) : null}
       {dialog === 'copyFlow' && flow.data ? (
         <CopyFlowDialog suggested={`${flow.data.name} (copy)`} busy={busy === 'copy'} error={dialogError} onCreate={(n) => void copyFlow(n)} onCancel={() => setDialog(null)} />

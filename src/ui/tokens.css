@@ -38,3 +38,11 @@
   --color-danger-ink: #7f1d1d;
   --shadow-popover: 0 8px 24px rgb(19 78 74 / 14%);
 }
+
+/* Version timeline and notes (screen 4). */
+:root {
+  --color-note-bg: #fff7ed;
+  --color-note-ink: #7c2d12;
+  --color-draft-ink: #9a3412;
+  --color-ended-ink: #334155;
+}

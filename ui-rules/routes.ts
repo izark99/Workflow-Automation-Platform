@@ -23,7 +23,7 @@ export const ROUTES: RuleRoute[] = [
   { path: '/reference-tables', sidebar: true },
   { path: '/admin', sidebar: true },
   { path: '/flows/flow-timesheet/run', sidebar: true },
-  { path: '/flows/flow-timesheet/versions', sidebar: true },
+  { path: '/flows/flow-timesheet/versions', sidebar: true, table: true, skeleton: true },
   // The builder has no sidebar and no page header.
   {
     path: '/flows/flow-timesheet/versions/4',
@@ -231,6 +231,20 @@ export const ROUTES: RuleRoute[] = [
       await page.locator('input[type=file]').setInputFiles({ name: 'people.csv', mimeType: 'text/csv', buffer: Buffer.from('name,kind\nAnn,WEEK\nBob,MONTH\n') });
       await page.getByRole('button', { name: 'Run flow' }).click();
       await page.getByRole('heading', { name: 'Result: run finished' }).waitFor({ timeout: 60_000 });
+    },
+  },
+  {
+    path: '/flows/flow-timesheet/versions',
+    name: '/flows/flow-timesheet/versions (new version dialog with a clash)',
+    sidebar: true,
+    // The dialog with the date picker and the message about a start day inside an existing version.
+    prepare: async (page) => {
+      await page.getByRole('button', { name: 'New version', exact: true }).click();
+      const dialog = page.getByRole('dialog', { name: 'New version from v4' });
+      await dialog.getByRole('button', { name: /^Valid from:/ }).click();
+      for (let i = 0; i < 6; i++) await page.keyboard.press('PageUp');
+      await page.keyboard.press('Enter');
+      await dialog.getByRole('alert').waitFor();
     },
   },
 ];

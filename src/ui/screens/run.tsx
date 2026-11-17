@@ -5,7 +5,7 @@ import type { Cell } from '../../engine/types';
 import { checkFileSize } from '../../engine/size-guard';
 import { prepareRun } from '../../engine/versions';
 import type { FlowDefinition } from '../../engine/flow/types';
-import { Badge, Button, ButtonLink, Card, DatePicker, EmptyState, ErrorState, ProgressBar, ScreenFrame, SkeletonTable, Table, Tabs, useDelayedLoading } from '../components';
+import { Badge, Button, ButtonLink, Card, CrumbLink, DatePicker, EmptyState, ErrorState, ProgressBar, ScreenFrame, SkeletonTable, Table, Tabs, useDelayedLoading } from '../components';
 import type { Column } from '../components';
 import { formatCell } from '../builder/preview-logic';
 import { useLoad, useStore } from '../store-context';
@@ -108,11 +108,9 @@ export function RunScreen() {
 
   const crumb = (
     <>
-      <ButtonLink compact to="/flows" variant="secondary">
-        {t.crumbFlows}
-      </ButtonLink>
+      <CrumbLink to="/flows">{t.crumbFlows}</CrumbLink>
       <span aria-hidden="true">/</span>
-      <span>{record?.name ?? ''}</span>
+      {record ? <CrumbLink to={`/flows/${record.id}/versions/${record.versions[0]?.versionNo ?? 1}`}>{record.name}</CrumbLink> : null}
     </>
   );
 

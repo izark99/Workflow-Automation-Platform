@@ -1,7 +1,7 @@
 import { Card, ScreenFrame } from '../components';
 import { strings } from '../strings';
 
-type Key = 'refTables' | 'admin' | 'versions';
+type Key = 'refTables' | 'admin';
 
 /** A screen that a later task builds. It already has the real header and the first block, so the layout rules run on it. */
 export function Placeholder({ screen }: { screen: Key }) {

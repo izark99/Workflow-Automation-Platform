@@ -48,8 +48,9 @@ export function PublishDialog({ versionNo, text, dirty, busy, error, onConfirm, 
 }
 
 /** Asks for the day a new version is valid from; the new version is a draft copy of the one that is open. */
-export function NewVersionDialog({ fromNo, suggested, busy, error, onCreate, onCancel }: { fromNo: number; suggested: string; busy: boolean; error: string | null; onCreate: (validFrom: string) => void; onCancel: () => void }) {
+export function NewVersionDialog({ fromNo, suggested, busy, error, check, onCreate, onCancel }: { fromNo: number; suggested: string; busy: boolean; error: string | null; /** Why a start day cannot be used (versions cannot overlap), or undefined. */ check?: (date: string) => string | undefined; onCreate: (validFrom: string) => void; onCancel: () => void }) {
   const [date, setDate] = useState(suggested);
+  const problem = check?.(date);
   return (
     <Dialog
       title={t.newVersionTitle(fromNo)}
@@ -57,7 +58,7 @@ export function NewVersionDialog({ fromNo, suggested, busy, error, onCreate, onC
       actions={
         <>
           <Button onClick={onCancel}>{t.cancel}</Button>
-          <Button variant="primary" busy={busy} onClick={() => onCreate(date)}>
+          <Button variant="primary" busy={busy} disabled={!!problem} onClick={() => onCreate(date)}>
             {t.createVersion}
           </Button>
         </>
@@ -66,6 +67,7 @@ export function NewVersionDialog({ fromNo, suggested, busy, error, onCreate, onC
       <div className={styles.dialogBody}>
         <span>{t.newVersionText}</span>
         <DatePicker label={t.validFrom} value={date} onChange={setDate} width={200} />
+        {problem ? <ErrorState what={t.startClash} next={problem} /> : null}
         {error ? <ErrorState what={t.versionFailed} next={error} /> : null}
       </div>
     </Dialog>

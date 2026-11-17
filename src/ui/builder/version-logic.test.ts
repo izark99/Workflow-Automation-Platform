@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { seedSnapshot } from '../../store/seed';
 import type { FlowRecord } from '../../store/types';
 import { addStep, connectSteps, emptyDefinition } from './graph';
-import { canEditFlow, canonical, isDirty, publishBlockers, publishSummary, suggestValidFrom, versionOptionLabel } from './version-logic';
+import { canEditFlow, canonical, isDirty, publishBlockers, publishSummary, versionOptionLabel } from './version-logic';
 
 const seed = seedSnapshot();
 const timesheet = seed.flows.find((f) => f.id === 'flow-timesheet')!;
@@ -35,15 +35,6 @@ describe('who may edit', () => {
     expect(canEditFlow(user('user-lan'), personal)).toBe(false);
     expect(canEditFlow(user('user-lan'), timesheet)).toBe(false);
     expect(canEditFlow(undefined, personal)).toBe(false);
-  });
-});
-
-describe('a start date for a new version', () => {
-  it('is today, or the day after the latest start when that is later', () => {
-    expect(suggestValidFrom([{ validFrom: '2026-01-01' }], '2026-11-17')).toBe('2026-11-17');
-    expect(suggestValidFrom([{ validFrom: '2026-11-17' }], '2026-11-17')).toBe('2026-11-18');
-    expect(suggestValidFrom([{ validFrom: '2027-01-01' }, { validFrom: '2026-01-01' }], '2026-11-17')).toBe('2027-01-02');
-    expect(suggestValidFrom([], '2026-11-17')).toBe('2026-11-17');
   });
 });
 

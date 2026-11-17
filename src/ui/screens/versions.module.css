@@ -1,0 +1,84 @@
+.bar {
+  display: flex;
+  gap: 4px;
+}
+
+.segment {
+  min-width: 0;
+  box-sizing: border-box;
+  height: 60px;
+  padding: 9px 12px;
+  border-radius: var(--radius-control);
+  border: 1px solid var(--color-rule);
+  background: var(--color-rule);
+  color: var(--color-ended-ink);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.segment b,
+.segment span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sub {
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.inEffect {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: var(--color-on-fill);
+}
+
+.draft {
+  border: 1px dashed var(--color-cta);
+  background: var(--color-note-bg);
+  color: var(--color-draft-ink);
+}
+
+.axis {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
+.axis span {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.note {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-control);
+  background: var(--color-note-bg);
+  color: var(--color-note-ink);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.checker {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}

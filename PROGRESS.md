@@ -64,7 +64,7 @@ before it passes, except where a task says otherwise.
 - [x] T2.14 Settings forms: Append, Output, SQL.
 - [x] T2.15 Builder, part 3: version dropdown, save draft, publish, read-only mode for published versions.
 - [x] T2.16 Run screen: effective date, resolved versions, file inputs, progress, result tabs, download, error state. A file above the size limit shows `strings.xlsxTooLarge` instead of starting a run; the e2e test uses a sparse file just over `MAX_SAFE_XLSX_BYTES`, as `checkGuard` in `scripts/spike.ts` does.
-- [ ] T2.17 Versions screen: timeline, table, new version from copy, no-overlap check, date checker.
+- [x] T2.17 Versions screen: timeline, table, new version from copy, no-overlap check, date checker.
 - [ ] T2.18 Reference tables screen: list, versions, grid with paste from Excel, read-only published versions.
 - [ ] T2.19 Admin screen: users, groups, access to shared flows, deleted flows with restore.
 - [ ] T2.20 End-to-end journeys for gate G3.
@@ -103,6 +103,14 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T2.17 Versions screen
+Changed: src/ui/screens/{versions.tsx,versions.module.css,versions-dialogs.tsx,versions-logic.ts(+10 tests)}, `CrumbLink` (text breadcrumb link; the Run screen now uses it too), `NewVersionDialog` with a start-day check (also in the builder, which now uses `suggestStart` and `newVersionProblem`), design tokens for the timeline notes, `versionsStrings`, title "Versions", e2e/versions-screen.spec.ts (9 tests), UI-rules states (table and skeleton for the route, dialog with a clash), docs/DECISIONS.md (D50).
+How: timeline of the versions in date order with widths by range and a note about what publishing does; table with status, dates, change note and actions (Edit or View, Publish, Copy to new version); "New version" with a live no-overlap check of the start day; date check sentence; users without edit rights see View only.
+Checked in the browser: the timeline texts and order; row texts and states; the date check (15 May 2026 uses v2; an earlier date says the run stops); the dialog refuses 15 May 2026 as inside v2 and creates a draft copy v5 for a later day; Publish v4 is refused for the unconnected seed draft and works for a finished one (v3 then ends on 31 Dec 2026); the group member sees no edit actions.
+Test mistakes of mine, fixed: I expected v3 "ended" after its end moved to 31 Dec 2026, but today is before that day; and a card without a label has no region role.
+Gates run: check PASS (587 tests), test:e2e PASS (129 tests), test:ui-rules PASS (322 tests: 161 per width, 25 route states), test:acceptance PASS (7 tests).
+Next: T2.18 (reference tables screen).
 
 ### 2026-11-17 T2.16 Run screen
 Changed: src/ui/screens/{run.tsx,run.module.css,run-logic.ts(+5 tests),run-engine.ts}, route `/flows/:id/run`, `runStrings`, e2e/run.spec.ts (8 tests) and e2e/runnable-flow.ts, ui-rules `before` hook and a finished-run state, docs/DECISIONS.md (D49).
