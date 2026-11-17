@@ -129,3 +129,20 @@ Open design points to settle in the task that needs them, each recorded here whe
 - Cancel: the signal is checked between steps and calls `runner.cancel()`. The Node runner cannot stop a query
   that is already running; the browser runner calls `cancelSent()`.
 - `TRY()` and `try_cast` exist in this DuckDB version (checked for T1.6).
+
+## D15 Input file node (T1.3)
+
+- Settings: `key` (logical name, one file per key, unique in a flow), `sheet`, `headerRow` (from 1, default 1),
+  `skipRows` after the header, `fillDown` (column names), `rowNumberColumn` (name of an added column with the row
+  number in the file; none by default). The file is read before the nodes run (`loadInputFile`); the node module only
+  exposes the loaded table. `runFlow` takes `files` by key, and `inputs` for tables already in memory (tests).
+- Every cell is staged as text in DuckDB and cast afterwards. xlsx column types come from the cell kinds seen while
+  streaming: all numbers give number, all midnight dates give date, all booleans give boolean, anything else (mixed or
+  text) stays text with numbers written as plain text. So `2h` among numbers survives (rule R8). csv columns are
+  number only for plain decimals without leading zeros, date only for `YYYY-MM-DD`, otherwise text. The Column mapping
+  node (T1.4) is where a user retypes a column.
+- Fully blank rows are skipped. Trailing empty header cells are dropped, interior ones are named `Column N`, a
+  duplicate header name is an error. For csv, `headerRow` counts non-blank lines, because DuckDB skips blank lines.
+- Known limit: rows are staged with SQL INSERT in batches of 2,000. This is correct but slower than an Arrow insert.
+  Throughput on a 1,000,000-row xlsx is not measured; measure it in T2.16 and switch the staging step if needed.
+- Dates read from xlsx are built from UTC milliseconds, so they do not move with the time zone of the browser.

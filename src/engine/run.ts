@@ -1,5 +1,6 @@
 import { NODE_PORTS } from './flow/types';
 import { resolveEdgeHandles, topologicalOrder, validateFlow } from './flow/validate';
+import { loadInputFile, parseInputSettings, type FileSource } from './input/load';
 import { defaultRegistry } from './nodes/registry';
 import type { NodeRegistry } from './nodes/types';
 import { boundarySelectList, createTableStatements, quoteIdent } from './sql';
@@ -12,8 +13,10 @@ export interface RunOptions {
   flow: unknown;
   /** ISO date, for example `2026-09-30`. */
   effectiveDate: string;
-  /** Input tables by logical key. */
+  /** Input tables held in memory, by logical key. For small data and tests. */
   inputs?: Record<string, TableData>;
+  /** Input files by logical key. Each input step reads the file of its key. */
+  files?: Record<string, FileSource>;
   /** Reference tables by name, already resolved to the version valid on the effective date. */
   refTables?: Record<string, TableData>;
   registry?: NodeRegistry;
@@ -74,6 +77,26 @@ export async function runFlow(runner: SqlRunner, options: RunOptions): Promise<R
     const inputTables: Record<string, LoadedTable> = {};
     for (const [i, [key, data]] of Object.entries(options.inputs ?? {}).entries()) {
       inputTables[key] = await load(`in${i}`, data);
+    }
+    const seenKeys = new Set<string>();
+    for (const node of flow.nodes.filter((n) => n.type === 'input_file')) {
+      const settings = parseInputSettings(node.settings, node.id);
+      if (seenKeys.has(settings.key)) {
+        throw new EngineError(
+          'invalid_settings',
+          `Two input steps use the key "${settings.key}". Give each input step its own key, because each key gets one file.`,
+          node.id,
+        );
+      }
+      seenKeys.add(settings.key);
+      const file = options.files?.[settings.key];
+      if (file) {
+        options.onNode?.({ nodeId: node.id, status: 'start' });
+        const relation = `${prefix}file${seenKeys.size}`;
+        inputTables[settings.key] = await loadInputFile(runner, file, settings, relation, node.id);
+        created.push(relation);
+        options.onNode?.({ nodeId: node.id, status: 'done' });
+      }
     }
     const refTables: Record<string, LoadedTable> = {};
     for (const [i, [name, data]] of Object.entries(options.refTables ?? {}).entries()) {

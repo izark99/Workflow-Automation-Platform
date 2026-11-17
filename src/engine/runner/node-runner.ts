@@ -36,6 +36,9 @@ export async function createNodeRunner(): Promise<SqlRunner> {
       return { columns, rows };
     },
     cancel: () => Promise.resolve(),
+    async registerFile(name, data) {
+      db.registerFileBuffer(name, new Uint8Array(await data.arrayBuffer()));
+    },
     async close() {
       conn.close();
     },

@@ -35,6 +35,10 @@ export async function createBrowserRunner(): Promise<SqlRunner> {
       });
       return { columns, rows };
     },
+    async registerFile(name, data) {
+      // A File is read through its handle, so a large csv is not copied into the page.
+      await db.registerFileHandle(name, data as File, duckdb.DuckDBDataProtocol.BROWSER_FILEREADER, true);
+    },
     async cancel() {
       await conn.cancelSent();
     },

@@ -216,7 +216,7 @@ describe('runFlow', () => {
       },
     };
     const result = await runFlow(runner, {
-      flow: flowOf([n('a', 'input_file')], []),
+      flow: flowOf([n('a', 'input_file', { key: 'Unused' })], []),
       effectiveDate: '2026-09-30',
       refTables: { limits: { columns: [{ name: 'period', type: 'text' }, { name: 'limit_hours', type: 'number' }], rows: [['WEEK', 16]] } },
       registry: { input_file: reader },

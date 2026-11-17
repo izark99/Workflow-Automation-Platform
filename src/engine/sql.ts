@@ -25,18 +25,27 @@ function literal(value: Cell, type: Column['type']): string {
 
 const INSERT_CHUNK = 500;
 
-/** SQL statements that create and fill a table from rows held in memory. For small tables only. */
-export function createTableStatements(relation: string, data: TableData): string[] {
-  const cols = data.columns.map((c) => `${quoteIdent(c.name)} ${sqlType(c.type)}`).join(', ');
-  const statements = [`CREATE OR REPLACE TABLE ${quoteIdent(relation)} (${cols})`];
-  for (let i = 0; i < data.rows.length; i += INSERT_CHUNK) {
-    const values = data.rows
+export function createTableStatement(relation: string, columns: Column[]): string {
+  const cols = columns.map((c) => `${quoteIdent(c.name)} ${sqlType(c.type)}`).join(', ');
+  return `CREATE OR REPLACE TABLE ${quoteIdent(relation)} (${cols})`;
+}
+
+/** INSERT statements for rows held in memory, in chunks. For small batches only. */
+export function insertRowsStatements(relation: string, columns: Column[], rows: Cell[][]): string[] {
+  const statements: string[] = [];
+  for (let i = 0; i < rows.length; i += INSERT_CHUNK) {
+    const values = rows
       .slice(i, i + INSERT_CHUNK)
-      .map((row) => `(${data.columns.map((c, j) => literal(row[j] ?? null, c.type)).join(', ')})`)
+      .map((row) => `(${columns.map((c, j) => literal(row[j] ?? null, c.type)).join(', ')})`)
       .join(', ');
     statements.push(`INSERT INTO ${quoteIdent(relation)} VALUES ${values}`);
   }
   return statements;
+}
+
+/** SQL statements that create and fill a table from rows held in memory. For small tables only. */
+export function createTableStatements(relation: string, data: TableData): string[] {
+  return [createTableStatement(relation, data.columns), ...insertRowsStatements(relation, data.columns, data.rows)];
 }
 
 /** Select list that returns cells in the boundary format: numbers as DOUBLE, dates as ISO text. */

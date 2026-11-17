@@ -31,6 +31,8 @@ export interface QueryResult {
 export interface SqlRunner {
   exec(sql: string): Promise<void>;
   query(sql: string): Promise<QueryResult>;
+  /** Makes a file readable by SQL under this name, for example by `read_csv`. Does not copy a File. */
+  registerFile(name: string, data: Blob): Promise<void>;
   /** Stops the running query, if the runner can. */
   cancel(): Promise<void>;
   close(): Promise<void>;
@@ -41,6 +43,9 @@ export type EngineErrorCode =
   | 'unsupported_node'
   | 'missing_input_table'
   | 'missing_reference_table'
+  | 'invalid_settings'
+  | 'file_too_large'
+  | 'file_read_failed'
   | 'unknown_column'
   | 'node_failed'
   | 'cancelled';
