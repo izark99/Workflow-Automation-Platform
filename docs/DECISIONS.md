@@ -426,3 +426,20 @@ blank or mixed column in one month cannot change the types of another month.
   reference table `ot_limits`, which the flow has to ask for.
 - Sort (rule R12): employee, then the level in the order DAY, WEEK, MONTH (a formula sort key), then the period text.
 - The sheet order of a workbook is the order of the Output steps in the flow file. T1.19b puts the Summary step first.
+
+## D33 Timesheet flow, part 2b: the Summary sheet (T1.19b)
+
+- Helper columns on the rows of known employees: `att_ok` (inside the window with a known code), `counted_category`
+  (the day category of a valid row, else blank), `work_value` (work day value of a valid row, else 0),
+  `ot_type_valid` and `ot_valid_hours` (OT type and hours of a valid OT row, else blank and 0). They feed the Summary and
+  the three breach streams.
+- Summary = Group by employee (sum of `work_value` and of `ot_valid_hours`, so every employee found in both files gets a
+  row, also with no valid day) + two Pivots keyed by employee whose column lists come from the reference tables
+  (`attendance_codes.day_category` and `ot_types.ot_type`, names built as lower case code plus `_days` or `_hours`) +
+  Lookups that bring only the five category columns and the four OT columns that the sheet has + the counts of the
+  two other sheets (Group by over the exception and breach streams), with 0 for an employee that has none. The Output
+  step lists the columns in the header order of the expected sheet and sorts by employee.
+- `work_days` is the sum of the work day values (half days count 0.5), not the count of WORK rows; the Pivot's own
+  `work_days` count column is not brought into the sheet.
+- The Summary Output step is first in the flow file, so the sheets are written as Summary, Exceptions, OT_breaches.
+- Result: `npm run test:acceptance` passes for both datasets with the same flow file (see the log of T1.19b).

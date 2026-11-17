@@ -3,6 +3,41 @@
   "name": "Monthly timesheet",
   "nodes": [
     {
+      "id": "out-summary",
+      "type": "output",
+      "label": "Summary sheet",
+      "position": {
+        "x": 8580,
+        "y": -480
+      },
+      "settings": {
+        "file": "Result",
+        "sheet": "Summary",
+        "columns": [
+          "employee_id",
+          "full_name",
+          "work_days",
+          "paid_leave_days",
+          "unpaid_leave_days",
+          "sick_days",
+          "holiday_days",
+          "rest_days",
+          "ot_day_hours",
+          "ot_night_hours",
+          "ot_rest_hours",
+          "ot_holiday_hours",
+          "ot_total_hours",
+          "ot_breach_count",
+          "exception_count"
+        ],
+        "sort": [
+          {
+            "column": "employee_id"
+          }
+        ]
+      }
+    },
+    {
       "id": "timesheet",
       "type": "input_file",
       "label": "Timesheet",
@@ -214,6 +249,10 @@
           {
             "column": "employee_id",
             "as": "list_id"
+          },
+          {
+            "column": "Full name",
+            "as": "full_name"
           },
           {
             "column": "Join date",
@@ -541,6 +580,71 @@
       },
       "settings": {
         "condition": "[ot_ok]"
+      }
+    },
+    {
+      "id": "att-ok",
+      "type": "formula_column",
+      "label": "Attendance code is valid",
+      "position": {
+        "x": 4030.0,
+        "y": 480
+      },
+      "settings": {
+        "name": "att_ok",
+        "expression": "IF(AND([inside], NOT(ISBLANK([known_code]))), TRUE, FALSE)"
+      }
+    },
+    {
+      "id": "att-cat",
+      "type": "formula_column",
+      "label": "Day category counted",
+      "position": {
+        "x": 4030.0,
+        "y": 520
+      },
+      "settings": {
+        "name": "counted_category",
+        "expression": "IF([att_ok], [day_category])"
+      }
+    },
+    {
+      "id": "work-val",
+      "type": "formula_column",
+      "label": "Work day value counted",
+      "position": {
+        "x": 4030.0,
+        "y": 560
+      },
+      "settings": {
+        "name": "work_value",
+        "expression": "IF([att_ok], [work_day_value], 0)"
+      }
+    },
+    {
+      "id": "ot-type-ok",
+      "type": "formula_column",
+      "label": "OT type counted",
+      "position": {
+        "x": 4030.0,
+        "y": 600
+      },
+      "settings": {
+        "name": "ot_type_valid",
+        "expression": "IF([ot_ok], [code_ot_type])"
+      }
+    },
+    {
+      "id": "ot-hours-ok",
+      "type": "formula_column",
+      "label": "OT hours counted",
+      "position": {
+        "x": 4030.0,
+        "y": 640
+      },
+      "settings": {
+        "name": "ot_valid_hours",
+        "expression": "IF([ot_ok], [ot_num], 0)"
       }
     },
     {
@@ -890,6 +994,267 @@
           }
         ]
       }
+    },
+    {
+      "id": "sum-base",
+      "type": "group_by",
+      "label": "Work days and OT hours per employee",
+      "position": {
+        "x": 6760,
+        "y": -480
+      },
+      "settings": {
+        "groupBy": [
+          "employee_id",
+          "full_name"
+        ],
+        "aggregations": [
+          {
+            "fn": "sum",
+            "column": "work_value",
+            "as": "work_days"
+          },
+          {
+            "fn": "sum",
+            "column": "ot_valid_hours",
+            "as": "ot_total_hours"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sum-categories",
+      "type": "pivot",
+      "label": "Days per category",
+      "position": {
+        "x": 6760,
+        "y": -320
+      },
+      "settings": {
+        "rowKeys": [
+          "employee_id"
+        ],
+        "columnSource": "counted_category",
+        "aggregation": "count",
+        "columns": {
+          "from": "reference",
+          "table": "attendance_codes",
+          "column": "day_category"
+        },
+        "nameSuffix": "_days",
+        "nameCase": "lower"
+      }
+    },
+    {
+      "id": "sum-ot-types",
+      "type": "pivot",
+      "label": "OT hours per OT type",
+      "position": {
+        "x": 6760,
+        "y": -160
+      },
+      "settings": {
+        "rowKeys": [
+          "employee_id"
+        ],
+        "columnSource": "ot_type_valid",
+        "value": "ot_valid_hours",
+        "aggregation": "sum",
+        "columns": {
+          "from": "reference",
+          "table": "ot_types",
+          "column": "ot_type"
+        },
+        "nameSuffix": "_hours",
+        "nameCase": "lower"
+      }
+    },
+    {
+      "id": "sum-breach-count",
+      "type": "group_by",
+      "label": "Breaches per employee",
+      "position": {
+        "x": 6760,
+        "y": 0
+      },
+      "settings": {
+        "groupBy": [
+          "employee_id"
+        ],
+        "aggregations": [
+          {
+            "fn": "count",
+            "as": "breach_n"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sum-exception-count",
+      "type": "group_by",
+      "label": "Exceptions per employee",
+      "position": {
+        "x": 6760,
+        "y": 160
+      },
+      "settings": {
+        "groupBy": [
+          "employee_id"
+        ],
+        "aggregations": [
+          {
+            "fn": "count",
+            "as": "exception_n"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sum-join-categories",
+      "type": "lookup_join",
+      "label": "Add the days per category",
+      "position": {
+        "x": 7020,
+        "y": -480
+      },
+      "settings": {
+        "source": {
+          "kind": "node"
+        },
+        "keys": [
+          {
+            "left": "employee_id",
+            "right": "employee_id"
+          }
+        ],
+        "bring": [
+          {
+            "column": "paid_leave_days"
+          },
+          {
+            "column": "unpaid_leave_days"
+          },
+          {
+            "column": "sick_days"
+          },
+          {
+            "column": "holiday_days"
+          },
+          {
+            "column": "rest_days"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sum-join-ot",
+      "type": "lookup_join",
+      "label": "Add the OT hours per type",
+      "position": {
+        "x": 7280,
+        "y": -480
+      },
+      "settings": {
+        "source": {
+          "kind": "node"
+        },
+        "keys": [
+          {
+            "left": "employee_id",
+            "right": "employee_id"
+          }
+        ],
+        "bring": [
+          {
+            "column": "ot_day_hours"
+          },
+          {
+            "column": "ot_night_hours"
+          },
+          {
+            "column": "ot_rest_hours"
+          },
+          {
+            "column": "ot_holiday_hours"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sum-join-breaches",
+      "type": "lookup_join",
+      "label": "Add the breach count",
+      "position": {
+        "x": 7540,
+        "y": -480
+      },
+      "settings": {
+        "source": {
+          "kind": "node"
+        },
+        "keys": [
+          {
+            "left": "employee_id",
+            "right": "employee_id"
+          }
+        ],
+        "bring": [
+          {
+            "column": "breach_n"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sum-join-exceptions",
+      "type": "lookup_join",
+      "label": "Add the exception count",
+      "position": {
+        "x": 7800,
+        "y": -480
+      },
+      "settings": {
+        "source": {
+          "kind": "node"
+        },
+        "keys": [
+          {
+            "left": "employee_id",
+            "right": "employee_id"
+          }
+        ],
+        "bring": [
+          {
+            "column": "exception_n"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sum-breach-zero",
+      "type": "formula_column",
+      "label": "Breach count, 0 when none",
+      "position": {
+        "x": 8060,
+        "y": -480
+      },
+      "settings": {
+        "name": "ot_breach_count",
+        "expression": "IF(ISBLANK([breach_n]), 0, [breach_n])"
+      }
+    },
+    {
+      "id": "sum-exception-zero",
+      "type": "formula_column",
+      "label": "Exception count, 0 when none",
+      "position": {
+        "x": 8320,
+        "y": -480
+      },
+      "settings": {
+        "name": "exception_count",
+        "expression": "IF(ISBLANK([exception_n]), 0, [exception_n])"
+      }
     }
   ],
   "edges": [
@@ -1032,6 +1397,26 @@
     },
     {
       "source": "ot-ok",
+      "target": "att-ok"
+    },
+    {
+      "source": "att-ok",
+      "target": "att-cat"
+    },
+    {
+      "source": "att-cat",
+      "target": "work-val"
+    },
+    {
+      "source": "work-val",
+      "target": "ot-type-ok"
+    },
+    {
+      "source": "ot-type-ok",
+      "target": "ot-hours-ok"
+    },
+    {
+      "source": "ot-hours-ok",
       "target": "ot-valid"
     },
     {
@@ -1137,6 +1522,78 @@
     {
       "source": "breaches-all",
       "target": "out-breaches"
+    },
+    {
+      "source": "ot-hours-ok",
+      "target": "sum-base"
+    },
+    {
+      "source": "ot-hours-ok",
+      "target": "sum-categories"
+    },
+    {
+      "source": "ot-hours-ok",
+      "target": "sum-ot-types"
+    },
+    {
+      "source": "breaches-all",
+      "target": "sum-breach-count"
+    },
+    {
+      "source": "exceptions-all",
+      "target": "sum-exception-count"
+    },
+    {
+      "source": "sum-base",
+      "target": "sum-join-categories",
+      "targetHandle": "left"
+    },
+    {
+      "source": "sum-categories",
+      "target": "sum-join-categories",
+      "targetHandle": "right"
+    },
+    {
+      "source": "sum-join-categories",
+      "target": "sum-join-ot",
+      "targetHandle": "left"
+    },
+    {
+      "source": "sum-ot-types",
+      "target": "sum-join-ot",
+      "targetHandle": "right"
+    },
+    {
+      "source": "sum-join-ot",
+      "target": "sum-join-breaches",
+      "targetHandle": "left"
+    },
+    {
+      "source": "sum-breach-count",
+      "target": "sum-join-breaches",
+      "targetHandle": "right"
+    },
+    {
+      "source": "sum-join-breaches",
+      "target": "sum-join-exceptions",
+      "targetHandle": "left"
+    },
+    {
+      "source": "sum-exception-count",
+      "target": "sum-join-exceptions",
+      "targetHandle": "right"
+    },
+    {
+      "source": "sum-join-exceptions",
+      "target": "sum-breach-zero"
+    },
+    {
+      "source": "sum-breach-zero",
+      "target": "sum-exception-zero"
+    },
+    {
+      "source": "sum-exception-zero",
+      "target": "out-summary"
     }
   ]
 }

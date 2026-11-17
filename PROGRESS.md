@@ -40,7 +40,7 @@ before it passes, except where a task says otherwise.
 - [x] T1.17 Acceptance harness: Playwright test that runs a flow file on a dataset folder and compares workbooks cell by cell. Prove it fails on a wrong workbook.
 - [x] T1.18 `flows/monthly-timesheet.flow.json`, part 1: reading, unpivot, dates, employment window, Exceptions sheet (rules R1 to R9).
 - [x] T1.19a `flows/monthly-timesheet.flow.json`, part 2a: OT_breaches sheet (R11), sort order (R12).
-- [ ] T1.19b `flows/monthly-timesheet.flow.json`, part 2b: Summary sheet (R10, needs the breach count of T1.19a), sort order (R12). The Summary output step goes first in the flow, so that the sheet is first in the workbook.
+- [x] T1.19b `flows/monthly-timesheet.flow.json`, part 2b: Summary sheet (R10, needs the breach count of T1.19a), sort order (R12). The Summary output step goes first in the flow, so that the sheet is first in the workbook.
 - [ ] T1.20 Both datasets pass `npm run test:acceptance`. Add the test that no network request carries file content.
 
 ## Phase 2: Canvas and screens (gates G3, G4)
@@ -100,6 +100,14 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T1.19b Timesheet flow, part 2b: Summary sheet
+Changed: flows/monthly-timesheet.flow.json (70 steps, 77 connections; the Summary output is the first Output step), docs/DECISIONS.md (D33).
+Result: `npm run test:acceptance` exit 0, 4 tests passed: the two harness self-checks, and the timesheet flow for both datasets with the same flow file. September: 3 sheets, 282 cells equal (11 summary rows, 11 exceptions, 4 breaches). October: 3 sheets, 336 cells equal (11, 19, 5). Browser time zone UTC+7.
+How: helper columns for valid days and valid OT; Group by employee for work days and total OT; two Pivots with column lists from the reference tables for the category days and the OT hours per type; Lookups that bring the sheet's columns, the breach count and the exception count; Output with the expected header order.
+Searches: src/ and flows/ for the fixture employee IDs: no match.
+Gates run: check PASS (380 unit tests, last run before this flow change; no file under src/ changed since). test:acceptance PASS.
+Next: T1.20 (both datasets pass; add the test that no network request carries file content). T1.20 is the last task of Phase 1: consult the advisor before ticking it.
 
 ### 2026-11-17 T1.19a Timesheet flow, part 2a: OT_breaches sheet
 Changed: flows/monthly-timesheet.flow.json (now 53 steps, 56 connections), docs/DECISIONS.md (D32). PROGRESS: T1.19 split into T1.19a (OT_breaches) and T1.19b (Summary), because the Summary needs the breach count.
