@@ -12,6 +12,7 @@ export default tseslint.config(
       'test-results',
       'bench-data',
       'dist-spike',
+      'dist-acceptance',
       'testcase',
       'node_modules',
     ],

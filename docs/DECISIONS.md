@@ -385,3 +385,27 @@ blank or mixed column in one month cannot change the types of another month.
   of -420 minutes). A date that depends on the time zone fails here.
 - `timesheet.spec.ts` runs `flows/monthly-timesheet.flow.json` for both datasets. Until T1.18 and T1.19 create the
   file it fails with a message that says so.
+
+## D31 Timesheet flow, part 1: reading and the Exceptions sheet (T1.18)
+
+- `flows/monthly-timesheet.flow.json` holds logic only: the logical input keys `Timesheet` and `Employees`, the layout
+  of the files (sheet names, header row 3, the 31 day columns `1` to `31`), the reference table name `attendance_codes`,
+  and the wording of the exception reasons and column names of the output sheet. No employee, date, count or expected
+  number. The attendance codes and OT types are never named; they come from the reference table.
+- Pipeline: trim the ID and read the row type; unpivot the 31 day columns to text (blanks kept); pivot the attendance
+  row and the OT row of one day side by side (`raw_att`, `raw_ot`, columns from the data); day number from `VALUE`; the
+  date is `DATE(year, month, day)` of the effective date, blank when the month rolled over (rule R4); employee list
+  lookup (join date, leave date, and a marker for "in the list"); Filter splits unknown employees (rule R3: one row each
+  through Group by) from the rest; attendance code lookup in the reference table; the day is inside the window when
+  `join <= date <= leave` (blank leave date is open); one formula per row type builds the reason in the order of the
+  oracle (invalid date, outside window, then the code or OT rules); a Filter keeps rows with a reason; Append joins
+  the three streams; the Output step picks and orders the columns, sorts by employee, day, row type, and writes plain
+  numbers of the `value` column as numbers (`numberLikeText`, D27).
+- Known limits, none visible in the test data: (1) a number typed as text in an OT cell (`"2"`) counts as the number 2,
+  because Unpivot writes every value as text; rule R8 would call it invalid. (2) Attendance codes match without regard
+  to case (Lookup), where the oracle compares exactly. (3) An employee in the list with no join date counts as inside
+  the window. (4) The pivot columns `raw_att` and `raw_ot` exist only when the file has both row types.
+- While the flow is built in parts, `ACCEPTANCE_SHEETS=Exceptions npx playwright test -c playwright.acceptance.config.ts
+  timesheet` compares a subset of sheets. The gate itself always compares the three sheets.
+- `dist-acceptance` is ignored by ESLint (the build output of the acceptance page made `npm run check` fail once the
+  page had been built).

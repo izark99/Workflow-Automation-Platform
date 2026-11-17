@@ -1,0 +1,657 @@
+{
+  "schemaVersion": 1,
+  "name": "Monthly timesheet",
+  "nodes": [
+    {
+      "id": "timesheet",
+      "type": "input_file",
+      "label": "Timesheet",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "settings": {
+        "key": "Timesheet",
+        "sheet": "Timesheet",
+        "headerRow": 3,
+        "fillDown": [
+          "Employee ID",
+          "Full name"
+        ]
+      }
+    },
+    {
+      "id": "ts-employee-id",
+      "type": "formula_column",
+      "label": "Employee ID without spaces",
+      "position": {
+        "x": 260,
+        "y": 0
+      },
+      "settings": {
+        "name": "employee_id",
+        "expression": "TRIM([Employee ID])"
+      }
+    },
+    {
+      "id": "ts-row-type",
+      "type": "formula_column",
+      "label": "Row type in capitals",
+      "position": {
+        "x": 520,
+        "y": 0
+      },
+      "settings": {
+        "name": "row_type",
+        "expression": "UPPER(TRIM([Row type]))"
+      }
+    },
+    {
+      "id": "ts-unpivot",
+      "type": "unpivot",
+      "label": "Days to rows",
+      "position": {
+        "x": 780,
+        "y": 0
+      },
+      "settings": {
+        "keep": [
+          "employee_id",
+          "row_type"
+        ],
+        "unpivot": [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "7",
+          "8",
+          "9",
+          "10",
+          "11",
+          "12",
+          "13",
+          "14",
+          "15",
+          "16",
+          "17",
+          "18",
+          "19",
+          "20",
+          "21",
+          "22",
+          "23",
+          "24",
+          "25",
+          "26",
+          "27",
+          "28",
+          "29",
+          "30",
+          "31"
+        ],
+        "nameColumn": "day_text",
+        "valueColumn": "value"
+      }
+    },
+    {
+      "id": "ts-pivot",
+      "type": "pivot",
+      "label": "Attendance and OT side by side",
+      "position": {
+        "x": 1040,
+        "y": 0
+      },
+      "settings": {
+        "rowKeys": [
+          "employee_id",
+          "day_text"
+        ],
+        "columnSource": "row_type",
+        "value": "value",
+        "aggregation": "max",
+        "columns": {
+          "from": "data"
+        },
+        "namePrefix": "raw_",
+        "nameCase": "lower"
+      }
+    },
+    {
+      "id": "ts-day",
+      "type": "formula_column",
+      "label": "Day number",
+      "position": {
+        "x": 1300,
+        "y": 0
+      },
+      "settings": {
+        "name": "day",
+        "expression": "VALUE([day_text])"
+      }
+    },
+    {
+      "id": "ts-date",
+      "type": "formula_column",
+      "label": "Date in the month of the run",
+      "position": {
+        "x": 1560,
+        "y": 0
+      },
+      "settings": {
+        "name": "date",
+        "expression": "IF(MONTH(DATE(YEAR(EFFECTIVE_DATE()), MONTH(EFFECTIVE_DATE()), [day])) = MONTH(EFFECTIVE_DATE()), DATE(YEAR(EFFECTIVE_DATE()), MONTH(EFFECTIVE_DATE()), [day]))"
+      }
+    },
+    {
+      "id": "employees",
+      "type": "input_file",
+      "label": "Employee list",
+      "position": {
+        "x": 0,
+        "y": 220
+      },
+      "settings": {
+        "key": "Employees",
+        "sheet": "Employees"
+      }
+    },
+    {
+      "id": "emp-id",
+      "type": "formula_column",
+      "label": "Employee ID without spaces",
+      "position": {
+        "x": 260,
+        "y": 220
+      },
+      "settings": {
+        "name": "employee_id",
+        "expression": "TRIM([Employee ID])"
+      }
+    },
+    {
+      "id": "emp-types",
+      "type": "column_mapping",
+      "label": "Date types",
+      "position": {
+        "x": 520,
+        "y": 220
+      },
+      "settings": {
+        "columns": [
+          {
+            "source": "Join date",
+            "type": "date"
+          },
+          {
+            "source": "Leave date",
+            "type": "date"
+          }
+        ]
+      }
+    },
+    {
+      "id": "look-employee",
+      "type": "lookup_join",
+      "label": "Employee list lookup",
+      "position": {
+        "x": 1820,
+        "y": 0
+      },
+      "settings": {
+        "source": {
+          "kind": "node"
+        },
+        "keys": [
+          {
+            "left": "employee_id",
+            "right": "employee_id"
+          }
+        ],
+        "bring": [
+          {
+            "column": "employee_id",
+            "as": "list_id"
+          },
+          {
+            "column": "Join date",
+            "as": "join_date"
+          },
+          {
+            "column": "Leave date",
+            "as": "leave_date"
+          }
+        ],
+        "onNoMatch": "blank"
+      }
+    },
+    {
+      "id": "split-known",
+      "type": "filter",
+      "label": "Employee is in the list",
+      "position": {
+        "x": 2080,
+        "y": 0
+      },
+      "settings": {
+        "condition": "NOT(ISBLANK([list_id]))"
+      }
+    },
+    {
+      "id": "att-code",
+      "type": "formula_column",
+      "label": "Attendance code without spaces",
+      "position": {
+        "x": 2340,
+        "y": 0
+      },
+      "settings": {
+        "name": "att_code",
+        "expression": "TRIM([raw_att])"
+      }
+    },
+    {
+      "id": "look-code",
+      "type": "lookup_join",
+      "label": "Attendance code lookup",
+      "position": {
+        "x": 2600,
+        "y": 0
+      },
+      "settings": {
+        "source": {
+          "kind": "reference",
+          "table": "attendance_codes"
+        },
+        "keys": [
+          {
+            "left": "att_code",
+            "right": "code"
+          }
+        ],
+        "bring": [
+          {
+            "column": "code",
+            "as": "known_code"
+          },
+          {
+            "column": "work_day_value"
+          },
+          {
+            "column": "day_category"
+          },
+          {
+            "column": "ot_type",
+            "as": "code_ot_type"
+          }
+        ],
+        "onNoMatch": "blank"
+      }
+    },
+    {
+      "id": "ot-text",
+      "type": "formula_column",
+      "label": "OT value as text",
+      "position": {
+        "x": 2860,
+        "y": 0
+      },
+      "settings": {
+        "name": "ot_text",
+        "expression": "TRIM([raw_ot])"
+      }
+    },
+    {
+      "id": "ot-num",
+      "type": "formula_column",
+      "label": "OT value as number",
+      "position": {
+        "x": 3120,
+        "y": 0
+      },
+      "settings": {
+        "name": "ot_num",
+        "expression": "VALUE([ot_text])"
+      }
+    },
+    {
+      "id": "in-month",
+      "type": "formula_column",
+      "label": "Day exists in the month",
+      "position": {
+        "x": 3380,
+        "y": 0
+      },
+      "settings": {
+        "name": "in_month",
+        "expression": "NOT(ISBLANK([date]))"
+      }
+    },
+    {
+      "id": "inside",
+      "type": "formula_column",
+      "label": "Day is inside the employment dates",
+      "position": {
+        "x": 3640,
+        "y": 0
+      },
+      "settings": {
+        "name": "inside",
+        "expression": "IF(AND([in_month], [join_date] <= [date], OR(ISBLANK([leave_date]), [date] <= [leave_date])), TRUE, FALSE)"
+      }
+    },
+    {
+      "id": "att-reason",
+      "type": "formula_column",
+      "label": "Reason for the attendance row",
+      "position": {
+        "x": 3900,
+        "y": -160
+      },
+      "settings": {
+        "name": "reason",
+        "expression": "IFS(AND(NOT([in_month]), LEN([att_code]) > 0), \"Invalid date\", NOT([in_month]), \"\", AND(NOT([inside]), LEN([att_code]) > 0), \"Outside employment dates\", NOT([inside]), \"\", LEN([att_code]) = 0, \"Missing attendance code\", ISBLANK([known_code]), \"Unknown attendance code\", TRUE, \"\")"
+      }
+    },
+    {
+      "id": "att-filter",
+      "type": "filter",
+      "label": "Attendance row has a reason",
+      "position": {
+        "x": 4160,
+        "y": -160
+      },
+      "settings": {
+        "condition": "LEN([reason]) > 0"
+      }
+    },
+    {
+      "id": "att-value",
+      "type": "formula_column",
+      "label": "Value shown",
+      "position": {
+        "x": 4420,
+        "y": -160
+      },
+      "settings": {
+        "name": "value",
+        "expression": "IF(LEN([att_code]) > 0, [att_code])"
+      }
+    },
+    {
+      "id": "att-type",
+      "type": "formula_column",
+      "label": "Row type",
+      "position": {
+        "x": 4680,
+        "y": -160
+      },
+      "settings": {
+        "name": "row_type",
+        "expression": "\"ATT\""
+      }
+    },
+    {
+      "id": "ot-reason",
+      "type": "formula_column",
+      "label": "Reason for the OT row",
+      "position": {
+        "x": 3900,
+        "y": 160
+      },
+      "settings": {
+        "name": "reason",
+        "expression": "IFS(AND(NOT([in_month]), LEN([ot_text]) > 0), \"Invalid date\", NOT([in_month]), \"\", AND(NOT([inside]), LEN([ot_text]) > 0), \"Outside employment dates\", NOT([inside]), \"\", LEN([ot_text]) = 0, \"\", OR(ISBLANK([ot_num]), [ot_num] < 0), \"Invalid OT value\", [ot_num] = 0, \"\", OR(ISBLANK([known_code]), ISBLANK([code_ot_type])), \"OT not allowed for attendance code\", TRUE, \"\")"
+      }
+    },
+    {
+      "id": "ot-filter",
+      "type": "filter",
+      "label": "OT row has a reason",
+      "position": {
+        "x": 4160,
+        "y": 160
+      },
+      "settings": {
+        "condition": "LEN([reason]) > 0"
+      }
+    },
+    {
+      "id": "ot-value",
+      "type": "formula_column",
+      "label": "Value shown",
+      "position": {
+        "x": 4420,
+        "y": 160
+      },
+      "settings": {
+        "name": "value",
+        "expression": "IF(LEN([ot_text]) > 0, [ot_text])"
+      }
+    },
+    {
+      "id": "ot-type",
+      "type": "formula_column",
+      "label": "Row type",
+      "position": {
+        "x": 4680,
+        "y": 160
+      },
+      "settings": {
+        "name": "row_type",
+        "expression": "\"OT\""
+      }
+    },
+    {
+      "id": "unknown-list",
+      "type": "group_by",
+      "label": "One row per unknown employee",
+      "position": {
+        "x": 2340,
+        "y": 320
+      },
+      "settings": {
+        "groupBy": [
+          "employee_id"
+        ]
+      }
+    },
+    {
+      "id": "unknown-reason",
+      "type": "formula_column",
+      "label": "Reason",
+      "position": {
+        "x": 2600,
+        "y": 320
+      },
+      "settings": {
+        "name": "reason",
+        "expression": "\"Employee not in employee list\""
+      }
+    },
+    {
+      "id": "exceptions-all",
+      "type": "append",
+      "label": "All exceptions",
+      "position": {
+        "x": 4940,
+        "y": 0
+      },
+      "settings": {
+        "match": "name"
+      }
+    },
+    {
+      "id": "out-exceptions",
+      "type": "output",
+      "label": "Exceptions sheet",
+      "position": {
+        "x": 5200,
+        "y": 0
+      },
+      "settings": {
+        "file": "Result",
+        "sheet": "Exceptions",
+        "columns": [
+          "employee_id",
+          "day",
+          "date",
+          "row_type",
+          "value",
+          "reason"
+        ],
+        "sort": [
+          {
+            "column": "employee_id"
+          },
+          {
+            "column": "day"
+          },
+          {
+            "column": "row_type"
+          }
+        ],
+        "numberLikeText": [
+          "value"
+        ]
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "timesheet",
+      "target": "ts-employee-id"
+    },
+    {
+      "source": "ts-employee-id",
+      "target": "ts-row-type"
+    },
+    {
+      "source": "ts-row-type",
+      "target": "ts-unpivot"
+    },
+    {
+      "source": "ts-unpivot",
+      "target": "ts-pivot"
+    },
+    {
+      "source": "ts-pivot",
+      "target": "ts-day"
+    },
+    {
+      "source": "ts-day",
+      "target": "ts-date"
+    },
+    {
+      "source": "employees",
+      "target": "emp-id"
+    },
+    {
+      "source": "emp-id",
+      "target": "emp-types"
+    },
+    {
+      "source": "ts-date",
+      "target": "look-employee",
+      "targetHandle": "left"
+    },
+    {
+      "source": "emp-types",
+      "target": "look-employee",
+      "targetHandle": "right"
+    },
+    {
+      "source": "look-employee",
+      "target": "split-known"
+    },
+    {
+      "source": "split-known",
+      "target": "att-code",
+      "sourceHandle": "match"
+    },
+    {
+      "source": "att-code",
+      "target": "look-code"
+    },
+    {
+      "source": "look-code",
+      "target": "ot-text"
+    },
+    {
+      "source": "ot-text",
+      "target": "ot-num"
+    },
+    {
+      "source": "ot-num",
+      "target": "in-month"
+    },
+    {
+      "source": "in-month",
+      "target": "inside"
+    },
+    {
+      "source": "inside",
+      "target": "att-reason"
+    },
+    {
+      "source": "att-reason",
+      "target": "att-filter"
+    },
+    {
+      "source": "att-filter",
+      "target": "att-value",
+      "sourceHandle": "match"
+    },
+    {
+      "source": "att-value",
+      "target": "att-type"
+    },
+    {
+      "source": "inside",
+      "target": "ot-reason"
+    },
+    {
+      "source": "ot-reason",
+      "target": "ot-filter"
+    },
+    {
+      "source": "ot-filter",
+      "target": "ot-value",
+      "sourceHandle": "match"
+    },
+    {
+      "source": "ot-value",
+      "target": "ot-type"
+    },
+    {
+      "source": "split-known",
+      "target": "unknown-list",
+      "sourceHandle": "nomatch"
+    },
+    {
+      "source": "unknown-list",
+      "target": "unknown-reason"
+    },
+    {
+      "source": "att-type",
+      "target": "exceptions-all",
+      "targetHandle": "in1"
+    },
+    {
+      "source": "ot-type",
+      "target": "exceptions-all",
+      "targetHandle": "in2"
+    },
+    {
+      "source": "unknown-reason",
+      "target": "exceptions-all",
+      "targetHandle": "in3"
+    },
+    {
+      "source": "exceptions-all",
+      "target": "out-exceptions"
+    }
+  ]
+}

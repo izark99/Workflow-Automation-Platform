@@ -27,5 +27,6 @@ export const DATASETS: DatasetConfig[] = [
   },
 ];
 
-export const COMPARED_SHEETS = ['Summary', 'Exceptions', 'OT_breaches'];
+// The gate compares all three sheets. While the flow is built in parts, ACCEPTANCE_SHEETS=Exceptions compares a subset.
+export const COMPARED_SHEETS = process.env.ACCEPTANCE_SHEETS?.split(',') ?? ['Summary', 'Exceptions', 'OT_breaches'];
 export const TIMESHEET_FLOW = 'flows/monthly-timesheet.flow.json';

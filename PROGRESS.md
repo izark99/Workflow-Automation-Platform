@@ -38,7 +38,7 @@ before it passes, except where a task says otherwise.
 - [x] T1.15b File writer: workbook with several sheets and csv from the Output steps; date, number and boolean cells typed, blank cells absent, `numberLikeText` columns, UTC-safe dates.
 - [x] T1.16 Effective date: resolve flow version and reference table versions, stop with a clear message when no version covers the date.
 - [x] T1.17 Acceptance harness: Playwright test that runs a flow file on a dataset folder and compares workbooks cell by cell. Prove it fails on a wrong workbook.
-- [ ] T1.18 `flows/monthly-timesheet.flow.json`, part 1: reading, unpivot, dates, employment window, Exceptions sheet (rules R1 to R9).
+- [x] T1.18 `flows/monthly-timesheet.flow.json`, part 1: reading, unpivot, dates, employment window, Exceptions sheet (rules R1 to R9).
 - [ ] T1.19 `flows/monthly-timesheet.flow.json`, part 2: Summary sheet (R10) and OT_breaches sheet (R11), sort order (R12).
 - [ ] T1.20 Both datasets pass `npm run test:acceptance`. Add the test that no network request carries file content.
 
@@ -99,6 +99,15 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T1.18 Timesheet flow, part 1 (reading, unpivot, dates, employment window, Exceptions sheet)
+Changed: flows/monthly-timesheet.flow.json (30 steps, 31 connections), acceptance/datasets.ts (`ACCEPTANCE_SHEETS` to compare a subset while the flow is built in parts; the default is still all three sheets), eslint.config.js (ignore `dist-acceptance`), docs/DECISIONS.md (D31).
+Result: with ACCEPTANCE_SHEETS=Exceptions, the Exceptions sheet equals the expected sheet cell by cell for both datasets with the same flow file: September 72 cells (11 exception rows), October 120 cells (19 rows), in a UTC+7 browser.
+Read the oracle and the real files first: ATT cells are text, OT cells are numbers or `2h`, blanks are absent, no stray spaces. The flow follows the oracle's order of checks.
+Found on the way: `npm run check` failed once the acceptance page had been built, because ESLint linted `dist-acceptance`; fixed in the same commit.
+Gates run: check PASS (380 unit tests). test:acceptance FAIL, exit 1 (harness 2 passed; timesheet specs 0/2: the sheets Summary and OT_breaches are not written yet; expected at this stage).
+Search of src/ and flows/ for the fixture employee IDs: no match.
+Next: T1.19 (Summary sheet, rules R10 and OT_breaches sheet, rule R11, sort order R12).
 
 ### 2026-11-17 T1.17 Acceptance harness
 Changed: scripts/lib/compare-workbooks.ts (+ 19 unit tests), acceptance/{index.html,page.ts,helpers.ts,datasets.ts,harness.spec.ts,timesheet.spec.ts}, vite.acceptance.config.ts, playwright.acceptance.config.ts, `npm run test:acceptance`, tsconfig, .gitignore, docs/DECISIONS.md (D30).
