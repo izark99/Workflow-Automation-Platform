@@ -1,12 +1,17 @@
 import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { Button, Dialog, Dropdown, ErrorState, Field, Icon } from './components';
+import { Button, Dialog, Dropdown, ErrorState, Field, Icon, ToastProvider } from './components';
 import type { IconName } from './components';
 import { useLoad, useStore } from './store-context';
 import { strings } from './strings';
 import styles from './shell.module.css';
 
 const t = strings.nav;
+
+/** What the shell offers to the screen inside it (read with `useOutletContext`). */
+export interface ShellContext {
+  openCreateFlow: () => void;
+}
 
 function NavItem({ to, icon, children }: { to: string; icon: IconName; children: string }) {
   return (
@@ -87,6 +92,7 @@ export function Shell() {
   const [creating, setCreating] = useState(false);
   const me = user.data;
   return (
+    <ToastProvider>
     <div className={styles.frame}>
       <nav aria-label={t.label} className={styles.nav}>
         <div className={styles.brand}>
@@ -117,9 +123,10 @@ export function Shell() {
         ) : null}
       </nav>
       <main className={styles.main}>
-        <Outlet />
+        <Outlet context={{ openCreateFlow: () => setCreating(true) } satisfies ShellContext} />
       </main>
       {creating ? <CreateFlowDialog admin={me?.role === 'admin'} onClose={() => setCreating(false)} /> : null}
     </div>
+    </ToastProvider>
   );
 }

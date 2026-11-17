@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { createLocalStore } from '../store';
 import type { DataStore } from '../store/types';
+import { FlowsScreen } from './screens/flows';
 import { Placeholder } from './screens/placeholder';
 import { DevComponents } from './screens/dev-components';
 import { Shell } from './shell';
@@ -28,7 +29,7 @@ export function App({ store }: { store?: DataStore }) {
       <BrowserRouter>
         <Routes>
           <Route element={<Shell />}>
-            <Route path="/flows" element={<Placeholder screen="flows" />} />
+            <Route path="/flows" element={<FlowsScreen />} />
             <Route path="/flows/:id/run" element={<Placeholder screen="run" />} />
             <Route path="/flows/:id/versions" element={<Placeholder screen="versions" />} />
             <Route path="/reference-tables" element={<Placeholder screen="refTables" />} />

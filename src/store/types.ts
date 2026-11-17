@@ -38,6 +38,9 @@ export interface FlowRecord {
   /** Groups that can view and run a shared flow. */
   groupIds: string[];
   versions: FlowVersionRecord[];
+  /** Filled by the store when it reads: the owner's name and the names of the groups with access. */
+  ownerName?: string;
+  groupNames?: string[];
 }
 
 export interface RefTableVersionRecord extends VersionRange {

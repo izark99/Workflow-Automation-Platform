@@ -4,7 +4,9 @@
 
 .table {
   width: 100%;
-  border-collapse: collapse;
+  /* Separate borders, so heights are exact: header 41 px (10 + 20 + 10 + 1), body rows 57 px (56 + 1 divider). */
+  border-collapse: separate;
+  border-spacing: 0;
   font-size: 14px;
 }
 
@@ -20,7 +22,7 @@
 }
 
 .td {
-  height: 56px;
+  height: 57px;
   padding: 0 16px;
   text-align: left;
   white-space: nowrap;

@@ -5,10 +5,12 @@ export interface RuleRoute {
   sidebar: boolean;
   /** The route is expected to show table rows. */
   table?: boolean;
+  /** The route loads data from the store, so a delayed load must show the skeleton. */
+  skeleton?: boolean;
 }
 
 export const ROUTES: RuleRoute[] = [
-  { path: '/flows', sidebar: true },
+  { path: '/flows', sidebar: true, table: true, skeleton: true },
   { path: '/reference-tables', sidebar: true },
   { path: '/admin', sidebar: true },
   { path: '/flows/flow-timesheet/run', sidebar: true },

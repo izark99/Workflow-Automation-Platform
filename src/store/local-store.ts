@@ -94,6 +94,15 @@ export class LocalStore implements DataStore {
     return u;
   }
 
+  /** A copy for the caller, with the owner's name and the group names that the screens show. */
+  private view(s: Snapshot, f: FlowRecord): FlowRecord {
+    return {
+      ...structuredClone(f),
+      ownerName: s.users.find((u) => u.id === f.ownerId)?.name ?? 'Unknown',
+      groupNames: f.groupIds.map((g) => s.groups.find((x) => x.id === g)?.name ?? g),
+    };
+  }
+
   private canSee(u: User, f: FlowRecord): boolean {
     if (u.role === 'admin') return true;
     if (f.deletedAt) return false;
@@ -151,12 +160,12 @@ export class LocalStore implements DataStore {
   async listFlows(): Promise<FlowRecord[]> {
     const s = await this.open();
     const u = this.who(s);
-    return structuredClone(s.flows.filter((f) => !f.deletedAt && this.canSee(u, f)));
+    return s.flows.filter((f) => !f.deletedAt && this.canSee(u, f)).map((f) => this.view(s, f));
   }
 
   async getFlow(id: string): Promise<FlowRecord> {
     const s = await this.open();
-    return structuredClone(this.flowFor(s, id, false));
+    return this.view(s, this.flowFor(s, id, false));
   }
 
   async createFlow({ name, scope }: { name: string; scope: Scope }): Promise<FlowRecord> {
@@ -216,7 +225,7 @@ export class LocalStore implements DataStore {
   async listDeletedFlows(): Promise<FlowRecord[]> {
     const s = await this.open();
     this.mustBeAdmin(s, 'see deleted flows');
-    return structuredClone(s.flows.filter((f) => f.deletedAt));
+    return s.flows.filter((f) => f.deletedAt).map((f) => this.view(s, f));
   }
 
   private deletedFlow(s: Snapshot, id: string): FlowRecord {

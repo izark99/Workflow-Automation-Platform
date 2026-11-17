@@ -52,7 +52,7 @@ before it passes, except where a task says otherwise.
 - [x] T2.5 `/dev/components` route that matches screen 7.
 - [x] T2.6 `DataStore` interface, `LocalStore`, and seed data that matches the screens.
 - [x] T2.7 App shell: sidebar, page header, routing, strings module.
-- [ ] T2.8 Flows screen: list, filters, search, delete with confirm, loading and empty states.
+- [x] T2.8 Flows screen: list, filters, search, delete with confirm, loading and empty states.
 - [ ] T2.9 Builder, part 1: canvas with React Flow, step cards, add by drag from the step list, connect, select, delete, zoom controls.
 - [ ] T2.10 Builder, part 2: settings panel shell with Setup, Configure and Test tabs, step preview table.
 - [ ] T2.11 Settings forms: Input file, Column mapping (with paste from Excel), Filter.
@@ -100,6 +100,13 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T2.8 Flows screen
+Changed: src/ui/screens/{flows.tsx,flows.module.css,flows-logic.ts(+9 tests)}, ButtonLink component, `flowsScreen` strings, shell outlet context and ToastProvider, store `ownerName`/`groupNames`, table CSS, e2e/flows.spec.ts (8 tests), ui-rules skeleton test, docs/DECISIONS.md (D38).
+How: list with name and step counts, scope badge and groups, owner, version in effect with status badge, effective range, Open / Run / Delete (row-named, compact, only where allowed); scope chips and search; confirm dialog before delete with a toast after; skeleton after 300 ms with `aria-busy`; empty state (no flows) and no-match state; error panel with Try again.
+UI rules found a real defect: rows measured 56 px and the header 40.5 px with collapsed table borders (advisor had warned). Fixed in the Table component with separate borders; skeleton and table now match exactly.
+Gates run: check PASS (471 tests), test:e2e PASS (27 tests), test:ui-rules PASS (100 tests: 50 per width, 7 routes incl. skeleton test for /flows).
+Next: T2.9 (builder part 1: canvas).
 
 ### 2026-11-17 T2.7 App shell
 Changed: src/ui/{shell.tsx,shell.module.css,store-context.tsx,app.tsx,strings.ts}, screens/placeholder.tsx, components/screen-frame.tsx, flow/table/shield icons, e2e/{smoke,shell}.spec.ts (6 tests), ui-rules route list (five sidebar routes).

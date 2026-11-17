@@ -492,3 +492,12 @@ blank or mixed column in one month cannot change the types of another month.
 - Test hooks, only in dev and test builds (`VITE_DEV_ROUTES` or the dev server): localStorage `dfw.seed` holds a snapshot to start from, so the e2e journey brings the real timesheet flow (`flows/`) and the real reference tables (`testcase/`) without putting them in `src/`; `dfw.loadDelayMs` delays every store call, so the skeleton rule (more than 300 ms, `aria-busy`) can be tested.
 - Seed data (`seed.ts`) is the sample content of the screens: four users, two groups, four flows plus two deleted ones, versions as on screen 4, three reference tables as on screen 5. It is not read from `testcase/`. The seed flows hold small placeholder definitions, so the Flows list shows the step count of the definition, not the "12 steps" of the mockup.
 - `LocalStore.switchUser` exists for tests and the dev tools only.
+
+## D38 Flows screen (T2.8)
+
+- Table heights are exact only with separate borders: `border-collapse: separate; border-spacing: 0`, header 41 px (10 + 20 + 10 + 1), body rows 57 px (the 1 px divider is inside the box). With collapsed borders the UI rules measured 56 px rows and a 40.5 px header. The skeleton uses the same two numbers.
+- "Version in effect" is the published version that covers today's local date; a flow with no such version shows its newest version with the Draft badge and "Not published yet". Open goes to that version. Run is offered only when a published version exists. Steps and output sheets are counted from the version's definition (placeholder seed flows show their own counts, not the "12 steps" of the mockup).
+- Delete is offered where SPEC section 7 allows it (admin: any flow; user: own personal flow); the store enforces it too. The confirm dialog names the flow and says it can be restored for 30 days.
+- The store adds `ownerName` and `groupNames` to the flows it returns, because a user may not read the profile or group lists (SPEC section 7) but the Flows screen shows the owner and the groups.
+- The shell passes `openCreateFlow` to its screens through the router's outlet context, so the empty state can open the same dialog. The empty-state action is `primary`, not `cta` (one cta per screen, D36).
+- Skeleton test: `dfw.loadDelayMs` delays the store; the UI rules check `aria-busy` during the delay and compare the skeleton heights with the real table. Routes that load data set `skeleton: true` in `ui-rules/routes.ts`.
