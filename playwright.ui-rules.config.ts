@@ -11,7 +11,7 @@ export default defineConfig({
     { name: '1440', use: { viewport: { width: 1440, height: 900 } } },
   ],
   webServer: {
-    command: 'npx vite build --outDir dist-ui-rules --emptyOutDir && npx vite preview --outDir dist-ui-rules --port 4177 --strictPort',
+    command: 'VITE_DEV_ROUTES=true npx vite build --outDir dist-ui-rules --emptyOutDir && npx vite preview --outDir dist-ui-rules --port 4177 --strictPort',
     url: 'http://localhost:4177/',
     timeout: 240_000,
     reuseExistingServer: false,

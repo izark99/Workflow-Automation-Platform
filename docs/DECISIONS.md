@@ -473,3 +473,11 @@ blank or mixed column in one month cannot change the types of another month.
 - Markers the rules rely on: `data-variant="cta"` on the cta button, `data-first-block` on the first block under the page header, `button` elements only for the height rule (breadcrumb links are 24 px text links).
 - `rules.selfcheck.spec.ts` proves each rule fails on a page that breaks it and passes on one that does not.
 - Not yet in the runner (added with the task that creates what they need): the skeleton with `aria-busy` during a delayed load (T2.6 adds the load-delay switch of the local store), and the header position on real sidebar screens (T2.7).
+
+## D36 Components page, dev routes and the e2e runner (T2.5)
+
+- `/dev/components` exists only when `VITE_DEV_ROUTES=true` or in the dev server (`import.meta.env.DEV`). The UI-rules and e2e builds set it; a normal production build has no such route.
+- `PageHeader` (min-height 92 px, items at the bottom: breadcrumb 24, gap 4, h1 36, gap 4, subtitle 21) puts the title at y 63 and, after the 24 px gap, the first block at y 148, as on the design screens. The rule checks it on every route with `sidebar: true` in `ui-rules/routes.ts` (the flag means "has the shared page header").
+- Screen 7 shows two orange buttons ("Run" and the empty state's "Create flow"). The one-`cta`-per-screen rule is stronger (DESIGN rules, G4), so the empty-state example on the page is `primary`.
+- Dropdown and Date picker take `defaultOpen` so the page can show the open state next to the closed one; an option that starts open does not take focus from the page.
+- `npm run test:e2e` is now real: production build in `dist-e2e`, `vite preview`, Chromium 1440 x 900, time zone UTC+7. The old dev-server `playwright.config.ts` was removed. Journeys are added by the screen tasks; T2.20 completes G3.

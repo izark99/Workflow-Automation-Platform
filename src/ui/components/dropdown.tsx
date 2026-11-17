@@ -18,12 +18,15 @@ export interface DropdownProps {
   onChange: (value: string) => void;
   width?: number;
   disabled?: boolean;
+  /** Starts open, for the components page. */
+  defaultOpen?: boolean;
 }
 
 /** Button with a chevron and a popover list. Arrow keys, Home, End, Enter, Space, Escape and type-ahead. */
-export function Dropdown({ label, options, value, onChange, width = 260, disabled = false }: DropdownProps) {
-  const [open, setOpen] = useState(false);
-  const [active, setActive] = useState(-1);
+export function Dropdown({ label, options, value, onChange, width = 260, disabled = false, defaultOpen = false }: DropdownProps) {
+  const [open, setOpen] = useState(defaultOpen);
+  const [active, setActive] = useState(() => (defaultOpen ? Math.max(0, options.findIndex((o) => o.value === value)) : -1));
+  const skipFocus = useRef(defaultOpen);
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const optionRefs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -39,6 +42,10 @@ export function Dropdown({ label, options, value, onChange, width = 260, disable
   useOutsideClose(rootRef, open, () => close(false));
 
   useEffect(() => {
+    if (skipFocus.current) {
+      skipFocus.current = false; // an option that starts open must not take focus from the page
+      return;
+    }
     if (open && active >= 0) optionRefs.current[active]?.focus();
   }, [open, active]);
 

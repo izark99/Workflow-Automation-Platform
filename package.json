@@ -14,7 +14,7 @@
     "check": "npm run typecheck && npm run lint && npm run test:unit",
     "spike": "node scripts/spike.ts",
     "test:acceptance": "playwright test -c playwright.acceptance.config.ts",
-    "test:e2e": "node scripts/not-implemented.mjs test:e2e T2.20",
+    "test:e2e": "playwright test -c playwright.e2e.config.ts",
     "test:ui-rules": "playwright test -c playwright.ui-rules.config.ts",
     "test:db": "node scripts/not-implemented.mjs test:db T3.1",
     "gates": "npm run check && npm run spike && npm run test:acceptance && npm run test:e2e && npm run test:ui-rules && npm run test:db"

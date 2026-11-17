@@ -14,3 +14,4 @@ __pycache__/
 dist-spike/
 dist-acceptance/
 dist-ui-rules/
+dist-e2e/

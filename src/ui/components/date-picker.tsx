@@ -14,13 +14,16 @@ export interface DatePickerProps {
   onChange: (iso: string) => void;
   width?: number;
   disabled?: boolean;
+  /** Starts open, for the components page. */
+  defaultOpen?: boolean;
 }
 
 const KEYS: DateKey[] = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End'];
 
 /** Button showing `30 Sep 2026` and a popover month grid that starts on Monday. Opens upward when there is no room below. */
-export function DatePicker({ label, value, onChange, width = 180, disabled = false }: DatePickerProps) {
-  const [open, setOpen] = useState(false);
+export function DatePicker({ label, value, onChange, width = 180, disabled = false, defaultOpen = false }: DatePickerProps) {
+  const [open, setOpen] = useState(defaultOpen);
+  const skipFocus = useRef(defaultOpen);
   const [focused, setFocused] = useState(value);
   const [shown, setShown] = useState(() => monthOf(value));
   const rootRef = useRef<HTMLDivElement>(null);
@@ -37,6 +40,10 @@ export function DatePicker({ label, value, onChange, width = 180, disabled = fal
 
   // Focus the focused day after every move.
   useEffect(() => {
+    if (skipFocus.current) {
+      skipFocus.current = false; // a picker that starts open must not take focus from the page
+      return;
+    }
     if (open) gridRef.current?.querySelector<HTMLButtonElement>(`[data-iso="${focused}"]`)?.focus();
   }, [open, focused, shown]);
 

@@ -14,6 +14,7 @@ export default tseslint.config(
       'dist-spike',
       'dist-acceptance',
       'dist-ui-rules',
+      'dist-e2e',
       'testcase',
       'node_modules',
     ],

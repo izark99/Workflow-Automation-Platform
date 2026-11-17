@@ -49,7 +49,7 @@ before it passes, except where a task says otherwise.
 - [x] T2.2 Base components: Button, Badge, Card, Table, Field, Search field.
 - [x] T2.3 Dropdown and Date picker, with keyboard support and tests.
 - [x] T2.4 Checkbox, Tabs, Dialog, Toast, Skeleton, Empty state, Error state.
-- [ ] T2.5 `/dev/components` route that matches screen 7.
+- [x] T2.5 `/dev/components` route that matches screen 7.
 - [ ] T2.6 `DataStore` interface, `LocalStore`, and seed data that matches the screens.
 - [ ] T2.7 App shell: sidebar, page header, routing, strings module.
 - [ ] T2.8 Flows screen: list, filters, search, delete with confirm, loading and empty states.
@@ -100,6 +100,13 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T2.5 `/dev/components` route, real e2e runner
+Changed: src/ui/screens/dev-components.{tsx,module.css}, src/ui/app.tsx (route), PageHeader and ProgressBar components, `devStrings` in strings.ts, `defaultOpen` on Dropdown and Date picker, playwright.e2e.config.ts (`npm run test:e2e` is real now; old dev-server config removed), e2e/components.spec.ts (12 tests), ui-rules route list, eslint/.gitignore for `dist-e2e`, docs/DECISIONS.md (D36).
+Browser tests now cover the T2.3 and T2.4 behaviour: Dropdown (click, arrows, Enter, Escape, Home/End, type-ahead, focus return, check mark), Date picker (Monday-first grid, arrows across a month end, PageDown, previous/next, Escape, opens upward in a 520 px window), Checkbox Space, Tabs arrows and End, Dialog focus trap and focus return, Toast, aria-busy skeleton, progress bar.
+UI rules found one real violation on the new route: two `cta` buttons (the empty-state example). Fixed by making that example `primary` (D36). Title y 63, first block y 148 and axe pass on `/dev/components` at both widths.
+Gates run: check PASS (432 tests), test:e2e PASS (13 tests: 12 components, 1 smoke), test:ui-rules PASS (40 tests: 20 per width, routes `/` and `/dev/components`).
+Next: T2.6 (DataStore interface, LocalStore, seed data). Decide async interface, IndexedDB versus localStorage for 50,000-row reference tables, and a load-delay switch for the skeleton rule.
 
 ### 2026-11-17 T2.4 Checkbox, Tabs, Dialog, Toast, Skeleton, Empty state, Error state
 Changed: src/ui/components/{checkbox,tabs,tab-keys,dialog,toast,toast-state,skeleton,states}.ts(x) with CSS modules, alert/inbox/close icons, more.test.tsx (12 tests).
