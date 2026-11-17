@@ -1,0 +1,96 @@
+STATUS: IN PROGRESS
+
+# Progress
+
+Tick a task only after its tests pass and the change is committed. Tasks run in
+order inside a phase. A later phase may start only when the gate of the phase
+before it passes, except where a task says otherwise.
+
+## Phase 0: Spike (gate G0)
+
+- [ ] T0.1 Scaffold the app (Vite, React, TypeScript strict, React Router, ESLint, Vitest, Playwright) and create every npm script named in `CLAUDE.md`. Scripts for later phases may fail with "not implemented" for now.
+- [ ] T0.2 Script that generates the six benchmark files of SPEC section 8 into a temporary folder (not committed).
+- [ ] T0.3 Benchmark page and Playwright runner: load each file with SheetJS into DuckDB-WASM in a worker, run one group-by query, record load time, peak memory, run time, and whether the tab survived.
+- [ ] T0.4 Try at least two xlsx reading strategies for the large files (for example whole-workbook parse, and a row-streaming or chunked path). Write `docs/SPIKE_RESULTS.md` with the numbers and the chosen strategy.
+- [ ] T0.5 Implement the size guard: when a file is above the measured safe size, show the "save as csv" warning instead of loading.
+
+## Phase 1: Engine (gates G1, G2)
+
+- [ ] T1.1 Flow definition schema: TypeScript types, JSON schema, validation with clear errors (unknown node type, missing input, cycle).
+- [ ] T1.2 Engine core: DuckDB-WASM worker, load input tables, topological order, one view per node, preview of 100 rows, cancel.
+- [ ] T1.3 Input file node: sheet, header row, rows to skip, fill down merged cells, row number column, csv.
+- [ ] T1.4 Column mapping node.
+- [ ] T1.5 Filter node with a second output for the rows that do not match.
+- [ ] T1.6 Formula parser: tokens, precedence, column references in square brackets, strings, numbers, function calls, error positions.
+- [ ] T1.7 Formula functions, logic and math groups of Tier 1, each with unit tests.
+- [ ] T1.8 Formula functions, text group of Tier 1, each with unit tests.
+- [ ] T1.9 Formula functions, date group of Tier 1 and EFFECTIVE_DATE, each with unit tests.
+- [ ] T1.10 Formula column node.
+- [ ] T1.11 Lookup / Join node: from another node and from a reference table, behaviour when no match is found.
+- [ ] T1.12 Group by node.
+- [ ] T1.13 Unpivot node and Pivot node.
+- [ ] T1.14 Append node and SQL node.
+- [ ] T1.15 Output node: several sheets in one workbook, csv, date and number types preserved.
+- [ ] T1.16 Effective date: resolve flow version and reference table versions, stop with a clear message when no version covers the date.
+- [ ] T1.17 Acceptance harness: Playwright test that runs a flow file on a dataset folder and compares workbooks cell by cell. Prove it fails on a wrong workbook.
+- [ ] T1.18 `flows/monthly-timesheet.flow.json`, part 1: reading, unpivot, dates, employment window, Exceptions sheet (rules R1 to R9).
+- [ ] T1.19 `flows/monthly-timesheet.flow.json`, part 2: Summary sheet (R10) and OT_breaches sheet (R11), sort order (R12).
+- [ ] T1.20 Both datasets pass `npm run test:acceptance`. Add the test that no network request carries file content.
+
+## Phase 2: Canvas and screens (gates G3, G4)
+
+- [ ] T2.1 Design tokens, global styles, font, and the UI-rules test skeleton.
+- [ ] T2.2 Base components: Button, Badge, Card, Table, Field, Search field.
+- [ ] T2.3 Dropdown and Date picker, with keyboard support and tests.
+- [ ] T2.4 Checkbox, Tabs, Dialog, Toast, Skeleton, Empty state, Error state.
+- [ ] T2.5 `/dev/components` route that matches screen 7.
+- [ ] T2.6 `DataStore` interface, `LocalStore`, and seed data that matches the screens.
+- [ ] T2.7 App shell: sidebar, page header, routing, strings module.
+- [ ] T2.8 Flows screen: list, filters, search, delete with confirm, loading and empty states.
+- [ ] T2.9 Builder, part 1: canvas with React Flow, step cards, add by drag from the step list, connect, select, delete, zoom controls.
+- [ ] T2.10 Builder, part 2: settings panel shell with Setup, Configure and Test tabs, step preview table.
+- [ ] T2.11 Settings forms: Input file, Column mapping (with paste from Excel), Filter.
+- [ ] T2.12 Settings forms: Formula column with editor, function list, validation message.
+- [ ] T2.13 Settings forms: Lookup / Join, Group by, Unpivot, Pivot.
+- [ ] T2.14 Settings forms: Append, Output, SQL.
+- [ ] T2.15 Builder, part 3: version dropdown, save draft, publish, read-only mode for published versions.
+- [ ] T2.16 Run screen: effective date, resolved versions, file inputs, progress, result tabs, download, error state.
+- [ ] T2.17 Versions screen: timeline, table, new version from copy, no-overlap check, date checker.
+- [ ] T2.18 Reference tables screen: list, versions, grid with paste from Excel, read-only published versions.
+- [ ] T2.19 Admin screen: users, groups, access to shared flows, deleted flows with restore.
+- [ ] T2.20 End-to-end journeys for gate G3.
+- [ ] T2.21 UI rules and accessibility tests for gate G4 on every route.
+
+## Phase 3: Server (gate G5)
+
+- [ ] T3.1 Supabase project folder, local start script, first migration with all tables of SPEC section 4.
+- [ ] T3.2 Constraints: no overlapping versions per flow and per reference table, published versions read-only, at most 50,000 rows per reference table version.
+- [ ] T3.3 Row-level security for flows, versions and group access, with tests for every cell of the permission table.
+- [ ] T3.4 Row-level security for reference tables, profiles, groups and run log, with tests.
+- [ ] T3.5 Soft delete, restore, and removal after 30 days.
+- [ ] T3.6 `SupabaseStore` that implements `DataStore`, selected by environment variables.
+- [ ] T3.7 Sign-in screen and session handling.
+- [ ] T3.8 Keep-alive: a small scheduled request that touches the database once a day, as code plus instructions.
+- [ ] T3.9 `docs/DEPLOY.md`: steps for a human to create the Supabase project, run migrations, set variables on Cloudflare Pages, and create the first admin.
+
+## Needs Harold
+
+Decisions with a default. Build with the default unless this list says otherwise.
+
+| Topic | Default used by the build |
+| --- | --- |
+| OT type of a day | From the attendance code of the same employee on the same day (rule R9) |
+| Week for the weekly OT limit | ISO week, only days of the run month (rule R11) |
+| Hours equal to a limit | Not a breach (rule R11) |
+| Formula language | Tier 1 only |
+| Approval before a version takes effect | None |
+| Reference tables by non-admin users | Not allowed |
+| UI language | English |
+
+## Blockers
+
+None.
+
+## Log
+
+Newest first.

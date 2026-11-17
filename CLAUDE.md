@@ -1,0 +1,67 @@
+# Data Flow Webapp
+
+A browser app where about 10 colleagues build and run data-processing flows on
+xlsx and csv files. Flows and reference tables have versions with an effective
+date range. All data processing runs in the browser.
+
+## Where things are
+
+| Path | Content |
+| --- | --- |
+| `PROMPT.md` | The build loop prompt. Follow it in every iteration |
+| `GOALS.md` | The `/goal` condition for each phase |
+| `PROGRESS.md` | Status, task list, log, blockers. Update it in every iteration |
+| `docs/SPEC.md` | What to build |
+| `docs/DESIGN.md` | Tokens, button sizes, layout rules, components, states |
+| `docs/DECISIONS.md` | Decisions made during the build. Create it with the first decision |
+| `design/screens/` | The seven target screens as HTML and PNG. Reference only |
+| `testcase/` | Acceptance data, rules, expected results. Read-only |
+| `flows/monthly-timesheet.flow.json` | The flow definition used by the acceptance test |
+| `src/engine/` | Flow engine. No React, no Supabase |
+| `src/ui/` | Components and screens |
+| `src/store/` | `DataStore` interface, `LocalStore`, `SupabaseStore` |
+| `supabase/` | Migrations and database tests |
+
+## Commands
+
+Task T0.1 creates these scripts. Keep the names.
+
+| Command | Purpose |
+| --- | --- |
+| `npm run dev` | Start the app on the local data store |
+| `npm run check` | Type check, lint, unit tests |
+| `npm run spike` | Benchmark, writes `docs/SPIKE_RESULTS.md` |
+| `npm run test:acceptance` | Timesheet flow against both datasets |
+| `npm run test:e2e` | Browser journeys |
+| `npm run test:ui-rules` | Design rules and accessibility |
+| `npm run test:db` | Migrations and row-level security on a local Supabase |
+| `npm run gates` | All of the above, in that order, stops at the first failure |
+
+## Rules that never change
+
+- `testcase/` is read-only. The tests are the judge.
+- No fixture values in `src/` or in flow definitions.
+- Input file content never leaves the browser.
+- One small task per iteration. Tests first. Commit only when the touched gates pass.
+- Report gate results exactly as they ran.
+- English only in code, comments, UI text and commit messages.
+- No deployment and no real credentials. Local Supabase only.
+
+## Cloud session notes
+
+This project is built in Claude Code cloud sessions that clone the GitHub repository.
+
+- Work on the session's branch. Push after every commit. Unpushed work is lost when the session's machine is replaced.
+- Node 22 is on `PATH`. Python 3 is available for the scripts in `testcase/`.
+- Docker and PostgreSQL 16 are installed but not running. Start the Docker daemon before you use the Supabase CLI.
+- For Playwright, try the bundled browser download first. If the download is blocked, use the system Chrome (`channel: 'chrome'`) and record that in `docs/DECISIONS.md`.
+- Only allowlisted domains are reachable. If an install fails because a host is blocked, write the host name under Blockers in `PROGRESS.md`. Do not look for a mirror.
+- The machine has about 4 vCPUs, 16 GB of RAM and 30 GB of disk. Delete the generated benchmark files after the spike.
+
+## Conventions
+
+- TypeScript strict. No `any` without a comment that says why.
+- Files and folders in kebab-case, React components in PascalCase.
+- Dates are ISO strings (`2026-09-30`) in data and `30 Sep 2026` in the UI.
+- Column names in flows are case-sensitive and written in square brackets in formulas: `[OT hours]`.
+- Every user-visible error says what failed and what to do next.

@@ -1,0 +1,158 @@
+# Build loop prompt: Data Flow Webapp
+
+You are building the Data Flow Webapp in this repository. You work in a loop
+driven by a goal condition (Claude Code `/goal`): after each turn an evaluator
+reads this conversation, and starts another turn until the condition holds.
+Treat every turn as one iteration. Your context may be compacted or cleared
+between iterations, so trust the repository, not your memory. Do one small,
+verified piece of work per iteration, record it, and stop.
+
+The goal conditions for each phase are in `GOALS.md`. The evaluator cannot run
+commands or read files. It sees only what you print, so every iteration ends
+with the Evidence block described in section 3.
+
+## 1. Read first, every iteration
+
+1. `CLAUDE.md`: standing rules and commands.
+2. `PROGRESS.md`: status line, task list, log, blockers.
+3. Only the parts you need of `docs/SPEC.md`, `docs/DESIGN.md`, `testcase/TEST_RULES.md`, and `docs/DECISIONS.md`.
+
+Order of authority when sources disagree: `testcase/TEST_RULES.md`, then
+`docs/SPEC.md`, then `docs/DESIGN.md`, then `design/screens/`.
+
+## 2. Goal
+
+The build is complete when every gate below passes in one clean run of
+`npm run gates`, started from a fresh install (`npm ci`).
+
+| Gate | Command | Passes when |
+| --- | --- | --- |
+| G0 Spike | `npm run spike` | The benchmark runs in headless Chromium for the six files in SPEC section 8 and writes load time, peak memory and run time to `docs/SPIKE_RESULTS.md`. That file states the chosen xlsx reading strategy. If xlsx at the full row limit fails, the app shows the "save as csv" warning instead of crashing |
+| G1 Engine | `npm run test:acceptance` | One flow definition, `flows/monthly-timesheet.flow.json`, run through the real engine in Chromium, produces a workbook equal to the expected workbook, cell by cell, on the sheets `Summary`, `Exceptions`, `OT_breaches`, for both datasets: `testcase/` with effective date 2026-09-30 and `testcase/variant_2026-10/` with 2026-10-31 |
+| G2 Unit | `npm run check` | Type check, lint and unit tests pass. Every node type and every Tier 1 formula function has unit tests |
+| G3 Screens | `npm run test:e2e` | In Chromium at 1440 x 900: a user creates a flow on the canvas from an empty state, adds and connects steps, configures them, previews a step, runs the timesheet flow with the September files, and downloads a workbook that equals the expected one. Versions, reference tables, admin and delete-restore journeys from SPEC sections 4 and 7 pass on the local data store |
+| G4 UI rules | `npm run test:ui-rules` | The rules in `docs/DESIGN.md` hold on every route at 1280 and 1440 px: only 40 px and 36 px buttons; none of the forbidden native elements; title and first block at the same y on all sidebar screens; table rows 57 px; at most one `cta` button per screen; no horizontal page scroll; skeleton with `aria-busy` during a delayed load; no serious or critical axe violations |
+| G5 Server | `npm run test:db` | On a local Supabase: migrations apply from zero, and row-level security tests prove every cell of the permission table in SPEC section 7, the no-overlap rule for versions, soft delete and restore |
+
+When all six pass, set line 1 of `PROGRESS.md` to `STATUS: COMPLETE`, print the
+Evidence block with the output of `npm run gates`, and end your reply with:
+
+`DFW BUILD COMPLETE`
+
+Never print that line in any other case. A false completion signal is the worst
+possible outcome of an iteration.
+
+## 3. One iteration
+
+1. Run `git status`. If the tree is dirty from an interrupted iteration, inspect it: finish it if it is small and clear, otherwise `git stash` and note it in the log.
+2. Read `PROGRESS.md`. If line 1 is `STATUS: COMPLETE`, run `npm run gates` once. If it still passes, print the completion line and stop. If not, set `STATUS: IN PROGRESS`, log what broke, and continue.
+3. Pick the first unchecked task whose dependencies are done. If it is too big for one iteration (more than about 400 changed lines or more than one concern), split it into smaller tasks in `PROGRESS.md` first, and take the first one.
+4. Write the tests for the task, then the code. Keep the change small.
+5. Run the gate commands that the task touches, and always `npm run check`.
+6. If green: commit with a message that starts with the task id, tick the task, add a log entry, and push the branch. Push after every commit: the session's machine can be replaced at any time, and only pushed work survives.
+7. If red after three honest attempts: revert the attempt, add an entry under Blockers with the exact error and what you tried, and stop. The next iteration will take a different task or a different approach.
+8. Print the Evidence block, then stop. Do not start a second task in the same iteration.
+
+Evidence block, at the end of every reply, copied from real command output:
+
+```
+EVIDENCE
+turn: 7 (if the goal has a turn limit)
+task: T1.4 done | T1.4 blocked | none
+commands: npm run check -> exit 0 (212 passed) ; npm run test:acceptance -> exit 1 (0/2 datasets)
+head -1 PROGRESS.md: STATUS: IN PROGRESS
+tasks: 9 ticked, 46 open (phase 1: 4 ticked, 16 open)
+git status --porcelain testcase: (empty)
+```
+
+Log entry format, newest first:
+
+```
+### 2026-11-18 T1.4 Unpivot node
+Changed: src/engine/nodes/unpivot.ts, tests.
+Gates run: check PASS (212 tests), test:acceptance FAIL (Summary 0/11 rows, expected at this stage).
+Next: T1.5.
+```
+
+Report gate results exactly as they ran. Never write PASS for a command you did
+not run in this iteration.
+
+## 4. Hard rules
+
+**The tests are the judge. Do not bend them.**
+
+- Never edit anything under `testcase/`, including the expected workbooks, the rules, and the two Python scripts.
+- Never special-case fixture values: no employee IDs, names, dates, counts or expected numbers in `src/` or in the flow definition. The flow definition holds logic only. Limits and codes come from reference tables.
+- Never delete, skip, loosen or mock away a failing test to get a green run. If a test is wrong, say why under Blockers and stop.
+- The acceptance comparison must load both workbooks and compare values cell by cell: same sheet names, same header row, same row order, same values. Numbers equal within 1e-9. Dates compared as dates. Empty cell equals empty cell.
+- Both datasets must pass with the same flow file and the same code path.
+
+**Scope**
+
+- Build only what `docs/SPEC.md` lists as in scope. Tier 2 formula functions and everything under "Out of scope" stay out.
+- Do not deploy, do not create cloud projects, do not touch real credentials. Deployment is a human step, described in `docs/DEPLOY.md`, which you write in task T3.9.
+- Do not add a dependency outside the stack in section 6 unless a task cannot be done without it. If you add one, record the reason in `docs/DECISIONS.md`.
+
+**Data**
+
+- Input files and their rows never leave the browser. No network request may carry file content. Add a test that fails if a run sends any request other than loading static assets.
+- No personal data in reference tables, seeds, logs, or `run_log`.
+
+**Code**
+
+- TypeScript in strict mode. Code, comments, UI text and commit messages in English.
+- UI strings in one module. Design tokens as CSS variables. No raw hex colors in components.
+- When the spec is silent, choose the simplest behaviour that fits `TEST_RULES.md`, record it in `docs/DECISIONS.md`, and continue. Do not stop to ask.
+
+## 5. Advisor
+
+If an advisor model is enabled, it is expensive: each call re-reads the whole
+conversation. Consult it only at these points, and say in one line why:
+
+- At the start of a phase, to review your plan for that phase.
+- Before you choose between two designs that are hard to undo (flow definition schema, engine execution model, formula parser design, row-level security model).
+- After two failed attempts at the same task, before the third.
+- Before you set `STATUS: COMPLETE` or tick the last task of a phase.
+
+Do not consult it for routine tasks, for writing tests, or to confirm work that
+the tests already prove.
+
+## 6. Stack
+
+Fixed. Check the current official documentation of each library before you
+first use it, and pin the versions you install.
+
+| Area | Choice |
+| --- | --- |
+| App | Vite, React, TypeScript, React Router |
+| Canvas | React Flow |
+| Engine | DuckDB-WASM, running in a Web Worker |
+| Files | SheetJS for reading and writing xlsx and csv. Follow its current official install instructions |
+| Formula | A small parser of your own that turns Tier 1 formulas into DuckDB SQL |
+| Styling | CSS variables and CSS modules. A headless accessibility library is allowed. No styled UI kit |
+| Data store | One `DataStore` interface with two implementations: `LocalStore` (browser storage, used by default and by G3 and G4) and `SupabaseStore` (used when Supabase environment variables are set) |
+| Server | Supabase: SQL migrations, row-level security, Auth. Local Supabase through its CLI for tests |
+| Tests | Vitest for unit tests, Playwright for acceptance, e2e and UI rules, axe for accessibility |
+
+Architecture rules:
+
+- `src/engine/` has no React and no Supabase imports. It takes a flow definition, input tables, reference tables and an effective date, and returns output tables.
+- Each node type is one module that compiles its settings to SQL. The engine runs the nodes in topological order as DuckDB views or tables.
+- The canvas reads and writes the same flow definition JSON that the engine runs. There is no second format.
+- The app works fully on `LocalStore`, with seed data that matches the screens in `design/screens/`. Supabase is an adapter, not a requirement for phases 0 to 2.
+
+## 7. When to stop and wait for a human
+
+Set line 1 of `PROGRESS.md` to `STATUS: BLOCKED` with one sentence, print the
+Evidence block, and end your reply with `DFW BUILD BLOCKED: reason`, only when
+every remaining task of the current phase needs one of these:
+
+- Docker or the Supabase CLI is not available for G5.
+- A decision listed in `PROGRESS.md` under "Needs Harold" changes what you would build.
+- A test in `testcase/` looks wrong.
+
+If only some tasks are blocked, skip them, note it, and keep working on the rest.
+
+## 8. Start
+
+Read `CLAUDE.md` and `PROGRESS.md` now, then do one iteration.
