@@ -274,3 +274,22 @@ blank or mixed column in one month cannot change the types of another month.
   columns, a month with a text value), and one flow must give the same column types for every dataset. A Column
   mapping step or VALUE() turns it back into numbers. Text such as `2h` therefore stays visible to rule R8.
 - Blank cells stay as rows with a blank value, because rules R6 and R8 report a missing value.
+
+## D25 Pivot node and asynchronous compile (T1.13b)
+
+- A node's output columns can depend on values (Pivot). `NodeModule.compile` may therefore return a promise, and its
+  context has `query(sql)` to read from the tables of the run. The engine awaits it. All other nodes stay synchronous.
+- Settings: `rowKeys`, `columnSource`, `value` (not needed for count), `aggregation` (sum, count, min, max, average),
+  `columns` (`{from: "data"}` default, or `{from: "reference", table, column}`), `fill`, `namePrefix`, `nameSuffix`,
+  `nameCase` (keep, lower, upper). A new column is named `prefix + value + suffix`, so the code `OT_DAY` with the
+  suffix `_hours` and lower case gives `ot_day_hours`.
+- Column list: from the data, distinct values sorted; from a reference table, its values in order of first appearance,
+  each once, also when the data has no row for them (zero columns stay). With a reference list, data values that are
+  not in the list are left out of the result. At most 500 columns; more is an error that says to add a Filter step.
+- Rows: one per combination of row keys, sorted by the keys; without row keys one total row. Rows whose column source
+  is blank are ignored.
+- Missing combinations: 0 for sum, else blank, or `fill` (a number or null; only for number results). Count is always a
+  number, 0 when nothing matches, and ignores `fill`. A key column clashing with a generated name (also by case) is
+  refused.
+- The order of the columns is the order of the list. A flow that needs another header order ends with a Column mapping
+  step, which also gives the final names.

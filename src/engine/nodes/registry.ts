@@ -3,6 +3,7 @@ import { filterNode } from './filter';
 import { formulaColumnNode } from './formula-column';
 import { lookupJoinNode } from './lookup-join';
 import { groupByNode } from './group-by';
+import { pivotNode } from './pivot';
 import { unpivotNode } from './unpivot';
 import { inputFileNode } from './input-file';
 import type { NodeRegistry } from './types';
@@ -16,4 +17,5 @@ export const defaultRegistry: NodeRegistry = {
   lookup_join: lookupJoinNode,
   group_by: groupByNode,
   unpivot: unpivotNode,
+  pivot: pivotNode,
 };

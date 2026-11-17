@@ -125,7 +125,14 @@ export async function runFlow(runner: SqlRunner, options: RunOptions): Promise<R
         const upstream = tables.get(`${e.source}/${e.sourceHandle}`);
         if (upstream) inputs[e.targetHandle] = upstream;
       }
-      const outputs = module.compile({ node, inputs, inputTables, refTables, effectiveDate: options.effectiveDate });
+      const outputs = await module.compile({
+        node,
+        inputs,
+        inputTables,
+        refTables,
+        effectiveDate: options.effectiveDate,
+        query: (sql) => runner.query(sql),
+      });
 
       for (const handle of NODE_PORTS[node.type].outputs) {
         const out = outputs[handle];

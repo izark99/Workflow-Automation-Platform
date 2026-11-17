@@ -32,7 +32,7 @@ before it passes, except where a task says otherwise.
 - [x] T1.11 Lookup / Join node: from another node and from a reference table, behaviour when no match is found.
 - [x] T1.12 Group by node.
 - [x] T1.13a Unpivot node.
-- [ ] T1.13b Pivot node, with a column list taken from a reference table, a fill value and a name suffix (D13), so zero-count columns appear in reference-table order.
+- [x] T1.13b Pivot node, with a column list taken from a reference table, a fill value and a name suffix (D13), so zero-count columns appear in reference-table order.
 - [ ] T1.14 Append node and SQL node.
 - [ ] T1.15 Output node: several sheets in one workbook, csv, date and number types preserved.
 - [ ] T1.16 Effective date: resolve flow version and reference table versions, stop with a clear message when no version covers the date.
@@ -98,6 +98,13 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T1.13b Pivot node
+Changed: src/engine/nodes/pivot.ts, pivot.test.ts (13 tests), `NodeModule.compile` may be async and gets `query(sql)` in its context (engine awaits it), registry, docs/DECISIONS.md (D25).
+How: row keys, column source, value, aggregation; the new columns come from the data (sorted) or from a reference table (its order, zero columns kept, data values outside the list ignored); name prefix, suffix and case; fill value; guards for 500 columns, name clashes and wrong types.
+Found while checking the expected `Summary`: its day-category columns are not in reference-table order (holiday before rest), so the flow ends with a Column mapping step that sets the order and final names (D25).
+Gates run: check PASS (304 unit tests). I replaced one vacuous assertion of mine (name clash with a key) by a real case before committing.
+Next: T1.14 (append and SQL nodes).
 
 ### 2026-11-17 T1.13a Unpivot node (T1.13 split into T1.13a and T1.13b)
 Changed: src/engine/nodes/unpivot.ts, unpivot.test.ts (8 tests), registry, test helper option `limit`, docs/DECISIONS.md (D24). PROGRESS: T1.13 split into Unpivot and Pivot (one concern each).
