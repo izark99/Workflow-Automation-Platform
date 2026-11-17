@@ -219,3 +219,19 @@ blank or mixed column in one month cannot change the types of another month.
   `#,##0`, `#,##0.00`, `0%`, `0.0%`, `000` (rounding as ROUND). Date formats: yyyy, yy, mmmm, mmm, mm, m, dddd, ddd, dd, d
   with any other characters kept. Other formats are refused with the list of supported ones. Time formats and
   optional-digit decimals (`0.##`) are not supported.
+
+## D21 Tier 1 date functions (T1.9)
+
+- `EFFECTIVE_DATE()` is the date picked for the run, as a date. A malformed effective date is a compile error.
+- `DATE(y, m, d)` rolls months and days over like Excel (`DATE(2026, 9, 31)` is 2026-10-01, month 0 is December of the
+  year before). A year DuckDB cannot represent gives a blank, never a failed run (`TRY`). Years below 1900 are not
+  shifted by 1900 as Excel does.
+- `YEAR`, `MONTH`, `DAY`, `WEEKDAY`, `WEEKNUM`, `ISOWEEKNUM`, `EOMONTH` of a blank date are blank (Excel reads a blank as
+  0 January 1900). `WEEKDAY` supports return types 1, 2 and 3, `WEEKNUM` types 1, 2 and 21; other types give a blank.
+- `EDATE` and `DATEDIF` use DuckDB month arithmetic, which stops at the end of a shorter month like Excel
+  (`EDATE(31 Jan, 1)` is 28 Feb). `DATEDIF` needs its unit in quotes (Y, M, D, MD, YM, YD, any case); `MD` and `YD` are
+  the days left after whole months or whole years, which gives Excel's result in normal cases and avoids its known bugs.
+  A start after the end gives a blank.
+- Date text such as "2026-09-30" is not a date. Use `DATE()` or retype the column to date in a Column mapping step.
+- `src/engine/formula/tier1/coverage.test.ts` fails when the registry differs from the Tier 1 list of the spec or when
+  a Tier 1 function has no call in any unit test (gate G2).

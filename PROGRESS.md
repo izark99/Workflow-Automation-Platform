@@ -27,7 +27,7 @@ before it passes, except where a task says otherwise.
 - [x] T1.6b Formula compiler core: typed AST to DuckDB SQL for literals, column references, operators and blank rules, plus a function registry with arity and argument types.
 - [x] T1.7 Formula functions, logic and math groups of Tier 1, each with unit tests.
 - [x] T1.8 Formula functions, text group of Tier 1, each with unit tests.
-- [ ] T1.9 Formula functions, date group of Tier 1 and EFFECTIVE_DATE, each with unit tests.
+- [x] T1.9 Formula functions, date group of Tier 1 and EFFECTIVE_DATE, each with unit tests.
 - [ ] T1.10 Formula column node.
 - [ ] T1.11 Lookup / Join node: from another node and from a reference table, behaviour when no match is found.
 - [ ] T1.12 Group by node.
@@ -97,6 +97,12 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T1.9 Formula functions: date group and EFFECTIVE_DATE
+Changed: src/engine/formula/tier1/date.ts (DATE YEAR MONTH DAY WEEKDAY WEEKNUM ISOWEEKNUM EOMONTH EDATE DATEDIF DAYS EFFECTIVE_DATE), date.test.ts (23 tests, Excel results checked by hand, e.g. WEEKNUM and ISO week of the week-limit case), coverage.test.ts (registry equals the Tier 1 list of the spec; every function is called in a unit test), hint for text given to a date argument, docs/DECISIONS.md (D21).
+All 48 Tier 1 functions plus EFFECTIVE_DATE are now registered.
+Gates run: check PASS (246 unit tests).
+Next: T1.10 (formula column node).
 
 ### 2026-11-17 T1.8 Formula functions: text group
 Changed: src/engine/formula/tier1/text.ts (LEFT RIGHT MID LEN TRIM UPPER LOWER PROPER CONCAT TEXTJOIN SUBSTITUTE REPLACE FIND SEARCH TEXT VALUE), text.test.ts (20 tests on real DuckDB), `toText` moved to ops.ts, `roundSql` shared with TEXT, argument hint to use TEXT() for a number given as text, docs/DECISIONS.md (D20).

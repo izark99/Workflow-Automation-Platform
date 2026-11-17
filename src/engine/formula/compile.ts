@@ -113,7 +113,9 @@ function compileCall(
           ? HINT_NUMBER
           : c.type === 'number' && type === 'text'
             ? 'Use TEXT() to turn a number into text, for example TEXT([x], "0").'
-            : 'Change the argument, or convert it first.';
+            : c.type === 'text' && type === 'date'
+              ? 'Use DATE(year, month, day) to build a date, or set the column type to date in a Column mapping step.'
+              : 'Change the argument, or convert it first.';
       fail(`Argument ${i + 1} of ${e.name} must be ${name(type)}, but it is ${name(c.type)}. ${hint}`, e.args[i]!);
     }
     return c;
