@@ -6,6 +6,7 @@ function rec(p: Partial<RunRecord> & Pick<RunRecord, 'format' | 'strategy' | 'to
   return {
     file: `rows-${p.totalRows}.${p.format}`,
     fileMb: p.format === 'xlsx' ? 30 : 36,
+    fileBytes: p.format === 'xlsx' ? 30_000_000 : 36_000_000,
     status: 'ok',
     loadMs: 1000,
     queryMs: 50,
@@ -94,6 +95,20 @@ describe('renderSpikeReport', () => {
     const md = renderSpikeReport(raw(fullSet()));
     expect(md).toMatch(/200,000-row xlsx/);
     expect(md).toMatch(/estimate/);
+  });
+  it('reports the size guard check', () => {
+    const r = raw(fullSet());
+    r.guardCheck = { fileMb: 301, blocked: true, message: 'Open it in Excel, save the sheet as .csv', wallMs: 400 };
+    const md = renderSpikeReport(r);
+    expect(md).toContain('## Size guard');
+    expect(md).toMatch(/301 MB .*refused/);
+    expect(md).toContain('Result: passed');
+  });
+  it('says the size guard check was not run when it is missing, and failed when it did not block', () => {
+    expect(renderSpikeReport(raw(fullSet()))).toMatch(/Result: not run/);
+    const r = raw(fullSet());
+    r.guardCheck = { fileMb: 301, blocked: false, wallMs: 400 };
+    expect(renderSpikeReport(r)).toMatch(/Result: FAILED/);
   });
   it('is identical for identical input', () => {
     expect(renderSpikeReport(raw(fullSet()))).toBe(renderSpikeReport(raw(fullSet())));

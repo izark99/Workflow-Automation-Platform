@@ -18,6 +18,7 @@ export interface RunRecord {
   format: 'xlsx' | 'csv';
   totalRows: number;
   fileMb: number;
+  fileBytes: number;
   strategy: SpikeStrategy;
   status: Status;
   loadMs?: number;
@@ -30,12 +31,21 @@ export interface RunRecord {
   error?: string;
 }
 
+/** Result of loading an xlsx just above the size limit with the guard on. */
+export interface GuardCheck {
+  fileMb: number;
+  blocked: boolean;
+  message?: string;
+  wallMs: number;
+}
+
 export interface RawResults {
   browser: string;
   node: string;
   cpus: number;
   ramGb: number;
   runs: RunRecord[];
+  guardCheck?: GuardCheck;
 }
 
 export function parseArgs(argv: string[]): SpikeArgs {

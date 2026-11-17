@@ -1,5 +1,6 @@
 // Renders docs/SPIKE_RESULTS.md from the raw run records. The strategy choice is a rule
 // over the numbers, so the file can be regenerated on every run without hand edits.
+import { MAX_SAFE_XLSX_BYTES } from '../../src/engine/size-guard.ts';
 import { BENCH_SIZES } from './bench-data.ts';
 import type { RawResults, RunRecord, SpikeStrategy } from './spike-runner.ts';
 
@@ -118,6 +119,24 @@ function targets(runs: RunRecord[], xlsx: Choice | undefined, csv: Choice | unde
   return out;
 }
 
+function guardLines(raw: RawResults): string[] {
+  const limit = `${(MAX_SAFE_XLSX_BYTES / 1e6).toFixed(1)} MB`;
+  const intro =
+    `The app refuses an xlsx file above ${limit} (${fmtNum(MAX_SAFE_XLSX_BYTES)} bytes, the largest xlsx that loaded) before it reads a byte, ` +
+    'and shows the "save as csv" warning instead. The benchmark runs above bypass the guard (`?guard=off`) to measure the raw strategies. ' +
+    'Each run of `npm run spike` then loads an xlsx just above the limit with the guard on.';
+  const g = raw.guardCheck;
+  if (!g) return [intro, '', 'Result: not run.'];
+  if (!g.blocked) return [intro, '', `A ${g.fileMb} MB xlsx was not refused. Result: FAILED.`];
+  return [
+    intro,
+    '',
+    `A ${g.fileMb} MB xlsx was refused in ${g.wallMs} ms with this message: "${g.message ?? ''}"`,
+    '',
+    'Result: passed.',
+  ];
+}
+
 export function renderSpikeReport(raw: RawResults): string {
   const { runs } = raw;
   const xlsx = chooseStrategy(runs, 'xlsx');
@@ -156,7 +175,7 @@ export function renderSpikeReport(raw: RawResults): string {
   }
   lines.push(...table(HEAD, six), '', '## Targets from SPEC section 8', '', ...targets(runs, xlsx, csv), '', '## Strategies', '');
   for (const s of new Set(runs.map((r) => r.strategy))) lines.push(`- \`${s}\`: ${STRATEGY_TEXT[s]}`);
-  lines.push('', '## All runs', '', ...table(HEAD, runs.map((r) => runRow(r, true))), '');
+  lines.push('', '## Size guard', '', ...guardLines(raw), '', '## All runs', '', ...table(HEAD, runs.map((r) => runRow(r, true))), '');
   const failed = runs.filter((r) => r.status !== 'ok' || r.rowsMatch === false);
   if (failed.length > 0) {
     lines.push('## Failures', '');
