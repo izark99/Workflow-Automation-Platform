@@ -45,7 +45,7 @@ before it passes, except where a task says otherwise.
 
 ## Phase 2: Canvas and screens (gates G3, G4)
 
-- [ ] T2.1 Design tokens, global styles, font, and the UI-rules test skeleton.
+- [x] T2.1 Design tokens, global styles, font, and the UI-rules test skeleton.
 - [ ] T2.2 Base components: Button, Badge, Card, Table, Field, Search field.
 - [ ] T2.3 Dropdown and Date picker, with keyboard support and tests.
 - [ ] T2.4 Checkbox, Tabs, Dialog, Toast, Skeleton, Empty state, Error state.
@@ -100,6 +100,13 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-17 T2.1 Design tokens, global styles, font, UI-rules runner
+Changed: src/ui/{tokens,global}.css, src/main.tsx, ui-rules/{routes,rules,routes.spec,rules.selfcheck.spec}.ts, playwright.ui-rules.config.ts, `npm run test:ui-rules` (now real), eslint/tsconfig/.gitignore for `dist-ui-rules`, deps `@fontsource/plus-jakarta-sans` 5.3.0 and `@axe-core/playwright` 4.14.0, docs/DECISIONS.md (D35).
+Result: the runner builds the app, serves it with `vite preview` and runs at 1280 and 1440 px. Rules: button heights 36/40, forbidden elements, one cta, no horizontal scroll, table rows 57, header position (sidebar screens), axe serious/critical. Self-checks show each rule fails on a bad page. Pixel targets measured on the design HTML with getBoundingClientRect (title y 63, first block y 148, rows 57).
+Gates run: check PASS (390 tests), test:ui-rules PASS (26 tests: 13 per width; route `/` only so far).
+Advisor consulted at the start of Phase 2: plan kept; points taken into D35 and into later tasks (async DataStore and IndexedDB check in T2.6, own zoom controls in T2.9, headless-library DOM check in T2.3/T2.4).
+Next: T2.2.
 
 ### 2026-11-17 T1.20 Both datasets pass; no network request carries file content (last task of Phase 1)
 Changed: scripts/lib/request-audit.ts (+ 10 unit tests), acceptance/privacy.spec.ts (3 tests), acceptance/timesheet.spec.ts (audits both real runs, with the names of the employee list as markers), acceptance/helpers.ts (`watchRequests`), acceptance/page.ts (files are `File` objects, as the file picker gives them), docs/DECISIONS.md (D34).

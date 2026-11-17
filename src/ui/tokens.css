@@ -1,0 +1,32 @@
+/* Design tokens (docs/DESIGN.md). Components use these variables and never a raw hex value. */
+:root {
+  --color-bg: #f0fdfa;
+  --color-card: #ffffff;
+  --color-ink: #134e4a;
+  --color-muted: #475569;
+  --color-line: #99f6e4;
+  --color-rule: #e8f1f4;
+  --color-control: #6f918d;
+  --color-primary: #0f766e;
+  --color-primary-soft: #ccfbf1;
+  --color-focus: #0d9488;
+  --color-cta: #c2410c;
+  --color-accent: #ea580c;
+  --color-danger: #b91c1c;
+  --color-skeleton: #dce7ea;
+  --color-on-fill: #ffffff;
+
+  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-mono: ui-monospace, Menlo, Consolas, monospace;
+
+  --radius-control: 8px;
+  --radius-step: 10px;
+  --radius-card: 12px;
+
+  --size-button: 40px;
+  --size-button-compact: 36px;
+  --size-sidebar: 232px;
+  --size-step-list: 184px;
+  --size-settings: 380px;
+  --size-builder-header: 64px;
+}

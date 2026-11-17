@@ -13,3 +13,4 @@ __pycache__/
 *.tsbuildinfo
 dist-spike/
 dist-acceptance/
+dist-ui-rules/

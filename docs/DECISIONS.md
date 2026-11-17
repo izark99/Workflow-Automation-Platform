@@ -462,3 +462,14 @@ blank or mixed column in one month cannot change the types of another month.
 - Worker requests: the engine runs in a Web Worker, so the audit has to see worker traffic. Checked, not assumed: the
   canary test starts a worker from a blob address that fetches `/leak-from-worker?d=<marker>`, and the audit reports it;
   and a real run's log contains the worker's `/assets/duckdb-*.wasm` request. `page.on('request')` sees both.
+
+## D35 Design tokens, bundled font and the UI-rules runner (T2.1)
+
+- Tokens are CSS variables in `src/ui/tokens.css`; `src/ui/global.css` sets the base type (14/21 px, h1 28/36, h2 16/24), the focus ring, non-resizable textareas and `prefers-reduced-motion`.
+- Font: Plus Jakarta Sans is bundled with `@fontsource/plus-jakarta-sans` 5.3.0 (latin 400, 500, 600, 700) instead of a Google Fonts link. A cross-origin font request would break the "static assets only" request audit (D34) and may be blocked. This is a new dependency, outside the PROMPT stack table, needed for that reason.
+- `@axe-core/playwright` 4.14.0 is the axe binding for the UI rules (the stack names axe).
+- `npm run test:ui-rules` builds the app into `dist-ui-rules`, serves it with `vite preview` and runs Playwright with two projects (1280 x 900 and 1440 x 900), so the output shows both widths. The route list is `ui-rules/routes.ts`; each rule in `ui-rules/rules.ts` runs on every listed route. A route added to the app is added to that list in the same task.
+- Pixel targets were measured on `design/screens/*.html` with `getBoundingClientRect` at 1440 px: title y 63 (36 px high), first block y 148, table rows 57 px, buttons 40 and 36 px, sidebar 232 px. Rules: `rules.ts`.
+- Markers the rules rely on: `data-variant="cta"` on the cta button, `data-first-block` on the first block under the page header, `button` elements only for the height rule (breadcrumb links are 24 px text links).
+- `rules.selfcheck.spec.ts` proves each rule fails on a page that breaks it and passes on one that does not.
+- Not yet in the runner (added with the task that creates what they need): the skeleton with `aria-busy` during a delayed load (T2.6 adds the load-delay switch of the local store), and the header position on real sidebar screens (T2.7).

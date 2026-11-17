@@ -13,6 +13,7 @@ export default tseslint.config(
       'bench-data',
       'dist-spike',
       'dist-acceptance',
+      'dist-ui-rules',
       'testcase',
       'node_modules',
     ],
@@ -29,7 +30,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['**/*.{js,mjs}', '*.config.ts', 'scripts/**', 'e2e/**'],
+    files: ['**/*.{js,mjs}', '*.config.ts', 'scripts/**', 'e2e/**', 'ui-rules/**'],
     languageOptions: { globals: { ...globals.node } },
   },
 );

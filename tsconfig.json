@@ -14,5 +14,5 @@
     "allowImportingTsExtensions": true,
     "types": ["vite/client", "node"]
   },
-  "include": ["src", "scripts", "e2e", "acceptance", "*.config.ts"]
+  "include": ["src", "scripts", "e2e", "acceptance", "ui-rules", "*.config.ts"]
 }

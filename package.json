@@ -15,12 +15,13 @@
     "spike": "node scripts/spike.ts",
     "test:acceptance": "playwright test -c playwright.acceptance.config.ts",
     "test:e2e": "node scripts/not-implemented.mjs test:e2e T2.20",
-    "test:ui-rules": "node scripts/not-implemented.mjs test:ui-rules T2.21",
+    "test:ui-rules": "playwright test -c playwright.ui-rules.config.ts",
     "test:db": "node scripts/not-implemented.mjs test:db T3.1",
     "gates": "npm run check && npm run spike && npm run test:acceptance && npm run test:e2e && npm run test:ui-rules && npm run test:db"
   },
   "dependencies": {
     "@duckdb/duckdb-wasm": "1.33.1-dev57.0",
+    "@fontsource/plus-jakarta-sans": "5.3.0",
     "apache-arrow": "17.0.0",
     "react": "19.3.1",
     "react-dom": "19.3.1",
@@ -28,6 +29,7 @@
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
     "@eslint/js": "10.0.1",
     "@playwright/test": "1.63.0",
     "@types/node": "26.6.6",
