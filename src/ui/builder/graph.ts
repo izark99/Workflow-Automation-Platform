@@ -1,5 +1,5 @@
 // Pure operations on the flow definition. The canvas reads and writes the same JSON that the engine runs (one format).
-import { FLOW_SCHEMA_VERSION, NODE_PORTS, NODE_TYPES, VARIADIC_HANDLE } from '../../engine/flow/types';
+import { BASE_SCHEMA_VERSION, NODE_PORTS, NODE_TYPES, VARIADIC_HANDLE } from '../../engine/flow/types';
 import { translate } from '../i18n';
 import type { MessageKey } from '../i18n';
 import type { FlowDefinition, FlowEdge, FlowNode, NodeType } from '../../engine/flow/types';
@@ -41,7 +41,7 @@ export const CARD_WIDTH = 240;
 export const CARD_HEIGHT = 56;
 export const CARD_GAP = 40;
 
-export const emptyDefinition = (): FlowDefinition => ({ schemaVersion: FLOW_SCHEMA_VERSION, nodes: [], edges: [] });
+export const emptyDefinition = (): FlowDefinition => ({ schemaVersion: BASE_SCHEMA_VERSION, nodes: [], edges: [] });
 
 export const edgeId = (e: FlowEdge): string => e.id ?? `${e.source}:${e.sourceHandle ?? ''}->${e.target}:${e.targetHandle ?? ''}`;
 

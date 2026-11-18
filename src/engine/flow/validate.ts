@@ -1,5 +1,10 @@
+import { engineText } from '../messages';
+import type { EngineMessageId, MessageParams } from '../messages';
+import { MAX_PARAMETER_KEY_LENGTH, PARAMETER_KEY, PARAMETER_TYPES, fitsParameterType } from './parameters';
+import type { FlowParameter, ParameterType } from './parameters';
 import {
   FLOW_SCHEMA_VERSION,
+  SUPPORTED_SCHEMA_VERSIONS,
   NODE_PORTS,
   NODE_TYPES,
   VARIADIC_HANDLE,
@@ -19,13 +24,17 @@ export type FlowErrorCode =
   | 'unknown_handle'
   | 'missing_input'
   | 'input_connected_twice'
-  | 'cycle';
+  | 'cycle'
+  | 'invalid_parameters';
 
 export interface FlowError {
   code: FlowErrorCode;
   /** Says what failed and what to do next. */
   message: string;
   nodeId?: string;
+  /** Id of the message in the catalog, with its parameters (the UI shows its own text). */
+  messageId?: string;
+  params?: MessageParams;
 }
 
 export type FlowValidation = { ok: true; flow: FlowDefinition } | { ok: false; errors: FlowError[] };
@@ -59,12 +68,13 @@ export function validateFlow(input: unknown): FlowValidation {
   }
   const errors: FlowError[] = [];
 
-  if (input.schemaVersion !== FLOW_SCHEMA_VERSION) {
+  if (!(SUPPORTED_SCHEMA_VERSIONS as readonly unknown[]).includes(input.schemaVersion)) {
     errors.push({
       code: 'unsupported_schema_version',
-      message: `The flow has schemaVersion ${JSON.stringify(input.schemaVersion)}, but this app reads version ${FLOW_SCHEMA_VERSION}. Change schemaVersion to ${FLOW_SCHEMA_VERSION} or open the flow in a matching app version.`,
+      message: `The flow has schemaVersion ${JSON.stringify(input.schemaVersion)}, but this app reads versions ${SUPPORTED_SCHEMA_VERSIONS.join(' and ')}. Change schemaVersion to ${FLOW_SCHEMA_VERSION} or open the flow in a matching app version.`,
     });
   }
+  const parameters = parametersFrom(input, errors);
   if (!Array.isArray(input.nodes)) {
     errors.push({ code: 'invalid_shape', message: 'The flow has no "nodes" list. Add "nodes" as an array of steps.' });
   }
@@ -229,7 +239,8 @@ export function validateFlow(input: unknown): FlowValidation {
   }
 
   if (errors.length > 0) return { ok: false, errors };
-  return { ok: true, flow: input as unknown as FlowDefinition };
+  // A copy with the normalized list: the input (a stored definition) is never changed.
+  return { ok: true, flow: { ...(input as unknown as FlowDefinition), parameters } };
 }
 
 function fail(error: FlowError): FlowValidation {
@@ -307,4 +318,63 @@ export function topologicalOrder(flow: FlowDefinition): string[] {
     }
   }
   return order;
+}
+
+const paramError = (id: EngineMessageId, params: MessageParams = {}): FlowError => ({ code: 'invalid_parameters', message: engineText(id, params), messageId: id, params });
+
+/**
+ * The parameters of a definition (SPEC 11.5): an empty list for an older definition. A version 1 definition that has a
+ * `parameters` key is refused instead of ignored, so nobody loses them without being told.
+ */
+function parametersFrom(input: Record<string, unknown>, errors: FlowError[]): FlowParameter[] {
+  if (input.parameters === undefined) return [];
+  if (input.schemaVersion === 1) {
+    errors.push(paramError('engine.paramNeedsV2', { version: 1 }));
+    return [];
+  }
+  if (!Array.isArray(input.parameters)) {
+    errors.push(paramError('engine.paramNotList'));
+    return [];
+  }
+  const out: FlowParameter[] = [];
+  const seen = new Set<string>();
+  input.parameters.forEach((raw: unknown, index: number) => {
+    const n = index + 1;
+    if (!isRecord(raw)) {
+      errors.push(paramError('engine.paramShape', { n }));
+      return;
+    }
+    const key = typeof raw.key === 'string' ? raw.key : '';
+    if (!PARAMETER_KEY.test(key) || key.length > MAX_PARAMETER_KEY_LENGTH) {
+      errors.push(paramError('engine.paramKey', { n, key, max: MAX_PARAMETER_KEY_LENGTH }));
+      return;
+    }
+    if (seen.has(key.toLowerCase())) {
+      errors.push(paramError('engine.paramDuplicateKey', { key }));
+      return;
+    }
+    seen.add(key.toLowerCase());
+    const before = errors.length;
+    if (typeof raw.label !== 'string' || raw.label.trim() === '') errors.push(paramError('engine.paramLabel', { key }));
+    if (!(PARAMETER_TYPES as readonly unknown[]).includes(raw.type)) {
+      errors.push(paramError('engine.paramType', { key, type: String(raw.type), types: PARAMETER_TYPES.join(', ') }));
+      return;
+    }
+    const type = raw.type as ParameterType;
+    if (typeof raw.required !== 'boolean') errors.push(paramError('engine.paramRequired', { key }));
+    if (raw.help !== undefined && typeof raw.help !== 'string') errors.push(paramError('engine.paramHelp', { key }));
+    let options: string[] | undefined;
+    if (type === 'list') {
+      const list = raw.options;
+      if (!Array.isArray(list) || list.length === 0) errors.push(paramError('engine.paramOptions', { key }));
+      else if (list.some((o) => typeof o !== 'string' || o === '') || new Set(list).size !== list.length) errors.push(paramError('engine.paramOptionBad', { key }));
+      else options = list as string[];
+    }
+    if (raw.default !== undefined && !fitsParameterType({ type, options }, raw.default)) {
+      const id = { date: 'engine.paramDefaultDate', number: 'engine.paramDefaultNumber', boolean: 'engine.paramDefaultBoolean', text: 'engine.paramDefaultText', list: 'engine.paramDefaultList' }[type] as EngineMessageId;
+      if (!(type === 'list' && options === undefined)) errors.push(paramError(id, { key }));
+    }
+    if (errors.length === before) out.push(options ? { ...(raw as unknown as FlowParameter), options } : { ...(raw as unknown as FlowParameter) });
+  });
+  return out;
 }

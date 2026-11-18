@@ -1074,6 +1074,24 @@ export const en = {
   'nav.changePasswordTitle': 'Change password',
   'nav.passwordChanged': 'Password changed.',
   'nav.cancel': 'Cancel',
+
+  // Flow parameters (T4.9a)
+  'engine.paramNotList': 'The "parameters" of the flow must be a list. Use an array, which may be empty.',
+  'engine.paramNeedsV2': 'The flow has "parameters" but schemaVersion {version}. Set schemaVersion to 2 to use parameters.',
+  'engine.paramShape': 'Parameter {n} is not an object with a key, a label and a type. Write each parameter as an object.',
+  'engine.paramKey': 'Parameter {n} has the key "{key}". A key has letters, digits and underscores, does not start with a digit, and has at most {max} characters.',
+  'engine.paramDuplicateKey': 'Two parameters use the key "{key}" (keys are compared without regard to case). Give each parameter its own key.',
+  'engine.paramLabel': 'Parameter "{key}" has no label. Add a label that the Run screen shows.',
+  'engine.paramType': 'Parameter "{key}" has the unknown type "{type}". Use one of: {types}.',
+  'engine.paramRequired': 'Parameter "{key}": "required" must be true or false.',
+  'engine.paramHelp': 'The help of parameter "{key}" must be text.',
+  'engine.paramDefaultDate': 'The default of parameter "{key}" is not a real date. Write it like 2026-09-30, or remove the default.',
+  'engine.paramDefaultNumber': 'The default of parameter "{key}" is not a number. Write a number, or remove the default.',
+  'engine.paramDefaultBoolean': 'The default of parameter "{key}" is not true or false. Write true or false, or remove the default.',
+  'engine.paramDefaultText': 'The default of parameter "{key}" is not text. Write text, or remove the default.',
+  'engine.paramDefaultList': 'The default of parameter "{key}" is not one of its options. Choose one of the options, or remove the default.',
+  'engine.paramOptions': 'Parameter "{key}" is a list and needs at least one option. Add "options" with one or more texts.',
+  'engine.paramOptionBad': 'Parameter "{key}" has an empty or repeated option. Every option must be a different text that is not empty.',
 } as const;
 
 export type MessageKey = keyof typeof en;
