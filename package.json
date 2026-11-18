@@ -17,6 +17,7 @@
     "test:e2e": "playwright test -c playwright.e2e.config.ts",
     "test:ui-rules": "playwright test -c playwright.ui-rules.config.ts",
     "test:db": "node scripts/test-db.mjs",
+    "test:store": "node scripts/test-store.mjs",
     "gates": "npm run check && npm run spike && npm run test:acceptance && npm run test:e2e && npm run test:ui-rules && npm run test:db"
   },
   "dependencies": {

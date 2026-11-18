@@ -80,6 +80,19 @@ export interface NameLookup {
   groups: Map<string, string>;
 }
 
+export interface VisibleNameRow {
+  kind: 'user' | 'group';
+  id: string;
+  name: string;
+}
+
+/** The rows of `visible_names()`: the owners and groups of the flows the caller can see. */
+export function namesFromRows(rows: VisibleNameRow[]): NameLookup {
+  const names: NameLookup = { users: new Map(), groups: new Map() };
+  for (const r of rows) (r.kind === 'user' ? names.users : names.groups).set(r.id, r.name);
+  return names;
+}
+
 export const userFromRows = (p: ProfileRow, groupIds: string[]): User => ({
   id: p.id,
   name: p.name,

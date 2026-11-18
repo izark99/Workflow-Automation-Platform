@@ -7,6 +7,7 @@ import { checkRange, checkRowCap } from './checks';
 import {
   flowFromRow,
   groupFromRow,
+  namesFromRows,
   refPatchToRow,
   refTableFromRow,
   runLogFromRow,
@@ -19,6 +20,7 @@ import {
   type ProfileRow,
   type RefTableRow,
   type RunLogRow,
+  type VisibleNameRow,
 } from './supabase-mapping';
 import {
   StoreError,
@@ -88,16 +90,9 @@ export class SupabaseStore implements DataStore {
     return u;
   }
 
-  /** Names the caller may read: all of them for the admin, the own profile and no groups for anyone else. */
+  /** Owner and group names of the flows the caller can see. Profiles and groups stay closed to non-admins (D59), D65. */
   private async names(): Promise<NameLookup> {
-    const [profiles, groups] = await Promise.all([
-      this.client.from('profiles').select('id, name'),
-      this.client.from('groups').select('id, name'),
-    ]);
-    return {
-      users: new Map(this.ok<{ id: string; name: string }[]>(profiles, 'read the user names').map((p) => [p.id, p.name])),
-      groups: new Map(this.ok<GroupRow[]>(groups, 'read the group names').map((g) => [g.id, g.name])),
-    };
+    return namesFromRows(this.ok<VisibleNameRow[]>(await this.client.rpc('visible_names'), 'read the owner and group names'));
   }
 
   async currentUser(): Promise<User> {

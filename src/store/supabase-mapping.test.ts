@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   groupFromRow,
   flowFromRow,
+  namesFromRows,
   refTableFromRow,
   refPatchToRow,
   runLogFromRow,
@@ -180,5 +181,23 @@ describe('runLogToRow', () => {
       output_rows: 3,
       status: 'failed',
     });
+  });
+});
+
+describe('namesFromRows', () => {
+  it('splits the rows of visible_names into user names and group names', () => {
+    const names = namesFromRows([
+      { kind: 'user', id: 'u1', name: 'Ann' },
+      { kind: 'group', id: 'g1', name: 'HR' },
+      { kind: 'user', id: 'u2', name: 'Bob' },
+    ]);
+    expect([...names.users]).toEqual([['u1', 'Ann'], ['u2', 'Bob']]);
+    expect([...names.groups]).toEqual([['g1', 'HR']]);
+  });
+
+  it('is empty for no rows', () => {
+    const names = namesFromRows([]);
+    expect(names.users.size).toBe(0);
+    expect(names.groups.size).toBe(0);
   });
 });

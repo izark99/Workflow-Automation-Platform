@@ -82,7 +82,7 @@ before it passes, except where a task says otherwise.
 - [x] T3.6b1 Server functions for the write side, with pgTAP tests: `create_flow`, `copy_flow`, `create_flow_version`, `create_ref_table`, `create_ref_table_version`, `set_flow_groups`, `set_user_groups`, and a rule that the last admin cannot be demoted or removed. They make multi-row writes atomic and take the next version number inside the database.
 - [x] T3.6b2 `SupabaseStore`, part 2: the write methods, calling those functions and the functions of T3.2 and T3.5; table updates for saving versions, groups and users; run log insert; friendlier messages for overlap and duplicates in `storeErrorFrom`.
 - [x] T3.6c1 Selection by environment variables: `createDataStore()` (Supabase when `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are both set, `LocalStore` otherwise; one set is an error), `.env.example`, the e2e and UI-rules builds pinned to the local store.
-- [ ] T3.6c2 Integration test of `SupabaseStore` against the full local stack (`npm run test:store`, not part of `gates`; it needs the API and Auth containers): roles, flows, versions, publish, soft delete, reference tables, groups, run log. Settles the owner-name and group-name limit for non-admins from T3.6a.
+- [x] T3.6c2 Integration test of `SupabaseStore` against the full local stack (`npm run test:store`, not part of `gates`; it needs the API and Auth containers): roles, flows, versions, publish, soft delete, reference tables, groups, run log. Settles the owner-name and group-name limit for non-admins from T3.6a.
 - [ ] T3.7 Sign-in screen and session handling.
 - [ ] T3.8 Keep-alive: a small scheduled request that touches the database once a day, as code plus instructions.
 - [ ] T3.9 `docs/DEPLOY.md`: steps for a human to create the Supabase project, run migrations, set variables on Cloudflare Pages, and create the first admin.
@@ -108,6 +108,13 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-18 T3.6c2 Integration test of SupabaseStore on the full local stack
+Changed: integration/supabase-store.test.ts (12 tests, four real users through Auth), scripts/test-store.mjs and `npm run test:store`, scripts/lib/local-supabase.mjs (shared by test-db.mjs and test-store.mjs), vitest.store.config.ts, tsconfig.json (includes integration/), supabase/migrations/20261118000007_visible_names.sql and supabase/tests/database/070-visible-names.test.sql (7 assertions), `namesFromRows` (+2 tests) and the store's use of it, docs/DECISIONS.md (D65).
+Result: the whole write and read side of SupabaseStore works against real PostgREST, Auth and row-level security on the first run; the limit from T3.6a (owner and group names for non-admins) is settled with `visible_names()`. Mutation checks: names returning nothing and an opened view helper each fail the test (4 tests).
+Mistakes of mine: one unused assignment in the test (lint); `integration/` was not type-checked until I added it to tsconfig.
+Gates run: check PASS (646 tests), test:db PASS (8 files, exit 0), test:store PASS (12 tests, exit 0). test:e2e, test:ui-rules and test:acceptance not rerun: nothing changed in src/ui, only src/store/supabase-* which the app does not use on the local store.
+Next: T3.7 (sign-in screen and session handling).
 
 ### 2026-11-18 T3.6c1 Selection of the data store by environment variables (T3.6c split into T3.6c1 and T3.6c2)
 Changed: src/store/config.ts (+4 tests), src/store/index.ts (`createDataStore`), src/ui/app.tsx, .env.example, playwright.e2e.config.ts and playwright.ui-rules.config.ts (both variables set to empty in the build command, so a value in the shell or a .env file cannot switch the gates to Supabase), docs/DECISIONS.md (D64).
