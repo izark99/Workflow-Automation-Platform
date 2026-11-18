@@ -681,3 +681,12 @@ blank or mixed column in one month cannot change the types of another month.
 - `flow_versions` and `ref_table_versions` are keyed by (parent id, `version_no`), as in the store records. `run_log` points to a version with (`flow_id`, `version_no`) because that pair is the version's key; it holds counts and ids only.
 - Only published versions take part in the no-overlap rule (`planPublish` in `src/engine/versions.ts` looks at published versions only), so the T3.2 exclusion constraint is partial: `where status = 'published'`.
 - Table and column names are snake_case; `SupabaseStore` (T3.6) maps them to the camelCase store records.
+
+## D57 Version constraints in the database (T3.2)
+
+- No overlap: an exclusion constraint on `daterange(valid_from, valid_to, '[]')` per flow and per reference table (extension `btree_gist`), partial on `status = 'published'`. An empty `valid_to` is an open end. Drafts may overlap, as in the local store.
+- Read-only: a trigger refuses any update of a published version and any direct delete, for every role, the admin included. A delete that comes from a cascade (purge of a flow or table, T3.5) is allowed: it is told apart by the trigger depth.
+- The one allowed change is rule 6, closing the previous open-ended version. The publish functions `publish_flow_version` and `publish_ref_table_version` do it in one call: set `valid_to` of the previous open-ended version to the day before, then set the draft to published, so the exclusion constraint never sees both. They set the transaction setting `app.closing_version` for that update; the trigger accepts a change of `valid_to` from null only while it is set. The API only exposes functions, so a client cannot set it.
+- The functions are security invoker, so the policies of T3.3 and T3.4 decide who may call them.
+- Row cap: check `jsonb_array_length(rows) <= 50000`.
+- Errors say what failed and what to do next ("Create a new version copied from it", "Publish a new version instead").

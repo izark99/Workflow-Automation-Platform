@@ -74,7 +74,7 @@ before it passes, except where a task says otherwise.
 
 - [x] T3.1a Supabase tooling: CLI pinned as a devDependency, `supabase init`, minimal service set, `npm run test:db` runner (starts Docker if needed, starts local Supabase with retries, `db reset`, `supabase test db`), one pgTAP smoke test that proves the impersonation pattern (`auth.users`, `auth.uid()`, `set local role authenticated`) works.
 - [x] T3.1b First migration with all tables of SPEC section 4, and a pgTAP test that each table exists.
-- [ ] T3.2 Constraints: no overlapping versions per flow and per reference table, published versions read-only, at most 50,000 rows per reference table version.
+- [x] T3.2 Constraints: no overlapping versions per flow and per reference table, published versions read-only, at most 50,000 rows per reference table version.
 - [ ] T3.3 Row-level security for flows, versions and group access, with tests for every cell of the permission table.
 - [ ] T3.4 Row-level security for reference tables, profiles, groups and run log, with tests.
 - [ ] T3.5 Soft delete, restore, and removal after 30 days.
@@ -104,6 +104,13 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-18 T3.2 Constraints on versions
+Changed: supabase/migrations/20261118000002_version_constraints.sql (exclusion constraints on published ranges, read-only trigger, 50,000-row check, `publish_flow_version` and `publish_ref_table_version`), supabase/tests/database/020-version-constraints.test.sql (29 pgTAP tests), docs/DECISIONS.md (D57).
+Tests prove: shared day refused (SQLSTATE 23P01), open end covering an earlier version refused, next day allowed, drafts may overlap, other flows independent, end before start refused; a published version cannot change its definition, dates or status and cannot be deleted directly, a draft can; publishing ends the previous open-ended version the day before; a second publish, a missing version and an overlapping draft are refused; a purge by cascade still removes published versions; reference tables follow the same rules; 50,000 rows allowed, 50,001 refused.
+Test mistake of mine: the plan count again (30 planned, 29 written); no assertion failed.
+Gates run: check PASS (619 tests), test:db PASS (3 files, 60 pgTAP tests, exit 0). Other gates not rerun: nothing under src/ changed.
+Next: T3.3 (row-level security for flows, versions and group access), with the permission grid for the four personas.
 
 ### 2026-11-18 T3.1b First migration: tables of SPEC section 4
 Changed: supabase/migrations/20261118000001_tables.sql (9 tables, keys, checks, row-level security on and closed), supabase/tests/database/010-tables.test.sql (25 pgTAP tests: every table, exact column lists, keys, foreign keys, RLS on), docs/DECISIONS.md (D56).
