@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Button, Card, Checkbox, Dialog, Dropdown, EmptyState, ErrorState, Field, InfoTip, ScreenFrame, SkeletonTable, Table, useDelayedLoading, useToast } from '../components';
+import { Button, Card, Checkbox, Dialog, Dropdown, EmptyState, ErrorState, Field, InfoTip, ScreenFrame, SkeletonTable, Table, Tabs, useDelayedLoading, useToast } from '../components';
 import type { Column } from '../components';
 import { StoreError } from '../../store/types';
 import type { FlowRecord, Group, User } from '../../store/types';
 import { useLoad, useStore } from '../store-context';
 import { useT, errorText } from '../i18n';
 import type { MessageKey } from '../i18n';
+import { AdminTexts } from './admin-texts';
 import { deletedOn, groupsText, keptUntil, memberCount, toggleGroup, userFormProblem } from './admin-logic';
 import type { UserForm } from './admin-logic';
 import styles from './admin.module.css';
@@ -27,6 +28,7 @@ export function AdminScreen() {
     return { users: await s.listUsers(), groups: await s.listGroups(), flows: await s.listFlows(), deleted: await s.listDeletedFlows() };
   });
   const showSkeleton = useDelayedLoading(data.loading && !data.data);
+  const [tab, setTab] = useState('users');
   const [dialog, setDialog] = useState<Dialogs>(null);
   const [dialogError, setDialogError] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
@@ -206,7 +208,13 @@ export function AdminScreen() {
 
   return (
     <ScreenFrame breadcrumb={<span>{t('admin.screen.crumb')}</span>} title={t('admin.screen.title')} subtitle={t('admin.screen.subtitle')}>
-      {body}
+      {data.error && data.error instanceof StoreError && data.error.code === 'forbidden' ? (
+        body
+      ) : (
+        <Tabs label={t('admin.tabs.label')} tabs={[{ id: 'users', label: t('admin.tabs.users') }, { id: 'texts', label: t('admin.tabs.texts') }]} selected={tab} onSelect={setTab}>
+          <div className={styles.panel}>{tab === 'texts' ? <AdminTexts /> : body}</div>
+        </Tabs>
+      )}
     </ScreenFrame>
   );
 }

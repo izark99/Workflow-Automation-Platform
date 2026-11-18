@@ -61,6 +61,12 @@ export function lookup(key: string, loc: 'en' | 'vi'): string {
   return overrides[loc]?.[key] ?? base[loc][key] ?? overrides.en?.[key] ?? base.en[key] ?? key;
 }
 
+/** The built-in text of a key in a language, without any edit; undefined when the language has none. */
+export const baseText = (key: string, loc: 'en' | 'vi'): string | undefined => base[loc][key];
+
+/** Every key of the catalog, in the order of the default texts. */
+export const catalogKeys = (): string[] => Object.keys(en);
+
 /** True when the catalog has a text for this key. */
 export const hasKey = (key: string): key is MessageKey => key in en;
 

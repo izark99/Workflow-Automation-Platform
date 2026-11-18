@@ -72,6 +72,27 @@ export const ROUTES: RuleRoute[] = [
       await page.getByText('Your session ended.').waitFor();
     },
   },
+  {
+    path: '/admin',
+    name: '/admin (Texts tab)',
+    sidebar: true,
+    table: true,
+    // The tab with the search field, two dropdowns, a table of 40 texts and the pager.
+    prepare: async (page) => {
+      await page.getByRole('tab', { name: /Texts/ }).click();
+      await page.getByRole('button', { name: /Edit nav\.flows/ }).waitFor();
+    },
+  },
+  {
+    path: '/admin',
+    name: '/admin (edit text dialog)',
+    sidebar: true,
+    prepare: async (page) => {
+      await page.getByRole('tab', { name: /Texts/ }).click();
+      await page.getByRole('button', { name: /Edit nav\.flows/ }).click();
+      await page.getByRole('dialog').waitFor();
+    },
+  },
   { path: '/flows', sidebar: true, table: true, skeleton: true },
   { path: '/reference-tables', sidebar: true, table: true, skeleton: true },
   { path: '/admin', sidebar: true, table: true, skeleton: true },
