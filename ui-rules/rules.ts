@@ -16,6 +16,11 @@ export const buttonHeights: Rule = async (page) =>
     for (const el of document.querySelectorAll('button')) {
       const r = el.getBoundingClientRect();
       if (r.width === 0 && r.height === 0) continue;
+      if (el.hasAttribute('data-infotip')) {
+        // The one exception to 36 and 40 px: the info button is exactly 24 x 24 px (WCAG 2.2 target size).
+        if (r.width !== 24 || r.height !== 24) bad.push(`info button "${el.getAttribute('aria-label') ?? ''}" is ${r.width} x ${r.height} px; it must be 24 x 24`);
+        continue;
+      }
       if (!allowed.includes(Math.round(r.height * 10) / 10)) {
         bad.push(`button "${(el.getAttribute('aria-label') ?? el.textContent ?? '').trim()}" is ${r.height} px high; allowed: ${allowed.join(', ')}`);
       }

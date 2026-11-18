@@ -30,6 +30,12 @@ const paths: Record<string, ReactElement> = {
       <path d="M4 13h5l1 2h4l1-2h5" />
     </>
   ),
+  info: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 11v5M12 7.5v.5" />
+    </>
+  ),
   close: <path d="M6 6l12 12M18 6L6 18" />,
   flow: (
     <>

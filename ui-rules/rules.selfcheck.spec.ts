@@ -4,6 +4,15 @@ import { axeSeriousOrCritical, buttonHeights, dangerSpacing, duplicateButtonName
 // Each rule must fail on a page that breaks it, and pass on a page that does not.
 const bad = (html: string) => `<!doctype html><html lang="en"><head><title>t</title></head><body style="margin:0">${html}</body></html>`;
 
+test('info button: 24 x 24 px passes, 26 x 26 and 24 x 36 fail', async ({ page }) => {
+  await page.setContent(bad('<button data-infotip style="width:24px;height:24px;padding:0;border:0">i</button>'));
+  expect(await buttonHeights(page)).toEqual([]);
+  await page.setContent(bad('<button data-infotip style="width:26px;height:26px;padding:0;border:0">i</button>'));
+  expect((await buttonHeights(page)).length).toBe(1);
+  await page.setContent(bad('<button data-infotip style="width:24px;height:36px;padding:0;border:0">i</button>'));
+  expect((await buttonHeights(page)).length).toBe(1);
+});
+
 test('button heights: 30 px fails, 36 and 40 pass', async ({ page }) => {
   await page.setContent(bad('<button style="height:30px">a</button>'));
   expect((await buttonHeights(page)).length).toBe(1);

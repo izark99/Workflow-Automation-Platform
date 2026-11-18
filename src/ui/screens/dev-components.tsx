@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Badge, Button, Card, Checkbox, DatePicker, Dialog, Dropdown, EmptyState, ErrorState, Field, PageHeader, ProgressBar, SearchField, SkeletonTable, Tabs, ToastProvider, useToast } from '../components';
+import { Badge, Button, Card, Checkbox, DatePicker, Dialog, Dropdown, EmptyState, ErrorState, Field, InfoTip, PageHeader, ProgressBar, SearchField, SkeletonTable, Tabs, ToastProvider, useToast } from '../components';
 import { devStrings as t } from '../strings';
 import styles from './dev-components.module.css';
 
@@ -70,6 +70,20 @@ function Content() {
             </div>
           </Card>
         </div>
+        <Card title="Info button">
+          <div className={styles.popovers} style={{ minHeight: 120 }}>
+            <span>
+              Effective date
+              <InfoTip label="Effective date">The date a run is for. The flow version and the reference table versions valid on this date are used.</InfoTip>
+            </span>
+            <span>
+              Open info button
+              <InfoTip label="Open info button" defaultOpen>
+                Opens on click, Enter or Space. Escape or a click outside closes it.
+              </InfoTip>
+            </span>
+          </div>
+        </Card>
         <Card title={t.datePicker}>
           <div className={styles.popovers} style={{ minHeight: 360 }}>
             <DatePicker label="Effective date" value={date} onChange={setDate} />

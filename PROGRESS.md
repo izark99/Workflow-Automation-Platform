@@ -101,7 +101,7 @@ Themes (SPEC 11.4)
 - [x] T4.4 UI rules in the dark theme: `test:ui-rules` runs every route in dark at 1440 px as well (axe contrast included). Fix what it finds in the same task, or split.
 
 Info button (SPEC 11.2)
-- [ ] T4.5 `InfoTip` component as in DESIGN "Info button": toggletip, hover delay, Escape, outside click, live region, placement; on `/dev/components`; unit and e2e keyboard tests; the UI rule accepts it only at exactly 24 x 24 px.
+- [x] T4.5 `InfoTip` component as in DESIGN "Info button": toggletip, hover delay, Escape, outside click, live region, placement; on `/dev/components`; unit and e2e keyboard tests; the UI rule accepts it only at exactly 24 x 24 px.
 - [ ] T4.6a Page header: subtitle moves into an InfoTip after the title on every screen; measure the new y of the first block, write it in DESIGN, update the UI rule in the same commit. `Field` and `TextAreaField`: `hint` renders an InfoTip after the label, not a paragraph.
 - [ ] T4.6b Builder: every explanation in the step list, settings panel, forms and Test tab moves into InfoTips. A UI rule fails when a hint paragraph is visible.
 - [ ] T4.6c Run, Versions, Reference tables, Admin, dialogs and the sign-in screen: the same.
@@ -167,6 +167,12 @@ None. The Pages file size blocker of T3.9 is solved by D71.
 ## Log
 
 Newest first.
+
+### 2026-11-18 T4.5 InfoTip component (turn 5)
+Changed: src/ui/components/{info-tip.tsx,info-tip.module.css,info-tip-logic.ts,info-tip-logic.test.ts,icons.tsx,index.ts}, strings.ts (`infoTip.about`), screens/dev-components.tsx (Info button card), ui-rules/rules.ts (a button with `data-infotip` must be exactly 24 x 24 px, other buttons stay 36 or 40), ui-rules/rules.selfcheck.spec.ts, e2e/info-tip.spec.ts (5 tests).
+How: toggletip state is a pure function (click pins, hover opens after 300 ms without pinning, leave closes unless pinned, Escape and outside click close); the popover is the content of a polite live region that exists before the text; focus never moves. A 5 px bridge element keeps hover open while the pointer crosses the gap to the popover (found by the first e2e run).
+Gates run: check PASS (68+ files, 728 tests, exit 0); e2e info-tip and components PASS (21); test:ui-rules limited to the `/dev/components` route and the new self-check (`-g`), 33 passed in all three projects. The full ui-rules run was not repeated: no other route changed.
+Next: T4.6a.
 
 ### 2026-11-18 T4.4 UI rules in the dark theme (turn 4)
 Changed: playwright.ui-rules.config.ts (three named projects: `light-1280`, `light-1440`, `dark-1440`; the theme comes from the OS setting, which the default choice System follows), ui-rules/routes.spec.ts (a test that the app really runs in the theme of the project, by `data-theme` and the page background colour).
