@@ -35,7 +35,41 @@ export interface RuleRoute {
   prepare?: (page: Page) => Promise<void>;
 }
 
+const USERS_JSON = JSON.stringify([{ email: 'harold@example.com', password: 'correct horse battery' }]);
+/** The sign-in screen needs the stand-in sign-in (D67): the key makes the app ask for a sign-in before it shows a route. */
+const withSignIn = async (page: Page): Promise<void> => {
+  await page.addInitScript((json) => localStorage.setItem('dfw.auth', json), USERS_JSON);
+};
+
 export const ROUTES: RuleRoute[] = [
+  // The sign-in screen has no sidebar and no page header. It is shown instead of any route when nobody is signed in.
+  { path: '/flows', name: 'sign-in screen', sidebar: false, nav: false, before: withSignIn },
+  {
+    path: '/flows',
+    name: 'sign-in screen with an error',
+    sidebar: false,
+    nav: false,
+    before: withSignIn,
+    prepare: async (page) => {
+      await page.getByRole('button', { name: 'Sign in' }).click();
+      await page.getByRole('alert').waitFor();
+    },
+  },
+  {
+    path: '/flows',
+    name: 'sign-in screen after a session ended',
+    sidebar: false,
+    nav: false,
+    before: async (page) => {
+      await withSignIn(page);
+      await page.addInitScript(() => localStorage.setItem('dfw.authSession', JSON.stringify({ userId: 'memory-harold@example.com', email: 'harold@example.com' })));
+    },
+    prepare: async (page) => {
+      await page.getByRole('button', { name: 'Sign out' }).waitFor();
+      await page.evaluate(() => (window as unknown as { dfwAuth: { expire: () => void } }).dfwAuth.expire());
+      await page.getByText('Your session ended.').waitFor();
+    },
+  },
   { path: '/flows', sidebar: true, table: true, skeleton: true },
   { path: '/reference-tables', sidebar: true, table: true, skeleton: true },
   { path: '/admin', sidebar: true, table: true, skeleton: true },

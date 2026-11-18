@@ -10,10 +10,12 @@ export interface FieldProps extends TextProps {
   hint?: string;
   /** An error says what failed and what to do next. */
   error?: string;
+  /** Hides what is typed (a password). */
+  secret?: boolean;
 }
 
 /** A labelled text field. The label, hint and error are tied to the input for screen readers. */
-export function Field({ label, hint, error, ...rest }: FieldProps) {
+export function Field({ label, hint, error, secret = false, ...rest }: FieldProps) {
   const id = useId();
   const hintId = `${id}-hint`;
   const errorId = `${id}-error`;
@@ -22,7 +24,7 @@ export function Field({ label, hint, error, ...rest }: FieldProps) {
     <div>
       <label className={styles.label} htmlFor={id}>
         {label}
-        <input {...rest} id={id} type="text" className={styles.input} aria-invalid={error ? 'true' : undefined} aria-describedby={describedBy} />
+        <input {...rest} id={id} type={secret ? 'password' : 'text'} className={styles.input} aria-invalid={error ? 'true' : undefined} aria-describedby={describedBy} />
       </label>
       {hint ? (
         <span id={hintId} className={styles.hint}>

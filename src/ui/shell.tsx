@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { Button, Dialog, Dropdown, ErrorState, Field, Icon, ToastProvider } from './components';
 import type { IconName } from './components';
+import { useAuth } from './auth-gate';
 import { useLoad, useStore } from './store-context';
 import { strings } from './strings';
 import styles from './shell.module.css';
@@ -90,6 +91,8 @@ function CreateFlowDialog({ admin, onClose }: { admin: boolean; onClose: () => v
 export function Shell() {
   const user = useLoad((s) => s.currentUser());
   const [creating, setCreating] = useState(false);
+  const [signOutProblem, setSignOutProblem] = useState(false);
+  const auth = useAuth();
   const me = user.data;
   return (
     <ToastProvider>
@@ -119,6 +122,20 @@ export function Shell() {
           <div className={styles.user}>
             <span className={styles.userName}>{me.name}</span>
             <span className={styles.userRole}>{strings.roles[me.role]}</span>
+            {auth ? (
+              <div className={styles.signOut}>
+                <Button
+                  compact
+                  onClick={() => {
+                    setSignOutProblem(false);
+                    auth.signOut().catch(() => setSignOutProblem(true));
+                  }}
+                >
+                  {strings.signIn.signOut}
+                </Button>
+                {signOutProblem ? <span role="alert" className={styles.signOutProblem}>{strings.signIn.signOutFailed}</span> : null}
+              </div>
+            ) : null}
           </div>
         ) : null}
       </nav>
