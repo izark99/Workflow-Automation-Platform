@@ -1,0 +1,1599 @@
+{
+  "schemaVersion": 1,
+  "name": "Monthly timesheet",
+  "nodes": [
+    {
+      "id": "out-summary",
+      "type": "output",
+      "label": "Summary sheet",
+      "position": {
+        "x": 8580,
+        "y": -480
+      },
+      "settings": {
+        "file": "Result",
+        "sheet": "Summary",
+        "columns": [
+          "employee_id",
+          "full_name",
+          "work_days",
+          "paid_leave_days",
+          "unpaid_leave_days",
+          "sick_days",
+          "holiday_days",
+          "rest_days",
+          "ot_day_hours",
+          "ot_night_hours",
+          "ot_rest_hours",
+          "ot_holiday_hours",
+          "ot_total_hours",
+          "ot_breach_count",
+          "exception_count"
+        ],
+        "sort": [
+          {
+            "column": "employee_id"
+          }
+        ]
+      }
+    },
+    {
+      "id": "timesheet",
+      "type": "input_file",
+      "label": "Timesheet",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "settings": {
+        "key": "Timesheet",
+        "sheet": "Timesheet",
+        "headerRow": 3,
+        "fillDown": [
+          "Employee ID",
+          "Full name"
+        ]
+      }
+    },
+    {
+      "id": "ts-employee-id",
+      "type": "formula_column",
+      "label": "Employee ID without spaces",
+      "position": {
+        "x": 260,
+        "y": 0
+      },
+      "settings": {
+        "name": "employee_id",
+        "expression": "TRIM([Employee ID])"
+      }
+    },
+    {
+      "id": "ts-row-type",
+      "type": "formula_column",
+      "label": "Row type in capitals",
+      "position": {
+        "x": 520,
+        "y": 0
+      },
+      "settings": {
+        "name": "row_type",
+        "expression": "UPPER(TRIM([Row type]))"
+      }
+    },
+    {
+      "id": "ts-unpivot",
+      "type": "unpivot",
+      "label": "Days to rows",
+      "position": {
+        "x": 780,
+        "y": 0
+      },
+      "settings": {
+        "keep": [
+          "employee_id",
+          "row_type"
+        ],
+        "unpivot": [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "7",
+          "8",
+          "9",
+          "10",
+          "11",
+          "12",
+          "13",
+          "14",
+          "15",
+          "16",
+          "17",
+          "18",
+          "19",
+          "20",
+          "21",
+          "22",
+          "23",
+          "24",
+          "25",
+          "26",
+          "27",
+          "28",
+          "29",
+          "30",
+          "31"
+        ],
+        "nameColumn": "day_text",
+        "valueColumn": "value"
+      }
+    },
+    {
+      "id": "ts-pivot",
+      "type": "pivot",
+      "label": "Attendance and OT side by side",
+      "position": {
+        "x": 1040,
+        "y": 0
+      },
+      "settings": {
+        "rowKeys": [
+          "employee_id",
+          "day_text"
+        ],
+        "columnSource": "row_type",
+        "value": "value",
+        "aggregation": "max",
+        "columns": {
+          "from": "data"
+        },
+        "namePrefix": "raw_",
+        "nameCase": "lower"
+      }
+    },
+    {
+      "id": "ts-day",
+      "type": "formula_column",
+      "label": "Day number",
+      "position": {
+        "x": 1300,
+        "y": 0
+      },
+      "settings": {
+        "name": "day",
+        "expression": "VALUE([day_text])"
+      }
+    },
+    {
+      "id": "ts-date",
+      "type": "formula_column",
+      "label": "Date in the month of the run",
+      "position": {
+        "x": 1560,
+        "y": 0
+      },
+      "settings": {
+        "name": "date",
+        "expression": "IF(MONTH(DATE(YEAR(EFFECTIVE_DATE()), MONTH(EFFECTIVE_DATE()), [day])) = MONTH(EFFECTIVE_DATE()), DATE(YEAR(EFFECTIVE_DATE()), MONTH(EFFECTIVE_DATE()), [day]))"
+      }
+    },
+    {
+      "id": "employees",
+      "type": "input_file",
+      "label": "Employee list",
+      "position": {
+        "x": 0,
+        "y": 220
+      },
+      "settings": {
+        "key": "Employees",
+        "sheet": "Employees"
+      }
+    },
+    {
+      "id": "emp-id",
+      "type": "formula_column",
+      "label": "Employee ID without spaces",
+      "position": {
+        "x": 260,
+        "y": 220
+      },
+      "settings": {
+        "name": "employee_id",
+        "expression": "TRIM([Employee ID])"
+      }
+    },
+    {
+      "id": "emp-types",
+      "type": "column_mapping",
+      "label": "Date types",
+      "position": {
+        "x": 520,
+        "y": 220
+      },
+      "settings": {
+        "columns": [
+          {
+            "source": "Join date",
+            "type": "date"
+          },
+          {
+            "source": "Leave date",
+            "type": "date"
+          }
+        ]
+      }
+    },
+    {
+      "id": "look-employee",
+      "type": "lookup_join",
+      "label": "Employee list lookup",
+      "position": {
+        "x": 1820,
+        "y": 0
+      },
+      "settings": {
+        "source": {
+          "kind": "node"
+        },
+        "keys": [
+          {
+            "left": "employee_id",
+            "right": "employee_id"
+          }
+        ],
+        "bring": [
+          {
+            "column": "employee_id",
+            "as": "list_id"
+          },
+          {
+            "column": "Full name",
+            "as": "full_name"
+          },
+          {
+            "column": "Join date",
+            "as": "join_date"
+          },
+          {
+            "column": "Leave date",
+            "as": "leave_date"
+          }
+        ],
+        "onNoMatch": "blank"
+      }
+    },
+    {
+      "id": "split-known",
+      "type": "filter",
+      "label": "Employee is in the list",
+      "position": {
+        "x": 2080,
+        "y": 0
+      },
+      "settings": {
+        "condition": "NOT(ISBLANK([list_id]))"
+      }
+    },
+    {
+      "id": "att-code",
+      "type": "formula_column",
+      "label": "Attendance code without spaces",
+      "position": {
+        "x": 2340,
+        "y": 0
+      },
+      "settings": {
+        "name": "att_code",
+        "expression": "TRIM([raw_att])"
+      }
+    },
+    {
+      "id": "look-code",
+      "type": "lookup_join",
+      "label": "Attendance code lookup",
+      "position": {
+        "x": 2600,
+        "y": 0
+      },
+      "settings": {
+        "source": {
+          "kind": "reference",
+          "table": "attendance_codes"
+        },
+        "keys": [
+          {
+            "left": "att_code",
+            "right": "code"
+          }
+        ],
+        "bring": [
+          {
+            "column": "code",
+            "as": "known_code"
+          },
+          {
+            "column": "work_day_value"
+          },
+          {
+            "column": "day_category"
+          },
+          {
+            "column": "ot_type",
+            "as": "code_ot_type"
+          }
+        ],
+        "onNoMatch": "blank"
+      }
+    },
+    {
+      "id": "ot-text",
+      "type": "formula_column",
+      "label": "OT value as text",
+      "position": {
+        "x": 2860,
+        "y": 0
+      },
+      "settings": {
+        "name": "ot_text",
+        "expression": "TRIM([raw_ot])"
+      }
+    },
+    {
+      "id": "ot-num",
+      "type": "formula_column",
+      "label": "OT value as number",
+      "position": {
+        "x": 3120,
+        "y": 0
+      },
+      "settings": {
+        "name": "ot_num",
+        "expression": "VALUE([ot_text])"
+      }
+    },
+    {
+      "id": "in-month",
+      "type": "formula_column",
+      "label": "Day exists in the month",
+      "position": {
+        "x": 3380,
+        "y": 0
+      },
+      "settings": {
+        "name": "in_month",
+        "expression": "NOT(ISBLANK([date]))"
+      }
+    },
+    {
+      "id": "inside",
+      "type": "formula_column",
+      "label": "Day is inside the employment dates",
+      "position": {
+        "x": 3640,
+        "y": 0
+      },
+      "settings": {
+        "name": "inside",
+        "expression": "IF(AND([in_month], [join_date] <= [date], OR(ISBLANK([leave_date]), [date] <= [leave_date])), TRUE, FALSE)"
+      }
+    },
+    {
+      "id": "att-reason",
+      "type": "formula_column",
+      "label": "Reason for the attendance row",
+      "position": {
+        "x": 3900,
+        "y": -160
+      },
+      "settings": {
+        "name": "reason",
+        "expression": "IFS(AND(NOT([in_month]), LEN([att_code]) > 0), \"Invalid date\", NOT([in_month]), \"\", AND(NOT([inside]), LEN([att_code]) > 0), \"Outside employment dates\", NOT([inside]), \"\", LEN([att_code]) = 0, \"Missing attendance code\", ISBLANK([known_code]), \"Unknown attendance code\", TRUE, \"\")"
+      }
+    },
+    {
+      "id": "att-filter",
+      "type": "filter",
+      "label": "Attendance row has a reason",
+      "position": {
+        "x": 4160,
+        "y": -160
+      },
+      "settings": {
+        "condition": "LEN([reason]) > 0"
+      }
+    },
+    {
+      "id": "att-value",
+      "type": "formula_column",
+      "label": "Value shown",
+      "position": {
+        "x": 4420,
+        "y": -160
+      },
+      "settings": {
+        "name": "value",
+        "expression": "IF(LEN([att_code]) > 0, [att_code])"
+      }
+    },
+    {
+      "id": "att-type",
+      "type": "formula_column",
+      "label": "Row type",
+      "position": {
+        "x": 4680,
+        "y": -160
+      },
+      "settings": {
+        "name": "row_type",
+        "expression": "\"ATT\""
+      }
+    },
+    {
+      "id": "ot-reason",
+      "type": "formula_column",
+      "label": "Reason for the OT row",
+      "position": {
+        "x": 3900,
+        "y": 160
+      },
+      "settings": {
+        "name": "reason",
+        "expression": "IFS(AND(NOT([in_month]), LEN([ot_text]) > 0), \"Invalid date\", NOT([in_month]), \"\", AND(NOT([inside]), LEN([ot_text]) > 0), \"Outside employment dates\", NOT([inside]), \"\", LEN([ot_text]) = 0, \"\", OR(ISBLANK([ot_num]), [ot_num] < 0), \"Invalid OT value\", [ot_num] = 0, \"\", OR(ISBLANK([known_code]), ISBLANK([code_ot_type])), \"OT not allowed for attendance code\", TRUE, \"\")"
+      }
+    },
+    {
+      "id": "ot-filter",
+      "type": "filter",
+      "label": "OT row has a reason",
+      "position": {
+        "x": 4160,
+        "y": 160
+      },
+      "settings": {
+        "condition": "LEN([reason]) > 0"
+      }
+    },
+    {
+      "id": "ot-value",
+      "type": "formula_column",
+      "label": "Value shown",
+      "position": {
+        "x": 4420,
+        "y": 160
+      },
+      "settings": {
+        "name": "value",
+        "expression": "IF(LEN([ot_text]) > 0, [ot_text])"
+      }
+    },
+    {
+      "id": "ot-type",
+      "type": "formula_column",
+      "label": "Row type",
+      "position": {
+        "x": 4680,
+        "y": 160
+      },
+      "settings": {
+        "name": "row_type",
+        "expression": "\"OT\""
+      }
+    },
+    {
+      "id": "unknown-list",
+      "type": "group_by",
+      "label": "One row per unknown employee",
+      "position": {
+        "x": 2340,
+        "y": 320
+      },
+      "settings": {
+        "groupBy": [
+          "employee_id"
+        ]
+      }
+    },
+    {
+      "id": "unknown-reason",
+      "type": "formula_column",
+      "label": "Reason",
+      "position": {
+        "x": 2600,
+        "y": 320
+      },
+      "settings": {
+        "name": "reason",
+        "expression": "\"Employee not in employee list\""
+      }
+    },
+    {
+      "id": "exceptions-all",
+      "type": "append",
+      "label": "All exceptions",
+      "position": {
+        "x": 4940,
+        "y": 0
+      },
+      "settings": {
+        "match": "name"
+      }
+    },
+    {
+      "id": "out-exceptions",
+      "type": "output",
+      "label": "Exceptions sheet",
+      "position": {
+        "x": 5200,
+        "y": 0
+      },
+      "settings": {
+        "file": "Result",
+        "sheet": "Exceptions",
+        "columns": [
+          "employee_id",
+          "day",
+          "date",
+          "row_type",
+          "value",
+          "reason"
+        ],
+        "sort": [
+          {
+            "column": "employee_id"
+          },
+          {
+            "column": "day"
+          },
+          {
+            "column": "row_type"
+          }
+        ],
+        "numberLikeText": [
+          "value"
+        ]
+      }
+    },
+    {
+      "id": "ot-ok",
+      "type": "formula_column",
+      "label": "OT row is valid",
+      "position": {
+        "x": 3900,
+        "y": 480
+      },
+      "settings": {
+        "name": "ot_ok",
+        "expression": "IF(AND([inside], NOT(ISBLANK([known_code])), NOT(ISBLANK([code_ot_type])), NOT(ISBLANK([ot_num])), [ot_num] > 0), TRUE, FALSE)"
+      }
+    },
+    {
+      "id": "ot-valid",
+      "type": "filter",
+      "label": "Keep valid OT rows",
+      "position": {
+        "x": 4160,
+        "y": 480
+      },
+      "settings": {
+        "condition": "[ot_ok]"
+      }
+    },
+    {
+      "id": "att-ok",
+      "type": "formula_column",
+      "label": "Attendance code is valid",
+      "position": {
+        "x": 4030.0,
+        "y": 480
+      },
+      "settings": {
+        "name": "att_ok",
+        "expression": "IF(AND([inside], NOT(ISBLANK([known_code]))), TRUE, FALSE)"
+      }
+    },
+    {
+      "id": "att-cat",
+      "type": "formula_column",
+      "label": "Day category counted",
+      "position": {
+        "x": 4030.0,
+        "y": 520
+      },
+      "settings": {
+        "name": "counted_category",
+        "expression": "IF([att_ok], [day_category])"
+      }
+    },
+    {
+      "id": "work-val",
+      "type": "formula_column",
+      "label": "Work day value counted",
+      "position": {
+        "x": 4030.0,
+        "y": 560
+      },
+      "settings": {
+        "name": "work_value",
+        "expression": "IF([att_ok], [work_day_value], 0)"
+      }
+    },
+    {
+      "id": "ot-type-ok",
+      "type": "formula_column",
+      "label": "OT type counted",
+      "position": {
+        "x": 4030.0,
+        "y": 600
+      },
+      "settings": {
+        "name": "ot_type_valid",
+        "expression": "IF([ot_ok], [code_ot_type])"
+      }
+    },
+    {
+      "id": "ot-hours-ok",
+      "type": "formula_column",
+      "label": "OT hours counted",
+      "position": {
+        "x": 4030.0,
+        "y": 640
+      },
+      "settings": {
+        "name": "ot_valid_hours",
+        "expression": "IF([ot_ok], [ot_num], 0)"
+      }
+    },
+    {
+      "id": "day-limit",
+      "type": "lookup_join",
+      "label": "Day limit of the OT type",
+      "position": {
+        "x": 4420,
+        "y": 480
+      },
+      "settings": {
+        "source": {
+          "kind": "reference",
+          "table": "ot_types"
+        },
+        "keys": [
+          {
+            "left": "code_ot_type",
+            "right": "ot_type"
+          }
+        ],
+        "bring": [
+          {
+            "column": "day_limit_hours",
+            "as": "limit_hours"
+          }
+        ],
+        "onNoMatch": "fail"
+      }
+    },
+    {
+      "id": "day-over",
+      "type": "filter",
+      "label": "Day hours above the limit",
+      "position": {
+        "x": 4680,
+        "y": 480
+      },
+      "settings": {
+        "condition": "[ot_num] > [limit_hours]"
+      }
+    },
+    {
+      "id": "day-hours",
+      "type": "formula_column",
+      "label": "OT hours",
+      "position": {
+        "x": 4940,
+        "y": 480
+      },
+      "settings": {
+        "name": "ot_hours",
+        "expression": "[ot_num]"
+      }
+    },
+    {
+      "id": "day-level",
+      "type": "formula_column",
+      "label": "Level",
+      "position": {
+        "x": 5200,
+        "y": 480
+      },
+      "settings": {
+        "name": "level",
+        "expression": "\"DAY\""
+      }
+    },
+    {
+      "id": "day-period",
+      "type": "formula_column",
+      "label": "Period",
+      "position": {
+        "x": 5460,
+        "y": 480
+      },
+      "settings": {
+        "name": "period",
+        "expression": "TEXT([date], \"yyyy-mm-dd\")"
+      }
+    },
+    {
+      "id": "day-type",
+      "type": "formula_column",
+      "label": "OT type",
+      "position": {
+        "x": 5720,
+        "y": 480
+      },
+      "settings": {
+        "name": "ot_type",
+        "expression": "[code_ot_type]"
+      }
+    },
+    {
+      "id": "week-label",
+      "type": "formula_column",
+      "label": "ISO week",
+      "position": {
+        "x": 4420,
+        "y": 640
+      },
+      "settings": {
+        "name": "week_label",
+        "expression": "YEAR([date] - WEEKDAY([date], 2) + 4) & \"-W\" & TEXT(ISOWEEKNUM([date]), \"00\")"
+      }
+    },
+    {
+      "id": "week-sum",
+      "type": "group_by",
+      "label": "OT hours per employee and week",
+      "position": {
+        "x": 4680,
+        "y": 640
+      },
+      "settings": {
+        "groupBy": [
+          "employee_id",
+          "week_label"
+        ],
+        "aggregations": [
+          {
+            "fn": "sum",
+            "column": "ot_num",
+            "as": "ot_hours"
+          }
+        ]
+      }
+    },
+    {
+      "id": "week-key",
+      "type": "formula_column",
+      "label": "Limit name",
+      "position": {
+        "x": 4940,
+        "y": 640
+      },
+      "settings": {
+        "name": "period_key",
+        "expression": "\"WEEK\""
+      }
+    },
+    {
+      "id": "week-limit",
+      "type": "lookup_join",
+      "label": "Week limit",
+      "position": {
+        "x": 5200,
+        "y": 640
+      },
+      "settings": {
+        "source": {
+          "kind": "reference",
+          "table": "ot_limits"
+        },
+        "keys": [
+          {
+            "left": "period_key",
+            "right": "period"
+          }
+        ],
+        "bring": [
+          {
+            "column": "limit_hours"
+          }
+        ],
+        "onNoMatch": "fail"
+      }
+    },
+    {
+      "id": "week-over",
+      "type": "filter",
+      "label": "Week hours above the limit",
+      "position": {
+        "x": 5460,
+        "y": 640
+      },
+      "settings": {
+        "condition": "[ot_hours] > [limit_hours]"
+      }
+    },
+    {
+      "id": "week-level",
+      "type": "formula_column",
+      "label": "Level",
+      "position": {
+        "x": 5720,
+        "y": 640
+      },
+      "settings": {
+        "name": "level",
+        "expression": "\"WEEK\""
+      }
+    },
+    {
+      "id": "week-period",
+      "type": "formula_column",
+      "label": "Period",
+      "position": {
+        "x": 5980,
+        "y": 640
+      },
+      "settings": {
+        "name": "period",
+        "expression": "[week_label]"
+      }
+    },
+    {
+      "id": "month-sum",
+      "type": "group_by",
+      "label": "OT hours per employee",
+      "position": {
+        "x": 4420,
+        "y": 800
+      },
+      "settings": {
+        "groupBy": [
+          "employee_id"
+        ],
+        "aggregations": [
+          {
+            "fn": "sum",
+            "column": "ot_num",
+            "as": "ot_hours"
+          }
+        ]
+      }
+    },
+    {
+      "id": "month-key",
+      "type": "formula_column",
+      "label": "Limit name",
+      "position": {
+        "x": 4680,
+        "y": 800
+      },
+      "settings": {
+        "name": "period_key",
+        "expression": "\"MONTH\""
+      }
+    },
+    {
+      "id": "month-limit",
+      "type": "lookup_join",
+      "label": "Month limit",
+      "position": {
+        "x": 4940,
+        "y": 800
+      },
+      "settings": {
+        "source": {
+          "kind": "reference",
+          "table": "ot_limits"
+        },
+        "keys": [
+          {
+            "left": "period_key",
+            "right": "period"
+          }
+        ],
+        "bring": [
+          {
+            "column": "limit_hours"
+          }
+        ],
+        "onNoMatch": "fail"
+      }
+    },
+    {
+      "id": "month-over",
+      "type": "filter",
+      "label": "Month hours above the limit",
+      "position": {
+        "x": 5200,
+        "y": 800
+      },
+      "settings": {
+        "condition": "[ot_hours] > [limit_hours]"
+      }
+    },
+    {
+      "id": "month-level",
+      "type": "formula_column",
+      "label": "Level",
+      "position": {
+        "x": 5460,
+        "y": 800
+      },
+      "settings": {
+        "name": "level",
+        "expression": "\"MONTH\""
+      }
+    },
+    {
+      "id": "month-period",
+      "type": "formula_column",
+      "label": "Period",
+      "position": {
+        "x": 5720,
+        "y": 800
+      },
+      "settings": {
+        "name": "period",
+        "expression": "TEXT(EFFECTIVE_DATE(), \"yyyy-mm\")"
+      }
+    },
+    {
+      "id": "breaches-all",
+      "type": "append",
+      "label": "All breaches",
+      "position": {
+        "x": 6240,
+        "y": 640
+      },
+      "settings": {
+        "match": "name"
+      }
+    },
+    {
+      "id": "out-breaches",
+      "type": "output",
+      "label": "OT_breaches sheet",
+      "position": {
+        "x": 6500,
+        "y": 640
+      },
+      "settings": {
+        "file": "Result",
+        "sheet": "OT_breaches",
+        "columns": [
+          "employee_id",
+          "level",
+          "period",
+          "ot_type",
+          "ot_hours",
+          "limit_hours"
+        ],
+        "sort": [
+          {
+            "column": "employee_id"
+          },
+          {
+            "expression": "IFS([level] = \"DAY\", 1, [level] = \"WEEK\", 2, TRUE, 3)"
+          },
+          {
+            "column": "period"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sum-base",
+      "type": "group_by",
+      "label": "Work days and OT hours per employee",
+      "position": {
+        "x": 6760,
+        "y": -480
+      },
+      "settings": {
+        "groupBy": [
+          "employee_id",
+          "full_name"
+        ],
+        "aggregations": [
+          {
+            "fn": "sum",
+            "column": "work_value",
+            "as": "work_days"
+          },
+          {
+            "fn": "sum",
+            "column": "ot_valid_hours",
+            "as": "ot_total_hours"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sum-categories",
+      "type": "pivot",
+      "label": "Days per category",
+      "position": {
+        "x": 6760,
+        "y": -320
+      },
+      "settings": {
+        "rowKeys": [
+          "employee_id"
+        ],
+        "columnSource": "counted_category",
+        "aggregation": "count",
+        "columns": {
+          "from": "reference",
+          "table": "attendance_codes",
+          "column": "day_category"
+        },
+        "nameSuffix": "_days",
+        "nameCase": "lower"
+      }
+    },
+    {
+      "id": "sum-ot-types",
+      "type": "pivot",
+      "label": "OT hours per OT type",
+      "position": {
+        "x": 6760,
+        "y": -160
+      },
+      "settings": {
+        "rowKeys": [
+          "employee_id"
+        ],
+        "columnSource": "ot_type_valid",
+        "value": "ot_valid_hours",
+        "aggregation": "sum",
+        "columns": {
+          "from": "reference",
+          "table": "ot_types",
+          "column": "ot_type"
+        },
+        "nameSuffix": "_hours",
+        "nameCase": "lower"
+      }
+    },
+    {
+      "id": "sum-breach-count",
+      "type": "group_by",
+      "label": "Breaches per employee",
+      "position": {
+        "x": 6760,
+        "y": 0
+      },
+      "settings": {
+        "groupBy": [
+          "employee_id"
+        ],
+        "aggregations": [
+          {
+            "fn": "count",
+            "as": "breach_n"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sum-exception-count",
+      "type": "group_by",
+      "label": "Exceptions per employee",
+      "position": {
+        "x": 6760,
+        "y": 160
+      },
+      "settings": {
+        "groupBy": [
+          "employee_id"
+        ],
+        "aggregations": [
+          {
+            "fn": "count",
+            "as": "exception_n"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sum-join-categories",
+      "type": "lookup_join",
+      "label": "Add the days per category",
+      "position": {
+        "x": 7020,
+        "y": -480
+      },
+      "settings": {
+        "source": {
+          "kind": "node"
+        },
+        "keys": [
+          {
+            "left": "employee_id",
+            "right": "employee_id"
+          }
+        ],
+        "bring": [
+          {
+            "column": "paid_leave_days"
+          },
+          {
+            "column": "unpaid_leave_days"
+          },
+          {
+            "column": "sick_days"
+          },
+          {
+            "column": "holiday_days"
+          },
+          {
+            "column": "rest_days"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sum-join-ot",
+      "type": "lookup_join",
+      "label": "Add the OT hours per type",
+      "position": {
+        "x": 7280,
+        "y": -480
+      },
+      "settings": {
+        "source": {
+          "kind": "node"
+        },
+        "keys": [
+          {
+            "left": "employee_id",
+            "right": "employee_id"
+          }
+        ],
+        "bring": [
+          {
+            "column": "ot_day_hours"
+          },
+          {
+            "column": "ot_night_hours"
+          },
+          {
+            "column": "ot_rest_hours"
+          },
+          {
+            "column": "ot_holiday_hours"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sum-join-breaches",
+      "type": "lookup_join",
+      "label": "Add the breach count",
+      "position": {
+        "x": 7540,
+        "y": -480
+      },
+      "settings": {
+        "source": {
+          "kind": "node"
+        },
+        "keys": [
+          {
+            "left": "employee_id",
+            "right": "employee_id"
+          }
+        ],
+        "bring": [
+          {
+            "column": "breach_n"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sum-join-exceptions",
+      "type": "lookup_join",
+      "label": "Add the exception count",
+      "position": {
+        "x": 7800,
+        "y": -480
+      },
+      "settings": {
+        "source": {
+          "kind": "node"
+        },
+        "keys": [
+          {
+            "left": "employee_id",
+            "right": "employee_id"
+          }
+        ],
+        "bring": [
+          {
+            "column": "exception_n"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sum-breach-zero",
+      "type": "formula_column",
+      "label": "Breach count, 0 when none",
+      "position": {
+        "x": 8060,
+        "y": -480
+      },
+      "settings": {
+        "name": "ot_breach_count",
+        "expression": "IF(ISBLANK([breach_n]), 0, [breach_n])"
+      }
+    },
+    {
+      "id": "sum-exception-zero",
+      "type": "formula_column",
+      "label": "Exception count, 0 when none",
+      "position": {
+        "x": 8320,
+        "y": -480
+      },
+      "settings": {
+        "name": "exception_count",
+        "expression": "IF(ISBLANK([exception_n]), 0, [exception_n])"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "timesheet",
+      "target": "ts-employee-id"
+    },
+    {
+      "source": "ts-employee-id",
+      "target": "ts-row-type"
+    },
+    {
+      "source": "ts-row-type",
+      "target": "ts-unpivot"
+    },
+    {
+      "source": "ts-unpivot",
+      "target": "ts-pivot"
+    },
+    {
+      "source": "ts-pivot",
+      "target": "ts-day"
+    },
+    {
+      "source": "ts-day",
+      "target": "ts-date"
+    },
+    {
+      "source": "employees",
+      "target": "emp-id"
+    },
+    {
+      "source": "emp-id",
+      "target": "emp-types"
+    },
+    {
+      "source": "ts-date",
+      "target": "look-employee",
+      "targetHandle": "left"
+    },
+    {
+      "source": "emp-types",
+      "target": "look-employee",
+      "targetHandle": "right"
+    },
+    {
+      "source": "look-employee",
+      "target": "split-known"
+    },
+    {
+      "source": "split-known",
+      "target": "att-code",
+      "sourceHandle": "match"
+    },
+    {
+      "source": "att-code",
+      "target": "look-code"
+    },
+    {
+      "source": "look-code",
+      "target": "ot-text"
+    },
+    {
+      "source": "ot-text",
+      "target": "ot-num"
+    },
+    {
+      "source": "ot-num",
+      "target": "in-month"
+    },
+    {
+      "source": "in-month",
+      "target": "inside"
+    },
+    {
+      "source": "inside",
+      "target": "att-reason"
+    },
+    {
+      "source": "att-reason",
+      "target": "att-filter"
+    },
+    {
+      "source": "att-filter",
+      "target": "att-value",
+      "sourceHandle": "match"
+    },
+    {
+      "source": "att-value",
+      "target": "att-type"
+    },
+    {
+      "source": "inside",
+      "target": "ot-reason"
+    },
+    {
+      "source": "ot-reason",
+      "target": "ot-filter"
+    },
+    {
+      "source": "ot-filter",
+      "target": "ot-value",
+      "sourceHandle": "match"
+    },
+    {
+      "source": "ot-value",
+      "target": "ot-type"
+    },
+    {
+      "source": "split-known",
+      "target": "unknown-list",
+      "sourceHandle": "nomatch"
+    },
+    {
+      "source": "unknown-list",
+      "target": "unknown-reason"
+    },
+    {
+      "source": "att-type",
+      "target": "exceptions-all",
+      "targetHandle": "in1"
+    },
+    {
+      "source": "ot-type",
+      "target": "exceptions-all",
+      "targetHandle": "in2"
+    },
+    {
+      "source": "unknown-reason",
+      "target": "exceptions-all",
+      "targetHandle": "in3"
+    },
+    {
+      "source": "exceptions-all",
+      "target": "out-exceptions"
+    },
+    {
+      "source": "inside",
+      "target": "ot-ok"
+    },
+    {
+      "source": "ot-ok",
+      "target": "att-ok"
+    },
+    {
+      "source": "att-ok",
+      "target": "att-cat"
+    },
+    {
+      "source": "att-cat",
+      "target": "work-val"
+    },
+    {
+      "source": "work-val",
+      "target": "ot-type-ok"
+    },
+    {
+      "source": "ot-type-ok",
+      "target": "ot-hours-ok"
+    },
+    {
+      "source": "ot-hours-ok",
+      "target": "ot-valid"
+    },
+    {
+      "source": "ot-valid",
+      "target": "day-limit",
+      "sourceHandle": "match",
+      "targetHandle": "left"
+    },
+    {
+      "source": "day-limit",
+      "target": "day-over"
+    },
+    {
+      "source": "day-over",
+      "target": "day-hours",
+      "sourceHandle": "match"
+    },
+    {
+      "source": "day-hours",
+      "target": "day-level"
+    },
+    {
+      "source": "day-level",
+      "target": "day-period"
+    },
+    {
+      "source": "day-period",
+      "target": "day-type"
+    },
+    {
+      "source": "ot-valid",
+      "target": "week-label",
+      "sourceHandle": "match"
+    },
+    {
+      "source": "week-label",
+      "target": "week-sum"
+    },
+    {
+      "source": "week-sum",
+      "target": "week-key"
+    },
+    {
+      "source": "week-key",
+      "target": "week-limit",
+      "targetHandle": "left"
+    },
+    {
+      "source": "week-limit",
+      "target": "week-over"
+    },
+    {
+      "source": "week-over",
+      "target": "week-level",
+      "sourceHandle": "match"
+    },
+    {
+      "source": "week-level",
+      "target": "week-period"
+    },
+    {
+      "source": "ot-valid",
+      "target": "month-sum",
+      "sourceHandle": "match"
+    },
+    {
+      "source": "month-sum",
+      "target": "month-key"
+    },
+    {
+      "source": "month-key",
+      "target": "month-limit",
+      "targetHandle": "left"
+    },
+    {
+      "source": "month-limit",
+      "target": "month-over"
+    },
+    {
+      "source": "month-over",
+      "target": "month-level",
+      "sourceHandle": "match"
+    },
+    {
+      "source": "month-level",
+      "target": "month-period"
+    },
+    {
+      "source": "day-type",
+      "target": "breaches-all",
+      "targetHandle": "in1"
+    },
+    {
+      "source": "week-period",
+      "target": "breaches-all",
+      "targetHandle": "in2"
+    },
+    {
+      "source": "month-period",
+      "target": "breaches-all",
+      "targetHandle": "in3"
+    },
+    {
+      "source": "breaches-all",
+      "target": "out-breaches"
+    },
+    {
+      "source": "ot-hours-ok",
+      "target": "sum-base"
+    },
+    {
+      "source": "ot-hours-ok",
+      "target": "sum-categories"
+    },
+    {
+      "source": "ot-hours-ok",
+      "target": "sum-ot-types"
+    },
+    {
+      "source": "breaches-all",
+      "target": "sum-breach-count"
+    },
+    {
+      "source": "exceptions-all",
+      "target": "sum-exception-count"
+    },
+    {
+      "source": "sum-base",
+      "target": "sum-join-categories",
+      "targetHandle": "left"
+    },
+    {
+      "source": "sum-categories",
+      "target": "sum-join-categories",
+      "targetHandle": "right"
+    },
+    {
+      "source": "sum-join-categories",
+      "target": "sum-join-ot",
+      "targetHandle": "left"
+    },
+    {
+      "source": "sum-ot-types",
+      "target": "sum-join-ot",
+      "targetHandle": "right"
+    },
+    {
+      "source": "sum-join-ot",
+      "target": "sum-join-breaches",
+      "targetHandle": "left"
+    },
+    {
+      "source": "sum-breach-count",
+      "target": "sum-join-breaches",
+      "targetHandle": "right"
+    },
+    {
+      "source": "sum-join-breaches",
+      "target": "sum-join-exceptions",
+      "targetHandle": "left"
+    },
+    {
+      "source": "sum-exception-count",
+      "target": "sum-join-exceptions",
+      "targetHandle": "right"
+    },
+    {
+      "source": "sum-join-exceptions",
+      "target": "sum-breach-zero"
+    },
+    {
+      "source": "sum-breach-zero",
+      "target": "sum-exception-zero"
+    },
+    {
+      "source": "sum-exception-zero",
+      "target": "out-summary"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+.crumb {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  font-weight: 700;
+  color: var(--color-ink);
+  text-decoration: none;
+}
+
+.crumb:hover {
+  text-decoration: underline;
+}

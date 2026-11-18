@@ -10,3 +10,8 @@ playwright-report/
 bench-data/
 __pycache__/
 .DS_Store
+*.tsbuildinfo
+dist-spike/
+dist-acceptance/
+dist-ui-rules/
+dist-e2e/

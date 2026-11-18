@@ -1,0 +1,36 @@
+# Calls the database once a day so that a free Supabase project is not paused after a week without requests.
+# Needs two repository secrets (and an optional third): see docs/KEEP_ALIVE.md. Not run by the build tests.
+name: Keep alive
+
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts/keep-alive.ts
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Touch the database
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          # Optional. With it the job also removes flows that were deleted 30 days ago or more.
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "::notice::SUPABASE_URL and SUPABASE_ANON_KEY are not set as repository secrets yet, so nothing was called. See docs/KEEP_ALIVE.md."
+            exit 0
+          fi
+          node scripts/keep-alive.ts

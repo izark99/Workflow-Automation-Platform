@@ -1,0 +1,34 @@
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--size-button);
+}
+
+.search {
+  margin-left: auto;
+}
+
+.sub {
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--color-muted);
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.note {
+  margin: 0;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--color-muted);
+}
+
+.tableSlot {
+  min-height: 200px;
+}

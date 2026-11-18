@@ -1,0 +1,210 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  min-height: 600px;
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: var(--size-builder-header);
+  padding: 0 24px;
+  background: var(--color-card);
+  border-bottom: 1px solid var(--color-line);
+}
+
+.crumb {
+  display: inline-flex;
+  align-items: center;
+  height: var(--size-button);
+  font-weight: 700;
+  color: var(--color-ink);
+  text-decoration: none;
+}
+
+.slash {
+  color: var(--color-muted);
+}
+
+.title {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 18px;
+  line-height: 24px;
+}
+
+.dirty {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+
+.notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 24px;
+  background: var(--color-primary-soft);
+  border-bottom: 1px solid var(--color-line);
+  color: var(--color-badge-ink);
+}
+
+.dialogBody {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  color: var(--color-ink);
+}
+
+.barActions {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+  flex: none;
+}
+
+.body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.stepList {
+  flex: 0 0 var(--size-step-list);
+  padding: 16px 12px;
+  background: var(--color-card);
+  border-right: 1px solid var(--color-line);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+}
+
+.hint {
+  margin: 0;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--color-muted);
+}
+
+.group {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-muted);
+  padding: 8px 4px 2px;
+}
+
+.stepButton {
+  justify-content: flex-start;
+  width: 100%;
+  cursor: grab;
+}
+
+.canvas {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background: var(--color-card);
+  border: 1px solid var(--color-control);
+  border-radius: var(--radius-card);
+}
+
+.zoom {
+  min-width: 48px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.summary {
+  padding: 0 8px;
+  color: var(--color-muted);
+  font-size: 13px;
+}
+
+.message {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  max-width: 560px;
+}
+
+/* Step card: 240 x 56 px, 10 px radius, 2 px accent border when selected. */
+.card {
+  box-sizing: border-box;
+  width: 240px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+  background: var(--color-card);
+  border: 1px solid var(--color-control);
+  border-radius: var(--radius-step);
+  color: var(--color-ink);
+}
+
+.cardSelected {
+  border: 2px solid var(--color-accent);
+  padding: 0 11px;
+}
+
+.number {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-primary-soft);
+  color: var(--color-badge-ink);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.cardText {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.cardTitle {
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cardSub {
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--color-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.handleLabel {
+  position: absolute;
+  font-size: 11px;
+  line-height: 14px;
+  color: var(--color-muted);
+  white-space: nowrap;
+  pointer-events: none;
+}
