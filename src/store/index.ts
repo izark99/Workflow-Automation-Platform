@@ -1,11 +1,16 @@
+import { createClient } from '@supabase/supabase-js';
+import { supabaseConfigFrom } from './config';
 import { IndexedDbAdapter } from './indexeddb-adapter';
 import { LocalStore } from './local-store';
 import type { Snapshot } from './local-store';
 import { seedSnapshot } from './seed';
+import { SupabaseStore } from './supabase-store';
+import type { DataStore } from './types';
 
 export type { DataStore } from './types';
 export * from './types';
 export { LocalStore, MemoryAdapter } from './local-store';
+export { SupabaseStore } from './supabase-store';
 
 const DEV_TOOLS = import.meta.env.DEV || import.meta.env.VITE_DEV_ROUTES === 'true';
 
@@ -31,4 +36,13 @@ export function createLocalStore(): LocalStore {
     },
     delayMs: () => (DEV_TOOLS ? Number(readKey('dfw.loadDelayMs') ?? 0) || 0 : 0),
   });
+}
+
+/**
+ * The store the app runs on: Supabase when VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are both set, the local store
+ * otherwise. The anon key is meant for the browser; row-level security protects the data, not the key.
+ */
+export function createDataStore(): DataStore {
+  const config = supabaseConfigFrom(import.meta.env as Record<string, unknown>);
+  return config ? new SupabaseStore(createClient(config.url, config.anonKey)) : createLocalStore();
 }

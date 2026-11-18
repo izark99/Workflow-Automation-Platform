@@ -746,3 +746,11 @@ blank or mixed column in one month cannot change the types of another month.
 - `storeErrorFrom` now also maps the overlap (23P01) to a sentence with what to do, a duplicate (23505) to "that name or email is already used", and keeps the database's own message for 22023.
 - Adding a user is not possible from the client: a profile belongs to an Auth user, which only the Auth service creates. `saveUser` without an id says that a new user must sign in once first. T3.7 settles how the first profile and later profiles appear.
 - Verified for real in T3.6c against the full local stack; here the pure parts (mappers, checks, error mapping) are unit-tested and the app gates were rerun because `local-store.ts` changed.
+
+## D64 Choosing the data store by environment variables (T3.6c1)
+
+- `createDataStore()` returns `SupabaseStore` when `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are both set, and `LocalStore` when neither is. Only one of them set is a mistake and throws a message that names the missing variable. The rule is a pure function (`supabaseConfigFrom`) with unit tests.
+- The gates never use Supabase: the e2e and UI-rules builds set both variables to empty text, which beats any value in the developer's shell or in a `.env` file, and an empty value counts as not set. The acceptance build has its own entry that does not use the app store.
+- `.env.example` documents the two variables, commented out. Real `.env` files stay ignored by git. The anon key is meant for the browser; row-level security protects the data.
+- `supabase-js` is imported statically by the store index, so it is part of the app bundle even on the local store. Splitting it out is possible later with a dynamic import, which would need the store to be created asynchronously; T3.7 changes how the app starts (sign-in), so that is the place to decide.
+- The integration test of `SupabaseStore` against the full local stack is T3.6c2.
