@@ -673,3 +673,11 @@ blank or mixed column in one month cannot change the types of another month.
 - Checked: a deliberate failing test and a broken migration each make `npm run test:db` exit 1.
 - Not an option: running the tests on the system PostgreSQL. G5 says "on a local Supabase".
 - `supabase/.temp` and `.branches` are ignored by `supabase/.gitignore`.
+
+## D56 Tables of the server schema (T3.1b)
+
+- One migration, `20261118000001_tables.sql`, creates the nine tables of SPEC section 4 (`group_members` and `flow_group_access` are the two join tables). Row-level security is on for all of them with no policy, so every table is closed until T3.3 and T3.4. A test fails if a table in `public` has it off.
+- `profiles` also has `email` (the Admin screen lists and invites by email; unique ignoring case). `profiles.id` is the `auth.users` id.
+- `flow_versions` and `ref_table_versions` are keyed by (parent id, `version_no`), as in the store records. `run_log` points to a version with (`flow_id`, `version_no`) because that pair is the version's key; it holds counts and ids only.
+- Only published versions take part in the no-overlap rule (`planPublish` in `src/engine/versions.ts` looks at published versions only), so the T3.2 exclusion constraint is partial: `where status = 'published'`.
+- Table and column names are snake_case; `SupabaseStore` (T3.6) maps them to the camelCase store records.

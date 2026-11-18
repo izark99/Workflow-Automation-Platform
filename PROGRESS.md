@@ -73,7 +73,7 @@ before it passes, except where a task says otherwise.
 ## Phase 3: Server (gate G5)
 
 - [x] T3.1a Supabase tooling: CLI pinned as a devDependency, `supabase init`, minimal service set, `npm run test:db` runner (starts Docker if needed, starts local Supabase with retries, `db reset`, `supabase test db`), one pgTAP smoke test that proves the impersonation pattern (`auth.users`, `auth.uid()`, `set local role authenticated`) works.
-- [ ] T3.1b First migration with all tables of SPEC section 4, and a pgTAP test that each table exists.
+- [x] T3.1b First migration with all tables of SPEC section 4, and a pgTAP test that each table exists.
 - [ ] T3.2 Constraints: no overlapping versions per flow and per reference table, published versions read-only, at most 50,000 rows per reference table version.
 - [ ] T3.3 Row-level security for flows, versions and group access, with tests for every cell of the permission table.
 - [ ] T3.4 Row-level security for reference tables, profiles, groups and run log, with tests.
@@ -104,6 +104,12 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-18 T3.1b First migration: tables of SPEC section 4
+Changed: supabase/migrations/20261118000001_tables.sql (9 tables, keys, checks, row-level security on and closed), supabase/tests/database/010-tables.test.sql (25 pgTAP tests: every table, exact column lists, keys, foreign keys, RLS on), docs/DECISIONS.md (D56).
+Test mistake of mine: the first run failed because I planned 26 assertions and wrote 25; the migration applied from zero on the first run.
+Gates run: check PASS (619 tests), test:db PASS (2 files, 31 pgTAP tests, exit 0). Other gates not rerun: nothing under src/ changed.
+Next: T3.2 (no-overlap exclusion constraint on published versions, published versions read-only, 50,000 row cap, atomic publish function).
 
 ### 2026-11-18 T3.1a Supabase tooling and the test:db runner
 Changed: package.json (`supabase@3.2.0` pinned, `test:db` now runs scripts/test-db.mjs), scripts/test-db.mjs, supabase/config.toml (only the database stays on), supabase/tests/database/000-impersonation.test.sql (6 pgTAP tests), docs/DECISIONS.md (D55). PROGRESS: T3.1 split into T3.1a and T3.1b.
