@@ -77,7 +77,7 @@ before it passes, except where a task says otherwise.
 - [x] T3.2 Constraints: no overlapping versions per flow and per reference table, published versions read-only, at most 50,000 rows per reference table version.
 - [x] T3.3 Row-level security for flows, versions and group access, with tests for every cell of the permission table.
 - [x] T3.4 Row-level security for reference tables, profiles, groups and run log, with tests.
-- [ ] T3.5 Soft delete, restore, and removal after 30 days.
+- [x] T3.5 Soft delete, restore, and removal after 30 days.
 - [ ] T3.6 `SupabaseStore` that implements `DataStore`, selected by environment variables.
 - [ ] T3.7 Sign-in screen and session handling.
 - [ ] T3.8 Keep-alive: a small scheduled request that touches the database once a day, as code plus instructions.
@@ -104,6 +104,13 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-18 T3.5 Soft delete, restore, removal after 30 days
+Changed: supabase/migrations/20261118000005_soft_delete.sql (`delete_flow`, `restore_flow`, `purge_flow`, `purge_expired_flows`; execute rights for the publish functions too), supabase/tests/database/050-soft-delete.test.sql (about 28 assertions), docs/DECISIONS.md (D60).
+Tests cover: owner deletes a personal flow, nobody else deletes a shared flow but the admin, no double delete; a deleted flow is hidden from owner and group and visible to the admin; restore by the admin only, versions come back; purge of a deleted flow only, admin only, group access goes with it; removal at 30 days (flows deleted 30 and 45 days ago go, one deleted 29 days 23 hours 59 minutes ago stays), a user removes nothing, versions and run log rows of a removed flow are gone.
+Mutation check: `<=` changed to `<` at the 30-day boundary fails four tests; migration restored afterwards.
+Gates run: check PASS (619 tests), test:db PASS (6 files, exit 0). Other gates not rerun: nothing under src/ changed.
+Next: T3.6 (`SupabaseStore` that implements `DataStore`, selected by environment variables). It touches src/store and the app wiring, so I will run the other gates too.
 
 ### 2026-11-18 T3.4 Row-level security for reference tables, profiles, groups and run log
 Changed: supabase/migrations/20261118000004_rls_other_tables.sql (policies, `anon` loses all table rights), supabase/tests/database/040-rls-other-tables.test.sql (about 60 assertions), docs/DECISIONS.md (D59).

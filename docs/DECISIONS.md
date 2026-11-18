@@ -709,3 +709,12 @@ blank or mixed column in one month cannot change the types of another month.
 - Run log: append only. A user inserts a row as themselves (`user_id = auth.uid()`) for a flow they can view; they read their own rows; the admin reads all. There is no update or delete policy; rows leave with their flow by cascade.
 - `anon` has no table privileges (revoked, and removed from the default privileges of `public`), so a signed-out request fails with a permission error even before the policies.
 - Tests (`040-rls-other-tables.test.sql`) use the four personas plus `anon`. A mutation check (profiles, group members and the run log insert opened up) fails the tests.
+
+## D60 Soft delete, restore and removal after 30 days (T3.5)
+
+- Four functions, security invoker, so the policies of T3.3 decide who may call them: `delete_flow` (a user for a personal flow, the admin for any flow; sets `deleted_at`), `restore_flow` (admin), `purge_flow` (admin, a deleted flow only), `purge_expired_flows` (removes every flow with `deleted_at <= now() - 30 days`, returns the count). A call that changes nothing raises SQLSTATE P0002 with a message that says what to do ("not in the deleted list, or only an admin can restore it"); the database does not tell a user whether a flow they cannot see exists.
+- The 30 days match `purgeExpired` in the local store: a flow stays while `deleted_at` is later than now minus 30 days, so it goes at exactly 30 days. A test pins the boundary (30 days goes, 29 days 23 hours 59 minutes stays; changing `<=` to `<` fails four tests).
+- Removal is a delete of the flow row; versions, group access and run log rows follow by cascade. The published-version guard allows this (D57).
+- Who triggers the removal: the Admin screen, when it opens (as the local store does), and the daily keep-alive of T3.8 with the service role, which bypasses row-level security. No database scheduler (pg_cron) is used, so the local stack needs no extra extension.
+- Hiding a deleted flow is done by `can_view_flow` (D58); restore stays admin-only through the trigger of T3.3.
+- Execute on these functions and on the publish functions is granted to `authenticated` and `service_role`, not to `anon`.
