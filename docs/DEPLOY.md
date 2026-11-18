@@ -85,6 +85,24 @@ update public.profiles set role = 'admin' where email = 'first.admin@example.com
 
 ## Deploy the app on Cloudflare Pages
 
+**Known blocker: do not start this step before you read this.** The build puts two DuckDB-WASM files in `dist/assets`:
+`duckdb-mvp-<hash>.wasm` (about 40 MB) and `duckdb-eh-<hash>.wasm` (about 35 MB). Cloudflare Pages accepts at most
+25 MiB for a single file (Cloudflare's documentation, "Pages, Limits"; Workers static assets have the same limit), so
+the upload of the build fails on these two files. The app is built this way on purpose (`docs/DECISIONS.md`, D7: the
+engine code is a static asset of the app, so a run makes no request for code). The decision of where to serve these
+two files from is open and is listed under "Needs Harold" in `PROGRESS.md`. The options:
+
+- **A. Serve the two files from a public R2 bucket** (Cloudflare's own advice for large files). The app stays on
+  Pages; the build is changed to leave the two files out and to load them from the bucket's address, which must send a
+  CORS header for the app's address. Still no file content leaves the browser, but engine code now comes from a second
+  address. This is the recommended option and needs one build task once you choose it.
+- **B. Serve the whole app from a host that accepts files of 40 MB or more.** No code change. Check that host's
+  file size limit first.
+- **C. Ask Cloudflare to raise the limit** with their limit increase form. Not guaranteed, and it can take time.
+
+Until one is chosen, steps 1 to 5 below describe the Pages setup that applies to options A and B (for B, read
+"Pages" as that host).
+
 1. Cloudflare dashboard: Workers & Pages, Create, Pages, Connect to Git. Pick this repository and the branch to
    publish.
 2. Build settings:

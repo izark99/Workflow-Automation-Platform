@@ -28,4 +28,9 @@ jobs:
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           # Optional. With it the job also removes flows that were deleted 30 days ago or more.
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-        run: node scripts/keep-alive.ts
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "::notice::SUPABASE_URL and SUPABASE_ANON_KEY are not set as repository secrets yet, so nothing was called. See docs/KEEP_ALIVE.md."
+            exit 0
+          fi
+          node scripts/keep-alive.ts

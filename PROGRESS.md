@@ -87,7 +87,7 @@ before it passes, except where a task says otherwise.
 - [x] T3.7b1 Auth service layer: `AuthService` interface, `SupabaseAuth`, an in-memory `MemoryAuth` for the local build and tests, messages for sign-in problems, `createBackend()` (store and auth together), unit tests, and an integration test of `SupabaseAuth` against the real local Auth service.
 - [x] T3.7b2 Sign-in screen and session handling in the app: gate that shows the sign-in screen when there is no session (only when an auth service exists; the local store keeps working without sign-in), session restore, sign out in the shell, "your session ended" message; the screen is covered by the UI rules and an e2e test.
 - [x] T3.8 Keep-alive: a small scheduled request that touches the database once a day, as code plus instructions.
-- [ ] T3.9 `docs/DEPLOY.md`: steps for a human to create the Supabase project, run migrations, set variables on Cloudflare Pages, and create the first admin.
+- [x] T3.9 `docs/DEPLOY.md`: steps for a human to create the Supabase project, run migrations, set variables on Cloudflare Pages, and create the first admin.
 
 ## Needs Harold
 
@@ -102,14 +102,23 @@ Decisions with a default. Build with the default unless this list says otherwise
 | Approval before a version takes effect | None |
 | Reference tables by non-admin users | Not allowed |
 | UI language | English |
+| Where the two DuckDB-WASM files are served. Each is above the 25 MiB limit of a Cloudflare Pages file (about 40 MB and 35 MB), so the Pages upload fails as built | Bundled in `dist` (decision D7). Options in `docs/DEPLOY.md`: A serve them from a public R2 bucket (recommended, needs one build task), B another host without the limit, C ask Cloudflare for a higher limit |
 
 ## Blockers
 
-None.
+- Deployment on Cloudflare Pages: the build output has two files above the 25 MiB limit per file (`dist/assets/duckdb-mvp-*.wasm` about 40 MB, `duckdb-eh-*.wasm` about 35 MB). Found in T3.9 by running the Pages build command and checking file sizes; the limit is confirmed by Cloudflare's documentation. It does not affect any gate. It needs the decision under "Needs Harold" above.
 
 ## Log
 
 Newest first.
+
+### 2026-11-18 T3.9 docs/DEPLOY.md (last task of Phase 3)
+Changed: docs/DEPLOY.md, scripts/deploy-doc.test.ts (7 tests), supabase/tests/database/100-first-admin.test.sql (5 assertions), .github/workflows/keep-alive.yml (skips with a notice until the secrets exist), PROGRESS.md (Needs Harold and Blockers), docs/DECISIONS.md (D70).
+Finding: the Pages build command puts two DuckDB-WASM files of about 40 MB and 35 MB in dist, above the 25 MiB limit per file of Cloudflare Pages (checked against Cloudflare's documentation). The document says so under "Known blocker" with three options, and the decision is listed under Needs Harold. No gate is affected. I did not choose an option, because it changes decision D7.
+Two claims in my first draft of the document were not backed by the code and were fixed before the commit: an export feature that does not exist, and an on-screen message for a half-set pair of variables (the app fails to start and the console names the variable).
+The advisor was asked before ticking the last task of the phase (PROMPT section 5). Its advice that led to the file size check and to the plan for the final run was followed.
+Gates run: check PASS (679 tests), test:db PASS earlier in this task (11 files, exit 0; the files changed after that are docs, a test of the document and the workflow, not the database). The final clean `npm ci` and `npm run gates` run is next and is not part of this entry.
+Next: the final run, then STATUS: COMPLETE only if the log shows it passed.
 
 ### 2026-11-18 T3.8 Keep-alive
 Changed: supabase/migrations/20261118000009_keep_alive.sql (`keep_alive()`), supabase/tests/database/090-keep-alive.test.sql (5 assertions), scripts/keep-alive.ts (+7 unit tests), integration/keep-alive.test.ts (3 tests on the real local stack), .github/workflows/keep-alive.yml, docs/KEEP_ALIVE.md, docs/DECISIONS.md (D69).
