@@ -1,8 +1,7 @@
 import type { FlowDefinition } from '../../engine/flow/types';
-import { formatDate } from '../../engine/versions';
 import type { PreparedRun, RefTable } from '../../engine/versions';
 import type { FlowVersionRecord } from '../../store/types';
-import { translate } from '../i18n';
+import { translate, formatDate } from '../i18n';
 
 export interface RunInput {
   stepId: string;

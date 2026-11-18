@@ -54,9 +54,10 @@ describe('catalog lookup', () => {
     expect(t('common.infoTip.about', { label: 'Run flow' })).toBe('About Run flow');
   });
   it('falls back: override of the locale, locale, override of English, English, the key', () => {
-    expect(lookup('app.brand', 'vi')).toBe('Data Flow'); // no Vietnamese value yet: English
+    expect(lookup('app.brand', 'vi')).toBe('Luồng dữ liệu'); // the Vietnamese text of the build
     setOverrides({ en: { 'app.brand': 'Flows' } });
-    expect(lookup('app.brand', 'vi')).toBe('Flows'); // override of English beats base English
+    expect(lookup('app.brand', 'vi')).toBe('Luồng dữ liệu'); // the Vietnamese text beats an override of English
+    expect(lookup('app.brand', 'en')).toBe('Flows'); // an override of English beats base English
     setOverrides({ en: { 'app.brand': 'Flows' }, vi: { 'app.brand': 'Luồng' } });
     expect(lookup('app.brand', 'vi')).toBe('Luồng');
     expect(lookup('app.brand', 'en')).toBe('Flows');
@@ -108,5 +109,30 @@ describe('readLocale', () => {
     expect(readLocale(store('fr'), true)).toBe('en');
     expect(readLocale(undefined, true)).toBe('en');
     expect(readLocale({ getItem: () => { throw new Error('blocked'); } }, true)).toBe('en');
+  });
+});
+
+describe('the Vietnamese catalog', () => {
+  it('has a text for every key, and the same placeholders as English', async () => {
+    const { vi } = await import('./messages/vi');
+    for (const [key, value] of Object.entries(en)) {
+      const text = (vi as Record<string, string>)[key];
+      expect(text, `${key} has no Vietnamese text`).toBeTruthy();
+      expect(validateMessage(text!), key).toBeNull();
+      expect(placeholdersOf(text!), key).toEqual(placeholdersOf(value));
+    }
+    expect(Object.keys(vi).sort()).toEqual(Object.keys(en).sort());
+  });
+  it('writes Vietnamese month names and dates in the Vietnamese form', async () => {
+    const { formatDate } = await import('./dates');
+    expect(formatDate('2026-09-30')).toBe('30 Sep 2026');
+    setLocale('vi');
+    expect(formatDate('2026-09-30')).toBe('30 Thg 9 2026');
+    expect(t('common.month.9')).toBe('Tháng Chín');
+  });
+  it('plural messages use the other branch in Vietnamese', () => {
+    setLocale('vi');
+    expect(t('admin.usersCount', { n: 1 })).toBe('1 người dùng.');
+    expect(t('admin.usersCount', { n: 5 })).toBe('5 người dùng.');
   });
 });

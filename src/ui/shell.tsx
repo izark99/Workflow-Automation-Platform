@@ -4,6 +4,7 @@ import { Button, Dialog, Dropdown, ErrorState, Field, Icon, ToastProvider } from
 import type { IconName } from './components';
 import { useAuth } from './auth-gate';
 import { useLoad, useStore } from './store-context';
+import { LanguageSwitch } from './language-switch';
 import { ThemeSwitch } from './theme-switch';
 import { useT, errorText } from './i18n';
 import styles from './shell.module.css';
@@ -123,6 +124,7 @@ export function Shell() {
             <span className={styles.userName} data-user-content>{me.name}</span>
             <span className={styles.userRole}>{t(me.role === 'admin' ? 'nav.role.admin' : 'nav.role.user')}</span>
             <div className={styles.prefs}>
+              <LanguageSwitch />
               <ThemeSwitch />
             </div>
             {auth ? (

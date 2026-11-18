@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { AuthError, signInProblem, type AuthService } from '../store/auth';
 import { Button, Card, ErrorState, Field, Icon, InfoTip } from './components';
 import { useT, errorText } from './i18n';
+import { LanguageSwitch } from './language-switch';
 import { ThemeSwitch } from './theme-switch';
 import styles from './sign-in.module.css';
 
@@ -34,7 +35,8 @@ export function SignInScreen({ auth, ended }: { auth: AuthService; ended: boolea
   return (
     <main className={styles.page}>
       <div className={styles.prefs}>
-        <ThemeSwitch width={160} />
+        <LanguageSwitch width={140} />
+        <ThemeSwitch width={140} />
       </div>
       <div className={styles.card}>
         <div className={styles.brand}>

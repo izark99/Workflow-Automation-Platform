@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
-import { formatDate } from '../../engine/versions';
-import { useT } from '../i18n';
+import { useT, formatDate } from '../i18n';
 import { addMonths, dayLabel, monthCells, monthOf, monthTitle, moveDate, weekdays } from './date-logic';
 import type { DateKey } from './date-logic';
 import { Icon } from './icons';

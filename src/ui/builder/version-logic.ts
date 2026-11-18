@@ -1,7 +1,7 @@
 import type { FlowDefinition } from '../../engine/flow/types';
 import { validateFlow } from '../../engine/flow/validate';
-import { formatDate, planPublish } from '../../engine/versions';
-import { translate } from '../i18n';
+import { planPublish } from '../../engine/versions';
+import { translate, formatDate } from '../i18n';
 import type { FlowRecord, FlowVersionRecord, User } from '../../store/types';
 
 const two = (iso: string): string => formatDate(iso).replace(/^(\d) /, '0$1 ');

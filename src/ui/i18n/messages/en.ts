@@ -20,6 +20,9 @@ export const en = {
   'nav.signOut': 'Sign out',
   'nav.signOutFailed': 'Could not sign out. Close this tab, or try again.',
 
+  'language.label': 'Language',
+  'language.en': 'English',
+  'language.vi': 'Tiếng Việt',
   'theme.label': 'Theme',
   'theme.light': 'Light',
   'theme.dark': 'Dark',
@@ -951,6 +954,20 @@ export const en = {
   'errors.auth.failedDetail': 'Sign-in failed: {detail}. Try again, or ask the admin if it keeps failing.',
   'errors.auth.failed': 'Sign-in failed. Try again, or ask the admin if it keeps failing.',
   'errors.auth.signOutFailed': 'Could not sign out: {detail}. Close the tab, or try again.',
+
+  // Added by T4.7e: short month names, for dates such as 30 Sep 2026
+  'common.monthShort.1': 'Jan',
+  'common.monthShort.2': 'Feb',
+  'common.monthShort.3': 'Mar',
+  'common.monthShort.4': 'Apr',
+  'common.monthShort.5': 'May',
+  'common.monthShort.6': 'Jun',
+  'common.monthShort.7': 'Jul',
+  'common.monthShort.8': 'Aug',
+  'common.monthShort.9': 'Sep',
+  'common.monthShort.10': 'Oct',
+  'common.monthShort.11': 'Nov',
+  'common.monthShort.12': 'Dec',
 } as const;
 
 export type MessageKey = keyof typeof en;

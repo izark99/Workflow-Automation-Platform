@@ -1,6 +1,6 @@
-import { formatDate } from '../../engine/versions';
 import type { Message } from '../i18n';
 import type { FlowRecord, FlowVersionRecord, User } from '../../store/types';
+import { formatDate } from '../i18n';
 
 export type ScopeFilter = 'all' | 'personal' | 'shared';
 

@@ -1,7 +1,6 @@
-import { formatDate } from '../../engine/versions';
 import { KEEP_DELETED_DAYS } from '../../store/types';
 import type { FlowRecord, Group, User } from '../../store/types';
-import { translate } from '../i18n';
+import { translate, formatDate } from '../i18n';
 
 const two = (iso: string): string => formatDate(iso).replace(/^(\d) /, '0$1 ');
 const DAY = 86_400_000;

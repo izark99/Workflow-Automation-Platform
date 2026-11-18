@@ -1,10 +1,10 @@
-import { dayAfter, findOverlaps, formatDate, planPublish } from '../../engine/versions';
+import { dayAfter, findOverlaps, planPublish } from '../../engine/versions';
 import type { FlowVersionRecord } from '../../store/types';
-import { translate } from '../i18n';
+import { translate, formatDate } from '../i18n';
+import type { MessageKey } from '../i18n';
 
 const two = (iso: string): string => formatDate(iso).replace(/^(\d) /, '0$1 ');
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const monthYear = (iso: string): string => `${MONTHS[Number(iso.slice(5, 7)) - 1]} ${iso.slice(0, 4)}`;
+const monthYear = (iso: string): string => `${translate(`common.monthShort.${Number(iso.slice(5, 7))}` as MessageKey)} ${iso.slice(0, 4)}`;
 
 /** What the checks need of a version: flows and reference tables share it. */
 export type VersionLike = Pick<FlowVersionRecord, 'status' | 'validFrom' | 'validTo'> & { versionNo: number };

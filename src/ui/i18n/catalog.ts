@@ -107,6 +107,15 @@ export function resetCatalog(): void {
 
 export const LOCALE_STORAGE_KEY = 'dfw.locale';
 
+/** Keeps the choice of the user in the browser. Blocked storage only means the choice is not remembered. */
+export function saveLocale(storage: Pick<Storage, 'setItem'> | undefined, loc: 'en' | 'vi'): void {
+  try {
+    storage?.setItem(LOCALE_STORAGE_KEY, loc);
+  } catch {
+    // The language still applies to this page.
+  }
+}
+
 /**
  * The locale kept in the browser. `pseudo` is for the UI rule only: it is accepted when the build has the development
  * routes (`allowPseudo`) and is never offered in the language switch.
