@@ -61,7 +61,7 @@ declare
 begin
   select * into v from public.flow_versions where flow_id = p_flow_id and version_no = p_version_no for update;
   if not found then
-    raise exception 'Version % of this flow does not exist.', p_version_no using errcode = 'P0002';
+    raise exception 'Version % of this flow does not exist, or you may not change it.', p_version_no using errcode = 'P0002';
   end if;
   if v.status = 'published' then
     raise exception 'Version % is already published.', p_version_no;
@@ -85,7 +85,7 @@ begin
   select * into v from public.ref_table_versions
    where ref_table_id = p_ref_table_id and version_no = p_version_no for update;
   if not found then
-    raise exception 'Version % of this reference table does not exist.', p_version_no using errcode = 'P0002';
+    raise exception 'Version % of this reference table does not exist, or you may not change it.', p_version_no using errcode = 'P0002';
   end if;
   if v.status = 'published' then
     raise exception 'Version % is already published.', p_version_no;

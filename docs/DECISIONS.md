@@ -690,3 +690,13 @@ blank or mixed column in one month cannot change the types of another month.
 - The functions are security invoker, so the policies of T3.3 and T3.4 decide who may call them.
 - Row cap: check `jsonb_array_length(rows) <= 50000`.
 - Errors say what failed and what to do next ("Create a new version copied from it", "Publish a new version instead").
+
+## D58 Row-level security model for flows (T3.3)
+
+- Four helper functions, all `security definer` with an empty `search_path` so that a policy can read `profiles`, `flows` and `group_members` without hitting the policies of those tables: `is_admin()`, `can_view_flow(id)`, `can_edit_flow(id)`, `is_group_member(group_id)`. Execute is granted to `authenticated` only.
+- `can_view_flow`: the admin (deleted flows too), the owner of a live personal flow, a member of a group that has access to a live shared flow. `can_edit_flow`: the admin, or the owner of a live personal flow. A member of a group never changes a shared flow.
+- `flows`: select by `can_view_flow`; insert and update need the admin, or `owner_id = auth.uid()` and `scope = 'personal'` (so a user can neither create a shared flow, nor make one shared, nor hand a flow to someone else); a user deletes softly by setting `deleted_at`; a delete for good is for the admin. A trigger refuses to clear `deleted_at` unless `is_admin()`, so a restore is admin-only even if a policy changes later.
+- `flow_versions` follow the flow: visible to whoever can view the flow (drafts included, the spec is silent), changed by whoever can edit it. A user copies a shared flow by inserting a personal flow and selecting the definition from the shared version, which the policies allow. The publish functions are security invoker, so the same rights apply; a caller without edit rights gets "does not exist, or you may not change it".
+- `flow_group_access`: admin writes; a member sees the rows of the groups they belong to.
+- Policies grant to `authenticated` only; `anon` has none and so sees nothing.
+- Tests (`030-rls-flows.test.sql`) act as the admin, an owner, a group member and another user through `set local role` and `request.jwt.claims`. A mutation check (delete policy `true`, view helper `true`) fails 13 of them.

@@ -75,7 +75,7 @@ before it passes, except where a task says otherwise.
 - [x] T3.1a Supabase tooling: CLI pinned as a devDependency, `supabase init`, minimal service set, `npm run test:db` runner (starts Docker if needed, starts local Supabase with retries, `db reset`, `supabase test db`), one pgTAP smoke test that proves the impersonation pattern (`auth.users`, `auth.uid()`, `set local role authenticated`) works.
 - [x] T3.1b First migration with all tables of SPEC section 4, and a pgTAP test that each table exists.
 - [x] T3.2 Constraints: no overlapping versions per flow and per reference table, published versions read-only, at most 50,000 rows per reference table version.
-- [ ] T3.3 Row-level security for flows, versions and group access, with tests for every cell of the permission table.
+- [x] T3.3 Row-level security for flows, versions and group access, with tests for every cell of the permission table.
 - [ ] T3.4 Row-level security for reference tables, profiles, groups and run log, with tests.
 - [ ] T3.5 Soft delete, restore, and removal after 30 days.
 - [ ] T3.6 `SupabaseStore` that implements `DataStore`, selected by environment variables.
@@ -104,6 +104,14 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-18 T3.3 Row-level security for flows, versions and group access
+Changed: supabase/migrations/20261118000003_rls_flows.sql (helpers `is_admin`, `can_view_flow`, `can_edit_flow`, `is_group_member`; policies on flows, flow_versions, flow_group_access; admin-only restore trigger), supabase/tests/database/030-rls-flows.test.sql (about 55 assertions), the publish functions' not-found message now also says "or you may not change it", docs/DECISIONS.md (D58).
+Tests cover the four personas against the permission table: what each sees (flows, versions, group access), create, edit, delete (soft and for good), publish, group access management, the copy of a shared flow into a personal flow, soft delete hiding the flow and its versions, restore by the admin only (also at trigger level), delete for good by the admin.
+Two real findings of the first runs: the group-access policy read `group_members`, which has no policy yet (a member saw 0 rows), so a definer helper `is_group_member` replaced the subquery; and data-modifying statements need a top-level WITH in the tests (my syntax mistake).
+Mutation check: with the delete policy and the view helper set to true, 13 tests fail; migration restored afterwards.
+Gates run: check PASS (619 tests), test:db PASS (4 files, exit 0). Other gates not rerun: nothing under src/ changed.
+Next: T3.4 (row-level security for reference tables, profiles, groups, group members and run log).
 
 ### 2026-11-18 T3.2 Constraints on versions
 Changed: supabase/migrations/20261118000002_version_constraints.sql (exclusion constraints on published ranges, read-only trigger, 50,000-row check, `publish_flow_version` and `publish_ref_table_version`), supabase/tests/database/020-version-constraints.test.sql (29 pgTAP tests), docs/DECISIONS.md (D57).
