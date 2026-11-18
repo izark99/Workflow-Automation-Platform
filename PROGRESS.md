@@ -84,7 +84,8 @@ before it passes, except where a task says otherwise.
 - [x] T3.6c1 Selection by environment variables: `createDataStore()` (Supabase when `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are both set, `LocalStore` otherwise; one set is an error), `.env.example`, the e2e and UI-rules builds pinned to the local store.
 - [x] T3.6c2 Integration test of `SupabaseStore` against the full local stack (`npm run test:store`, not part of `gates`; it needs the API and Auth containers): roles, flows, versions, publish, soft delete, reference tables, groups, run log. Settles the owner-name and group-name limit for non-admins from T3.6a.
 - [x] T3.7a A profile appears when an Auth user is created (trigger, role always `user`, never taken from user-editable metadata; the first admin is made by a documented SQL step in T3.9), with pgTAP tests; the new-user message of `saveUser` says so.
-- [ ] T3.7b Sign-in screen and session handling in the app when the Supabase store is selected (sign in, session restore, sign out, session ended message); the local store keeps working without sign-in; the screen is covered by the UI rules and an e2e test.
+- [x] T3.7b1 Auth service layer: `AuthService` interface, `SupabaseAuth`, an in-memory `MemoryAuth` for the local build and tests, messages for sign-in problems, `createBackend()` (store and auth together), unit tests, and an integration test of `SupabaseAuth` against the real local Auth service.
+- [ ] T3.7b2 Sign-in screen and session handling in the app: gate that shows the sign-in screen when there is no session (only when an auth service exists; the local store keeps working without sign-in), session restore, sign out in the shell, "your session ended" message; the screen is covered by the UI rules and an e2e test.
 - [ ] T3.8 Keep-alive: a small scheduled request that touches the database once a day, as code plus instructions.
 - [ ] T3.9 `docs/DEPLOY.md`: steps for a human to create the Supabase project, run migrations, set variables on Cloudflare Pages, and create the first admin.
 
@@ -109,6 +110,12 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-18 T3.7b1 Auth service layer (T3.7b split into T3.7b1 and T3.7b2)
+Changed: src/store/auth.ts (`AuthService`, `AuthError`, `signInProblem`, `authErrorMessage`, `MemoryAuth`; 12 tests), src/store/supabase-auth.ts, src/store/index.ts (`createBackend`, `Backend`, exports), integration/supabase-auth.test.ts (6 tests against the real local Auth container), docs/DECISIONS.md (D67). PROGRESS: T3.7b split.
+Checked against real Auth: no session at start; wrong password and unknown email give the same message; sign-in returns the user and the same client serves SupabaseStore as that user (profile made by the trigger of T3.7a, name from the metadata); sign-in and sign-out events; a sign-out the page did not ask for is reported as `session_ended`; a stopped listener hears nothing. Mutation check: reporting every sign-out as `signed_out` fails the session-ended test; file restored.
+Gates run: check PASS (658 tests), test:store PASS (2 files, 18 tests, exit 0). test:db not rerun (no change under supabase/). The UI gates were not rerun: the app does not use the new code yet (T3.7b2).
+Next: T3.7b2 (sign-in screen and session handling in the app).
 
 ### 2026-11-18 T3.7a A profile appears when an Auth user is created (T3.7 split into T3.7a and T3.7b)
 Changed: supabase/migrations/20261118000008_new_user_profile.sql (trigger `handle_new_user`), supabase/tests/database/080-new-user-profile.test.sql (8 assertions), the profile fixtures of the other database tests (now an upsert, because the trigger makes the profile first), integration/supabase-store.test.ts (same), the new-user message of `saveUser`, docs/DECISIONS.md (D66). PROGRESS: T3.7 split.

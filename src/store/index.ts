@@ -1,9 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
+import { MemoryAuth, type AuthService } from './auth';
 import { supabaseConfigFrom } from './config';
 import { IndexedDbAdapter } from './indexeddb-adapter';
 import { LocalStore } from './local-store';
 import type { Snapshot } from './local-store';
 import { seedSnapshot } from './seed';
+import { SupabaseAuth } from './supabase-auth';
 import { SupabaseStore } from './supabase-store';
 import type { DataStore } from './types';
 
@@ -11,6 +13,8 @@ export type { DataStore } from './types';
 export * from './types';
 export { LocalStore, MemoryAdapter } from './local-store';
 export { SupabaseStore } from './supabase-store';
+export { SupabaseAuth } from './supabase-auth';
+export * from './auth';
 
 const DEV_TOOLS = import.meta.env.DEV || import.meta.env.VITE_DEV_ROUTES === 'true';
 
@@ -38,11 +42,31 @@ export function createLocalStore(): LocalStore {
   });
 }
 
-/**
- * The store the app runs on: Supabase when VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are both set, the local store
- * otherwise. The anon key is meant for the browser; row-level security protects the data, not the key.
- */
-export function createDataStore(): DataStore {
-  const config = supabaseConfigFrom(import.meta.env as Record<string, unknown>);
-  return config ? new SupabaseStore(createClient(config.url, config.anonKey)) : createLocalStore();
+/** The store and, when there is a server, the sign-in service the app runs on. */
+export interface Backend {
+  store: DataStore;
+  /** Null on the local store: nobody signs in there. */
+  auth: AuthService | null;
 }
+
+/**
+ * Supabase when VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are both set, the local store otherwise. The anon key is
+ * meant for the browser; row-level security protects the data, not the key. In the dev and test builds the local store can
+ * be given a stand-in sign-in with the localStorage key `dfw.auth` (a JSON list of {email, password}); then the app shows
+ * the sign-in screen, and `window.dfwAuth.expire()` ends the session (decision D67).
+ */
+export function createBackend(): Backend {
+  const config = supabaseConfigFrom(import.meta.env as Record<string, unknown>);
+  if (config) {
+    const client = createClient(config.url, config.anonKey);
+    return { store: new SupabaseStore(client), auth: new SupabaseAuth(client) };
+  }
+  const store = createLocalStore();
+  const injected = DEV_TOOLS ? readKey('dfw.auth') : null;
+  if (!injected) return { store, auth: null };
+  const auth = new MemoryAuth({ users: JSON.parse(injected) as { email: string; password: string }[], storage: localStorage });
+  (window as unknown as { dfwAuth?: MemoryAuth }).dfwAuth = auth;
+  return { store, auth };
+}
+
+export const createDataStore = (): DataStore => createBackend().store;
