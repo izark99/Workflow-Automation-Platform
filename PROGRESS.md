@@ -97,7 +97,7 @@ parameters, quality pass, docs, final run. A task may start before an earlier gr
 Themes (SPEC 11.4)
 - [x] T4.1 Dark tokens in `tokens.css` under `:root[data-theme="dark"]`, the two new tokens `--color-on-primary` and `--color-on-cta` used by filled buttons, and a unit test that computes the contrast of every pair listed in DESIGN for both themes. Replace any raw colour left outside `tokens.css`.
 - [x] T4.2 Theme setting: Light, Dark, System; inline script in `index.html` sets `data-theme` and `color-scheme` before first paint; System follows `prefers-color-scheme` live; choice kept in browser storage; switch in the sidebar footer and on the sign-in screen. Unit tests for the choice logic, e2e for the switch and for no flash on reload.
-- [ ] T4.3 Fix: React Flow follows the app theme, not the operating system. First a failing e2e test: operating system dark (`emulateMedia`), app Light, the canvas background, dots, edges and controls are light; then app Dark and the canvas is dark. Then pass `colorMode` from the theme and map React Flow colours to tokens.
+- [x] T4.3 Fix: React Flow follows the app theme, not the operating system. First a failing e2e test: operating system dark (`emulateMedia`), app Light, the canvas background, dots, edges and controls are light; then app Dark and the canvas is dark. Then pass `colorMode` from the theme and map React Flow colours to tokens.
 - [ ] T4.4 UI rules in the dark theme: `test:ui-rules` runs every route in dark at 1440 px as well (axe contrast included). Fix what it finds in the same task, or split.
 
 Info button (SPEC 11.2)
@@ -167,6 +167,13 @@ None. The Pages file size blocker of T3.9 is solved by D71.
 ## Log
 
 Newest first.
+
+### 2026-11-18 T4.3 React Flow follows the app theme (turn 3)
+Changed: src/ui/builder/canvas.tsx, builder.module.css (React Flow variables mapped to tokens), e2e/canvas-theme.spec.ts (2 tests: OS dark with app Light gives a light canvas, OS light with app Dark gives a dark canvas; background, dots, edge colours and colour-scheme checked).
+Finding: the installed @xyflow/react 13.0.1 has no `colorMode` prop (the task text and the advisor assumed v12 behaviour). Its stylesheet uses `light-dark()` with `color-scheme: light dark`, and `.light .react-flow` or `.dark .react-flow` classes on an ancestor override it. So the canvas wrapper gets the class `light` or `dark` from the app theme.
+Test order: the first run of the new test failed for a wrong reason (the seed flow has no edge), so it was rewritten to build one; with the old canvas code unchanged the colour-scheme assertion was not run separately, so "failing first" is only shown by the dots colour (`rgb(145,145,154)` instead of the token).
+Gates run: check PASS (68 files, 723 tests, exit 0); builder, settings-panel and canvas-theme e2e PASS (builder + canvas-theme re-run after the class change: 11 passed). Full e2e and ui-rules not run (T4.4 covers ui-rules).
+Next: T4.4.
 
 ### 2026-11-18 T4.2 Theme setting (turn 2)
 Changed: src/ui/theme.ts (+ theme.test.ts, 3 tests), theme-context.tsx, theme-switch.tsx, app.tsx (ThemeProvider), shell.tsx and sign-in.tsx (switch in the sidebar footer above Sign out and top right of the sign-in screen), index.html (inline script sets `data-theme` and `color-scheme` before first paint), strings.ts, e2e/theme.spec.ts (3 tests: System follows the OS live, choice kept after reload, theme set before first paint).

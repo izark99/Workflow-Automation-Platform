@@ -6,6 +6,7 @@ import type { FlowDefinition, NodeType } from '../../engine/flow/types';
 import { NODE_TYPES } from '../../engine/flow/types';
 import { ErrorState } from '../components';
 import { strings } from '../strings';
+import { useAppTheme } from '../theme-context';
 import { addStep, STEP_CATALOG, CARD_HEIGHT, CARD_WIDTH, connectSteps, deleteEdges, deleteSteps, inputHandlesOf, moveStep, nextFreePosition, outputHandlesOf, resolvedEdges, stepNumbers } from './graph';
 import { StepCard } from './step-card';
 import type { StepCardNode } from './step-card';
@@ -34,6 +35,8 @@ export interface CanvasProps {
 
 function Inner({ definition, onChange, selection, onSelect, message, onMessage, readOnly, addRequest }: CanvasProps) {
   const { screenToFlowPosition } = useReactFlow();
+  // @xyflow/react 13 has no colorMode prop: its stylesheet reads a `light` or `dark` class on an ancestor of .react-flow.
+  const { theme } = useAppTheme();
 
   const nodes: StepCardNode[] = useMemo(() => {
     const numbers = stepNumbers(definition);
@@ -112,7 +115,7 @@ function Inner({ definition, onChange, selection, onSelect, message, onMessage, 
   }, [addRequest, readOnly]);
 
   return (
-    <div className={styles.canvas} onDragOver={(e) => { if (e.dataTransfer.types.includes(DRAG_TYPE)) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; } }} onDrop={(e) => {
+    <div className={`${styles.canvas} ${theme}`} onDragOver={(e) => { if (e.dataTransfer.types.includes(DRAG_TYPE)) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; } }} onDrop={(e) => {
       const type = e.dataTransfer.getData(DRAG_TYPE);
       if (readOnly || !(NODE_TYPES as readonly string[]).includes(type)) return;
       e.preventDefault();

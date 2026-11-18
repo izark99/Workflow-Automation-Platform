@@ -113,6 +113,28 @@
   min-width: 0;
 }
 
+/* React Flow gets its colours from the tokens, so its own light-dark() defaults never decide (docs/DESIGN.md, Theme rules). */
+.canvas :global(.react-flow) {
+  --xy-background-color: var(--color-bg);
+  --xy-background-pattern-color: var(--color-line);
+  --xy-edge-stroke: var(--color-control);
+  --xy-edge-stroke-selected: var(--color-primary);
+  --xy-connectionline-stroke: var(--color-primary);
+  --xy-handle-background-color: var(--color-card);
+  --xy-handle-border-color: var(--color-control);
+  --xy-selection-background-color: var(--color-primary-soft);
+  --xy-selection-border: 1px dotted var(--color-primary);
+  --xy-attribution-background-color: var(--color-card);
+}
+
+.canvas :global(.react-flow__attribution) {
+  color: var(--color-muted);
+}
+
+.canvas :global(.react-flow__attribution a) {
+  color: var(--color-muted);
+}
+
 .toolbar {
   display: flex;
   align-items: center;
