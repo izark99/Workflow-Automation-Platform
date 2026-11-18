@@ -96,7 +96,7 @@ parameters, quality pass, docs, final run. A task may start before an earlier gr
 
 Themes (SPEC 11.4)
 - [x] T4.1 Dark tokens in `tokens.css` under `:root[data-theme="dark"]`, the two new tokens `--color-on-primary` and `--color-on-cta` used by filled buttons, and a unit test that computes the contrast of every pair listed in DESIGN for both themes. Replace any raw colour left outside `tokens.css`.
-- [ ] T4.2 Theme setting: Light, Dark, System; inline script in `index.html` sets `data-theme` and `color-scheme` before first paint; System follows `prefers-color-scheme` live; choice kept in browser storage; switch in the sidebar footer and on the sign-in screen. Unit tests for the choice logic, e2e for the switch and for no flash on reload.
+- [x] T4.2 Theme setting: Light, Dark, System; inline script in `index.html` sets `data-theme` and `color-scheme` before first paint; System follows `prefers-color-scheme` live; choice kept in browser storage; switch in the sidebar footer and on the sign-in screen. Unit tests for the choice logic, e2e for the switch and for no flash on reload.
 - [ ] T4.3 Fix: React Flow follows the app theme, not the operating system. First a failing e2e test: operating system dark (`emulateMedia`), app Light, the canvas background, dots, edges and controls are light; then app Dark and the canvas is dark. Then pass `colorMode` from the theme and map React Flow colours to tokens.
 - [ ] T4.4 UI rules in the dark theme: `test:ui-rules` runs every route in dark at 1440 px as well (axe contrast included). Fix what it finds in the same task, or split.
 
@@ -167,6 +167,12 @@ None. The Pages file size blocker of T3.9 is solved by D71.
 ## Log
 
 Newest first.
+
+### 2026-11-18 T4.2 Theme setting (turn 2)
+Changed: src/ui/theme.ts (+ theme.test.ts, 3 tests), theme-context.tsx, theme-switch.tsx, app.tsx (ThemeProvider), shell.tsx and sign-in.tsx (switch in the sidebar footer above Sign out and top right of the sign-in screen), index.html (inline script sets `data-theme` and `color-scheme` before first paint), strings.ts, e2e/theme.spec.ts (3 tests: System follows the OS live, choice kept after reload, theme set before first paint).
+Gates run: check PASS (68 files, 723 tests, exit 0); theme, shell and sign-in e2e PASS (9 passed; the full e2e suite was not run); test:acceptance:pages PASS (8 passed, exit 0); test:ui-rules PASS (676 passed, exit 0, light only).
+Note: the switch is 184 px wide; 200 px made the sidebar 241 px.
+Next: T4.3.
 
 ### 2026-11-18 T4.1 Dark tokens (turn 1)
 Changed: src/ui/tokens.css (dark values under `:root[data-theme='dark']`, `--color-on-primary`, `--color-on-cta`, `--color-overlay`; `--color-on-fill` removed), button, popover, checkbox, toast, dialog, versions CSS, docs/DESIGN.md (dark values of the extra tokens), src/ui/tokens.test.ts (33 tests: 16 contrast pairs per theme, plus a check that dark overrides every colour token).

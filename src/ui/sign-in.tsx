@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { AuthError, signInProblem, type AuthService } from '../store/auth';
 import { Button, Card, ErrorState, Field, Icon } from './components';
 import { strings } from './strings';
+import { ThemeSwitch } from './theme-switch';
 import styles from './sign-in.module.css';
 
 const t = strings.signIn;
@@ -32,6 +33,9 @@ export function SignInScreen({ auth, ended }: { auth: AuthService; ended: boolea
 
   return (
     <main className={styles.page}>
+      <div className={styles.prefs}>
+        <ThemeSwitch width={160} />
+      </div>
       <div className={styles.card}>
         <div className={styles.brand}>
           <Icon name="flow" size={22} />

@@ -5,6 +5,7 @@ const mb = (bytes: number): string => `${(bytes / 1e6).toFixed(1)} MB`;
 export const strings = {
   brand: 'Data Flow',
   nav: { label: 'Main', flows: 'Flows', refTables: 'Reference tables', admin: 'Admin', createFlow: 'Create flow' },
+  theme: { label: 'Theme', light: 'Light', dark: 'Dark', system: 'System' },
   roles: { admin: 'Admin', user: 'User' },
   signIn: {
     title: 'Sign in',

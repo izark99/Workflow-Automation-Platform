@@ -5,6 +5,7 @@ import type { IconName } from './components';
 import { useAuth } from './auth-gate';
 import { useLoad, useStore } from './store-context';
 import { strings } from './strings';
+import { ThemeSwitch } from './theme-switch';
 import styles from './shell.module.css';
 
 const t = strings.nav;
@@ -122,6 +123,9 @@ export function Shell() {
           <div className={styles.user}>
             <span className={styles.userName}>{me.name}</span>
             <span className={styles.userRole}>{strings.roles[me.role]}</span>
+            <div className={styles.prefs}>
+              <ThemeSwitch />
+            </div>
             {auth ? (
               <div className={styles.signOut}>
                 <Button

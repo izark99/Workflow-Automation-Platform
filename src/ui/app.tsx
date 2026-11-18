@@ -13,6 +13,7 @@ import { DevComponents } from './screens/dev-components';
 import { AuthGate } from './auth-gate';
 import { Shell } from './shell';
 import { StoreProvider } from './store-context';
+import { ThemeProvider } from './theme-context';
 
 // The components page is development only: it is built in when VITE_DEV_ROUTES=true (the dev server, the UI-rules and e2e builds).
 const DEV_ROUTES = import.meta.env.DEV || import.meta.env.VITE_DEV_ROUTES === 'true';
@@ -36,6 +37,8 @@ export function App({ store, auth }: { store?: DataStore; auth?: AuthService | n
     </BrowserRouter>
   );
   return (
-    <StoreProvider store={backend.store}>{backend.auth ? <AuthGate auth={backend.auth}>{routes}</AuthGate> : routes}</StoreProvider>
+    <ThemeProvider>
+      <StoreProvider store={backend.store}>{backend.auth ? <AuthGate auth={backend.auth}>{routes}</AuthGate> : routes}</StoreProvider>
+    </ThemeProvider>
   );
 }
