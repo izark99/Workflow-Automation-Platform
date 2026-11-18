@@ -72,7 +72,8 @@ before it passes, except where a task says otherwise.
 
 ## Phase 3: Server (gate G5)
 
-- [ ] T3.1 Supabase project folder, local start script, first migration with all tables of SPEC section 4.
+- [x] T3.1a Supabase tooling: CLI pinned as a devDependency, `supabase init`, minimal service set, `npm run test:db` runner (starts Docker if needed, starts local Supabase with retries, `db reset`, `supabase test db`), one pgTAP smoke test that proves the impersonation pattern (`auth.users`, `auth.uid()`, `set local role authenticated`) works.
+- [ ] T3.1b First migration with all tables of SPEC section 4, and a pgTAP test that each table exists.
 - [ ] T3.2 Constraints: no overlapping versions per flow and per reference table, published versions read-only, at most 50,000 rows per reference table version.
 - [ ] T3.3 Row-level security for flows, versions and group access, with tests for every cell of the permission table.
 - [ ] T3.4 Row-level security for reference tables, profiles, groups and run log, with tests.
@@ -103,6 +104,13 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-18 T3.1a Supabase tooling and the test:db runner
+Changed: package.json (`supabase@3.2.0` pinned, `test:db` now runs scripts/test-db.mjs), scripts/test-db.mjs, supabase/config.toml (only the database stays on), supabase/tests/database/000-impersonation.test.sql (6 pgTAP tests), docs/DECISIONS.md (D55). PROGRESS: T3.1 split into T3.1a and T3.1b.
+How: the runner starts Docker if needed, starts only the database container, runs `db reset` and `supabase test db`, and stops the stack. Image downloads are retried; real failures are not. The advisor reviewed the plan for the phase (RLS model, exclusion constraint on valid dates, publish function, test grid); its points are the plan for T3.2 to T3.5.
+Checked: `auth.users` and `auth.uid()` exist with only the database container; a deliberate failing test and a deliberately broken migration each make `npm run test:db` exit 1.
+Gates run: check PASS (619 tests), test:db PASS (6 pgTAP tests, exit 0). Other gates not rerun: nothing under src/ changed.
+Next: T3.1b (first migration with the tables of SPEC section 4).
 
 ### 2026-11-18 T2.21 UI rules and accessibility tests for gate G4 on every route (last task of Phase 2)
 Changed: ui-rules/{rules.ts,rules.selfcheck.spec.ts,routes.ts,routes.spec.ts}, src/ui/routes-coverage.test.ts (9 tests), docs/DECISIONS.md (D54).

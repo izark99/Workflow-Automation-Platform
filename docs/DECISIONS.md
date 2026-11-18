@@ -663,3 +663,13 @@ blank or mixed column in one month cannot change the types of another month.
 - Result of the first full run with the new rules: no defect in the product. The only failures were two premises of my new tests (a 120 ms delay for each call adds up to more than 300 ms on screens that make several calls; the components page has no sidebar). Both were corrected in the tests.
 - Not testable as a generic rule and covered by the e2e specs instead: the confirm dialogs that name the flow and the 30 days, the keyboard behaviour of the dropdown, date picker, dialog and tabs, and "no information by color alone" (words are in the text of every status, checked in the timeline and version tests).
 - The advisor was asked before ticking the last task of the phase (PROMPT section 5) and was unavailable (overloaded); the decision rests on the gates.
+
+## D55 Local Supabase tooling for gate G5 (T3.1a)
+
+- The Supabase CLI is a pinned devDependency (`supabase@3.2.0`), so `npm ci` installs it. No global install.
+- `npm run test:db` is `scripts/test-db.mjs`: start the Docker daemon if it is down, `supabase start`, `supabase db reset` (all migrations from zero), `supabase test db` (pgTAP files in `supabase/tests/database/`), then `supabase stop --no-backup`. The exit code is the one of the first failing step. `DB_KEEP_RUNNING=1` leaves the database up.
+- Only the database container runs (`-x gotrue,postgrest,kong`; realtime, studio, storage, mail, edge runtime and analytics are disabled in `supabase/config.toml`). The tests need `auth.users` and `auth.uid()`, which the database image provides, and they act as a user with `set local role authenticated` and `request.jwt.claims` (proved by `000-impersonation.test.sql`). Fewer images means fewer failed downloads.
+- Only an image download problem is retried (4 attempts, 15 s, 30 s, 45 s pauses; the registry answered "Data limit exceeded" and 429 in this environment). A migration error or a failing test stops at once.
+- Checked: a deliberate failing test and a broken migration each make `npm run test:db` exit 1.
+- Not an option: running the tests on the system PostgreSQL. G5 says "on a local Supabase".
+- `supabase/.temp` and `.branches` are ignored by `supabase/.gitignore`.
