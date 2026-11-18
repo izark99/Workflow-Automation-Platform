@@ -1,0 +1,89 @@
+import { formatMessage, placeholdersOf } from './format';
+import type { MessageParams } from './format';
+import { en } from './messages/en';
+import type { MessageKey } from './messages/en';
+import { vi } from './messages/vi';
+
+export type { MessageKey } from './messages/en';
+export type { MessageParams } from './format';
+
+/** The screen a key belongs to. The Texts tab filters by it (T4.7g). */
+export const KEY_PREFIXES = ['app', 'common', 'nav', 'signIn', 'theme', 'language', 'flows', 'builder', 'run', 'versions', 'refTables', 'admin', 'errors', 'engine', 'dev'] as const;
+
+export type Locale = 'en' | 'vi' | 'pseudo';
+export const PSEUDO_OPEN = '⟦';
+export const PSEUDO_CLOSE = '⟧';
+
+type Table = Partial<Record<string, string>>;
+
+const base: Record<'en' | 'vi', Table> = { en, vi };
+let locale: Locale = 'en';
+let overrides: Record<string, Table> = {};
+const listeners = new Set<() => void>();
+let version = 0;
+
+function changed(): void {
+  version++;
+  for (const l of listeners) l();
+}
+
+export function getLocale(): Locale {
+  return locale;
+}
+
+export function setLocale(next: Locale): void {
+  if (next === locale) return;
+  locale = next;
+  if (typeof document !== 'undefined') document.documentElement.lang = next === 'vi' ? 'vi' : 'en';
+  changed();
+}
+
+/**
+ * Edited texts by locale (`{ vi: { 'run.title': '…' } }`). An override whose placeholders differ from the default is
+ * dropped: the default may have changed since it was saved.
+ */
+export function setOverrides(next: Record<string, Table>): void {
+  const kept: Record<string, Table> = {};
+  for (const [loc, table] of Object.entries(next)) {
+    for (const [key, value] of Object.entries(table)) {
+      const fallback = base[loc as 'en' | 'vi']?.[key] ?? base.en[key];
+      if (value === undefined || fallback === undefined) continue;
+      if (placeholdersOf(value).join() !== placeholdersOf(fallback).join()) continue;
+      (kept[loc] ??= {})[key] = value;
+    }
+  }
+  overrides = kept;
+  changed();
+}
+
+/** The text of a key in a locale, with the fallbacks: override, locale, override of English, English, the key itself. */
+export function lookup(key: string, loc: 'en' | 'vi'): string {
+  return overrides[loc]?.[key] ?? base[loc][key] ?? overrides.en?.[key] ?? base.en[key] ?? key;
+}
+
+export function translate(key: MessageKey, params?: MessageParams, loc: Locale = locale): string {
+  if (loc === 'pseudo') return `${PSEUDO_OPEN}${formatMessage(lookup(key, 'en'), params, 'en')}${PSEUDO_CLOSE}`;
+  return formatMessage(lookup(key, loc), params, loc);
+}
+
+/** `t()` in the current locale. Prefer `useT()` in components, so they render again when the language changes. */
+export function t(key: MessageKey, params?: MessageParams): string {
+  return translate(key, params);
+}
+
+export function subscribe(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+/** Changes whenever the locale or the overrides change. */
+export function snapshot(): number {
+  return version;
+}
+
+/** Test helper: back to English with no overrides. */
+export function resetCatalog(): void {
+  locale = 'en';
+  overrides = {};
+  changed();
+}

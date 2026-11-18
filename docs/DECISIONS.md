@@ -824,3 +824,12 @@ blank or mixed column in one month cannot change the types of another month.
   is not under the app's control at run time. The R2 option of D70 remains the way out if either becomes a problem.
 - Subresource integrity is not used: a classic worker's `importScripts` and DuckDB's own wasm fetch do not take an
   integrity value.
+
+## D72 Message catalog design (Phase 4, T4.7a1)
+
+- Keys are flat and dotted, declared `as const` in `src/ui/i18n/messages/en.ts`; `MessageKey` is derived from them. The first segment is the screen and comes from the fixed list `KEY_PREFIXES` (a unit test checks it). The Texts tab filters by that prefix (T4.7g) and `ui_texts` stores `(key, locale, value)` directly.
+- A text never holds a function. Dynamic values are `{name}` placeholders, formatted by the caller and passed as strings. Plural forms use `{count, plural, one {# row} other {# rows}}` and `Intl.PluralRules`; no i18n library is added. A missing parameter stays visible as `{name}`.
+- Lookup order: override of the locale, text of the locale, override of `en`, text of `en`, the key. An override whose placeholders differ from the default is dropped when overrides are set, because the default may have changed after the override was saved.
+- `useT()` uses `useSyncExternalStore`, so a language switch renders again without remounting (a remount would lose unsaved builder or grid state). Code outside React returns keys and parameters; the component translates them. The module-level `const t = strings.x` pattern is removed as screens migrate.
+- The pseudo-locale wraps every English text in `⟦` and `⟧` (no square brackets: they are formula syntax). It exists for the UI rule of T4.7a2 and is never offered in the language switch.
+- `vi` is typed `Record<MessageKey, string>` in T4.7e, so a key without a Vietnamese value fails the type check. The runtime fallback to English stays for stored overrides.

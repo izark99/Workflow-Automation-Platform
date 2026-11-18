@@ -107,7 +107,8 @@ Info button (SPEC 11.2)
 - [x] T4.6c Run, Versions, Reference tables, Admin, dialogs and the sign-in screen: the same.
 
 Texts (SPEC 11.3)
-- [ ] T4.7a Message catalog in `src/ui/i18n/`: typed keys, `{name}` placeholders, plural forms, `t()` and a React hook, `en` as default and fallback. A pseudo-locale for tests wraps every value in markers; a UI rule renders every route in it and fails on visible text outside the markers, except regions marked as user data (`data-user-content`). Migrate the shell and the sign-in screen in this task to prove the path; the rule checks only migrated routes until T4.7d.
+- [x] T4.7a1 Message catalog core in `src/ui/i18n/`: flat dotted keys with a fixed list of screen prefixes, `{name}` placeholders, plural forms (`Intl.PluralRules`), `placeholdersOf`, lookup order (override of the locale, locale, override of `en`, `en`, key), `en` as default and fallback, pseudo-locale (markers `⟦` `⟧`), `t()` and `useT()` hook. Unit tests.
+- [ ] T4.7a2 Migrate the shell, the shared components (InfoTip, Field, ErrorState, Dropdown, Dialog and the rest that the shell and the sign-in screen render) and the sign-in screen to catalog keys, with the pseudo-locale UI rule (its own test per route, markers and `data-user-content`, `placeholder` attributes) and a static scan of migrated files for literal UI text. The rule checks only migrated routes until T4.7c. Keep the "sign-in screen with an error" route out of the rule until T4.7d (log it).
 - [ ] T4.7b Migrate the Flows screen, the builder, every settings form and the formula editor messages to catalog keys. Remove their entries from `strings.ts`.
 - [ ] T4.7c Migrate Run, Versions, Reference tables, Admin and every dialog. Remove `strings.ts` when it is empty. The pseudo-locale rule now covers every route.
 - [ ] T4.7d Errors as codes: the store, the auth service and the engine return a code with parameters; the UI shows the catalog text for the code. The engine keeps its English text as the fallback and imports nothing from the UI. Unit test: every code has an `en` text with the same placeholders.
@@ -167,6 +168,13 @@ None. The Pages file size blocker of T3.9 is solved by D71.
 ## Log
 
 Newest first.
+
+### 2026-11-18 T4.7a1 Message catalog core (turn 9)
+Advisor consulted (catalog design, hard to undo). Decisions (also in docs/DECISIONS.md D72): flat dotted keys, first segment a fixed screen prefix (`app common nav signIn theme language flows builder run versions refTables admin errors engine dev`); no functions in texts, only `{name}` and `{count, plural, one {# row} other {# rows}}`; lookup order override of the locale, locale, override of `en`, `en`, the key; an override with other placeholders than the default is dropped; `useT()` on `useSyncExternalStore` so a language switch never remounts; pseudo-locale wraps texts in `⟦ ⟧`; `vi` typed `Record<MessageKey, string>` in T4.7e; `lang` set on `<html>`.
+Changed: src/ui/i18n/{format.ts,catalog.ts,react.ts,index.ts,i18n.test.ts,messages/en.ts,messages/vi.ts}. Only two keys exist yet (`app.brand`, `common.infoTip.about`); nothing in the app uses `t()` yet.
+Split: T4.7a became T4.7a1 (this) and T4.7a2 (migrate shell, shared components, sign-in, plus the pseudo-locale rule), because the whole was over 400 lines. T4.7b and T4.7c will be split when they start.
+Gates run: check PASS (743 tests, exit 0, 0 lint warnings). No UI change, so no e2e or ui-rules run.
+Next: T4.7a2.
 
 ### 2026-11-18 T4.6c Info buttons on the remaining screens (turn 8)
 Changed: Flows (the admin note joins the title's info button text for admins), Admin (the group hint is an info button after "Groups"; the invite hint is the hint of the Email field in the Add user dialog), sign-in screen (subtitle is an info button after the title), sign-in.module.css, ui-rules/rules.ts (the hint rule also fails on a visible `subtitle` class), e2e/sign-in.spec.ts and ui-rules/routes.ts (Sign in button locators `exact: true`, because "About Sign in" matches the name).
