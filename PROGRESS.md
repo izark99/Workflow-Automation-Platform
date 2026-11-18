@@ -86,7 +86,7 @@ before it passes, except where a task says otherwise.
 - [x] T3.7a A profile appears when an Auth user is created (trigger, role always `user`, never taken from user-editable metadata; the first admin is made by a documented SQL step in T3.9), with pgTAP tests; the new-user message of `saveUser` says so.
 - [x] T3.7b1 Auth service layer: `AuthService` interface, `SupabaseAuth`, an in-memory `MemoryAuth` for the local build and tests, messages for sign-in problems, `createBackend()` (store and auth together), unit tests, and an integration test of `SupabaseAuth` against the real local Auth service.
 - [x] T3.7b2 Sign-in screen and session handling in the app: gate that shows the sign-in screen when there is no session (only when an auth service exists; the local store keeps working without sign-in), session restore, sign out in the shell, "your session ended" message; the screen is covered by the UI rules and an e2e test.
-- [ ] T3.8 Keep-alive: a small scheduled request that touches the database once a day, as code plus instructions.
+- [x] T3.8 Keep-alive: a small scheduled request that touches the database once a day, as code plus instructions.
 - [ ] T3.9 `docs/DEPLOY.md`: steps for a human to create the Supabase project, run migrations, set variables on Cloudflare Pages, and create the first admin.
 
 ## Needs Harold
@@ -110,6 +110,13 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-18 T3.8 Keep-alive
+Changed: supabase/migrations/20261118000009_keep_alive.sql (`keep_alive()`), supabase/tests/database/090-keep-alive.test.sql (5 assertions), scripts/keep-alive.ts (+7 unit tests), integration/keep-alive.test.ts (3 tests on the real local stack), .github/workflows/keep-alive.yml, docs/KEEP_ALIVE.md, docs/DECISIONS.md (D69).
+How: see D69. Nothing was deployed or run against a real project; the workflow only runs after a human adds the secrets (docs/KEEP_ALIVE.md).
+My correction before the commit: the workflow first said `permissions: {}`, which would make the checkout fail in a private repository; it is `contents: read` now.
+Gates run: check PASS (672 tests), test:db PASS (10 files, exit 0), test:store PASS (3 files, 21 tests, exit 0). The UI gates were not rerun: nothing under src/ or the app changed.
+Next: T3.9 (docs/DEPLOY.md), then the final `npm ci` and `npm run gates`.
 
 ### 2026-11-18 T3.7b2 Sign-in screen and session handling in the app
 Changed: src/ui/auth-gate.tsx, auth-gate-logic.ts (+8 tests), sign-in.tsx, sign-in.module.css, shell.tsx (Sign out), app.tsx (`createBackend`, gate only with an auth service), `Field` `secret` option, strings, e2e/sign-in.spec.ts (8 tests), ui-rules/routes.ts (3 sign-in states), docs/DECISIONS.md (D68).
