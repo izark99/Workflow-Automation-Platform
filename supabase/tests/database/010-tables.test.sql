@@ -6,7 +6,7 @@ select has_table('public', t, t || ' exists')
 from unnest(array['profiles','groups','group_members','flows','flow_versions',
                   'flow_group_access','ref_tables','ref_table_versions','run_log']) as t;
 
-select columns_are('public', 'profiles', array['id','name','email','role'], 'profiles columns');
+select columns_are('public', 'profiles', array['id','name','email','role','locked_at','must_change_password'], 'profiles columns');
 select columns_are('public', 'groups', array['id','name'], 'groups columns');
 select columns_are('public', 'group_members', array['group_id','user_id'], 'group_members columns');
 select columns_are('public', 'flows',
