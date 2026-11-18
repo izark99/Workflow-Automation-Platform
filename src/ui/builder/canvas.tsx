@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import type { FlowDefinition, NodeType } from '../../engine/flow/types';
 import { NODE_TYPES } from '../../engine/flow/types';
 import { ErrorState } from '../components';
-import { strings } from '../strings';
+import { translate, useT } from '../i18n';
 import { useAppTheme } from '../theme-context';
 import { addStep, STEP_CATALOG, CARD_HEIGHT, CARD_WIDTH, connectSteps, deleteEdges, deleteSteps, inputHandlesOf, moveStep, nextFreePosition, outputHandlesOf, resolvedEdges, stepNumbers } from './graph';
 import { StepCard } from './step-card';
@@ -37,6 +37,7 @@ function Inner({ definition, onChange, selection, onSelect, message, onMessage, 
   const { screenToFlowPosition } = useReactFlow();
   // @xyflow/react 13 has no colorMode prop: its stylesheet reads a `light` or `dark` class on an ancestor of .react-flow.
   const { theme } = useAppTheme();
+  const t = useT();
 
   const nodes: StepCardNode[] = useMemo(() => {
     const numbers = stepNumbers(definition);
@@ -45,10 +46,10 @@ function Inner({ definition, onChange, selection, onSelect, message, onMessage, 
       type: 'step' as const,
       position: n.position ?? { x: 0, y: i * (CARD_HEIGHT + 40) },
       selected: selection.nodes.includes(n.id),
-      ariaLabel: `Step ${numbers.get(n.id) ?? i + 1}: ${n.label ?? n.id}, ${STEP_CATALOG[n.type].label}`,
+      ariaLabel: t('builder.stepAria', { number: numbers.get(n.id) ?? i + 1, name: n.label ?? n.id, type: STEP_CATALOG[n.type].label }),
       data: { step: n, number: numbers.get(n.id) ?? i + 1, inputs: inputHandlesOf(definition, n), outputs: outputHandlesOf(n.type) },
     }));
-  }, [definition, selection.nodes]);
+  }, [definition, selection.nodes, t]);
 
   const edges: Edge[] = useMemo(
     () => resolvedEdges(definition).map((e) => ({ id: e.id, source: e.source, sourceHandle: e.sourceHandle, target: e.target, targetHandle: e.targetHandle, type: 'smoothstep', selected: selection.edges.includes(e.id) })),
@@ -147,14 +148,14 @@ function Inner({ definition, onChange, selection, onSelect, message, onMessage, 
         fitView={definition.nodes.length > 0}
         fitViewOptions={{ padding: 0.2, maxZoom: 1 }}
         proOptions={{ hideAttribution: false }}
-        aria-label={strings.builder.canvas}
+        aria-label={t('builder.canvas')}
       >
         <Background variant={BackgroundVariant.Dots} gap={20} />
         <ZoomControls summary={summary(definition)} />
       </ReactFlow>
       {message ? (
         <div className={styles.message}>
-          <ErrorState what={strings.builder.connectFailed} next={message} />
+          <ErrorState what={t('builder.connectFailed')} next={message} />
         </div>
       ) : null}
     </div>
@@ -164,7 +165,7 @@ function Inner({ definition, onChange, selection, onSelect, message, onMessage, 
 function summary(def: FlowDefinition): string {
   const steps = def.nodes.length;
   const outputs = def.nodes.filter((n) => n.type === 'output').length;
-  return `${steps} ${steps === 1 ? 'step' : 'steps'}, ${outputs} output ${outputs === 1 ? 'sheet' : 'sheets'}`;
+  return translate('flows.steps', { steps, outputs });
 }
 
 export function Canvas(props: CanvasProps) {

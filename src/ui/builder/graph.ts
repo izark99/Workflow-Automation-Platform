@@ -1,5 +1,7 @@
 // Pure operations on the flow definition. The canvas reads and writes the same JSON that the engine runs (one format).
-import { FLOW_SCHEMA_VERSION, NODE_PORTS, VARIADIC_HANDLE } from '../../engine/flow/types';
+import { FLOW_SCHEMA_VERSION, NODE_PORTS, NODE_TYPES, VARIADIC_HANDLE } from '../../engine/flow/types';
+import { translate } from '../i18n';
+import type { MessageKey } from '../i18n';
 import type { FlowDefinition, FlowEdge, FlowNode, NodeType } from '../../engine/flow/types';
 
 export interface StepInfo {
@@ -7,27 +9,33 @@ export interface StepInfo {
   hint: string;
 }
 
-export const STEP_CATALOG: Record<NodeType, StepInfo> = {
-  input_file: { label: 'Input file', hint: 'Loads one sheet of an xlsx file, or a csv file.' },
-  output: { label: 'Output', hint: 'Writes the result to a sheet or a csv file.' },
-  column_mapping: { label: 'Column mapping', hint: 'Selects, renames and types columns.' },
-  filter: { label: 'Filter', hint: 'Keeps the rows that match a condition.' },
-  formula_column: { label: 'Formula column', hint: 'Adds or replaces a column from a formula.' },
-  unpivot: { label: 'Unpivot', hint: 'Turns many columns into rows.' },
-  pivot: { label: 'Pivot', hint: 'Turns row values into columns.' },
-  group_by: { label: 'Group by', hint: 'Aggregates rows.' },
-  lookup_join: { label: 'Lookup / Join', hint: 'Adds columns from a reference table or another step.' },
-  append: { label: 'Append', hint: 'Stacks two or more inputs.' },
-  sql: { label: 'SQL', hint: 'Runs free SQL on the steps before it.' },
-};
+/** Name and one-line description of every step type. The texts come from the catalog, read when they are used. */
+export const STEP_CATALOG = Object.fromEntries(
+  NODE_TYPES.map((type) => [
+    type,
+    {
+      get label(): string {
+        return translate(`builder.step.${type}.label`);
+      },
+      get hint(): string {
+        return translate(`builder.step.${type}.hint`);
+      },
+    },
+  ]),
+) as Record<NodeType, StepInfo>;
 
 /** The groups of the step list, in the order of the design. */
 export const STEP_GROUPS: { label: string; types: NodeType[] }[] = [
-  { label: 'Files', types: ['input_file', 'output'] },
-  { label: 'Shape', types: ['column_mapping', 'filter', 'formula_column', 'unpivot', 'pivot', 'group_by'] },
-  { label: 'Combine', types: ['lookup_join', 'append'] },
-  { label: 'Advanced', types: ['sql'] },
-];
+  { id: 'files', types: ['input_file', 'output'] },
+  { id: 'shape', types: ['column_mapping', 'filter', 'formula_column', 'unpivot', 'pivot', 'group_by'] },
+  { id: 'combine', types: ['lookup_join', 'append'] },
+  { id: 'advanced', types: ['sql'] },
+].map((g) => ({
+  types: g.types as NodeType[],
+  get label(): string {
+    return translate(`builder.stepGroup.${g.id}` as MessageKey);
+  },
+}));
 
 export const CARD_WIDTH = 240;
 export const CARD_HEIGHT = 56;
@@ -177,17 +185,17 @@ function reaches(def: FlowDefinition, from: string, to: string): boolean {
 export function connectSteps(def: FlowDefinition, c: ConnectionLike): ConnectResult {
   const src = find(def, c.source);
   const tgt = find(def, c.target);
-  if (!src || !tgt) return { ok: false, reason: 'One of the steps does not exist any more. Reload the flow and try again.' };
-  if (src.id === tgt.id) return { ok: false, reason: 'A step cannot feed itself. Connect it to another step.' };
+  if (!src || !tgt) return { ok: false, reason: translate('builder.connect.gone') };
+  if (src.id === tgt.id) return { ok: false, reason: translate('builder.connect.self') };
   const out = c.sourceHandle ?? outputHandlesOf(src.type)[0];
-  if (!out || !outputHandlesOf(src.type).includes(out)) return { ok: false, reason: `${src.label ?? src.id} has no output to connect from. Start the connection at a step that has an output.` };
+  if (!out || !outputHandlesOf(src.type).includes(out)) return { ok: false, reason: translate('builder.connect.noOutput', { name: src.label ?? src.id }) };
   const inHandles = inputHandlesOf(def, tgt);
   const into = c.targetHandle ?? inHandles[0];
-  if (!into || !inHandles.includes(into)) return { ok: false, reason: `${tgt.label ?? tgt.id} takes no input here. Connect to a step that has an input.` };
+  if (!into || !inHandles.includes(into)) return { ok: false, reason: translate('builder.connect.noInput', { name: tgt.label ?? tgt.id }) };
   if (resolvedEdges(def).some((e) => e.target === tgt.id && e.targetHandle === into)) {
-    return { ok: false, reason: `${tgt.label ?? tgt.id} already has an input on that port. Delete the existing connection first, or use another port.` };
+    return { ok: false, reason: translate('builder.connect.taken', { name: tgt.label ?? tgt.id }) };
   }
-  if (reaches(def, tgt.id, src.id)) return { ok: false, reason: `Connecting ${src.label ?? src.id} to ${tgt.label ?? tgt.id} would make a loop. A flow runs from top to bottom without loops.` };
+  if (reaches(def, tgt.id, src.id)) return { ok: false, reason: translate('builder.connect.loop', { from: src.label ?? src.id, to: tgt.label ?? tgt.id }) };
   const edge: FlowEdge = { source: src.id, sourceHandle: out, target: tgt.id, targetHandle: into };
   return { ok: true, definition: { ...def, edges: [...def.edges, { ...edge, id: edgeId(edge) }] } };
 }
@@ -228,10 +236,13 @@ export interface SourceOption {
   label: string;
 }
 
-const HANDLE_TITLES: Record<string, string> = { in: 'Input', left: 'Left input', right: 'Right input', match: 'match', nomatch: 'no match' };
+const handleTitle = (handle: string): string | undefined => {
+  const keys: Record<string, MessageKey> = { in: 'builder.port.input', left: 'builder.port.left', right: 'builder.port.right', match: 'builder.port.match', nomatch: 'builder.port.noMatch' };
+  return keys[handle] ? translate(keys[handle]!) : undefined;
+};
 
 /** The name of an input port for a person: `Input`, `Left input`, `Input 2`. */
-export const inputTitle = (handle: string): string => HANDLE_TITLES[handle] ?? (/^in(\d+)$/.test(handle) ? `Input ${handle.slice(2)}` : handle);
+export const inputTitle = (handle: string): string => handleTitle(handle) ?? (/^in(\d+)$/.test(handle) ? translate('builder.port.numbered', { n: handle.slice(2) }) : handle);
 
 /** The value of the connection into an input port, or an empty text. */
 export function currentSource(def: FlowDefinition, targetId: string, handle: string): string {
@@ -245,11 +256,11 @@ export function currentSource(def: FlowDefinition, targetId: string, handle: str
  */
 export function sourceOptions(def: FlowDefinition, targetId: string): SourceOption[] {
   const numbers = stepNumbers(def);
-  const options: SourceOption[] = [{ value: '', label: 'None' }];
+  const options: SourceOption[] = [{ value: '', label: translate('builder.sourceNone') }];
   for (const n of def.nodes) {
     if (n.id === targetId || reaches(def, targetId, n.id)) continue;
     const outs = outputHandlesOf(n.type);
-    for (const h of outs) options.push({ value: `${n.id}:${h}`, label: `${numbers.get(n.id)}. ${n.label ?? n.id}${outs.length > 1 ? ` (${HANDLE_TITLES[h] ?? h})` : ''}` });
+    for (const h of outs) options.push({ value: `${n.id}:${h}`, label: translate('builder.stepTitle', { number: numbers.get(n.id) ?? '', name: `${n.label ?? n.id}${outs.length > 1 ? ` (${handleTitle(h) ?? h})` : ''}` }) });
   }
   return options;
 }

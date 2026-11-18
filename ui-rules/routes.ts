@@ -29,6 +29,8 @@ export interface RuleRoute {
   skeleton?: boolean;
   /** The route shows a skeleton while it loads, but not in a table (the Run screen): only `aria-busy` and the delay are checked. */
   busy?: boolean;
+  /** False when the route's own steps need the English texts, so the pseudo-locale check skips it. */
+  pseudo?: boolean;
   /** Runs before the page loads, for example to put data into the store. */
   before?: (page: Page) => Promise<void>;
   /** Puts the page in the state to check after it has loaded, for example by selecting a step. */
@@ -288,6 +290,7 @@ export const ROUTES: RuleRoute[] = [
     path: '/flows/flow-timesheet/versions',
     name: '/flows/flow-timesheet/versions (new version dialog with a clash)',
     sidebar: true,
+    pseudo: false, // its steps click buttons by their exact English names
     // The dialog with the date picker and the message about a start day inside an existing version.
     prepare: async (page) => {
       await page.getByRole('button', { name: 'New version', exact: true }).click();

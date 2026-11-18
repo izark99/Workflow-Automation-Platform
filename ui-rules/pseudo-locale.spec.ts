@@ -9,7 +9,10 @@ import { untranslatedText } from './rules';
 // the sign-in screens. "sign-in screen with an error" waits for T4.7d (errors as codes: the stand-in auth service still
 // returns English text); T4.7c ends with `body` on every route.
 const scopeOf = (route: (typeof ROUTES)[number]): string | null => {
+  if (route.pseudo === false) return null;
   if (route.path === '/flows' && !route.name && route.sidebar) return 'body'; // T4.7b1
+  // T4.7b2: the builder, with a step selected and on the Test tab. The forms (Configure tab) follow in T4.7b3 and T4.7b4.
+  if (route.path.endsWith('/versions/4') && (!route.name || route.name.includes('(Test tab)'))) return 'body';
   if (route.sidebar && route.nav !== false) return 'nav[aria-label="⟦Main⟧"]';
   if (route.name === 'sign-in screen' || route.name === 'sign-in screen after a session ended') return 'body';
   return null;

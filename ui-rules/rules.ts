@@ -220,7 +220,18 @@ export async function untranslatedText(page: Page, selector: string): Promise<st
     const bad: string[] = [];
     const root = document.querySelector(sel);
     if (!root) return [`no element matches ${sel}`];
-    const outside = (text: string): boolean => /\p{L}/u.test(text.replace(/\u27E6[^\u27E7]*\u27E7/gu, ''));
+    // Markers can nest (a text passed as a parameter of another text): strip the innermost pairs until none are left.
+    // Dates such as 30 Sep 2026 keep their English month name until T4.7e puts month names in the catalog.
+    const date = /\b\d{1,2} (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d{4}\b/g;
+    const outside = (text: string): boolean => {
+      let rest = text.replace(date, '');
+      for (let prev = ''; prev !== rest; ) {
+        prev = rest;
+        rest = rest.replace(/\u27E6[^\u27E6\u27E7]*\u27E7/gu, '');
+      }
+      return /\p{L}/u.test(rest);
+    };
+    const skip = '[data-user-content], .react-flow__attribution'; // user data, and the React Flow attribution link
     const visible = (el: Element): boolean => {
       const r = el.getBoundingClientRect();
       const s = getComputedStyle(el);
@@ -230,11 +241,11 @@ export async function untranslatedText(page: Page, selector: string): Promise<st
     for (let n = walker.nextNode(); n; n = walker.nextNode()) {
       const el = n.parentElement;
       const text = n.textContent ?? '';
-      if (!el || !text.trim() || el.closest('[data-user-content]') || el.closest('script, style') || !visible(el)) continue;
+      if (!el || !text.trim() || el.closest(skip) || el.closest('script, style') || !visible(el)) continue;
       if (outside(text)) bad.push(`text outside the catalog: "${text.trim().slice(0, 60)}"`);
     }
     for (const el of [root, ...root.querySelectorAll('*')]) {
-      if (el.closest('[data-user-content]') || !visible(el)) continue;
+      if (el.closest(skip) || !visible(el)) continue;
       for (const attr of ['placeholder', 'aria-label', 'title', 'alt']) {
         const value = el.getAttribute(attr);
         if (value && outside(value)) bad.push(`${attr} outside the catalog: "${value.slice(0, 60)}"`);

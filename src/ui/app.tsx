@@ -13,12 +13,14 @@ import { DevComponents } from './screens/dev-components';
 import { AuthGate } from './auth-gate';
 import { Shell } from './shell';
 import { StoreProvider } from './store-context';
+import { useT } from './i18n';
 import { ThemeProvider } from './theme-context';
 
 // The components page is development only: it is built in when VITE_DEV_ROUTES=true (the dev server, the UI-rules and e2e builds).
 const DEV_ROUTES = import.meta.env.DEV || import.meta.env.VITE_DEV_ROUTES === 'true';
 
 export function App({ store, auth }: { store?: DataStore; auth?: AuthService | null }) {
+  useT(); // re-renders the whole tree when the language or an edited text changes, also parts that read texts outside React
   const backend = useMemo(() => (store ? { store, auth: auth ?? null } : createBackend()), [store, auth]);
   const routes = (
     <BrowserRouter>

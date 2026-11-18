@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { formatDate } from '../../engine/versions';
+import { useT } from '../i18n';
 import { addMonths, dayLabel, monthCells, monthOf, monthTitle, moveDate, WEEKDAYS } from './date-logic';
 import type { DateKey } from './date-logic';
 import { Icon } from './icons';
@@ -22,6 +23,7 @@ const KEYS: DateKey[] = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Pag
 
 /** Button showing `30 Sep 2026` and a popover month grid that starts on Monday. Opens upward when there is no room below. */
 export function DatePicker({ label, value, onChange, width = 180, disabled = false, defaultOpen = false }: DatePickerProps) {
+  const t = useT();
   const [open, setOpen] = useState(defaultOpen);
   const skipFocus = useRef(defaultOpen);
   const [focused, setFocused] = useState(value);
@@ -86,7 +88,7 @@ export function DatePicker({ label, value, onChange, width = 180, disabled = fal
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-controls={open ? dialogId : undefined}
-        aria-label={`${label}: ${formatDate(value)}. Change date`}
+        aria-label={t('common.datePicker.change', { label, date: formatDate(value) })}
         disabled={disabled}
         onClick={() => (open ? close(false) : openPicker())}
       >
@@ -94,15 +96,15 @@ export function DatePicker({ label, value, onChange, width = 180, disabled = fal
         {formatDate(value)}
       </button>
       {open ? (
-        <div id={dialogId} role="dialog" aria-label={`Choose ${label.toLowerCase()}`} className={`${styles.popover} ${styles.calendar} ${up ? styles.up : ''}`} onKeyDown={onKey}>
+        <div id={dialogId} role="dialog" aria-label={t('common.datePicker.choose', { label: label.toLowerCase() })} className={`${styles.popover} ${styles.calendar} ${up ? styles.up : ''}`} onKeyDown={onKey}>
           <div className={styles.monthRow}>
-            <button type="button" className={styles.nav} aria-label="Previous month" onClick={() => step(-1)}>
+            <button type="button" className={styles.nav} aria-label={t('common.datePicker.previousMonth')} onClick={() => step(-1)}>
               <Icon name="chevronLeft" />
             </button>
             <span style={{ fontWeight: 700 }} aria-live="polite">
               {monthTitle(shown)}
             </span>
-            <button type="button" className={styles.nav} aria-label="Next month" onClick={() => step(1)}>
+            <button type="button" className={styles.nav} aria-label={t('common.datePicker.nextMonth')} onClick={() => step(1)}>
               <Icon name="chevronRight" />
             </button>
           </div>

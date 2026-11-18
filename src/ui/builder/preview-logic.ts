@@ -1,6 +1,7 @@
 import { formatDate } from '../../engine/versions';
 import type { Cell, ColumnType } from '../../engine/types';
 import type { FlowDefinition, FlowNode } from '../../engine/flow/types';
+import { translate } from '../i18n';
 import { outputHandlesOf, resolvedEdges, upstreamOf } from './graph';
 
 export type PreviewTarget =
@@ -19,7 +20,7 @@ export function previewTarget(def: FlowDefinition, step: FlowNode, handle?: stri
   }
   const feed = resolvedEdges(def).find((e) => e.target === step.id);
   if (!feed) {
-    return { kind: 'needs_input', message: 'This step has no input yet. Choose the step it reads from on the Setup tab, then preview again.' };
+    return { kind: 'needs_input', message: translate('builder.preview.needsInput') };
   }
   return { kind: 'ready', definition: upstreamOf(def, [step.id]), nodeId: step.id, handle: 'result', handles: ['result'] };
 }

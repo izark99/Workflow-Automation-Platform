@@ -3,7 +3,7 @@ import type { FlowDefinition, FlowNode } from '../../engine/flow/types';
 import { NODE_PORTS } from '../../engine/flow/types';
 import type { RefTable } from '../../engine/versions';
 import { Button, Dropdown, ErrorState, Field, InfoTip, Tabs } from '../components';
-import { settingsStrings as t } from '../strings';
+import { useT } from '../i18n';
 import { currentSource, deleteSteps, updateSettings, inputHandlesOf, inputTitle, renameStep, setInput, sourceOptions, STEP_CATALOG, stepNumbers } from './graph';
 import { FORMS } from './forms';
 import type { FormContext } from './forms/types';
@@ -27,13 +27,14 @@ export interface SettingsPanelProps {
 
 /** The 380 px panel at the right: the selected step with the tabs Setup, Configure and Test. */
 export function SettingsPanel({ definition, step, onChange, onDeleted, readOnly, testFiles, onTestFile, refTables }: SettingsPanelProps) {
+  const t = useT();
   const [tab, setTab] = useState<SettingsTab>('setup');
   const [error, setError] = useState<string | null>(null);
 
   if (!step) {
     return (
-      <aside aria-label={t.panel} className={styles.panel}>
-        <p className={styles.note}>{t.none}</p>
+      <aside aria-label={t('builder.settings.panel')} className={styles.panel}>
+        <p className={styles.note}>{t('builder.settings.none')}</p>
       </aside>
     );
   }
@@ -41,26 +42,26 @@ export function SettingsPanel({ definition, step, onChange, onDeleted, readOnly,
   const label = step.label ?? step.id;
 
   return (
-    <aside aria-label={t.panel} className={styles.panel}>
+    <aside aria-label={t('builder.settings.panel')} className={styles.panel}>
       <div className={styles.head}>
         <div className={styles.titleRow}>
-          <h2>{`${number}. ${label}`}</h2>
-          <InfoTip label={label}>{`${STEP_CATALOG[step.type].label}. ${STEP_CATALOG[step.type].hint}`}</InfoTip>
+          <h2 data-user-content>{`${number}. ${label}`}</h2>
+          <InfoTip label={label}>{t('builder.stepInfo', { type: STEP_CATALOG[step.type].label, hint: STEP_CATALOG[step.type].hint })}</InfoTip>
         </div>
         <p className={styles.note}>{STEP_CATALOG[step.type].label}</p>
       </div>
       <Tabs
-        label={t.tabsLabel}
+        label={t('builder.settings.tabsLabel')}
         tabs={[
-          { id: 'setup', label: t.tabs.setup },
-          { id: 'configure', label: t.tabs.configure },
-          { id: 'test', label: t.tabs.test },
+          { id: 'setup', label: t('builder.settings.tabs.setup') },
+          { id: 'configure', label: t('builder.settings.tabs.configure') },
+          { id: 'test', label: t('builder.settings.tabs.test') },
         ]}
         selected={tab}
         onSelect={(id) => setTab(id as SettingsTab)}
       >
         <div className={styles.stack}>
-          {readOnly ? <p className={styles.note}>{t.readOnly}</p> : null}
+          {readOnly ? <p className={styles.note}>{t('builder.settings.readOnly')}</p> : null}
           {tab === 'setup' ? (
             <SetupTab key={step.id} definition={definition} step={step} onChange={onChange} readOnly={readOnly} error={error} setError={setError} />
           ) : null}
@@ -77,7 +78,7 @@ export function SettingsPanel({ definition, step, onChange, onDeleted, readOnly,
             onDeleted();
           }}
         >
-          {t.deleteStep}
+          {t('builder.settings.deleteStep')}
         </Button>
       </div>
     </aside>
@@ -85,6 +86,7 @@ export function SettingsPanel({ definition, step, onChange, onDeleted, readOnly,
 }
 
 function SetupTab({ definition, step, onChange, readOnly, error, setError }: { definition: FlowDefinition; step: FlowNode } & Pick<SettingsPanelProps, 'onChange' | 'readOnly'> & { error: string | null; setError: (e: string | null) => void }) {
+  const t = useT();
   const [name, setName] = useState(step.label ?? step.id);
   const [nameError, setNameError] = useState(false);
   const ports = NODE_PORTS[step.type].inputs;
@@ -94,11 +96,11 @@ function SetupTab({ definition, step, onChange, readOnly, error, setError }: { d
   return (
     <>
       <Field
-        label={t.stepName}
-        hint={t.stepNameHint}
+        label={t('builder.settings.stepName')}
+        hint={t('builder.settings.stepNameHint')}
         value={name}
         disabled={readOnly}
-        error={nameError ? `${t.emptyStepName} ${t.emptyStepNameNext}` : undefined}
+        error={nameError ? `${t('builder.settings.emptyStepName')} ${t('builder.settings.emptyStepNameNext')}` : undefined}
         onChange={(e) => {
           setName(e.target.value);
           const clean = e.target.value.trim();
@@ -106,12 +108,12 @@ function SetupTab({ definition, step, onChange, readOnly, error, setError }: { d
           if (clean !== '') onChange(renameStep(definition, step.id, clean));
         }}
       />
-      {inputs.length === 0 ? <p className={styles.note}>{t.noInputs}</p> : null}
+      {inputs.length === 0 ? <p className={styles.note}>{t('builder.settings.noInputs')}</p> : null}
       {inputs.map((h) => (
         <div key={h} className={styles.field}>
-          <span className={styles.fieldLabel}>{inputs.length > 1 ? `${t.inputFrom} (${inputTitle(h).toLowerCase()})` : t.inputFrom}</span>
+          <span className={styles.fieldLabel}>{inputs.length > 1 ? `${t('builder.settings.inputFrom')} (${inputTitle(h).toLowerCase()})` : t('builder.settings.inputFrom')}</span>
           <Dropdown
-            label={inputs.length > 1 ? `${t.inputFrom}, ${inputTitle(h).toLowerCase()}` : t.inputFrom}
+            label={inputs.length > 1 ? `${t('builder.settings.inputFrom')}, ${inputTitle(h).toLowerCase()}` : t('builder.settings.inputFrom')}
             options={options}
             value={currentSource(definition, step.id, h)}
             disabled={readOnly}
@@ -126,7 +128,7 @@ function SetupTab({ definition, step, onChange, readOnly, error, setError }: { d
           />
         </div>
       ))}
-      {error ? <ErrorState what={t.connectFailed} next={error} /> : null}
+      {error ? <ErrorState what={t('builder.settings.connectFailed')} next={error} /> : null}
     </>
   );
 }

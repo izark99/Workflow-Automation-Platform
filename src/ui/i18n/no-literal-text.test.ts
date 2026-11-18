@@ -12,11 +12,20 @@ const MIGRATED = [
   'src/ui/theme-switch.tsx',
   'src/ui/components/info-tip.tsx',
   'src/ui/components/toast.tsx',
+  'src/ui/components/date-picker.tsx',
   'src/ui/components/page-header.tsx',
   'src/ui/components/screen-frame.tsx',
   'src/ui/components/field.tsx',
   'src/ui/components/states.tsx',
   'src/ui/screens/flows.tsx',
+  'src/ui/builder/builder-screen.tsx',
+  'src/ui/builder/builder-dialogs.tsx',
+  'src/ui/builder/canvas.tsx',
+  'src/ui/builder/zoom-controls.tsx',
+  'src/ui/builder/step-list.tsx',
+  'src/ui/builder/step-card.tsx',
+  'src/ui/builder/settings-panel.tsx',
+  'src/ui/builder/step-preview.tsx',
 ];
 
 const TEXT_ATTRIBUTES = new Set(['label', 'title', 'placeholder', 'aria-label', 'alt', 'aria-description', 'text', 'what', 'next']);
