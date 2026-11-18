@@ -19,6 +19,7 @@ const MIGRATED = [
   'src/ui/components/states.tsx',
   'src/ui/screens/flows.tsx',
   'src/ui/screens/run.tsx',
+  'src/ui/screens/reference-tables.tsx',
   'src/ui/screens/versions.tsx',
   'src/ui/screens/versions-dialogs.tsx',
   'src/ui/builder/builder-screen.tsx',

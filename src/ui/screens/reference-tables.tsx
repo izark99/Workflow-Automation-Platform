@@ -7,9 +7,8 @@ import type { Cell } from '../../engine/types';
 import type { RefTableRecord, RefTableVersionRecord } from '../../store/types';
 import { NewVersionDialog, PublishDialog } from '../builder/builder-dialogs';
 import { publishSummaryFor, versionOptionLabel } from '../builder/version-logic';
-import { translate } from '../i18n';
+import { useT } from '../i18n';
 import { useLoad, useStore } from '../store-context';
-import { refStrings as t, strings } from '../strings';
 import { todayIso } from './flows-logic';
 import { looksLikeGrid, newTableFromPaste, pageRange, pasteAt, pasteIntoGrid, pastedCells, rowsToText, textToRows, tooManyRows, usedBy, versionToShow, tableSummary } from './reftable-logic';
 import type { RowErrors } from './reftable-logic';
@@ -19,7 +18,10 @@ import styles from './reference-tables.module.css';
 type Dialogs = 'paste' | 'newVersion' | 'publish' | 'newTable' | null;
 
 /** The shared reference tables: the list, the versions of one table, and its rows (editable while a version is a draft). */
+const pastedText = (t: ReturnType<typeof useT>, n: number): string => t('refTables.pasted', { n, nText: n.toLocaleString('en-US') });
+
 export function ReferenceTablesScreen() {
+  const t = useT();
   const store = useStore();
   const navigate = useNavigate();
   const toast = useToast();
@@ -102,9 +104,9 @@ export function ReferenceTablesScreen() {
       await store.saveRefTableVersion(table.id, version.versionNo, { rows: parsed.rows });
       data.reload();
       loadedKey.current = ''; // reload the text from what was saved (typed numbers come back as numbers)
-      toast(t.saved);
+      toast(t('refTables.saved'));
     } catch (e) {
-      setSaveError(e instanceof Error ? e.message : t.saveFailed);
+      setSaveError(e instanceof Error ? e.message : t('refTables.saveFailed'));
     } finally {
       setBusy(null);
     }
@@ -120,13 +122,14 @@ export function ReferenceTablesScreen() {
         ...version.columns.map((c, ci) => ({
           key: `${ci}-${c.name}`,
           header: c.name,
+          userContent: true,
           align: c.type === 'number' ? ('right' as const) : ('left' as const),
           render: (row: { index: number; cells: string[] }) =>
             editable ? (
               <input
                 type="text"
                 className={styles.cellInput}
-                aria-label={t.cell(row.index + 1, c.name)}
+                aria-label={t('refTables.cell', { row: row.index + 1, column: c.name })}
                 aria-invalid={firstError(row.index + 1, c.name) ? 'true' : undefined}
                 data-row={row.index}
                 data-col={ci}
@@ -139,7 +142,7 @@ export function ReferenceTablesScreen() {
         })),
         ...(editable
           ? [{ key: 'remove', header: '', render: (row: { index: number; cells: string[] }) => (
-              <Button compact aria-label={t.removeRow(row.index + 1)} onClick={() => edit((g) => g.filter((_, i) => i !== row.index))}>
+              <Button compact aria-label={t('refTables.removeRow', { n: row.index + 1 })} onClick={() => edit((g) => g.filter((_, i) => i !== row.index))}>
                 <Icon name="close" />
               </Button>
             ) }]
@@ -154,7 +157,7 @@ export function ReferenceTablesScreen() {
     e.preventDefault();
     const next = pasteAt(grid, version.columns.length, Number(target.dataset.row), Number(target.dataset.col), pastedCells(text));
     edit(next);
-    setInfo(t.pasted(pastedCells(text).length));
+    setInfo(pastedText(t, pastedCells(text).length));
   };
 
   const createTable = async (name: string, description: string, text: string): Promise<void> => {
@@ -178,7 +181,7 @@ export function ReferenceTablesScreen() {
       data.reload();
       void navigate(url(created.id, 1));
     } catch (e) {
-      setDialogError(e instanceof Error ? e.message : t.createFailed);
+      setDialogError(e instanceof Error ? e.message : t('refTables.createFailed'));
     } finally {
       setBusy(null);
     }
@@ -191,12 +194,12 @@ export function ReferenceTablesScreen() {
     try {
       if (kind === 'publish') {
         await store.publishRefTableVersion(table.id, version.versionNo);
-        toast(t.published(version.versionNo));
+        toast(t('refTables.published', { n: version.versionNo }));
         setDialog(null);
       } else {
         const updated = await store.createRefTableVersion(table.id, { validFrom: validFrom as string, copyFrom: version.versionNo });
         const no = Math.max(...updated.versions.map((v) => v.versionNo));
-        toast(t.created(no));
+        toast(t('refTables.created', { n: no }));
         setDialog(null);
         loadedKey.current = '';
         void navigate(url(table.id, no));
@@ -211,63 +214,63 @@ export function ReferenceTablesScreen() {
 
   let body;
   if (data.error) {
-    body = <ErrorState what={t.loadFailed} next={t.loadFailedNext} actions={<Button compact onClick={data.reload}>{translate('flows.retry')}</Button>} />;
+    body = <ErrorState what={t('refTables.loadFailed')} next={t('refTables.loadFailedNext')} actions={<Button compact onClick={data.reload}>{t('flows.retry')}</Button>} />;
   } else if (data.loading && !data.data) {
-    body = showSkeleton ? <SkeletonTable weights={[10, 16, 12, 12, 14]} rows={3} label="Loading the reference tables" /> : null;
+    body = showSkeleton ? <SkeletonTable weights={[10, 16, 12, 12, 14]} rows={3} label={t('refTables.loading')} /> : null;
   } else if (tables.length === 0 || !table || !version) {
-    body = <EmptyState title={t.emptyTitle} text={isAdmin ? t.emptyText : t.emptyReader} action={isAdmin ? <Button variant="primary" onClick={() => { setDialogError(null); setDialog('newTable'); }}>{t.newTable}</Button> : null} />;
+    body = <EmptyState title={t('refTables.emptyTitle')} text={isAdmin ? t('refTables.emptyText') : t('refTables.emptyReader')} action={isAdmin ? <Button variant="primary" onClick={() => { setDialogError(null); setDialog('newTable'); }}>{t('refTables.newTable')}</Button> : null} />;
   } else {
     const sorted = [...table.versions].sort((a, b) => b.versionNo - a.versionNo);
     body = (
       <div className={styles.layout}>
-        <ul className={styles.list} aria-label={t.list}>
+        <ul className={styles.list} aria-label={t('refTables.list')}>
           {tables.map((x: RefTableRecord) => (
             <li key={x.id}>
               <Link to={url(x.id)} className={styles.item} aria-current={x.id === table.id ? 'true' : undefined} onClick={guard(url(x.id))}>
-                {x.name}
+                <span data-user-content>{x.name}</span>
                 <span className={styles.itemSub}>{tableSummary(x, today)}</span>
               </Link>
             </li>
           ))}
         </ul>
-        <section className={styles.detail} aria-label={t.detail}>
-          <Card flush title={table.name}>
+        <section className={styles.detail} aria-label={t('refTables.detail')}>
+          <Card flush title={t('refTables.grid', { name: table.name })}>
             <div className={styles.head}>
               <div className={styles.headText}>
-                <h2>{table.name}</h2>
-                {table.description ? <span className={styles.note}>{table.description}</span> : null}
+                <h2 data-user-content>{table.name}</h2>
+                {table.description ? <span className={styles.note} data-user-content>{table.description}</span> : null}
               </div>
               <div className={styles.headActions}>
                 {dirty ? (
                   <span className={styles.dirty} role="status">
-                    {t.unsaved}
+                    {t('refTables.unsaved')}
                   </span>
                 ) : null}
                 {editable ? (
                   <>
-                    <Button onClick={() => { setPasteText(''); setDialogError(null); setDialog('paste'); }}>{t.paste}</Button>
+                    <Button onClick={() => { setPasteText(''); setDialogError(null); setDialog('paste'); }}>{t('refTables.paste')}</Button>
                     <Button variant="primary" busy={busy === 'save'} disabled={!dirty} onClick={() => void save()}>
-                      {busy === 'save' ? t.saving : t.save}
+                      {busy === 'save' ? t('refTables.saving') : t('refTables.save')}
                     </Button>
                   </>
                 ) : null}
-                {isAdmin ? <Button onClick={() => { setDialogError(null); setDialog('newVersion'); }}>{t.newVersion}</Button> : null}
+                {isAdmin ? <Button onClick={() => { setDialogError(null); setDialog('newVersion'); }}>{t('refTables.newVersion')}</Button> : null}
                 {editable ? (
                   <Button variant="primary" disabled={dirty} onClick={() => { setDialogError(null); setDialog('publish'); }}>
-                    {t.publish}
+                    {t('refTables.publish')}
                   </Button>
                 ) : null}
               </div>
             </div>
-            <div className={styles.chips} role="group" aria-label={t.versionsLabel}>
+            <div className={styles.chips} role="group" aria-label={t('refTables.versionsLabel')}>
               {sorted.map((v) => (
                 <Chip key={v.versionNo} pressed={v.versionNo === version.versionNo} onClick={() => go(url(table.id, v.versionNo))}>
                   {versionOptionLabel(v)}
                 </Chip>
               ))}
-              <Badge tone={version.status === 'draft' ? 'outline' : 'soft'}>{version.status === 'draft' ? 'Draft' : 'Published'}</Badge>
+              <Badge tone={version.status === 'draft' ? 'outline' : 'soft'}>{version.status === 'draft' ? t('refTables.badge.draft') : t('refTables.badge.published')}</Badge>
             </div>
-            {dirty && editable ? <p className={styles.note} style={{ padding: '0 20px 12px' }}>{t.publishNeedsSave}</p> : null}
+            {dirty && editable ? <p className={styles.note} style={{ padding: '0 20px 12px' }}>{t('refTables.publishNeedsSave')}</p> : null}
             {info ? (
               <p className={styles.note} style={{ padding: '0 20px 12px' }} role="status">
                 {info}
@@ -275,50 +278,50 @@ export function ReferenceTablesScreen() {
             ) : null}
             {errors.length > 0 ? (
               <div style={{ padding: '0 20px 12px' }}>
-                <ErrorState what={t.rowErrors(errors.length)} next={`Row ${errors[0]!.row}, ${errors[0]!.column}: ${errors[0]!.message}`} />
+                <ErrorState what={t('refTables.rowErrors', { n: errors.length })} next={t('refTables.cellError', { row: errors[0]!.row, column: errors[0]!.column, message: errors[0]!.message })} />
               </div>
             ) : null}
             {saveError ? (
               <div style={{ padding: '0 20px 12px' }}>
-                <ErrorState what={t.saveFailed} next={saveError} />
+                <ErrorState what={t('refTables.saveFailed')} next={saveError} />
               </div>
             ) : null}
             <div className={styles.gridWrap} onPaste={onPaste}>
-              {grid.length === 0 ? <p className={styles.note} style={{ padding: 20 }}>{t.noRows}</p> : <Table label={t.grid(table.name)} columns={columns} rows={pageRows} rowKey={(r) => String(r.index)} />}
+              {grid.length === 0 ? <p className={styles.note} style={{ padding: 20 }}>{t('refTables.noRows')}</p> : <Table label={t('refTables.grid', { name: table.name })} columns={columns} rows={pageRows} rowKey={(r) => String(r.index)} />}
             </div>
             {editable || range.pages > 1 ? (
               <div className={styles.pager}>
                 {editable ? (
                   <Button compact onClick={() => { edit((g) => [...g, version.columns.map(() => '')]); setPage(pageRange(grid.length + 1, 999).page); }}>
-                    {t.addRow}
+                    {t('refTables.addRow')}
                   </Button>
                 ) : null}
-                {grid.length > 0 ? <span className={styles.note}>{t.showing(range.from, range.to, grid.length)}</span> : null}
+                {grid.length > 0 ? <span className={styles.note}>{t('refTables.showing', { from: (range.from + 1).toLocaleString('en-US'), to: range.to.toLocaleString('en-US'), total: grid.length.toLocaleString('en-US') })}</span> : null}
                 {range.pages > 1 ? (
                   <>
                     <Button compact disabled={range.page === 0} onClick={() => setPage(range.page - 1)}>
-                      {t.previous}
+                      {t('refTables.previous')}
                     </Button>
                     <Button compact disabled={range.page >= range.pages - 1} onClick={() => setPage(range.page + 1)}>
-                      {t.next}
+                      {t('refTables.next')}
                     </Button>
                   </>
                 ) : null}
               </div>
             ) : null}
             <div className={styles.notes}>
-              {!isAdmin ? <p className={styles.note}>{t.readOnlyUser}</p> : version.status === 'published' ? <p className={styles.note}>{t.readOnlyPublished}</p> : null}
-              <p className={styles.note}>{usedByNames.length > 0 ? t.usedBy(usedByNames) : t.notUsed}</p>
+              {!isAdmin ? <p className={styles.note}>{t('refTables.readOnlyUser')}</p> : version.status === 'published' ? <p className={styles.note}>{t('refTables.readOnlyPublished')}</p> : null}
+              <p className={styles.note}>{usedByNames.length > 0 ? t('refTables.usedBy', { names: usedByNames.join(', ') }) : t('refTables.notUsed')}</p>
             </div>
           </Card>
         </section>
         {dialog === 'paste' ? (
           <Dialog
-            title={t.pasteTitle}
+            title={t('refTables.pasteTitle')}
             onClose={() => setDialog(null)}
             actions={
               <>
-                <Button onClick={() => setDialog(null)}>{t.cancel}</Button>
+                <Button onClick={() => setDialog(null)}>{t('refTables.cancel')}</Button>
                 <Button
                   variant="primary"
                   onClick={() => {
@@ -329,17 +332,17 @@ export function ReferenceTablesScreen() {
                     }
                     edit(r.rows);
                     setPage(0);
-                    setInfo(t.pasted(r.rows.length));
+                    setInfo(pastedText(t, r.rows.length));
                     setDialog(null);
                   }}
                 >
-                  {t.pasteApply}
+                  {t('refTables.pasteApply')}
                 </Button>
               </>
             }
           >
             <div className={styles.dialogBody}>
-              <TextAreaField label={t.pasteLabel} hint={t.pasteHelp} mono rows={8} value={pasteText} onChange={(e) => setPasteText(e.target.value)} error={dialogError ?? undefined} />
+              <TextAreaField label={t('refTables.pasteLabel')} hint={t('refTables.pasteHelp')} mono rows={8} value={pasteText} onChange={(e) => setPasteText(e.target.value)} error={dialogError ?? undefined} />
             </div>
           </Dialog>
         ) : null}
@@ -356,21 +359,21 @@ export function ReferenceTablesScreen() {
   return (
     <>
       <ScreenFrame
-        breadcrumb={<span>{strings.screens.refTables.crumb}</span>}
-        title={strings.screens.refTables.title}
-        subtitle={strings.screens.refTables.subtitle}
-        action={isAdmin ? <Button variant="primary" onClick={() => { setDialogError(null); setDialog('newTable'); }}>{t.newTable}</Button> : undefined}
+        breadcrumb={<span>{t('refTables.screen.crumb')}</span>}
+        title={t('refTables.screen.title')}
+        subtitle={t('refTables.screen.subtitle')}
+        action={isAdmin ? <Button variant="primary" onClick={() => { setDialogError(null); setDialog('newTable'); }}>{t('refTables.newTable')}</Button> : undefined}
       >
         {body}
       </ScreenFrame>
       {dialog === 'newTable' ? <NewTableDialog busy={busy === 'table'} error={dialogError} onCreate={(n, d, x) => void createTable(n, d, x)} onCancel={() => setDialog(null)} /> : null}
       {pendingNav ? (
         <Dialog
-          title={t.discardTitle}
+          title={t('refTables.discardTitle')}
           onClose={() => setPendingNav(null)}
           actions={
             <>
-              <Button onClick={() => setPendingNav(null)}>{t.stay}</Button>
+              <Button onClick={() => setPendingNav(null)}>{t('refTables.stay')}</Button>
               <Button
                 variant="danger"
                 onClick={() => {
@@ -380,12 +383,12 @@ export function ReferenceTablesScreen() {
                   void navigate(to);
                 }}
               >
-                {t.discard}
+                {t('refTables.discard')}
               </Button>
             </>
           }
         >
-          {t.discardText}
+          {t('refTables.discardText')}
         </Dialog>
       ) : null}
     </>
@@ -393,39 +396,40 @@ export function ReferenceTablesScreen() {
 }
 
 function NewTableDialog({ busy, error, onCreate, onCancel }: { busy: boolean; error: string | null; onCreate: (name: string, description: string, text: string) => void; onCancel: () => void }) {
+  const t = useT();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [text, setText] = useState('');
   const [local, setLocal] = useState<string | null>(null);
   return (
     <Dialog
-      title={t.newTitle}
+      title={t('refTables.newTitle')}
       onClose={onCancel}
       actions={
         <>
-          <Button onClick={onCancel}>{t.cancel}</Button>
+          <Button onClick={onCancel}>{t('refTables.cancel')}</Button>
           <Button
             variant="primary"
             busy={busy}
             onClick={() => {
-              if (!name.trim()) setLocal(`${t.emptyName} ${t.emptyNameNext}`);
+              if (!name.trim()) setLocal(t('common.pair', { a: t('refTables.emptyName'), b: t('refTables.emptyNameNext') }));
               else {
                 setLocal(null);
                 onCreate(name, description, text);
               }
             }}
           >
-            {t.create}
+            {t('refTables.create')}
           </Button>
         </>
       }
     >
       <div className={styles.dialogBody}>
-        <Field label={t.tableName} value={name} onChange={(e) => setName(e.target.value)} />
-        <Field label={t.tableDescription} value={description} onChange={(e) => setDescription(e.target.value)} />
-        <TextAreaField label={t.tablePaste} hint={t.tablePasteHelp} mono rows={6} value={text} onChange={(e) => setText(e.target.value)} />
-        {local ? <ErrorState what={t.createFailed} next={local} /> : null}
-        {error ? <ErrorState what={t.createFailed} next={error} /> : null}
+        <Field label={t('refTables.tableName')} value={name} onChange={(e) => setName(e.target.value)} />
+        <Field label={t('refTables.tableDescription')} value={description} onChange={(e) => setDescription(e.target.value)} />
+        <TextAreaField label={t('refTables.tablePaste')} hint={t('refTables.tablePasteHelp')} mono rows={6} value={text} onChange={(e) => setText(e.target.value)} />
+        {local ? <ErrorState what={t('refTables.createFailed')} next={local} /> : null}
+        {error ? <ErrorState what={t('refTables.createFailed')} next={error} /> : null}
       </div>
     </Dialog>
   );

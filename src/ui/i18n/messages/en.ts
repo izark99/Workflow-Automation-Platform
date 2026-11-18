@@ -785,6 +785,28 @@ export const en = {
   'versions.problem.inside': '{date} is inside v{n} ({from} to {to}). Choose a day after {to}.',
   'versions.problem.notBefore': 'v{n} starts on {from}, which is not before {date}. Choose a day after {from}.',
   'versions.actionLabel': '{action} v{n}',
+
+  // Added by T4.7c2
+  'refTables.noVersion': 'No version',
+  'refTables.rowCount': '{count, plural, one {{countText} row} other {{countText} rows}}',
+  'refTables.summary.inEffect': '{rows}, v{n} in effect',
+  'refTables.summary.draft': '{rows}, v{n} (draft)',
+  'refTables.summary.notInEffect': '{rows}, v{n} (not in effect)',
+  'refTables.badge.draft': 'Draft',
+  'refTables.badge.published': 'Published',
+  'refTables.error.number': '"{value}" is not a number. Type a number such as 8 or 0.5, or leave the cell empty.',
+  'refTables.error.date': '"{value}" is not a date. Write it as 2026-09-30, or leave the cell empty.',
+  'refTables.error.boolean': '"{value}" is not yes or no. Write yes or no, or leave the cell empty.',
+  'refTables.error.tooManyRows': 'A reference table version holds at most {max} rows, and this one has {n}. Remove rows, then save again.',
+  'refTables.error.pasteEmptyCells': 'There is nothing to paste. Copy the cells in Excel first, then paste again.',
+  'refTables.error.pasteNoRows': 'The pasted text has a header row but no rows under it. Copy the rows too.',
+  'refTables.error.pasteWidth': 'Row {n} of the pasted text has {cells} cells, but the table has {columns} columns. Remove the extra cells, or copy the header row too, then paste again.',
+  'refTables.error.tableEmpty': 'There is nothing to paste. Copy the header row and the rows in Excel, then paste again.',
+  'refTables.error.headerEmptyCell': 'The header row has an empty cell. Give every column a name in the first row, then paste again.',
+  'refTables.error.headerDuplicate': 'The column name "{name}" appears twice in the header row. Rename one of them, then paste again.',
+  'refTables.error.rowWidth': 'Row {n} under the header has {cells} cells, but the header has {columns} columns. Remove the extra cells, then paste again.',
+  'refTables.cellError': 'Row {row}, {column}: {message}',
+  'refTables.loading': 'Loading the reference tables',
 } as const;
 
 export type MessageKey = keyof typeof en;

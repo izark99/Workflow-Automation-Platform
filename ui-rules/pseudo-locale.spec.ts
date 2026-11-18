@@ -13,7 +13,7 @@ const scopeOf = (route: (typeof ROUTES)[number]): string | null => {
   if (route.path === '/flows' && !route.name && route.sidebar) return 'body'; // T4.7b1
   // T4.7b2 to T4.7b4: every state of the builder.
   if (route.path.endsWith('/versions/4')) return 'body';
-  if (route.sidebar && route.nav !== false && (route.path.includes('/run') || route.path.endsWith('/versions'))) return 'body'; // T4.7c1
+  if (route.sidebar && route.nav !== false && (route.path.includes('/run') || route.path.startsWith('/reference-tables') || route.path.endsWith('/versions'))) return 'body'; // T4.7c1
   if (route.sidebar && route.nav !== false) return 'nav[aria-label="⟦Main⟧"]';
   if (route.name === 'sign-in screen' || route.name === 'sign-in screen after a session ended') return 'body';
   return null;

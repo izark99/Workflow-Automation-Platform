@@ -5,6 +5,7 @@ import { referencedTables } from '../../engine/versions';
 import { MAX_REF_ROWS } from '../../store/types';
 import type { FlowRecord, RefTableRecord, RefTableVersionRecord } from '../../store/types';
 import { formatCell } from '../builder/preview-logic';
+import { translate } from '../i18n';
 
 /** The published version that covers `today`, or undefined. */
 export function versionInEffect(t: RefTableRecord, today: string): RefTableVersionRecord | undefined {
@@ -19,9 +20,10 @@ export const versionToShow = (t: RefTableRecord, today: string): RefTableVersion
 export function tableSummary(t: RefTableRecord, today: string): string {
   const inEffect = versionInEffect(t, today);
   const v = inEffect ?? versionToShow(t, today);
-  if (!v) return 'No version';
-  const rows = `${v.rows.length.toLocaleString('en-US')} ${v.rows.length === 1 ? 'row' : 'rows'}`;
-  return inEffect ? `${rows}, v${v.versionNo} in effect` : `${rows}, v${v.versionNo} ${v.status === 'draft' ? '(draft)' : '(not in effect)'}`;
+  if (!v) return translate('refTables.noVersion');
+  const rows = translate('refTables.rowCount', { count: v.rows.length, countText: v.rows.length.toLocaleString('en-US') });
+  const key = inEffect ? 'refTables.summary.inEffect' : v.status === 'draft' ? 'refTables.summary.draft' : 'refTables.summary.notInEffect';
+  return translate(key, { rows, n: v.versionNo });
 }
 
 /** The flows that read the table, by name (any of their versions). */
@@ -45,14 +47,14 @@ export function parseCell(text: string, column: Column): CellParse {
   if (t === '') return { ok: true, value: null };
   switch (column.type) {
     case 'number':
-      return NUMBER.test(t) ? { ok: true, value: Number(t) } : { ok: false, message: `"${t}" is not a number. Type a number such as 8 or 0.5, or leave the cell empty.` };
+      return NUMBER.test(t) ? { ok: true, value: Number(t) } : { ok: false, message: translate('refTables.error.number', { value: t }) };
     case 'date':
-      return isIsoDate(t) ? { ok: true, value: t } : { ok: false, message: `"${t}" is not a date. Write it as 2026-09-30, or leave the cell empty.` };
+      return isIsoDate(t) ? { ok: true, value: t } : { ok: false, message: translate('refTables.error.date', { value: t }) };
     case 'boolean': {
       const l = t.toLowerCase();
       if (['yes', 'true', '1'].includes(l)) return { ok: true, value: true };
       if (['no', 'false', '0'].includes(l)) return { ok: true, value: false };
-      return { ok: false, message: `"${t}" is not yes or no. Write yes or no, or leave the cell empty.` };
+      return { ok: false, message: translate('refTables.error.boolean', { value: t }) };
     }
     default:
       return { ok: true, value: text };
@@ -85,7 +87,7 @@ export function textToRows(text: string[][], columns: Column[]): { rows: Cell[][
 }
 
 export const tooManyRows = (n: number): string | undefined =>
-  n > MAX_REF_ROWS ? `A reference table version holds at most ${MAX_REF_ROWS.toLocaleString('en-US')} rows, and this one has ${n.toLocaleString('en-US')}. Remove rows, then save again.` : undefined;
+  n > MAX_REF_ROWS ? translate('refTables.error.tooManyRows', { max: MAX_REF_ROWS.toLocaleString('en-US'), n: n.toLocaleString('en-US') }) : undefined;
 
 // ---- Paste from Excel
 
@@ -119,19 +121,19 @@ export type PasteRows = { ok: true; rows: string[][] } | { ok: false; message: s
  */
 export function pasteIntoGrid(text: string, columns: Column[]): PasteRows {
   const lines = splitLines(text);
-  if (lines.length === 0) return { ok: false, message: 'There is nothing to paste. Copy the cells in Excel first, then paste again.' };
+  if (lines.length === 0) return { ok: false, message: translate('refTables.error.pasteEmptyCells') };
   const names = columns.map((c) => c.name.toLowerCase());
   const first = lines[0]!.map((c) => c.trim().toLowerCase());
   const header = first.length > 0 && first.every((c) => names.includes(c)) && first.length <= names.length && first.some((c) => c !== '');
   const body = header ? lines.slice(1) : lines;
-  if (body.length === 0) return { ok: false, message: 'The pasted text has a header row but no rows under it. Copy the rows too.' };
+  if (body.length === 0) return { ok: false, message: translate('refTables.error.pasteNoRows') };
   // With a header, the cells are placed by column name; without one, by position.
   const place = header ? first.map((h) => names.indexOf(h)) : lines[0]!.map((_, i) => i);
   const rows: string[][] = [];
   for (let i = 0; i < body.length; i++) {
     const cells = body[i]!;
     if (!header && cells.length > columns.length) {
-      return { ok: false, message: `Row ${i + 1} of the pasted text has ${cells.length} cells, but the table has ${columns.length} columns. Remove the extra cells, or copy the header row too, then paste again.` };
+      return { ok: false, message: translate('refTables.error.pasteWidth', { n: i + 1, cells: cells.length, columns: columns.length }) };
     }
     const row = columns.map(() => '');
     cells.forEach((cell, ci) => {
@@ -151,15 +153,15 @@ export type NewTable = { ok: true; columns: Column[]; rows: Cell[][] } | { ok: f
 /** A whole table from Excel for "New table": the first line is the header, types follow the values (number, date, else text). */
 export function newTableFromPaste(text: string): NewTable {
   const lines = splitLines(text);
-  if (lines.length === 0) return { ok: false, message: 'There is nothing to paste. Copy the header row and the rows in Excel, then paste again.' };
+  if (lines.length === 0) return { ok: false, message: translate('refTables.error.tableEmpty') };
   const names = lines[0]!.map((c) => c.trim());
-  if (names.some((n) => n === '')) return { ok: false, message: 'The header row has an empty cell. Give every column a name in the first row, then paste again.' };
+  if (names.some((n) => n === '')) return { ok: false, message: translate('refTables.error.headerEmptyCell') };
   const lower = names.map((n) => n.toLowerCase());
   const dup = names.find((_, i) => lower.indexOf(lower[i]!) !== i);
-  if (dup) return { ok: false, message: `The column name "${dup}" appears twice in the header row. Rename one of them, then paste again.` };
+  if (dup) return { ok: false, message: translate('refTables.error.headerDuplicate', { name: dup }) };
   const body = lines.slice(1);
   for (let i = 0; i < body.length; i++) {
-    if (body[i]!.length > names.length) return { ok: false, message: `Row ${i + 1} under the header has ${body[i]!.length} cells, but the header has ${names.length} columns. Remove the extra cells, then paste again.` };
+    if (body[i]!.length > names.length) return { ok: false, message: translate('refTables.error.rowWidth', { n: i + 1, cells: body[i]!.length, columns: names.length }) };
   }
   const columns: Column[] = names.map((name, ci) => {
     const values = body.map((r) => (r[ci] ?? '').trim()).filter((v) => v !== '');

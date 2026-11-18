@@ -114,7 +114,7 @@ Texts (SPEC 11.3)
 - [x] T4.7b3 Migrate the settings forms, part 1: input file, filter, formula column, the formula editor and its messages, column mapping, column pickers.
 - [x] T4.7b4 Migrate the settings forms, part 2: lookup, group by, unpivot and pivot, output, append, SQL.
 - [x] T4.7c1 Migrate Run (with the engine messages shown there) and Versions to keys.
-- [ ] T4.7c2 Migrate Reference tables and every dialog of it, and the date picker (month and weekday names stay for T4.7e).
+- [x] T4.7c2 Migrate Reference tables and every dialog of it, and the date picker (month and weekday names stay for T4.7e).
 - [ ] T4.7c3 Migrate Admin (users, groups, access, deleted flows) and `/dev/components` (`dev.*` keys). Remove `strings.ts` when it is empty. The pseudo-locale rule and the static scan now cover `body` on every route and every `.tsx` file of `src/ui`.
 - [ ] T4.7d Errors as codes: the store, the auth service and the engine return a code with parameters; the UI shows the catalog text for the code. The engine keeps its English text as the fallback and imports nothing from the UI. Unit test: every code has an `en` text with the same placeholders.
 - [ ] T4.7e `vi` catalog: a Vietnamese value for every key, placeholders identical (unit test). Month and weekday names in the catalog; dates still `30 Sep 2026` in English. Language switch in the sidebar footer and on the sign-in screen, kept in browser storage. Ask Harold to review the wording later (Needs Harold); do not wait for it.
@@ -173,6 +173,12 @@ None. The Pages file size blocker of T3.9 is solved by D71.
 ## Log
 
 Newest first.
+
+### 2026-11-18 T4.7c2 Reference tables on the catalog (turn 16)
+Changed: screens/reference-tables.tsx (list, detail, grid, pager, paste dialog, new table dialog, discard dialog, toasts), reftable-logic.ts (cell errors, paste errors, row limit, table summary with plural forms), components/table.tsx (`userContent` on a column marks header and cells as user data), en.ts (about 30 keys), strings.ts (`refStrings` and the screen header removed), no-literal-text.test.ts, ui-rules (pseudo-locale covers `/reference-tables` and its dialogs; the flush card label no longer carries the table name).
+The date picker was migrated in T4.7b2 apart from month and weekday names, which T4.7e moves into the catalog.
+Gates run: check PASS (783 tests, exit 0); `npm run test:e2e` exit 0 (177 passed); `npm run test:ui-rules` limited to the Reference tables and Versions routes plus every pseudo-locale test: exit 0, 318 passed in 5.0 min (106 each in light-1280, light-1440, dark-1440). Full ui-rules not repeated.
+Next: T4.7c3.
 
 ### 2026-11-18 T4.7c1 Run and Versions on the catalog (turn 15)
 Changed: screens/run.tsx, run-logic.ts (progress text, file sizes, version rows and sheet labels through keys), versions.tsx, versions-logic.ts (state texts, timeline segments, date check, notes under the timeline, overlap problems), en.ts (about 45 keys), strings.ts (`runStrings`, `versionsStrings` and the Run and Versions screen headers removed), no-literal-text.test.ts (run, versions, versions-dialogs), ui-rules (pseudo-locale covers Run and Versions routes; the rule message names the element; month-and-year dates such as `Jan 2026` are tolerated until T4.7e; user data marked: flow name in the crumb, change notes, step labels of the file rows, the result table; one route locator made tolerant).
