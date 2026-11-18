@@ -31,10 +31,11 @@ The build is complete when every gate below passes in one clean run of
 | G1 Engine | `npm run test:acceptance` | One flow definition, `flows/monthly-timesheet.flow.json`, run through the real engine in Chromium, produces a workbook equal to the expected workbook, cell by cell, on the sheets `Summary`, `Exceptions`, `OT_breaches`, for both datasets: `testcase/` with effective date 2026-09-30 and `testcase/variant_2026-10/` with 2026-10-31 |
 | G2 Unit | `npm run check` | Type check, lint and unit tests pass. Every node type and every Tier 1 formula function has unit tests |
 | G3 Screens | `npm run test:e2e` | In Chromium at 1440 x 900: a user creates a flow on the canvas from an empty state, adds and connects steps, configures them, previews a step, runs the timesheet flow with the September files, and downloads a workbook that equals the expected one. Versions, reference tables, admin and delete-restore journeys from SPEC sections 4 and 7 pass on the local data store |
-| G4 UI rules | `npm run test:ui-rules` | The rules in `docs/DESIGN.md` hold on every route at 1280 and 1440 px: only 40 px and 36 px buttons; none of the forbidden native elements; title and first block at the same y on all sidebar screens; table rows 57 px; at most one `cta` button per screen; no horizontal page scroll; skeleton with `aria-busy` during a delayed load; no serious or critical axe violations |
-| G5 Server | `npm run test:db` | On a local Supabase: migrations apply from zero, and row-level security tests prove every cell of the permission table in SPEC section 7, the no-overlap rule for versions, soft delete and restore |
+| G4 UI rules | `npm run test:ui-rules` | The rules in `docs/DESIGN.md` hold on every route at 1280 and 1440 px in the light theme, and at 1440 px in the dark theme (from Phase 4): only 40 px and 36 px buttons; none of the forbidden native elements; title and first block at the same y on all sidebar screens; table rows 57 px; at most one `cta` button per screen; no horizontal page scroll; skeleton with `aria-busy` during a delayed load; no serious or critical axe violations. From Phase 4 also: info buttons exactly 24 x 24 px; no visible hint paragraphs; every visible text comes from the catalog (pseudo-locale check, task T4.7a) |
+| G5 Server | `npm run test:db` | On a local Supabase: migrations apply from zero, and row-level security tests prove every cell of the permission table in SPEC section 7, the no-overlap rule for versions, soft delete and restore. From Phase 4 also: a locked user's open session reads and writes nothing; `ui_texts` rules |
+| G6 Functions (Phase 4) | `npm run test:functions` | On a local Supabase with the Edge Functions running: `admin-users` creates an account, resets a password, locks and unlocks, and refuses every call from a non-admin, a locked admin, a signed-out caller, and the last-admin and self-lock cases |
 
-When all six pass, set line 1 of `PROGRESS.md` to `STATUS: COMPLETE`, print the
+When all gates pass (six up to Phase 3, seven from Phase 4), set line 1 of `PROGRESS.md` to `STATUS: COMPLETE`, print the
 Evidence block with the output of `npm run gates`, and end your reply with:
 
 `DFW BUILD COMPLETE`
@@ -90,7 +91,7 @@ not run in this iteration.
 **Scope**
 
 - Build only what `docs/SPEC.md` lists as in scope. Tier 2 formula functions and everything under "Out of scope" stay out.
-- Do not deploy, do not create cloud projects, do not touch real credentials. Deployment is a human step, described in `docs/DEPLOY.md`, which you write in task T3.9.
+- Do not deploy, do not create cloud projects, do not touch real credentials. Deployment is a human step, described in `docs/DEPLOY.md`, which you write in task T3.9 and extend in Phase 4 (new migrations, the Edge Function). Edge Functions run only on the local Supabase in this loop.
 - Do not add a dependency outside the stack in section 6 unless a task cannot be done without it. If you add one, record the reason in `docs/DECISIONS.md`.
 
 **Data**
@@ -100,8 +101,8 @@ not run in this iteration.
 
 **Code**
 
-- TypeScript in strict mode. Code, comments, UI text and commit messages in English.
-- UI strings in one module. Design tokens as CSS variables. No raw hex colors in components.
+- TypeScript in strict mode. Code, comments and commit messages in English. The default UI text (the `en` catalog) is English; other languages are data files of the catalog (Phase 4).
+- Up to Phase 3: UI strings in one module. From Phase 4: every visible text is a catalog key read through `t()`; no literal UI text in components. Design tokens as CSS variables. No raw hex colors outside `tokens.css`.
 - When the spec is silent, choose the simplest behaviour that fits `TEST_RULES.md`, record it in `docs/DECISIONS.md`, and continue. Do not stop to ask.
 
 ## 5. Advisor
@@ -131,7 +132,8 @@ first use it, and pin the versions you install.
 | Formula | A small parser of your own that turns Tier 1 formulas into DuckDB SQL |
 | Styling | CSS variables and CSS modules. A headless accessibility library is allowed. No styled UI kit |
 | Data store | One `DataStore` interface with two implementations: `LocalStore` (browser storage, used by default and by G3 and G4) and `SupabaseStore` (used when Supabase environment variables are set) |
-| Server | Supabase: SQL migrations, row-level security, Auth. Local Supabase through its CLI for tests |
+| Server | Supabase: SQL migrations, row-level security, Auth. Local Supabase through its CLI for tests. From Phase 4: one Supabase Edge Function (TypeScript on Deno, the Supabase runtime) for account actions; it is the only server code |
+| Texts (Phase 4) | A small message catalog of your own: keys, `{name}` placeholders, `plural` forms. No i18n library unless the plural rules need one (record it in `docs/DECISIONS.md`) |
 | Tests | Vitest for unit tests, Playwright for acceptance, e2e and UI rules, axe for accessibility |
 
 Architecture rules:
