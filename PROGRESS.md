@@ -111,7 +111,7 @@ Texts (SPEC 11.3)
 - [x] T4.7a2 Migrate the shell, the shared components (InfoTip, Field, ErrorState, Dropdown, Dialog and the rest that the shell and the sign-in screen render) and the sign-in screen to catalog keys, with the pseudo-locale UI rule (its own test per route, markers and `data-user-content`, `placeholder` attributes) and a static scan of migrated files for literal UI text. The rule checks only migrated routes until T4.7c. Keep the "sign-in screen with an error" route out of the rule until T4.7d (log it).
 - [x] T4.7b1 Catalog: every key of the former `strings.ts` generated into `en.ts` (text unchanged; plural forms by hand). Migrate the Flows screen (list, filters, delete dialog, empty and error states) and the screen headers to keys; remove their entries from `strings.ts`; the pseudo-locale rule and the static scan cover the Flows route.
 - [x] T4.7b2 Migrate the builder frame: header, save and publish, version dialogs, step catalog (`STEP_CATALOG` returns keys), step list, canvas, zoom controls, settings panel, Test tab. Rule and scan cover the builder route.
-- [ ] T4.7b3 Migrate the settings forms, part 1: input file, filter, formula column, the formula editor and its messages, column mapping, column pickers.
+- [x] T4.7b3 Migrate the settings forms, part 1: input file, filter, formula column, the formula editor and its messages, column mapping, column pickers.
 - [ ] T4.7b4 Migrate the settings forms, part 2: lookup, group by, unpivot and pivot, output, append, SQL.
 - [ ] T4.7c1 Migrate Run (with the engine messages shown there) and Versions to keys.
 - [ ] T4.7c2 Migrate Reference tables and every dialog of it, and the date picker (month and weekday names stay for T4.7e).
@@ -173,6 +173,12 @@ None. The Pages file size blocker of T3.9 is solved by D71.
 ## Log
 
 Newest first.
+
+### 2026-11-18 T4.7b3 Settings forms part 1 on the catalog (turn 13)
+Changed: forms input-file, filter, formula-column, formula-editor, column-mapping, column-pickers, load-columns; their logic modules (input-file-logic, column-mapping-logic, formula-logic) now build messages with `translate()` and placeholders (row numbers and values are parameters); function-docs.ts (the 50 function descriptions are catalog keys `builder.fn.NAME`, read through a getter; group names are `builder.fnGroup.*`); en.ts (about 60 keys added); strings.ts (`formStrings`, `formulaStrings`, `pickerStrings` removed); ui-rules (pseudo-locale scope adds the Configure tab, Column mapping grid, Formula editor and function list routes; `data-code` marks formula syntax such as function names and signatures, which is not translated; two route locators made tolerant of the markers); no-literal-text.test.ts (the six form files).
+Engine messages inside formula errors (`Character 3: ...`) stay English for now: the part after the colon is the engine's text, T4.7d turns those into codes.
+Gates run: check PASS (771 tests, exit 0); `npm run test:e2e` exit 0 (177 passed); `npm run test:ui-rules` limited with `-g "versions/4|pseudo-locale"` (all builder routes, all pseudo-locale tests): exit 0, 480 passed in 7.7 min (160 each in light-1280, light-1440, dark-1440). The full ui-rules run was not repeated, only routes of the builder changed.
+Next: T4.7b4.
 
 ### 2026-11-18 T4.7b2 Builder frame on the catalog (turn 12)
 Changed: builder-screen, builder-dialogs, canvas, zoom-controls, step-list, step-card, settings-panel, step-preview, graph.ts (`STEP_CATALOG` and `STEP_GROUPS` read their texts from the catalog through getters, so callers are unchanged; connect errors, port titles, "None" and the numbered step title are catalog texts), version-logic.ts and preview-logic.ts (texts through `translate`), date-picker.tsx (four aria-labels), en.ts (about 60 keys added), strings.ts (`builder`, `settingsStrings`, `previewStrings` removed), app.tsx (`useT()` at the root, so a language change re-renders the whole tree, also logic modules that call `translate` while rendering), ui-rules (pseudo-locale scope: the builder with a step selected and its Test tab; nested markers; the React Flow attribution is skipped as third-party text; month names in dates are tolerated until T4.7e; a route can opt out with `pseudo: false`, used for the new-version dialog route, whose steps click English names), no-literal-text.test.ts (builder files and the date picker).

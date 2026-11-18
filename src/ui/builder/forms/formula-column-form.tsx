@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Field } from '../../components';
-import { formulaStrings as t } from '../../strings';
+import { useT } from '../../i18n';
 import { FormulaEditor } from './formula-editor';
 import type { FormProps } from './types';
 import { useSourceColumns } from './use-source-columns';
@@ -8,6 +8,7 @@ import styles from '../settings-panel.module.css';
 
 /** Settings of a Formula column step: the name of the column and its formula. The formula is saved as typed. */
 export function FormulaColumnForm(props: FormProps) {
+  const t = useT();
   const { step, onSettings, readOnly } = props;
   const [name, setName] = useState(typeof step.settings.name === 'string' ? step.settings.name : '');
   const [expression, setExpression] = useState(typeof step.settings.expression === 'string' ? step.settings.expression : '');
@@ -17,11 +18,11 @@ export function FormulaColumnForm(props: FormProps) {
   return (
     <div className={styles.stack} style={{ paddingTop: 0 }}>
       <Field
-        label={t.name}
-        hint={t.nameHint}
+        label={t('builder.formula.name')}
+        hint={t('builder.formula.nameHint')}
         value={name}
         disabled={readOnly}
-        error={nameError ? `${t.emptyName} ${t.emptyNameNext}` : undefined}
+        error={nameError ? `${t('builder.formula.emptyName')} ${t('builder.formula.emptyNameNext')}` : undefined}
         onChange={(e) => {
           setName(e.target.value);
           const clean = e.target.value.trim();
@@ -30,8 +31,8 @@ export function FormulaColumnForm(props: FormProps) {
         }}
       />
       <FormulaEditor
-        label={t.formula}
-        hint={t.formulaHint}
+        label={t('builder.formula.formula')}
+        hint={t('builder.formula.formulaHint')}
         value={expression}
         readOnly={readOnly}
         source={source}

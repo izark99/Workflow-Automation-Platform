@@ -131,7 +131,7 @@ export const ROUTES: RuleRoute[] = [
     sidebar: false,
     // A new Formula column step: name field, formula text, message, function buttons, load columns.
     prepare: async (page) => {
-      await page.getByRole('button', { name: 'Add step Formula column' }).click();
+      await page.getByRole('button', { name: /Add step\W*Formula column/ }).click();
       const panel = page.getByRole('complementary', { name: 'Step settings' });
       await panel.getByRole('tab', { name: 'Configure' }).click();
       await panel.getByRole('textbox', { name: 'Formula' }).waitFor();
@@ -143,11 +143,11 @@ export const ROUTES: RuleRoute[] = [
     sidebar: false,
     // The dialog with the searchable list of all functions.
     prepare: async (page) => {
-      await page.getByRole('button', { name: 'Add step Formula column' }).click();
+      await page.getByRole('button', { name: /Add step\W*Formula column/ }).click();
       const panel = page.getByRole('complementary', { name: 'Step settings' });
       await panel.getByRole('tab', { name: 'Configure' }).click();
       await panel.getByRole('button', { name: 'All functions' }).click();
-      await page.getByRole('dialog', { name: 'All functions' }).getByRole('button', { name: 'Insert IF', exact: true }).waitFor();
+      await page.getByRole('dialog', { name: 'All functions' }).getByRole('button', { name: /Insert IF\W*$/ }).waitFor();
     },
   },
   {

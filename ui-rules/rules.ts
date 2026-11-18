@@ -231,7 +231,7 @@ export async function untranslatedText(page: Page, selector: string): Promise<st
       }
       return /\p{L}/u.test(rest);
     };
-    const skip = '[data-user-content], .react-flow__attribution'; // user data, and the React Flow attribution link
+    const skip = '[data-user-content], [data-code], .react-flow__attribution'; // user data, formula syntax such as function names, and the React Flow attribution link
     const visible = (el: Element): boolean => {
       const r = el.getBoundingClientRect();
       const s = getComputedStyle(el);

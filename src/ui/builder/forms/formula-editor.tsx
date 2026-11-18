@@ -2,7 +2,7 @@ import { useLayoutEffect, useRef, useState } from 'react';
 import type { Column } from '../../../engine/types';
 import { Button, Dialog, Dropdown, ErrorState, SearchField, TextAreaField } from '../../components';
 import { todayIso } from '../../screens/flows-logic';
-import { formulaStrings as t } from '../../strings';
+import { useT } from '../../i18n';
 import { COMMON_FUNCTIONS, FUNCTION_DOCS, GROUP_ORDER, searchFunctions } from './function-docs';
 import { checkFormula, columnReference, functionInsert, insertAtCursor } from './formula-logic';
 import type { SourceColumns } from './use-source-columns';
@@ -22,6 +22,7 @@ export interface FormulaEditorProps {
 
 /** A formula editor: the text, a message about it, buttons that insert functions and columns, and the list of all functions. */
 export function FormulaEditor({ label, hint, value, onChange, readOnly, source, expect, rows = 7 }: FormulaEditorProps) {
+  const t = useT();
   const ref = useRef<HTMLTextAreaElement>(null);
   // Where the cursor goes after the next render. It is set in the same commit that writes the new text, so typing right
   // after an insert cannot land at the old cursor position.
@@ -66,24 +67,24 @@ export function FormulaEditor({ label, hint, value, onChange, readOnly, source, 
         status={bad ? undefined : state.message}
         onChange={(e) => onChange(e.target.value)}
       />
-      <span className={styles.label}>{t.insertFunction}</span>
-      <div className={styles.chips} role="group" aria-label={t.insertFunction}>
+      <span className={styles.label}>{t('builder.formula.insertFunction')}</span>
+      <div className={styles.chips} role="group" aria-label={t('builder.formula.insertFunction')}>
         {COMMON_FUNCTIONS.map((name) => {
           const doc = FUNCTION_DOCS.find((f) => f.name === name)!;
           return (
-            <Button key={name} compact disabled={readOnly} aria-label={t.insertFunctionLabel(name)} onClick={() => insertFunction(doc.signature)}>
-              <span className={styles.mono}>{name}</span>
+            <Button key={name} compact disabled={readOnly} aria-label={t('builder.formula.insertFunctionLabel', { name })} onClick={() => insertFunction(doc.signature)}>
+              <span className={styles.mono} data-code>{name}</span>
             </Button>
           );
         })}
         <Button compact onClick={() => { setQuery(''); setListOpen(true); }}>
-          {t.allFunctions}
+          {t('builder.formula.allFunctions')}
         </Button>
       </div>
       {source.columns ? (
         <Dropdown
-          label={t.insertColumn}
-          options={[{ value: '', label: t.insertColumn }, ...source.columns.map((c) => ({ value: c.name, label: c.name }))]}
+          label={t('builder.formula.insertColumn')}
+          options={[{ value: '', label: t('builder.formula.insertColumn') }, ...source.columns.map((c) => ({ value: c.name, label: c.name }))]}
           value=""
           disabled={readOnly}
           width={338}
@@ -92,41 +93,41 @@ export function FormulaEditor({ label, hint, value, onChange, readOnly, source, 
       ) : (
         <div>
           <Button compact busy={source.loading} onClick={() => void source.load()}>
-            {t.loadColumns}
+            {t('builder.formula.loadColumns')}
           </Button>
         </div>
       )}
-      {source.error ? <ErrorState what={t.loadFailed} next={source.error} /> : null}
+      {source.error ? <ErrorState what={t('builder.formula.loadFailed')} next={source.error} /> : null}
       {listOpen ? (
-        <Dialog title={t.functionsTitle} onClose={() => setListOpen(false)} actions={<Button onClick={() => setListOpen(false)}>{t.close}</Button>}>
+        <Dialog title={t('builder.formula.functionsTitle')} onClose={() => setListOpen(false)} actions={<Button onClick={() => setListOpen(false)}>{t('builder.formula.close')}</Button>}>
           <div className={styles.dialogBody}>
-            <SearchField label={t.searchFunctions} placeholder={t.searchPlaceholder} value={query} onChange={(e) => setQuery(e.target.value)} />
-            {found.length === 0 ? <span>{t.noFunctions}</span> : null}
-            <ul className={styles.list} aria-label={t.functionsTitle}>
+            <SearchField label={t('builder.formula.searchFunctions')} placeholder={t('builder.formula.searchPlaceholder')} value={query} onChange={(e) => setQuery(e.target.value)} />
+            {found.length === 0 ? <span>{t('builder.formula.noFunctions')}</span> : null}
+            <ul className={styles.list} aria-label={t('builder.formula.functionsTitle')}>
               {GROUP_ORDER.flatMap((group) => {
                 const items = found.filter((f) => f.group === group);
                 return items.length === 0
                   ? []
                   : [
                       <li key={`g-${group}`} className={styles.group}>
-                        {group}
+                        {t(`builder.fnGroup.${group}`)}
                       </li>,
                       ...items.map((f) => (
                         <li key={f.name} className={styles.item}>
                           <span className={styles.itemText}>
-                            <span className={styles.signature}>{f.signature}</span>
+                            <span className={styles.signature} data-code>{f.signature}</span>
                             <span className={styles.text}>{f.text}</span>
                           </span>
                           <Button
                             compact
                             disabled={readOnly}
-                            aria-label={t.insertFunctionLabel(f.name)}
+                            aria-label={t('builder.formula.insertFunctionLabel', { name: f.name })}
                             onClick={() => {
                               insertFunction(f.signature);
                               setListOpen(false);
                             }}
                           >
-                            {t.insertShort}
+                            {t('builder.formula.insertShort')}
                           </Button>
                         </li>
                       )),

@@ -1,3 +1,4 @@
+import { translate } from '../../i18n';
 // Pure part of the Input file form: text in, settings out, with messages that say what to do.
 export interface InputFormValues {
   key: string;
@@ -51,13 +52,13 @@ export function parseNameList(text: string): string[] {
 export function validateInputForm(v: InputFormValues, otherKeys: string[], previous: Record<string, unknown>): { errors: InputFormErrors; settings?: Record<string, unknown> } {
   const errors: InputFormErrors = {};
   const key = v.key.trim();
-  if (key === '') errors.key = 'The name is empty. Type the name that the run screen shows for this file.';
-  else if (otherKeys.includes(key)) errors.key = `Another Input file step already uses the name "${key}". Give each Input file step its own name.`;
+  if (key === '') errors.key = translate('builder.form.input.error.keyEmpty');
+  else if (otherKeys.includes(key)) errors.key = translate('builder.form.input.error.keyTaken', { key });
   const headerRow = wholeNumber(v.headerRow, 1);
-  if (headerRow === null) errors.headerRow = `"${v.headerRow}" is not a row number. Type a whole number of 1 or more.`;
+  if (headerRow === null) errors.headerRow = translate('builder.form.input.error.headerRow', { value: v.headerRow });
   const skipRows = wholeNumber(v.skipRows, 0);
-  if (skipRows === null) errors.skipRows = `"${v.skipRows}" is not a number of rows. Type a whole number of 0 or more.`;
-  if (v.addRowNumber && v.rowNumberColumn.trim() === '') errors.rowNumberColumn = 'The row number column has no name. Type a name, or untick the box.';
+  if (skipRows === null) errors.skipRows = translate('builder.form.input.error.skipRows', { value: v.skipRows });
+  if (v.addRowNumber && v.rowNumberColumn.trim() === '') errors.rowNumberColumn = translate('builder.form.input.error.rowNumberColumn');
   if (Object.keys(errors).length > 0) return { errors };
   const settings: Record<string, unknown> = { ...previous, key, headerRow, skipRows };
   const sheet = v.sheet.trim();

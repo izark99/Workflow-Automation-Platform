@@ -26,6 +26,12 @@ const MIGRATED = [
   'src/ui/builder/step-card.tsx',
   'src/ui/builder/settings-panel.tsx',
   'src/ui/builder/step-preview.tsx',
+  'src/ui/builder/forms/input-file-form.tsx',
+  'src/ui/builder/forms/filter-form.tsx',
+  'src/ui/builder/forms/formula-column-form.tsx',
+  'src/ui/builder/forms/formula-editor.tsx',
+  'src/ui/builder/forms/column-mapping-form.tsx',
+  'src/ui/builder/forms/column-pickers.tsx',
 ];
 
 const TEXT_ATTRIBUTES = new Set(['label', 'title', 'placeholder', 'aria-label', 'alt', 'aria-description', 'text', 'what', 'next']);
