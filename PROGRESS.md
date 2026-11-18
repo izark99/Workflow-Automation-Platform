@@ -95,7 +95,7 @@ Read SPEC section 11 and the Phase 4 parts of `docs/DESIGN.md` first. Order: the
 parameters, quality pass, docs, final run. A task may start before an earlier group ends only where it says so.
 
 Themes (SPEC 11.4)
-- [ ] T4.1 Dark tokens in `tokens.css` under `:root[data-theme="dark"]`, the two new tokens `--color-on-primary` and `--color-on-cta` used by filled buttons, and a unit test that computes the contrast of every pair listed in DESIGN for both themes. Replace any raw colour left outside `tokens.css`.
+- [x] T4.1 Dark tokens in `tokens.css` under `:root[data-theme="dark"]`, the two new tokens `--color-on-primary` and `--color-on-cta` used by filled buttons, and a unit test that computes the contrast of every pair listed in DESIGN for both themes. Replace any raw colour left outside `tokens.css`.
 - [ ] T4.2 Theme setting: Light, Dark, System; inline script in `index.html` sets `data-theme` and `color-scheme` before first paint; System follows `prefers-color-scheme` live; choice kept in browser storage; switch in the sidebar footer and on the sign-in screen. Unit tests for the choice logic, e2e for the switch and for no flash on reload.
 - [ ] T4.3 Fix: React Flow follows the app theme, not the operating system. First a failing e2e test: operating system dark (`emulateMedia`), app Light, the canvas background, dots, edges and controls are light; then app Dark and the canvas is dark. Then pass `colorMode` from the theme and map React Flow colours to tokens.
 - [ ] T4.4 UI rules in the dark theme: `test:ui-rules` runs every route in dark at 1440 px as well (axe contrast included). Fix what it finds in the same task, or split.
@@ -167,6 +167,12 @@ None. The Pages file size blocker of T3.9 is solved by D71.
 ## Log
 
 Newest first.
+
+### 2026-11-18 T4.1 Dark tokens (turn 1)
+Changed: src/ui/tokens.css (dark values under `:root[data-theme='dark']`, `--color-on-primary`, `--color-on-cta`, `--color-overlay`; `--color-on-fill` removed), button, popover, checkbox, toast, dialog, versions CSS, docs/DESIGN.md (dark values of the extra tokens), src/ui/tokens.test.ts (33 tests: 16 contrast pairs per theme, plus a check that dark overrides every colour token).
+Gates run: check PASS (67 files, 720 tests, exit 0). Light theme values are unchanged except the toast text (`--color-bg` instead of white).
+Notes for later tasks (advisor, turn 1): split ui-rules into named projects in T4.4; run long gates in the background with logs; namespace catalog keys by screen in T4.7a; `ui_texts` read policy `anon OR is_active_user()` (T4.7f, record in DECISIONS); rerun `test:acceptance:pages` after T4.2 and T4.7f; never write `flows/monthly-timesheet.flow.json` (T4.9a upgrades in memory).
+Next: T4.2.
 
 ### 2026-11-18 Phase 4 planned (docs only)
 Changed: docs/SPEC.md (section 11 and the rows it touches in sections 1, 2, 4, 7, 10), docs/DESIGN.md (dark tokens with checked contrast, theme rules, Info button, account dialogs, parameters, UI quality checklist, header rule), PROMPT.md (G4 and G5 extended, new G6, rules on texts and the Edge Function), GOALS.md (Phase 4 goal), CLAUDE.md (paths, commands, text rule), PROGRESS.md (status, Phase 4 tasks, Phase 4 defaults under Needs Harold).

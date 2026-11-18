@@ -69,6 +69,13 @@ the dark fills are light:
 | `--color-danger` | `#B91C1C` | `#F87171` |
 | `--color-skeleton` | `#DCE7EA` | `#22362F` |
 
+The extra tokens of the screens follow the same rule. Dark values: `--color-badge-ink` `#99F6E4`, `--color-danger-soft`
+`#3A1717`, `--color-danger-ink` `#FECACA`, `--color-note-bg` `#2B1A0E`, `--color-note-ink` `#FED7AA`,
+`--color-draft-ink` `#FDBA74`, `--color-ended-ink` `#CBD5E1`, `--color-overlay` `rgb(0 0 0 / 60%)` (light: the teal
+at 35%), `--shadow-popover` black at 50%. The toast uses `--color-bg` as its text colour on `--color-ink`, so it
+inverts in both themes. `--color-on-fill` is gone: filled primary buttons, selected days, checked boxes and the
+in-effect segment use `--color-on-primary`; the CTA button uses `--color-on-cta`.
+
 The dark values were checked for these pairs (WCAG contrast): ink on bg 15.4, ink on card 13.9, muted on card 8.1,
 control on card 4.8, focus on card 10.9, on-primary on primary 9.2, on-cta on cta 7.9, danger on card 5.8, ink on
 primary-soft 10.1. Task T4.1 adds a unit test that computes every pair of both themes, so a later change cannot

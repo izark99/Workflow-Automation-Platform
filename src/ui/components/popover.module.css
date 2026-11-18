@@ -130,6 +130,6 @@
 .day[aria-pressed='true'] {
   background: var(--color-primary);
   border-color: var(--color-primary);
-  color: var(--color-on-fill);
+  color: var(--color-on-primary);
   font-weight: 700;
 }
