@@ -1,4 +1,4 @@
-STATUS: IN PROGRESS
+STATUS: COMPLETE
 
 # Progress
 
@@ -111,6 +111,19 @@ Decisions with a default. Build with the default unless this list says otherwise
 ## Log
 
 Newest first.
+
+### 2026-11-18 Final run: npm ci, then npm run gates (Phase 3 done, build complete)
+Run: a clean tree, no leftover servers or containers, `npm ci` (exit 0, 278 packages), then `npm run gates` started after it, as one background command that wrote logs only. This entry was written after reading the logs, in a separate step.
+Result of `npm run gates`: exit 0 in 20 min 25 s, all six gates in order.
+- check: 65 test files, 679 tests passed.
+- spike: ran all six files (100,000, 500,000 and 1,048,576 rows, xlsx and csv), the 301 MB xlsx was refused with the warning in 129 ms, wrote docs/spike-raw.json and docs/SPIKE_RESULTS.md; the chosen xlsx reading strategy is `xlsx-stream`. SheetJS whole-workbook failed on the two larger xlsx files with "The file has no sheet" (as measured, not a gate failure).
+- test:acceptance: 7 passed.
+- test:e2e: 167 passed (2.3 min).
+- test:ui-rules: 676 passed (10.2 min).
+- test:db: exit 0 on a local Supabase, 11 pgTAP files, all ok, nine migrations applied from zero.
+`git status --porcelain testcase` is empty. The spike regenerated its two result files; they were committed before this entry.
+Not part of the gates: `npm run test:store` (21 tests against the full local stack) passed earlier in T3.8 and was not rerun here.
+Open, not a gate: the Cloudflare Pages upload fails on two DuckDB-WASM files above 25 MiB. See Blockers and Needs Harold; the app cannot be deployed to Pages as built until that decision is made.
 
 ### 2026-11-18 T3.9 docs/DEPLOY.md (last task of Phase 3)
 Changed: docs/DEPLOY.md, scripts/deploy-doc.test.ts (7 tests), supabase/tests/database/100-first-admin.test.sql (5 assertions), .github/workflows/keep-alive.yml (skips with a notice until the secrets exist), PROGRESS.md (Needs Harold and Blockers), docs/DECISIONS.md (D70).
