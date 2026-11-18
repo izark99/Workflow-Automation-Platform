@@ -21,10 +21,14 @@ export interface RuleRoute {
   name?: string;
   /** Screens with the page header share the title y and the first block y. */
   sidebar: boolean;
+  /** False for a page that has the page header but no sidebar (the components page). */
+  nav?: boolean;
   /** The route is expected to show table rows. */
   table?: boolean;
   /** The route loads data from the store, so a delayed load must show the skeleton. */
   skeleton?: boolean;
+  /** The route shows a skeleton while it loads, but not in a table (the Run screen): only `aria-busy` and the delay are checked. */
+  busy?: boolean;
   /** Runs before the page loads, for example to put data into the store. */
   before?: (page: Page) => Promise<void>;
   /** Puts the page in the state to check after it has loaded, for example by selecting a step. */
@@ -35,7 +39,7 @@ export const ROUTES: RuleRoute[] = [
   { path: '/flows', sidebar: true, table: true, skeleton: true },
   { path: '/reference-tables', sidebar: true, table: true, skeleton: true },
   { path: '/admin', sidebar: true, table: true, skeleton: true },
-  { path: '/flows/flow-timesheet/run', sidebar: true },
+  { path: '/flows/flow-timesheet/run', sidebar: true, busy: true },
   { path: '/flows/flow-timesheet/versions', sidebar: true, table: true, skeleton: true },
   // The builder has no sidebar and no page header.
   {
@@ -47,7 +51,7 @@ export const ROUTES: RuleRoute[] = [
       await page.getByRole('complementary', { name: 'Step settings' }).getByRole('heading').waitFor();
     },
   },
-  { path: '/dev/components', sidebar: true },
+  { path: '/dev/components', sidebar: true, nav: false },
   {
     path: '/flows/flow-timesheet/versions/4',
     name: '/flows/flow-timesheet/versions/4 (Test tab)',

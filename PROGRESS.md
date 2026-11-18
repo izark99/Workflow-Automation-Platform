@@ -68,7 +68,7 @@ before it passes, except where a task says otherwise.
 - [x] T2.18 Reference tables screen: list, versions, grid with paste from Excel, read-only published versions.
 - [x] T2.19 Admin screen: users, groups, access to shared flows, deleted flows with restore.
 - [x] T2.20 End-to-end journeys for gate G3.
-- [ ] T2.21 UI rules and accessibility tests for gate G4 on every route.
+- [x] T2.21 UI rules and accessibility tests for gate G4 on every route.
 
 ## Phase 3: Server (gate G5)
 
@@ -103,6 +103,15 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-18 T2.21 UI rules and accessibility tests for gate G4 on every route (last task of Phase 2)
+Changed: ui-rules/{rules.ts,rules.selfcheck.spec.ts,routes.ts,routes.spec.ts}, src/ui/routes-coverage.test.ts (9 tests), docs/DECISIONS.md (D54).
+What G4 checks on every route and state (33 states, both widths): buttons 36 or 40 px, no forbidden native element, at most one `cta`, no horizontal scroll, table rows 57 px, axe serious or critical, title y 63 and first block y 148, skeleton with `aria-busy` and the real row heights during a delayed load. New in this task: a test that every route of `src/ui/app.tsx` has a state in the list (a new route fails `npm run check`); and the DESIGN rules that nothing checked yet: distinct `aria-label`s for same-name buttons in a table, 8 px around destructive buttons, sidebar 232 px, a visible keyboard focus ring on every control (tabbing through the page), a skeleton that does not move with reduced motion, no skeleton for a load shorter than 300 ms, and the skeleton states of the Run screen. Each new rule has a self-check that fails on a page that breaks it (11 self-checks).
+Result: the new rules found no defect in the product. The first full run had 6 failures, which were two premises of my new tests at both widths (a store delay of 120 ms for each call adds up to more than 300 ms on screens that make several calls; the components page has no sidebar); fixed in the tests.
+The advisor was asked before ticking the last task of the phase (PROMPT section 5) and was overloaded; the decision rests on the gates.
+Phase 2 done; the build is not. Phase 3 (T3.1 to T3.9, gate G5) and the final `npm run gates` run remain. `test:db` exits 1 by design until T3.1.
+Gates run: check PASS (619 tests), test:e2e PASS (159 tests), test:ui-rules PASS (622 tests: 311 per width, 33 route states), test:acceptance PASS (7 tests).
+Next: Phase 3, T3.1 (Supabase project folder, local start script, first migration), with an advisor review of the plan at the start of the phase.
 
 ### 2026-11-18 T2.20 End-to-end journeys for gate G3
 Changed: e2e/journeys.spec.ts (5 tests), e2e/journey-data.ts (the real flow and reference tables into the store, date picker keys, user switch), docs/DECISIONS.md (D53).
