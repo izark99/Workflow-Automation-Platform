@@ -36,9 +36,9 @@
   line-height: 36px;
 }
 
-.subtitle {
-  margin: 0;
-  color: var(--color-muted);
+.titleRow {
+  display: flex;
+  align-items: center;
 }
 
 .form {

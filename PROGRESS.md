@@ -104,7 +104,7 @@ Info button (SPEC 11.2)
 - [x] T4.5 `InfoTip` component as in DESIGN "Info button": toggletip, hover delay, Escape, outside click, live region, placement; on `/dev/components`; unit and e2e keyboard tests; the UI rule accepts it only at exactly 24 x 24 px.
 - [x] T4.6a Page header: subtitle moves into an InfoTip after the title on every screen; measure the new y of the first block, write it in DESIGN, update the UI rule in the same commit. `Field` and `TextAreaField`: `hint` renders an InfoTip after the label, not a paragraph.
 - [x] T4.6b Builder: every explanation in the step list, settings panel, forms and Test tab moves into InfoTips. A UI rule fails when a hint paragraph is visible.
-- [ ] T4.6c Run, Versions, Reference tables, Admin, dialogs and the sign-in screen: the same.
+- [x] T4.6c Run, Versions, Reference tables, Admin, dialogs and the sign-in screen: the same.
 
 Texts (SPEC 11.3)
 - [ ] T4.7a Message catalog in `src/ui/i18n/`: typed keys, `{name}` placeholders, plural forms, `t()` and a React hook, `en` as default and fallback. A pseudo-locale for tests wraps every value in markers; a UI rule renders every route in it and fails on visible text outside the markers, except regions marked as user data (`data-user-content`). Migrate the shell and the sign-in screen in this task to prove the path; the rule checks only migrated routes until T4.7d.
@@ -167,6 +167,12 @@ None. The Pages file size blocker of T3.9 is solved by D71.
 ## Log
 
 Newest first.
+
+### 2026-11-18 T4.6c Info buttons on the remaining screens (turn 8)
+Changed: Flows (the admin note joins the title's info button text for admins), Admin (the group hint is an info button after "Groups"; the invite hint is the hint of the Email field in the Add user dialog), sign-in screen (subtitle is an info button after the title), sign-in.module.css, ui-rules/rules.ts (the hint rule also fails on a visible `subtitle` class), e2e/sign-in.spec.ts and ui-rules/routes.ts (Sign in button locators `exact: true`, because "About Sign in" matches the name).
+Left visible on purpose (state or user data, not explanation): publish-needs-save, read-only and used-by notes on Reference tables, row counts, empty states, version notes, the table description (user data), and the text of confirm dialogs (delete says it can be restored for 30 days).
+Gates run: check PASS (729 tests, exit 0); `npm run test:e2e` exit 0, 177 passed (after the sign-in locator fix, full rerun); `npm run test:ui-rules` exit 0, 1119 passed in 17.1 min (373 each in light-1280, light-1440, dark-1440).
+Next: T4.7a (advisor first: catalog design, hard to undo).
 
 ### 2026-11-18 T4.6b Builder explanations in info buttons (turn 7)
 Changed: builder step list, settings panel, Test tab and every form (`column-pickers.tsx` gets `SectionLabel`, and `ColumnList` and `ColumnSelect` get a `hint` prop that renders an InfoTip after the label), CSS module class `.hint` renamed `.note` for state messages (read-only notice, empty lists, "still missing" status, no-input notice), `Field.hint` CSS removed, ui-rules/rules.ts (new rule "no visible hint paragraphs": a visible element whose CSS class is `hint` or `help` fails; self-check added), e2e/builder.spec.ts and settings-panel.spec.ts (the step description is read after opening the info button; the step list now has 11 step buttons plus the info button).

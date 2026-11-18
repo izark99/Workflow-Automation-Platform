@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { AuthError, signInProblem, type AuthService } from '../store/auth';
-import { Button, Card, ErrorState, Field, Icon } from './components';
+import { Button, Card, ErrorState, Field, Icon, InfoTip } from './components';
 import { strings } from './strings';
 import { ThemeSwitch } from './theme-switch';
 import styles from './sign-in.module.css';
@@ -51,8 +51,10 @@ export function SignInScreen({ auth, ended }: { auth: AuthService; ended: boolea
             }}
           >
             <div>
-              <h1 className={styles.title}>{t.title}</h1>
-              <p className={styles.subtitle}>{t.subtitle}</p>
+              <div className={styles.titleRow}>
+                <h1 className={styles.title}>{t.title}</h1>
+                <InfoTip label={t.title}>{t.subtitle}</InfoTip>
+              </div>
             </div>
             {ended && !problem ? <ErrorState what={t.ended} next={t.endedNext} /> : null}
             <Field label={t.email} value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="username" autoFocus spellCheck={false} />

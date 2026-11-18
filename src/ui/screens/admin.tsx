@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Card, Checkbox, Dialog, Dropdown, EmptyState, ErrorState, Field, ScreenFrame, SkeletonTable, Table, useDelayedLoading, useToast } from '../components';
+import { Button, Card, Checkbox, Dialog, Dropdown, EmptyState, ErrorState, Field, InfoTip, ScreenFrame, SkeletonTable, Table, useDelayedLoading, useToast } from '../components';
 import type { Column } from '../components';
 import { StoreError } from '../../store/types';
 import type { FlowRecord, Group, User } from '../../store/types';
@@ -233,16 +233,17 @@ function UserDialog({ user, groups, busy, error, onSave, onCancel }: { user: Use
       }
     >
       <div className={styles.dialogBody}>
-        {user ? null : <span>{t.inviteHint}</span>}
         <Field label={t.userName} value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
-        <Field label={t.userEmail} value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} />
+        <Field label={t.userEmail} hint={user ? undefined : t.inviteHint} value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} />
         <div>
           <span style={{ display: 'block', fontWeight: 700, marginBottom: 6 }}>{t.userRole}</span>
           <Dropdown label={t.userRole} options={(['user', 'admin'] as const).map((r) => ({ value: r, label: t.roles[r] }))} value={f.role} width={200} onChange={(role) => setF({ ...f, role: role as UserForm['role'] })} />
         </div>
         <div className={styles.groupBoxes} role="group" aria-label={t.userGroups}>
-          <span style={{ fontWeight: 700 }}>{t.userGroups}</span>
-          <span className={styles.note}>{t.userGroupsHint}</span>
+          <span style={{ display: 'flex', alignItems: 'center', fontWeight: 700 }}>
+            {t.userGroups}
+            <InfoTip label={t.userGroups}>{t.userGroupsHint}</InfoTip>
+          </span>
           {groups.map((g) => (
             <Checkbox key={g.id} checked={f.groupIds.includes(g.id)} onChange={(on) => setF({ ...f, groupIds: on ? [...f.groupIds, g.id] : f.groupIds.filter((x) => x !== g.id) })}>
               {g.name}

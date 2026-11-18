@@ -35,7 +35,7 @@ export const buttonHeights: Rule = async (page) =>
 export const noHintParagraphs: Rule = async (page) =>
   page.evaluate(() => {
     const bad: string[] = [];
-    for (const el of document.querySelectorAll('[class*="_hint_"], [class*="_help_"]')) {
+    for (const el of document.querySelectorAll('[class*="_hint_"], [class*="_help_"], [class*="_subtitle_"]')) {
       const r = el.getBoundingClientRect();
       if (r.width === 0 && r.height === 0) continue;
       bad.push(`visible hint paragraph: "${(el.textContent ?? '').trim().slice(0, 60)}"; move it into an info button`);

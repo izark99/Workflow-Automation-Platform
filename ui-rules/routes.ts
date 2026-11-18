@@ -51,7 +51,7 @@ export const ROUTES: RuleRoute[] = [
     nav: false,
     before: withSignIn,
     prepare: async (page) => {
-      await page.getByRole('button', { name: 'Sign in' }).click();
+      await page.getByRole('button', { name: 'Sign in', exact: true }).click();
       await page.getByRole('alert').waitFor();
     },
   },

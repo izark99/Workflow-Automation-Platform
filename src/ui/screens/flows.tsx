@@ -123,7 +123,7 @@ export function FlowsScreen() {
   }
 
   return (
-    <ScreenFrame breadcrumb={<span>{strings.screens.flows.crumb}</span>} title={strings.screens.flows.title} subtitle={strings.screens.flows.subtitle}>
+    <ScreenFrame breadcrumb={<span>{strings.screens.flows.crumb}</span>} title={strings.screens.flows.title} subtitle={me?.role === 'admin' ? `${strings.screens.flows.subtitle} ${t.adminNote}` : strings.screens.flows.subtitle}>
       <div className={styles.toolbar}>
         <ChipGroup label={t.filterLabel}>
           {([['all', t.all], ['personal', t.personal], ['shared', t.shared]] as const).map(([key, label]) => (
@@ -141,7 +141,6 @@ export function FlowsScreen() {
           {body}
         </div>
       </Card>
-      {me?.role === 'admin' ? <p className={styles.note}>{t.adminNote}</p> : null}
       {toDelete ? (
         <Dialog
           title={t.confirmTitle(toDelete.name)}
