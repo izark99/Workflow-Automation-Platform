@@ -188,6 +188,42 @@ describe('reference table versions', () => {
   });
 });
 
+describe('groups and the last admin', () => {
+  it('the admin creates, renames and deletes groups; a deleted group leaves users and flows', async () => {
+    const g = await store.saveGroup({ name: ' HR Test ' });
+    expect(g.name).toBe('HR Test');
+    expect((await store.listGroups()).map((x) => x.name)).toContain('HR Test');
+    await store.saveGroup({ id: g.id, name: 'HR Testing' });
+    expect((await store.listGroups()).find((x) => x.id === g.id)!.name).toBe('HR Testing');
+    await store.saveUser({ id: 'user-lan', name: 'Lan', email: 'lan@example.com', role: 'user', groupIds: ['group-payroll', g.id] });
+    await store.setFlowGroups('flow-headcount', ['group-payroll', g.id]);
+    await store.deleteGroup(g.id);
+    expect((await store.listUsers()).find((u) => u.id === 'user-lan')!.groupIds).toEqual(['group-payroll']);
+    expect((await store.getFlow('flow-headcount')).groupIds).toEqual(['group-payroll']);
+    expect(await code(store.deleteGroup(g.id))).toBe('not_found');
+  });
+  it('refuses an empty name and a name that exists (ignoring case); only the admin changes groups', async () => {
+    expect(await code(store.saveGroup({ name: '  ' }))).toBe('invalid');
+    expect(await code(store.saveGroup({ name: 'hr payroll' }))).toBe('conflict');
+    expect(await code(store.saveGroup({ id: 'group-analytics', name: 'HR PAYROLL' }))).toBe('conflict');
+    expect(await code(store.saveGroup({ id: 'group-analytics', name: 'HR Analytics' }))).toBe('ok');
+    await as('user-lan');
+    expect(await code(store.saveGroup({ name: 'X' }))).toBe('forbidden');
+    expect(await code(store.deleteGroup('group-payroll'))).toBe('forbidden');
+  });
+  it('the last admin cannot be made a user; with a second admin it can', async () => {
+    const me = (await store.listUsers()).find((u) => u.id === 'user-harold')!;
+    await expect(store.saveUser({ ...me, role: 'user' })).rejects.toThrow(/At least one admin is needed/);
+    await store.saveUser({ id: 'user-lan', name: 'Lan', email: 'lan@example.com', role: 'admin', groupIds: ['group-payroll'] });
+    expect(await code(store.saveUser({ ...me, role: 'user' }))).toBe('ok');
+  });
+  it('an email is used once (ignoring case), and unknown groups are dropped from a user', async () => {
+    expect(await code(store.saveUser({ id: '', name: 'New', email: 'LAN@example.com', role: 'user', groupIds: [] }))).toBe('conflict');
+    const u = await store.saveUser({ id: '', name: ' New ', email: ' new@example.com ', role: 'user', groupIds: ['group-payroll', 'group-nothing'] });
+    expect(u).toMatchObject({ name: 'New', email: 'new@example.com', groupIds: ['group-payroll'] });
+  });
+});
+
 describe('users, groups and run log', () => {
   it('the admin edits a user; a bad email is refused', async () => {
     await store.saveUser({ id: 'user-lan', name: 'Lan', email: 'lan@example.com', role: 'user', groupIds: ['group-payroll', 'group-analytics'] });

@@ -2,6 +2,11 @@ import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { seedSnapshot } from '../src/store/seed';
 
+// The tests count months and days back from "today", so today is fixed: they do not depend on the day they run.
+test.beforeEach(async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2026-11-17T09:00:00+07:00'));
+});
+
 const URL = '/flows/flow-timesheet/versions';
 const rows = (page: Page) => page.getByRole('table', { name: 'Versions' }).locator('tbody tr');
 const toastWith = (page: Page, text: string) => page.getByRole('status').filter({ hasText: text });

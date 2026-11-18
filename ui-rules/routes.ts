@@ -34,7 +34,7 @@ export interface RuleRoute {
 export const ROUTES: RuleRoute[] = [
   { path: '/flows', sidebar: true, table: true, skeleton: true },
   { path: '/reference-tables', sidebar: true, table: true, skeleton: true },
-  { path: '/admin', sidebar: true },
+  { path: '/admin', sidebar: true, table: true, skeleton: true },
   { path: '/flows/flow-timesheet/run', sidebar: true },
   { path: '/flows/flow-timesheet/versions', sidebar: true, table: true, skeleton: true },
   // The builder has no sidebar and no page header.
@@ -288,6 +288,25 @@ export const ROUTES: RuleRoute[] = [
     prepare: async (page) => {
       await page.getByRole('button', { name: 'New table' }).first().click();
       await page.getByRole('dialog', { name: 'New reference table' }).waitFor();
+    },
+  },
+  {
+    path: '/admin',
+    name: '/admin (edit user dialog)',
+    sidebar: true,
+    // The dialog with text fields, the role dropdown and one checkbox for each group.
+    prepare: async (page) => {
+      await page.getByRole('button', { name: 'Edit Lan' }).click();
+      await page.getByRole('dialog', { name: 'Edit Lan' }).getByRole('checkbox', { name: 'HR Analytics' }).waitFor();
+    },
+  },
+  {
+    path: '/admin',
+    name: '/admin (delete group dialog)',
+    sidebar: true,
+    prepare: async (page) => {
+      await page.getByRole('button', { name: 'Delete HR Analytics' }).click();
+      await page.getByRole('dialog', { name: 'Delete HR Analytics?' }).waitFor();
     },
   },
 ];

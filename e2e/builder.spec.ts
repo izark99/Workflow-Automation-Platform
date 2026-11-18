@@ -125,10 +125,10 @@ test('a published version is read-only: the step buttons are disabled and a card
   await page.goto('/flows/flow-timesheet/versions/3');
   await expect(page.getByRole('button', { name: 'Add step Filter' })).toBeDisabled();
   await expect(page.getByText('Published', { exact: true })).toBeVisible();
-  const n = await cards(page).count();
+  await expect(cards(page)).toHaveCount(12); // wait until the canvas is drawn, then count
   await cards(page).first().click();
   await page.keyboard.press('Backspace');
-  await expect(cards(page)).toHaveCount(n);
+  await expect(cards(page)).toHaveCount(12);
 });
 
 test('a flow that does not exist shows what failed and a way back', async ({ page }) => {

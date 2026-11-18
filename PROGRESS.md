@@ -66,7 +66,7 @@ before it passes, except where a task says otherwise.
 - [x] T2.16 Run screen: effective date, resolved versions, file inputs, progress, result tabs, download, error state. A file above the size limit shows `strings.xlsxTooLarge` instead of starting a run; the e2e test uses a sparse file just over `MAX_SAFE_XLSX_BYTES`, as `checkGuard` in `scripts/spike.ts` does.
 - [x] T2.17 Versions screen: timeline, table, new version from copy, no-overlap check, date checker.
 - [x] T2.18 Reference tables screen: list, versions, grid with paste from Excel, read-only published versions.
-- [ ] T2.19 Admin screen: users, groups, access to shared flows, deleted flows with restore.
+- [x] T2.19 Admin screen: users, groups, access to shared flows, deleted flows with restore.
 - [ ] T2.20 End-to-end journeys for gate G3.
 - [ ] T2.21 UI rules and accessibility tests for gate G4 on every route.
 
@@ -103,6 +103,15 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-18 T2.19 Admin screen
+Changed: src/ui/screens/{admin.tsx,admin.module.css,admin-logic.ts(+5 tests)}, store `saveGroup`, `deleteGroup`, last-admin rule, unique email, group-id clean-up (+4 test groups, 34 store tests), `adminStrings`, e2e/admin.spec.ts (10 tests), UI-rules (table and skeleton for `/admin`, two dialog states), the placeholder screen is gone, docs/DECISIONS.md (D52).
+How: Users (Invite user and Edit in one dialog), Groups (create, rename, delete with the impact said), Access to shared flows (a checkbox for each group, saved at once), Deleted flows (kept until, Restore, Delete for good with confirm); expired deleted flows are removed when the admin opens the screen; non-admins get a clear message.
+Checked in the browser: all four tables from the seed (4 users, 2 groups with 3 members each, 2 shared flows, 2 deleted flows with 05 Dec 2026 and 27 Nov 2026); role and group edit; invite with wrong and used emails refused; the last admin refused; group create, duplicate refused, rename, delete (3 members and 2 flows named) and its removal from users; unticking HR Analytics shows in the Flows list after a reload; restore returns a flow to the list; delete for good asks first and survives a reload; a flow deleted in August is purged on opening; a user is refused.
+Test mistake of mine, fixed: two `.click().catch()` lines waited on a button that does not exist (60 s timeout); the screen was right.
+Two older tests of mine turned out to depend on the day they run, found when the system date moved from 17 to 18 Nov: the versions and run specs counted months back from "today" (now the clock is fixed with `page.clock.setFixedTime`), and one builder test counted cards before they were drawn (now it waits for 12 first). Neither was a product bug.
+Gates run: check PASS (610 tests), test:e2e PASS (154 tests, third full run; the first two each had a failure from the two test problems above), test:ui-rules PASS (396 tests: 198 per width, 30 route states), test:acceptance PASS (7 tests).
+Next: T2.20 (end-to-end journeys for gate G3). T2.21 follows (UI rules for every route).
 
 ### 2026-11-17 T2.18 Reference tables screen
 Changed: src/ui/screens/{reference-tables.tsx,reference-tables.module.css,reftable-logic.ts(+14 tests)}, `refStrings`, generalised `newVersionProblem`/`suggestStart` (`VersionLike`) and `publishSummaryFor`, e2e/reference-tables.spec.ts (15 tests), UI-rules states (table and skeleton, editable draft with pager, paste dialog, new table dialog), docs/DECISIONS.md (D51).

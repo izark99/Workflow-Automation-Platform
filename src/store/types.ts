@@ -105,6 +105,10 @@ export interface DataStore {
   listUsers(): Promise<User[]>;
   saveUser(user: User): Promise<User>;
   listGroups(): Promise<Group[]>;
+  /** Admin only. Creates a group (no id) or renames one. */
+  saveGroup(group: { id?: string; name: string }): Promise<Group>;
+  /** Admin only. Removes the group from every user and every shared flow. */
+  deleteGroup(id: string): Promise<void>;
 
   /** The flows the current user may see, without deleted ones. */
   listFlows(): Promise<FlowRecord[]>;

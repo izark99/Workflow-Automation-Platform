@@ -4,7 +4,7 @@ import { createLocalStore } from '../store';
 import type { DataStore } from '../store/types';
 import { BuilderScreen } from './builder/builder-screen';
 import { FlowsScreen } from './screens/flows';
-import { Placeholder } from './screens/placeholder';
+import { AdminScreen } from './screens/admin';
 import { ReferenceTablesScreen } from './screens/reference-tables';
 import { RunScreen } from './screens/run';
 import { VersionsScreen } from './screens/versions';
@@ -26,7 +26,7 @@ export function App({ store }: { store?: DataStore }) {
             <Route path="/flows/:id/run" element={<RunScreen />} />
             <Route path="/flows/:id/versions" element={<VersionsScreen />} />
             <Route path="/reference-tables" element={<ReferenceTablesScreen />} />
-            <Route path="/admin" element={<Placeholder screen="admin" />} />
+            <Route path="/admin" element={<AdminScreen />} />
           </Route>
           <Route path="/flows/:id/versions/:versionNo" element={<BuilderScreen />} />
           {DEV_ROUTES ? <Route path="/dev/components" element={<DevComponents />} /> : null}

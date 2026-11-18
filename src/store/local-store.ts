@@ -143,7 +143,13 @@ export class LocalStore implements DataStore {
     this.mustBeAdmin(s, 'change users');
     if (!user.name.trim() || !user.email.includes('@')) fail('invalid', 'A user needs a name and an email address. Fill both and save again.');
     const i = s.users.findIndex((u) => u.id === user.id);
-    const saved = { ...user, id: user.id || this.nextId(s, 'user') };
+    if (user.role !== 'admin' && i >= 0 && s.users[i]!.role === 'admin' && !s.users.some((u, j) => j !== i && u.role === 'admin')) {
+      fail('conflict', 'At least one admin is needed. Make another user an admin first, then change this user.');
+    }
+    if (s.users.some((u, j) => j !== i && u.email.toLowerCase() === user.email.trim().toLowerCase())) {
+      fail('conflict', `A user with the email ${user.email.trim()} exists. Use another email address.`);
+    }
+    const saved = { ...user, name: user.name.trim(), email: user.email.trim(), groupIds: user.groupIds.filter((g) => s.groups.some((x) => x.id === g)), id: user.id || this.nextId(s, 'user') };
     if (i >= 0) s.users[i] = saved;
     else s.users.push(saved);
     await this.commit(s);
@@ -154,6 +160,35 @@ export class LocalStore implements DataStore {
     const s = await this.open();
     this.mustBeAdmin(s, 'see the groups');
     return structuredClone(s.groups);
+  }
+
+  async saveGroup(group: { id?: string; name: string }): Promise<Group> {
+    const s = await this.open();
+    this.mustBeAdmin(s, 'change groups');
+    const name = group.name.trim();
+    if (!name) fail('invalid', 'A group needs a name. Type a name and save again.');
+    if (s.groups.some((g) => g.id !== group.id && g.name.toLowerCase() === name.toLowerCase())) fail('conflict', `A group named "${name}" exists. Choose another name.`);
+    let saved: Group;
+    if (group.id) {
+      const existing = s.groups.find((g) => g.id === group.id) ?? fail('not_found', 'This group does not exist any more. Reload the page.');
+      existing.name = name;
+      saved = existing;
+    } else {
+      saved = { id: this.nextId(s, 'group'), name };
+      s.groups.push(saved);
+    }
+    await this.commit(s);
+    return structuredClone(saved);
+  }
+
+  async deleteGroup(id: string): Promise<void> {
+    const s = await this.open();
+    this.mustBeAdmin(s, 'delete groups');
+    if (!s.groups.some((g) => g.id === id)) fail('not_found', 'This group does not exist any more. Reload the page.');
+    s.groups = s.groups.filter((g) => g.id !== id);
+    for (const u of s.users) u.groupIds = u.groupIds.filter((g) => g !== id);
+    for (const f of s.flows) f.groupIds = f.groupIds.filter((g) => g !== id);
+    await this.commit(s);
   }
 
   async listFlows(): Promise<FlowRecord[]> {

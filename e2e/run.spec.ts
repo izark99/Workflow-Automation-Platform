@@ -7,6 +7,11 @@ import * as XLSX from 'xlsx';
 import { MAX_SAFE_XLSX_BYTES } from '../src/engine/size-guard';
 import { seedRunnableFlow } from './runnable-flow';
 
+// The tests count months and days back from "today", so today is fixed: they do not depend on the day they run.
+test.beforeEach(async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2026-11-17T09:00:00+07:00'));
+});
+
 const csv = (text: string, name = 'people.csv') => ({ name, mimeType: 'text/csv', buffer: Buffer.from(text) });
 const DATA = 'name,kind\nAnn,WEEK\nBob,MONTH\nCy,YEAR\n';
 
