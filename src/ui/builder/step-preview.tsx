@@ -5,7 +5,7 @@ import { checkFileSize } from '../../engine/size-guard';
 import { EngineError } from '../../engine/types';
 import type { Cell } from '../../engine/types';
 import type { RefTable } from '../../engine/versions';
-import { Button, Chip, ChipGroup, DatePicker, EmptyState, ErrorState, SkeletonTable, Table } from '../components';
+import { Button, Chip, ChipGroup, DatePicker, EmptyState, ErrorState, InfoTip, SkeletonTable, Table } from '../components';
 import type { Column } from '../components';
 import { previewStrings as t, strings } from '../strings';
 import { todayIso } from '../screens/flows-logic';
@@ -76,8 +76,10 @@ export function StepPreview({ definition, step, files, onFile, refTables }: Step
       </div>
       {needed.length > 0 ? (
         <div className={styles.block}>
-          <span className={styles.label}>{t.filesTitle}</span>
-          <span className={styles.muted}>{t.filesHint}</span>
+          <span className={styles.labelRow}>
+            <span className={styles.label}>{t.filesTitle}</span>
+            <InfoTip label={t.filesTitle}>{t.filesHint}</InfoTip>
+          </span>
           {needed.map((n) => (
             <FileRow key={n.stepId} label={n.label} file={files[n.key]} onFile={(f) => onFile(n.key, f)} />
           ))}

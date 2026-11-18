@@ -1,8 +1,15 @@
 import { expect, test } from '@playwright/test';
-import { axeSeriousOrCritical, buttonHeights, dangerSpacing, duplicateButtonNames, forbiddenElements, headerPosition, keyboardFocusRing, noHorizontalScroll, oneCta, sidebarWidth, tableRows } from './rules';
+import { axeSeriousOrCritical, buttonHeights, dangerSpacing, noHintParagraphs, duplicateButtonNames, forbiddenElements, headerPosition, keyboardFocusRing, noHorizontalScroll, oneCta, sidebarWidth, tableRows } from './rules';
 
 // Each rule must fail on a page that breaks it, and pass on a page that does not.
 const bad = (html: string) => `<!doctype html><html lang="en"><head><title>t</title></head><body style="margin:0">${html}</body></html>`;
+
+test('hint paragraphs: a visible element with a hint class fails, a note and a hidden hint pass', async ({ page }) => {
+  await page.setContent(bad('<p class="_hint_x1">Explains something</p>'));
+  expect((await noHintParagraphs(page)).length).toBe(1);
+  await page.setContent(bad('<p class="_note_x1">State</p><p class="_hint_x1" style="display:none">h</p>'));
+  expect(await noHintParagraphs(page)).toEqual([]);
+});
 
 test('info button: 24 x 24 px passes, 26 x 26 and 24 x 36 fail', async ({ page }) => {
   await page.setContent(bad('<button data-infotip style="width:24px;height:24px;padding:0;border:0">i</button>'));

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { checkOutputNodes } from '../../../engine/nodes/output';
 import { Button, Checkbox, Dropdown, ErrorState, Field, Icon } from '../../components';
 import { outputStrings as t } from '../../strings';
-import { ColumnList, ColumnSelect, LoadColumnsBar } from './column-pickers';
+import { ColumnList, ColumnSelect, LoadColumnsBar, SectionLabel } from './column-pickers';
 import { outputFromSettings, outputMissing, outputToSettings } from './output-logic';
 import type { OutputErrors, OutputFormat, OutputValues, SortRow } from './output-logic';
 import type { FormProps } from './types';
@@ -51,14 +51,12 @@ export function OutputForm(props: FormProps) {
       </Checkbox>
       {v.allColumns ? null : (
         <>
-          <p className={styles.hint}>{t.columnsHint}</p>
-          <ColumnList label={t.columns} values={v.columns} columns={names} disabled={readOnly} onChange={(columns) => apply({ ...v, columns })} />
+          <ColumnList label={t.columns} hint={t.columnsHint} values={v.columns} columns={names} disabled={readOnly} onChange={(columns) => apply({ ...v, columns })} />
         </>
       )}
 
       <div role="group" aria-label={t.sort} style={{ display: 'flex', flexDirection: 'column' }}>
-        <span className={styles.label} style={{ marginBottom: 0 }}>{t.sort}</span>
-        <p className={styles.hint}>{t.sortHint}</p>
+        <SectionLabel label={t.sort} hint={t.sortHint} flush />
         {v.sort.map((k, i) => (
           <div key={i} className={styles.rowCard}>
             <div className={styles.line}>
@@ -90,10 +88,9 @@ export function OutputForm(props: FormProps) {
         </div>
       </div>
 
-      <p className={styles.hint}>{t.numberLikeHint}</p>
-      <ColumnList label={t.numberLike} values={v.numberLikeText} columns={names} disabled={readOnly} onChange={(numberLikeText) => apply({ ...v, numberLikeText })} />
+      <ColumnList label={t.numberLike} hint={t.numberLikeHint} values={v.numberLikeText} columns={names} disabled={readOnly} onChange={(numberLikeText) => apply({ ...v, numberLikeText })} />
       {missing.length > 0 ? (
-        <p className={styles.hint} role="status">
+        <p className={styles.note} role="status">
           {`${t.stillMissing} ${missing.join(' ')}`}
         </p>
       ) : null}

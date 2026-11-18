@@ -1,28 +1,38 @@
 import { useState } from 'react';
-import { Button, Dropdown, ErrorState, Field, Icon } from '../../components';
+import { Button, Dropdown, ErrorState, Field, Icon, InfoTip } from '../../components';
 import { pickerStrings as t } from '../../strings';
 import type { SourceColumns } from './use-source-columns';
 import styles from './column-pickers.module.css';
+
+/** A label with an optional info button after it: the place where the explanation of a setting lives. */
+export function SectionLabel({ label, hint, flush = false }: { label: string; hint?: string; flush?: boolean }) {
+  return (
+    <span className={styles.labelRow} style={flush ? { marginBottom: 0 } : undefined}>
+      <span className={styles.labelText}>{label}</span>
+      {hint ? <InfoTip label={label}>{hint}</InfoTip> : null}
+    </span>
+  );
+}
 
 /**
  * One column name. With the columns loaded it is a dropdown of them (a name that is not among them stays selectable, so
  * a saved flow shows what it holds); without them it is a text field, so the form works before any file is chosen.
  */
-export function ColumnSelect({ label, value, onChange, columns, disabled, width = 150 }: { label: string; value: string; onChange: (v: string) => void; columns: string[] | null; disabled: boolean; width?: number }) {
+export function ColumnSelect({ label, hint, value, onChange, columns, disabled, width = 150 }: { label: string; hint?: string; value: string; onChange: (v: string) => void; columns: string[] | null; disabled: boolean; width?: number }) {
   if (columns === null) {
-    return <Field label={label} value={value} disabled={disabled} onChange={(e) => onChange(e.target.value)} />;
+    return <Field label={label} hint={hint} value={value} disabled={disabled} onChange={(e) => onChange(e.target.value)} />;
   }
   const names = value && !columns.includes(value) ? [value, ...columns] : columns;
   return (
     <div>
-      <span className={styles.label}>{label}</span>
+      <SectionLabel label={label} hint={hint} />
       <Dropdown label={label} options={[{ value: '', label: t.choose }, ...names.map((n) => ({ value: n, label: n }))]} value={value} disabled={disabled} width={width} onChange={onChange} />
     </div>
   );
 }
 
 /** A list of column names as chips with a remove button, and a way to add one (a dropdown when the columns are loaded, else a text field). */
-export function ColumnList({ label, values, onChange, columns, disabled }: { label: string; values: string[]; onChange: (v: string[]) => void; columns: string[] | null; disabled: boolean }) {
+export function ColumnList({ label, hint, values, onChange, columns, disabled }: { label: string; hint?: string; values: string[]; onChange: (v: string[]) => void; columns: string[] | null; disabled: boolean }) {
   const [text, setText] = useState('');
   const add = (name: string): void => {
     const n = name.trim();
@@ -31,10 +41,8 @@ export function ColumnList({ label, values, onChange, columns, disabled }: { lab
   };
   return (
     <div role="group" aria-label={label} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <span className={styles.label} style={{ marginBottom: 0 }}>
-        {label}
-      </span>
-      {values.length === 0 ? <p className={styles.hint}>{t.none}</p> : null}
+      <SectionLabel label={label} hint={hint} flush />
+      {values.length === 0 ? <p className={styles.note}>{t.none}</p> : null}
       <div className={styles.chips}>
         {values.map((v) => (
           <span key={v} className={styles.chip}>

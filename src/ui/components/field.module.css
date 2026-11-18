@@ -28,13 +28,6 @@
   border-color: var(--color-danger);
 }
 
-.hint {
-  font-weight: 400;
-  font-size: 13px;
-  line-height: 20px;
-  color: var(--color-muted);
-}
-
 .error {
   font-weight: 400;
   font-size: 13px;

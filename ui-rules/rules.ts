@@ -28,6 +28,21 @@ export const buttonHeights: Rule = async (page) =>
     return bad;
   }, BUTTON_HEIGHTS);
 
+/**
+ * SPEC 11.2: explanations live behind an info button. A visible element whose CSS class is named "hint" is an explanation
+ * paragraph; state messages use the class "note". (The class names are kept in production builds by CSS modules.)
+ */
+export const noHintParagraphs: Rule = async (page) =>
+  page.evaluate(() => {
+    const bad: string[] = [];
+    for (const el of document.querySelectorAll('[class*="_hint_"], [class*="_help_"]')) {
+      const r = el.getBoundingClientRect();
+      if (r.width === 0 && r.height === 0) continue;
+      bad.push(`visible hint paragraph: "${(el.textContent ?? '').trim().slice(0, 60)}"; move it into an info button`);
+    }
+    return bad;
+  });
+
 export const forbiddenElements: Rule = async (page) =>
   page.evaluate(() => {
     const bad: string[] = [];
@@ -184,6 +199,7 @@ export const keyboardFocusRing: Rule = async (page) => {
 /** Rules that run on every route. */
 export const COMMON_RULES: Record<string, Rule> = {
   'button heights': buttonHeights,
+  'no visible hint paragraphs': noHintParagraphs,
   'forbidden elements': forbiddenElements,
   'one cta': oneCta,
   'no horizontal scroll': noHorizontalScroll,

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { resolvedEdges } from '../graph';
 import { Button, Dropdown, Field, Icon } from '../../components';
 import { joinStrings as t } from '../../strings';
-import { ColumnSelect, LoadColumnsBar } from './column-pickers';
+import { ColumnSelect, LoadColumnsBar, SectionLabel } from './column-pickers';
 import { NO_MATCH, lookupFromSettings, lookupMissing, lookupToSettings, refTableColumns } from './lookup-logic';
 import type { LookupValues, NoMatch } from './lookup-logic';
 import type { FormProps } from './types';
@@ -31,7 +31,7 @@ export function LookupForm(props: FormProps) {
   return (
     <div className={styles.rowCard} style={{ gap: 16, borderBottom: 0, padding: 0 }}>
       <div>
-        <span className={styles.label}>{t.source}</span>
+        <SectionLabel label={t.source} hint={v.source.kind === 'node' ? t.nodeHint : undefined} />
         <Dropdown
           label={t.source}
           options={[{ value: 'node', label: t.sourceNode }, ...tableOptions]}
@@ -40,7 +40,6 @@ export function LookupForm(props: FormProps) {
           width={338}
           onChange={(value) => apply({ ...v, source: value === 'node' ? { kind: 'node' } : { kind: 'reference', table: value.slice(4) } })}
         />
-        {v.source.kind === 'node' ? <p className={styles.hint}>{t.nodeHint}</p> : null}
       </div>
 
       <div className={styles.toolbar}>
@@ -49,8 +48,7 @@ export function LookupForm(props: FormProps) {
       </div>
 
       <div role="group" aria-label={t.keys} style={{ display: 'flex', flexDirection: 'column' }}>
-        <span className={styles.label} style={{ marginBottom: 0 }}>{t.keys}</span>
-        <p className={styles.hint}>{t.keysHint}</p>
+        <SectionLabel label={t.keys} hint={t.keysHint} flush />
         {v.keys.map((k, i) => (
           <div key={i} className={styles.rowCard}>
             <div className={styles.line}>
@@ -103,7 +101,7 @@ export function LookupForm(props: FormProps) {
         />
       </div>
 
-      <p className={styles.hint} role="status">
+      <p className={styles.note} role="status">
         {missing.length === 0 ? t.complete : `${t.stillMissing} ${missing.join(' ')}`}
       </p>
     </div>

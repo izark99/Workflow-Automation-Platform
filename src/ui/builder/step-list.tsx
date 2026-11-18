@@ -1,4 +1,4 @@
-import { Button } from '../components';
+import { Button, InfoTip } from '../components';
 import type { NodeType } from '../../engine/flow/types';
 import { STEP_CATALOG, STEP_GROUPS } from './graph';
 import { strings } from '../strings';
@@ -11,8 +11,10 @@ export function StepList({ onAdd, disabled }: { onAdd: (type: NodeType) => void;
   const t = strings.builder;
   return (
     <aside aria-label={t.stepTypes} className={styles.stepList}>
-      <h2>{t.addStep}</h2>
-      <p className={styles.hint}>{t.addStepHint}</p>
+      <div className={styles.titleRow}>
+        <h2>{t.addStep}</h2>
+        <InfoTip label={t.addStep}>{t.addStepHint}</InfoTip>
+      </div>
       {STEP_GROUPS.map((g) => (
         <div key={g.label} role="group" aria-label={g.label} style={{ display: 'contents' }}>
           <span className={styles.group} aria-hidden="true">

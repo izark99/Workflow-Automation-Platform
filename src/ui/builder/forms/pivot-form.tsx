@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Dropdown, Field } from '../../components';
 import { reshapeStrings as t } from '../../strings';
-import { ColumnList, ColumnSelect, LoadColumnsBar } from './column-pickers';
+import { ColumnList, ColumnSelect, LoadColumnsBar, SectionLabel } from './column-pickers';
 import { refTableColumns } from './lookup-logic';
 import { NAME_CASES, PIVOT_FNS, parseFill, pivotFromSettings, pivotMissing, pivotToSettings } from './reshape-logic';
 import type { NameCase, PivotFn, PivotValues } from './reshape-logic';
@@ -29,10 +29,9 @@ export function PivotForm(props: FormProps) {
 
   return (
     <div className={styles.rowCard} style={{ gap: 16, borderBottom: 0, padding: 0 }}>
-      <p className={styles.hint}>{t.pivotHint}</p>
       <LoadColumnsBar source={source} />
       <ColumnList label={t.rowKeys} values={v.rowKeys} columns={names} disabled={readOnly} onChange={(rowKeys) => apply({ ...v, rowKeys })} />
-      <ColumnSelect label={t.columnSource} value={v.columnSource} columns={names} disabled={readOnly} width={338} onChange={(columnSource) => apply({ ...v, columnSource })} />
+      <ColumnSelect label={t.columnSource} hint={t.pivotHint} value={v.columnSource} columns={names} disabled={readOnly} width={338} onChange={(columnSource) => apply({ ...v, columnSource })} />
       <ColumnSelect label={t.value} value={v.value} columns={names} disabled={readOnly} width={338} onChange={(value) => apply({ ...v, value })} />
       <div>
         <span className={styles.label}>{t.aggregation}</span>
@@ -62,11 +61,10 @@ export function PivotForm(props: FormProps) {
       <Field label={t.prefix} value={v.namePrefix} disabled={readOnly} onChange={(e) => apply({ ...v, namePrefix: e.target.value })} />
       <Field label={t.suffix} value={v.nameSuffix} disabled={readOnly} onChange={(e) => apply({ ...v, nameSuffix: e.target.value })} />
       <div>
-        <span className={styles.label}>{t.nameCase}</span>
+        <SectionLabel label={t.nameCase} hint={t.nameCaseHint} />
         <Dropdown label={t.nameCase} options={NAME_CASES.map((c) => ({ value: c, label: t.cases[c] }))} value={v.nameCase} disabled={readOnly} width={338} onChange={(nameCase) => apply({ ...v, nameCase: nameCase as NameCase })} />
-        <p className={styles.hint}>{t.nameCaseHint}</p>
       </div>
-      <p className={styles.hint} role="status">
+      <p className={styles.note} role="status">
         {missing.length === 0 ? t.completePivot : `${t.stillMissing} ${missing.join(' ')}`}
       </p>
     </div>

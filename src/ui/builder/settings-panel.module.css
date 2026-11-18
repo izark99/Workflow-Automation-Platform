@@ -16,7 +16,7 @@
   gap: 2px;
 }
 
-.hint {
+.note {
   margin: 0;
   font-size: 13px;
   line-height: 20px;
@@ -42,4 +42,13 @@
 
 .footer {
   margin-top: auto;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+}
+
+.titleRow h2 {
+  margin: 0;
 }

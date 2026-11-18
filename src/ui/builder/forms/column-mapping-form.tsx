@@ -6,6 +6,7 @@ import { COLUMN_TYPES, emptyRow, looksLikeGrid, mergeColumns, parsePaste, rowsFr
 import type { MappingRow } from './column-mapping-logic';
 import { loadSourceColumns } from './load-columns';
 import type { FormProps } from './types';
+import { SectionLabel } from './column-pickers';
 import styles from './column-mapping-form.module.css';
 
 const t = formStrings.mapping;
@@ -64,7 +65,7 @@ export function ColumnMappingForm({ step, definition, onSettings, readOnly, cont
         setError(message ? `${t.pasteFailed} ${message}` : null);
       }}
     >
-      <p className={styles.hint}>{t.hint}</p>
+      <SectionLabel label={t.list} hint={t.hint} />
       <div className={styles.toolbar}>
         <Button compact disabled={readOnly || loading} busy={loading} onClick={() => void load()}>
           {t.load}
@@ -78,11 +79,11 @@ export function ColumnMappingForm({ step, definition, onSettings, readOnly, cont
       </div>
       {error ? <ErrorState what={t.loadFailed} next={error} /> : null}
       {info ? (
-        <p className={styles.hint} role="status">
+        <p className={styles.note} role="status">
           {info}
         </p>
       ) : null}
-      {rows.length === 0 ? <p className={styles.hint}>{t.empty}</p> : null}
+      {rows.length === 0 ? <p className={styles.note}>{t.empty}</p> : null}
       <ul className={styles.rows} aria-label={t.list}>
         {rows.map((r, i) => (
           <li key={i} className={styles.row} aria-label={`${t.source}: ${r.source || '(empty)'}`}>

@@ -103,7 +103,7 @@ Themes (SPEC 11.4)
 Info button (SPEC 11.2)
 - [x] T4.5 `InfoTip` component as in DESIGN "Info button": toggletip, hover delay, Escape, outside click, live region, placement; on `/dev/components`; unit and e2e keyboard tests; the UI rule accepts it only at exactly 24 x 24 px.
 - [x] T4.6a Page header: subtitle moves into an InfoTip after the title on every screen; measure the new y of the first block, write it in DESIGN, update the UI rule in the same commit. `Field` and `TextAreaField`: `hint` renders an InfoTip after the label, not a paragraph.
-- [ ] T4.6b Builder: every explanation in the step list, settings panel, forms and Test tab moves into InfoTips. A UI rule fails when a hint paragraph is visible.
+- [x] T4.6b Builder: every explanation in the step list, settings panel, forms and Test tab moves into InfoTips. A UI rule fails when a hint paragraph is visible.
 - [ ] T4.6c Run, Versions, Reference tables, Admin, dialogs and the sign-in screen: the same.
 
 Texts (SPEC 11.3)
@@ -167,6 +167,13 @@ None. The Pages file size blocker of T3.9 is solved by D71.
 ## Log
 
 Newest first.
+
+### 2026-11-18 T4.6b Builder explanations in info buttons (turn 7)
+Changed: builder step list, settings panel, Test tab and every form (`column-pickers.tsx` gets `SectionLabel`, and `ColumnList` and `ColumnSelect` get a `hint` prop that renders an InfoTip after the label), CSS module class `.hint` renamed `.note` for state messages (read-only notice, empty lists, "still missing" status, no-input notice), `Field.hint` CSS removed, ui-rules/rules.ts (new rule "no visible hint paragraphs": a visible element whose CSS class is `hint` or `help` fails; self-check added), e2e/builder.spec.ts and settings-panel.spec.ts (the step description is read after opening the info button; the step list now has 11 step buttons plus the info button).
+Decision: what stays visible is state, not explanation: the read-only notice, "No column chosen yet", "still missing" messages, "no input" notices, the stale-preview and row-count lines. The settings panel keeps the step type name as a short visible note.
+Gates run: check PASS (729 tests, exit 0); `npm run test:e2e` first run 175 passed, 2 failed (the two tests above), both pass after the fix (16 passed in builder + settings-panel; the other files were not rerun after the fix); `npm run test:ui-rules` exit 0, 1119 passed in 16.9 min (373 per project: light-1280, light-1440, dark-1440).
+Not covered yet: the sign-in subtitle (T4.6c), and formula-editor messages, which were not touched.
+Next: T4.6c.
 
 ### 2026-11-18 T4.6a Page header and field hints in info buttons (turn 6)
 Changed: components/page-header.tsx and .module.css (the subtitle is the content of an InfoTip after the title; header 67 px), field.tsx and field.module.css (`hint` of `Field` and `TextAreaField` is an InfoTip after the label, no paragraph; the label is a sibling of the info button, not around it), info-tip.module.css (negative margins keep the line height), base.test.tsx, ui-rules/rules.ts (first block y 123, was 148), rules.selfcheck.spec.ts, ui-rules/routes.ts, docs/DESIGN.md (new y written), e2e/journeys.spec.ts and run.spec.ts.

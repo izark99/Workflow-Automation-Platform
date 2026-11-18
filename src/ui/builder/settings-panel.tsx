@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { FlowDefinition, FlowNode } from '../../engine/flow/types';
 import { NODE_PORTS } from '../../engine/flow/types';
 import type { RefTable } from '../../engine/versions';
-import { Button, Dropdown, ErrorState, Field, Tabs } from '../components';
+import { Button, Dropdown, ErrorState, Field, InfoTip, Tabs } from '../components';
 import { settingsStrings as t } from '../strings';
 import { currentSource, deleteSteps, updateSettings, inputHandlesOf, inputTitle, renameStep, setInput, sourceOptions, STEP_CATALOG, stepNumbers } from './graph';
 import { FORMS } from './forms';
@@ -33,7 +33,7 @@ export function SettingsPanel({ definition, step, onChange, onDeleted, readOnly,
   if (!step) {
     return (
       <aside aria-label={t.panel} className={styles.panel}>
-        <p className={styles.hint}>{t.none}</p>
+        <p className={styles.note}>{t.none}</p>
       </aside>
     );
   }
@@ -43,8 +43,11 @@ export function SettingsPanel({ definition, step, onChange, onDeleted, readOnly,
   return (
     <aside aria-label={t.panel} className={styles.panel}>
       <div className={styles.head}>
-        <h2>{`${number}. ${label}`}</h2>
-        <p className={styles.hint}>{STEP_CATALOG[step.type].label}. {STEP_CATALOG[step.type].hint}</p>
+        <div className={styles.titleRow}>
+          <h2>{`${number}. ${label}`}</h2>
+          <InfoTip label={label}>{`${STEP_CATALOG[step.type].label}. ${STEP_CATALOG[step.type].hint}`}</InfoTip>
+        </div>
+        <p className={styles.note}>{STEP_CATALOG[step.type].label}</p>
       </div>
       <Tabs
         label={t.tabsLabel}
@@ -57,7 +60,7 @@ export function SettingsPanel({ definition, step, onChange, onDeleted, readOnly,
         onSelect={(id) => setTab(id as SettingsTab)}
       >
         <div className={styles.stack}>
-          {readOnly ? <p className={styles.hint}>{t.readOnly}</p> : null}
+          {readOnly ? <p className={styles.note}>{t.readOnly}</p> : null}
           {tab === 'setup' ? (
             <SetupTab key={step.id} definition={definition} step={step} onChange={onChange} readOnly={readOnly} error={error} setError={setError} />
           ) : null}
@@ -103,7 +106,7 @@ function SetupTab({ definition, step, onChange, readOnly, error, setError }: { d
           if (clean !== '') onChange(renameStep(definition, step.id, clean));
         }}
       />
-      {inputs.length === 0 ? <p className={styles.hint}>{t.noInputs}</p> : null}
+      {inputs.length === 0 ? <p className={styles.note}>{t.noInputs}</p> : null}
       {inputs.map((h) => (
         <div key={h} className={styles.field}>
           <span className={styles.fieldLabel}>{inputs.length > 1 ? `${t.inputFrom} (${inputTitle(h).toLowerCase()})` : t.inputFrom}</span>

@@ -39,10 +39,9 @@ export function UnpivotForm(props: FormProps) {
 
   return (
     <div className={styles.rowCard} style={{ gap: 16, borderBottom: 0, padding: 0 }}>
-      <p className={styles.hint}>{t.unpivotHint}</p>
       <LoadColumnsBar source={source} />
       <ColumnList label={t.keep} values={v.keep} columns={offer(v.unpivot)} disabled={readOnly} onChange={pick('keep')} />
-      <ColumnList label={t.unpivot} values={v.unpivot} columns={offer(v.keep)} disabled={readOnly} onChange={pick('unpivot')} />
+      <ColumnList label={t.unpivot} hint={t.unpivotHint} values={v.unpivot} columns={offer(v.keep)} disabled={readOnly} onChange={pick('unpivot')} />
       {names ? (
         <div>
           <Button compact disabled={readOnly} onClick={() => apply({ ...v, unpivot: names.filter((n) => !v.keep.includes(n)) })}>
@@ -56,7 +55,7 @@ export function UnpivotForm(props: FormProps) {
       <Checkbox checked={v.skipBlank} disabled={readOnly} onChange={(skipBlank) => apply({ ...v, skipBlank })}>
         {t.skipBlank}
       </Checkbox>
-      <p className={styles.hint} role="status">
+      <p className={styles.note} role="status">
         {missing.length === 0 ? t.completeUnpivot : `${t.stillMissing} ${missing.join(' ')}`}
       </p>
     </div>

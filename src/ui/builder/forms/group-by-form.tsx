@@ -23,9 +23,8 @@ export function GroupByForm(props: FormProps) {
 
   return (
     <div className={styles.rowCard} style={{ gap: 16, borderBottom: 0, padding: 0 }}>
-      <p className={styles.hint}>{t.hint}</p>
       <LoadColumnsBar source={source} />
-      <ColumnList label={t.groupColumns} values={v.groupBy} columns={names} disabled={readOnly} onChange={(groupBy) => apply({ ...v, groupBy })} />
+      <ColumnList label={t.groupColumns} hint={t.hint} values={v.groupBy} columns={names} disabled={readOnly} onChange={(groupBy) => apply({ ...v, groupBy })} />
       <div role="group" aria-label={t.aggregations} style={{ display: 'flex', flexDirection: 'column' }}>
         <span className={styles.label} style={{ marginBottom: 0 }}>{t.aggregations}</span>
         {v.aggregations.map((a, i) => (
@@ -49,7 +48,7 @@ export function GroupByForm(props: FormProps) {
           </Button>
         </div>
       </div>
-      <p className={styles.hint} role="status">
+      <p className={styles.note} role="status">
         {missing.length === 0 ? t.complete : `${t.stillMissing} ${missing.join(' ')}`}
       </p>
     </div>

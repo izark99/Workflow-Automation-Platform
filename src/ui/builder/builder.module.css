@@ -87,7 +87,7 @@
   overflow-y: auto;
 }
 
-.hint {
+.note {
   margin: 0;
   font-size: 13px;
   line-height: 20px;
@@ -229,4 +229,13 @@
   color: var(--color-muted);
   white-space: nowrap;
   pointer-events: none;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+}
+
+.titleRow h2 {
+  margin: 0;
 }
