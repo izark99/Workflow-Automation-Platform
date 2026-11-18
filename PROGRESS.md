@@ -85,7 +85,7 @@ before it passes, except where a task says otherwise.
 - [x] T3.6c2 Integration test of `SupabaseStore` against the full local stack (`npm run test:store`, not part of `gates`; it needs the API and Auth containers): roles, flows, versions, publish, soft delete, reference tables, groups, run log. Settles the owner-name and group-name limit for non-admins from T3.6a.
 - [x] T3.7a A profile appears when an Auth user is created (trigger, role always `user`, never taken from user-editable metadata; the first admin is made by a documented SQL step in T3.9), with pgTAP tests; the new-user message of `saveUser` says so.
 - [x] T3.7b1 Auth service layer: `AuthService` interface, `SupabaseAuth`, an in-memory `MemoryAuth` for the local build and tests, messages for sign-in problems, `createBackend()` (store and auth together), unit tests, and an integration test of `SupabaseAuth` against the real local Auth service.
-- [ ] T3.7b2 Sign-in screen and session handling in the app: gate that shows the sign-in screen when there is no session (only when an auth service exists; the local store keeps working without sign-in), session restore, sign out in the shell, "your session ended" message; the screen is covered by the UI rules and an e2e test.
+- [x] T3.7b2 Sign-in screen and session handling in the app: gate that shows the sign-in screen when there is no session (only when an auth service exists; the local store keeps working without sign-in), session restore, sign out in the shell, "your session ended" message; the screen is covered by the UI rules and an e2e test.
 - [ ] T3.8 Keep-alive: a small scheduled request that touches the database once a day, as code plus instructions.
 - [ ] T3.9 `docs/DEPLOY.md`: steps for a human to create the Supabase project, run migrations, set variables on Cloudflare Pages, and create the first admin.
 
@@ -110,6 +110,13 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-18 T3.7b2 Sign-in screen and session handling in the app
+Changed: src/ui/auth-gate.tsx, auth-gate-logic.ts (+8 tests), sign-in.tsx, sign-in.module.css, shell.tsx (Sign out), app.tsx (`createBackend`, gate only with an auth service), `Field` `secret` option, strings, e2e/sign-in.spec.ts (8 tests), ui-rules/routes.ts (3 sign-in states), docs/DECISIONS.md (D68).
+How: see D68. The local store keeps working without sign-in. A first WIP commit of this work was pushed while the gates were still running (a hook asked for it after a worker restart, and unpushed work is lost if the machine is replaced); the task was not ticked until the gates below had passed.
+Checked: a mutation that bypassed the gate failed 7 of the 8 sign-in tests (the app crashed; not a clean mutation, but the tests notice a broken gate). My first full e2e command was killed by the worker restart (exit 137, no result) and was rerun in the background.
+Gates run: check PASS (665 tests), test:e2e PASS (167 tests, 2.2 min), test:ui-rules PASS (676 tests, 10.2 min), test:acceptance PASS (7 tests; see the command output in the evidence). test:db and test:store not rerun (no change under supabase/, src/store or integration/).
+Next: T3.8 (keep-alive).
 
 ### 2026-11-18 T3.7b1 Auth service layer (T3.7b split into T3.7b1 and T3.7b2)
 Changed: src/store/auth.ts (`AuthService`, `AuthError`, `signInProblem`, `authErrorMessage`, `MemoryAuth`; 12 tests), src/store/supabase-auth.ts, src/store/index.ts (`createBackend`, `Backend`, exports), integration/supabase-auth.test.ts (6 tests against the real local Auth container), docs/DECISIONS.md (D67). PROGRESS: T3.7b split.
