@@ -4,6 +4,8 @@
  */
 import type { Cell, Column } from '../engine/types';
 import type { VersionRange } from '../engine/versions';
+import { storeText } from './messages';
+import type { StoreMessageId } from './messages';
 
 export type Role = 'admin' | 'user';
 export type Scope = 'personal' | 'shared';
@@ -92,11 +94,21 @@ export type StoreErrorCode = 'not_found' | 'forbidden' | 'invalid' | 'conflict';
 /** Every message says what failed and what to do next. */
 export class StoreError extends Error {
   readonly code: StoreErrorCode;
-  constructor(code: StoreErrorCode, message: string) {
+  /** Id of the message in the catalog and its parameters. Without an id the English `message` is shown. */
+  readonly messageId: string | undefined;
+  readonly params: Record<string, string | number> | undefined;
+  constructor(code: StoreErrorCode, message: string, detail?: { messageId: string; params?: Record<string, string | number> }) {
     super(message);
     this.name = 'StoreError';
     this.code = code;
+    this.messageId = detail?.messageId;
+    this.params = detail?.params;
   }
+}
+
+/** A store error with a message id: the message is the English template filled with the parameters. */
+export function storeError(code: StoreErrorCode, messageId: StoreMessageId, params: Record<string, string | number> = {}): StoreError {
+  return new StoreError(code, storeText(messageId, params), { messageId, params });
 }
 
 export interface DataStore {

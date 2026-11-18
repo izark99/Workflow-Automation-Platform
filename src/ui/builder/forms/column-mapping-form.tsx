@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button, Checkbox, Dialog, Dropdown, ErrorState, Field, Icon, TextAreaField } from '../../components';
-import { useT } from '../../i18n';
+import { useT, errorText } from '../../i18n';
 import { todayIso } from '../../screens/flows-logic';
 import { COLUMN_TYPES, emptyRow, looksLikeGrid, mergeColumns, parsePaste, rowsFromSettings, settingsFromRows } from './column-mapping-logic';
 import type { MappingRow } from './column-mapping-logic';
@@ -48,7 +48,7 @@ export function ColumnMappingForm({ step, definition, onSettings, readOnly, cont
       setError(null);
       setInfo(merged.added === 0 ? t('builder.form.mapping.loadedNone') : t('builder.form.mapping.loaded', { n: merged.added }));
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(errorText(e));
     } finally {
       setLoading(false);
     }

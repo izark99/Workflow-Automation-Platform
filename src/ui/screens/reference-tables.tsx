@@ -7,7 +7,7 @@ import type { Cell } from '../../engine/types';
 import type { RefTableRecord, RefTableVersionRecord } from '../../store/types';
 import { NewVersionDialog, PublishDialog } from '../builder/builder-dialogs';
 import { publishSummaryFor, versionOptionLabel } from '../builder/version-logic';
-import { useT } from '../i18n';
+import { useT, errorText } from '../i18n';
 import { useLoad, useStore } from '../store-context';
 import { todayIso } from './flows-logic';
 import { looksLikeGrid, newTableFromPaste, pageRange, pasteAt, pasteIntoGrid, pastedCells, rowsToText, textToRows, tooManyRows, usedBy, versionToShow, tableSummary } from './reftable-logic';
@@ -106,7 +106,7 @@ export function ReferenceTablesScreen() {
       loadedKey.current = ''; // reload the text from what was saved (typed numbers come back as numbers)
       toast(t('refTables.saved'));
     } catch (e) {
-      setSaveError(e instanceof Error ? e.message : t('refTables.saveFailed'));
+      setSaveError(errorText(e, t('refTables.saveFailed')));
     } finally {
       setBusy(null);
     }
@@ -181,7 +181,7 @@ export function ReferenceTablesScreen() {
       data.reload();
       void navigate(url(created.id, 1));
     } catch (e) {
-      setDialogError(e instanceof Error ? e.message : t('refTables.createFailed'));
+      setDialogError(errorText(e, t('refTables.createFailed')));
     } finally {
       setBusy(null);
     }
@@ -206,7 +206,7 @@ export function ReferenceTablesScreen() {
       }
       data.reload();
     } catch (e) {
-      setDialogError(e instanceof Error ? e.message : '');
+      setDialogError(errorText(e));
     } finally {
       setBusy(null);
     }

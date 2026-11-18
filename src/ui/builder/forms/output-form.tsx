@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { checkOutputNodes } from '../../../engine/nodes/output';
 import { Button, Checkbox, Dropdown, ErrorState, Field, Icon } from '../../components';
-import { useT } from '../../i18n';
+import { useT, errorText } from '../../i18n';
 import type { MessageKey } from '../../i18n';
 import { ColumnList, ColumnSelect, LoadColumnsBar, SectionLabel } from './column-pickers';
 import { outputFromSettings, outputMissing, outputToSettings } from './output-logic';
@@ -32,7 +32,7 @@ export function OutputForm(props: FormProps) {
   try {
     checkOutputNodes(definition);
   } catch (e) {
-    const message = e instanceof Error ? e.message : '';
+    const message = errorText(e);
     if (message.includes(`"${step.id}"`)) clash = message;
   }
   const missing = outputMissing(v);

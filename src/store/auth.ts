@@ -1,3 +1,5 @@
+import { storeText } from './messages';
+import type { StoreMessageId } from './messages';
 // Sign-in, separate from the data (decision D67). The app asks an AuthService who is signed in; the data store
 // asks Supabase with the same session. The local build has no sign-in, so it has no AuthService.
 
@@ -19,9 +21,14 @@ export interface AuthService {
 }
 
 export class AuthError extends Error {
-  constructor(message: string) {
+  /** Id of the message in the catalog and its parameters. Without an id the English `message` is shown. */
+  readonly messageId: string | undefined;
+  readonly params: Record<string, string | number> | undefined;
+  constructor(message: string, detail?: { messageId: string; params?: Record<string, string | number> }) {
     super(message);
     this.name = 'AuthError';
+    this.messageId = detail?.messageId;
+    this.params = detail?.params;
   }
 }
 
@@ -47,21 +54,27 @@ interface AuthFailure {
   message?: string;
 }
 
-/** The message a person reads when sign-in fails. It never says which of email and password is wrong. */
-export function authErrorMessage(error: AuthFailure): string {
-  if (error.code === 'invalid_credentials') return 'The email or the password is wrong. Check both and try again.';
-  if (error.code === 'email_not_confirmed') {
-    return 'This email address is not confirmed yet. Open the confirmation message that was sent to it, then sign in.';
-  }
-  if (error.code === 'over_request_rate_limit' || error.code === 'over_email_send_rate_limit' || error.status === 429) {
-    return 'Too many attempts. Wait a minute and try again.';
-  }
-  if (error.name === 'AuthRetryableFetchError' || error.status === 0) return 'Could not reach the server. Check your connection and try again.';
+/** Which message a person reads when sign-in fails. It never says which of email and password is wrong. */
+export function authFailure(error: AuthFailure): { id: StoreMessageId; params: Record<string, string> } {
+  if (error.code === 'invalid_credentials') return { id: 'errors.auth.invalidCredentials', params: {} };
+  if (error.code === 'email_not_confirmed') return { id: 'errors.auth.emailNotConfirmed', params: {} };
+  if (error.code === 'over_request_rate_limit' || error.code === 'over_email_send_rate_limit' || error.status === 429) return { id: 'errors.auth.tooManyAttempts', params: {} };
+  if (error.name === 'AuthRetryableFetchError' || error.status === 0) return { id: 'errors.auth.unreachable', params: {} };
   const detail = error.message?.trim();
-  return detail
-    ? `Sign-in failed: ${detail}. Try again, or ask the admin if it keeps failing.`
-    : 'Sign-in failed. Try again, or ask the admin if it keeps failing.';
+  return detail ? { id: 'errors.auth.failedDetail', params: { detail } } : { id: 'errors.auth.failed', params: {} };
 }
+
+/** The English text of `authFailure`. */
+export const authErrorMessage = (error: AuthFailure): string => {
+  const f = authFailure(error);
+  return storeText(f.id, f.params);
+};
+
+/** An AuthError for a failed sign-in, with its message id. */
+export const authErrorFrom = (error: AuthFailure): AuthError => {
+  const f = authFailure(error);
+  return new AuthError(storeText(f.id, f.params), { messageId: f.id, params: f.params });
+};
 
 type KeyValueStorage = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
 
@@ -118,7 +131,7 @@ export class MemoryAuth implements AuthService {
   signIn(email: string, password: string): Promise<AuthSession> {
     const user = this.users.find((u) => u.email.toLowerCase() === email.trim().toLowerCase());
     if (!user || user.password !== password) {
-      return Promise.reject(new AuthError(authErrorMessage({ code: 'invalid_credentials' })));
+      return Promise.reject(authErrorFrom({ code: 'invalid_credentials' }));
     }
     const session = { userId: `memory-${user.email.toLowerCase()}`, email: user.email };
     this.session = session;

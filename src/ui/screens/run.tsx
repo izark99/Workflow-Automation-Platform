@@ -9,7 +9,7 @@ import { Badge, Button, ButtonLink, Card, CrumbLink, DatePicker, EmptyState, Err
 import type { Column } from '../components';
 import { formatCell } from '../builder/preview-logic';
 import { useLoad, useStore } from '../store-context';
-import { useT } from '../i18n';
+import { useT, errorText } from '../i18n';
 import { todayIso } from './flows-logic';
 import { executeRun } from './run-engine';
 import type { RunOutcome } from './run-engine';
@@ -52,7 +52,7 @@ export function RunScreen() {
     try {
       return { ok: true as const, run: prepareRun({ flowName: record.name, flowVersions: record.versions, refTables: refs, effectiveDate: date }) };
     } catch (e) {
-      return { ok: false as const, message: e instanceof Error ? e.message : String(e), noPublished: !record.versions.some((v) => v.status === 'published') };
+      return { ok: false as const, message: errorText(e), noPublished: !record.versions.some((v) => v.status === 'published') };
     }
   }, [record, refs, date]);
 
@@ -65,7 +65,7 @@ export function RunScreen() {
     const guard = checkFileSize(file);
     if (!guard.ok) {
       // Too large to read safely: refuse it here, and start nothing.
-      setFileErrors((e) => ({ ...e, [key]: t('errors.xlsxTooLarge', { fileName: file.name, size: sizeLabel(guard.sizeBytes), limit: sizeLabel(guard.limitBytes) }) }));
+      setFileErrors((e) => ({ ...e, [key]: t('engine.fileTooLarge', { fileName: file.name, size: sizeLabel(guard.sizeBytes), limit: sizeLabel(guard.limitBytes) }) }));
       setFiles((f) => omit(f, key));
       return;
     }
@@ -93,7 +93,7 @@ export function RunScreen() {
       });
     } catch (e) {
       if (e instanceof EngineError && e.code === 'cancelled') cancelled = true;
-      else failure = e instanceof Error ? e.message : String(e);
+      else failure = errorText(e);
     }
     try {
       // The run log holds counts only: no names and no cell values.

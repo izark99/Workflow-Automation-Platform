@@ -61,6 +61,9 @@ export function lookup(key: string, loc: 'en' | 'vi'): string {
   return overrides[loc]?.[key] ?? base[loc][key] ?? overrides.en?.[key] ?? base.en[key] ?? key;
 }
 
+/** True when the catalog has a text for this key. */
+export const hasKey = (key: string): key is MessageKey => key in en;
+
 export function translate(key: MessageKey, params?: MessageParams, loc: Locale = locale): string {
   if (loc === 'pseudo') {
     // A parameter that is itself a pseudo text loses its markers, so a message is wrapped once, not in nested pairs.

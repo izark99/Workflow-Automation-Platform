@@ -5,7 +5,7 @@ import type { IconName } from './components';
 import { useAuth } from './auth-gate';
 import { useLoad, useStore } from './store-context';
 import { ThemeSwitch } from './theme-switch';
-import { useT } from './i18n';
+import { useT, errorText } from './i18n';
 import styles from './shell.module.css';
 
 /** What the shell offers to the screen inside it (read with `useOutletContext`). */
@@ -42,7 +42,7 @@ function CreateFlowDialog({ admin, onClose }: { admin: boolean; onClose: () => v
       navigate(`/flows/${flow.id}/versions/1`);
       onClose();
     } catch (e) {
-      setError({ what: t('flows.createDialog.failed'), next: e instanceof Error ? e.message : '' });
+      setError({ what: t('flows.createDialog.failed'), next: errorText(e) });
       setBusy(false);
     }
   };

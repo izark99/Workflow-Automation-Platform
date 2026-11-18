@@ -7,7 +7,7 @@ import type { Cell } from '../../engine/types';
 import type { RefTable } from '../../engine/versions';
 import { Button, Chip, ChipGroup, DatePicker, EmptyState, ErrorState, InfoTip, SkeletonTable, Table } from '../components';
 import type { Column } from '../components';
-import { useT } from '../i18n';
+import { useT, errorText } from '../i18n';
 import { todayIso } from '../screens/flows-logic';
 import { formatCell, neededFiles, previewKey, previewTarget } from './preview-logic';
 import { runPreview } from './preview-runner';
@@ -56,13 +56,13 @@ export function StepPreview({ definition, step, files, onFile, refTables }: Step
         const f = files[n.key];
         if (!f) continue;
         const guard = checkFileSize(f);
-        if (!guard.ok) throw new EngineError('file_too_large', t('errors.xlsxTooLarge', { fileName: f.name, size: megabytes(guard.sizeBytes), limit: megabytes(guard.limitBytes) }));
+        if (!guard.ok) throw new EngineError('file_too_large', t('engine.fileTooLarge', { fileName: f.name, size: megabytes(guard.sizeBytes), limit: megabytes(guard.limitBytes) }));
         sources[n.key] = asSource(f);
       }
       const data = await runPreview({ definition: target.definition, nodeId: target.nodeId, handle: target.handle, files: sources, refTables, effectiveDate: date, signal: controller.signal });
       if (!controller.signal.aborted) setState({ status: 'ready', data, key });
     } catch (e) {
-      if (!controller.signal.aborted) setState({ status: 'error', message: e instanceof Error ? e.message : String(e) });
+      if (!controller.signal.aborted) setState({ status: 'error', message: errorText(e) });
     }
   };
 

@@ -9,7 +9,7 @@ import type { FlowRecord, FlowVersionRecord } from '../../store/types';
 import { PublishDialog } from '../builder/builder-dialogs';
 import { canEditFlow, publishBlockers, publishSummary } from '../builder/version-logic';
 import { useLoad, useStore } from '../store-context';
-import { useT } from '../i18n';
+import { useT, errorText } from '../i18n';
 import { todayIso } from './flows-logic';
 import { dateCheck, rangeEnd, stateText, timeline, timelineNote, versionState } from './versions-logic';
 import styles from './versions.module.css';
@@ -51,7 +51,7 @@ export function VersionsScreen() {
       toast(t('versions.published', { n: no }));
       data.reload();
     } catch (e) {
-      setPublishError(e instanceof Error ? e.message : t('versions.publishFailed'));
+      setPublishError(errorText(e, t('versions.publishFailed')));
     } finally {
       setBusy(false);
     }

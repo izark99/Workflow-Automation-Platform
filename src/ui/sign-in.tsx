@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { AuthError, signInProblem, type AuthService } from '../store/auth';
 import { Button, Card, ErrorState, Field, Icon, InfoTip } from './components';
-import { useT } from './i18n';
+import { useT, errorText } from './i18n';
 import { ThemeSwitch } from './theme-switch';
 import styles from './sign-in.module.css';
 
@@ -26,7 +26,7 @@ export function SignInScreen({ auth, ended }: { auth: AuthService; ended: boolea
       await auth.signIn(email, password);
       // The gate switches to the app when the service reports the sign-in.
     } catch (e) {
-      setProblem(e instanceof AuthError ? e.message : t('signIn.failedGeneric'));
+      setProblem(e instanceof AuthError ? errorText(e) : t('signIn.failedGeneric'));
       setBusy(false);
     }
   };

@@ -4,7 +4,7 @@ import type { Column } from '../components';
 import { StoreError } from '../../store/types';
 import type { FlowRecord, Group, User } from '../../store/types';
 import { useLoad, useStore } from '../store-context';
-import { useT } from '../i18n';
+import { useT, errorText } from '../i18n';
 import type { MessageKey } from '../i18n';
 import { deletedOn, groupsText, keptUntil, memberCount, toggleGroup, userFormProblem } from './admin-logic';
 import type { UserForm } from './admin-logic';
@@ -12,7 +12,7 @@ import styles from './admin.module.css';
 
 type Dialogs = { kind: 'user'; user: User | null } | { kind: 'group'; group: Group | null } | { kind: 'deleteGroup'; group: Group } | { kind: 'purge'; flow: FlowRecord } | null;
 
-const message = (e: unknown, fallback: string): string => (e instanceof Error ? e.message : fallback);
+const message = (e: unknown, fallback: string): string => errorText(e, fallback);
 
 /** Admin: users, groups, access of groups to shared flows, and deleted flows with restore. */
 export function AdminScreen() {
@@ -58,7 +58,7 @@ export function AdminScreen() {
   let body;
   if (data.error) {
     const forbidden = data.error instanceof StoreError && data.error.code === 'forbidden';
-    body = <ErrorState what={forbidden ? t('admin.forbidden') : t('admin.loadFailed')} next={forbidden ? t('admin.forbiddenNext') : data.error.message} />;
+    body = <ErrorState what={forbidden ? t('admin.forbidden') : t('admin.loadFailed')} next={forbidden ? t('admin.forbiddenNext') : errorText(data.error)} />;
   } else if (!d) {
     body = showSkeleton ? <SkeletonTable weights={[16, 24, 10, 20, 12]} rows={3} label={t('admin.loading')} /> : null;
   } else {

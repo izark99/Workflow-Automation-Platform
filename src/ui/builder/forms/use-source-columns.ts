@@ -3,6 +3,7 @@ import type { Column } from '../../../engine/types';
 import { todayIso } from '../../screens/flows-logic';
 import { loadSourceColumns } from './load-columns';
 import type { FormProps } from './types';
+import { errorText } from '../../i18n';
 
 export interface SourceColumns {
   /** Null until the columns are loaded. */
@@ -23,7 +24,7 @@ export function useSourceColumns({ step, definition, context }: Pick<FormProps, 
     try {
       setColumns(await loadSourceColumns(definition, step, context.testFiles, context.refTables, todayIso(), inputHandle));
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(errorText(e));
     } finally {
       setLoading(false);
     }

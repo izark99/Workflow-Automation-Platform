@@ -24,6 +24,7 @@ import {
 } from './supabase-mapping';
 import {
   StoreError,
+  storeError,
   type DataStore,
   type FlowRecord,
   type Group,
@@ -58,18 +59,18 @@ const CODES: Record<string, StoreErrorCode> = {
 /** What the person doing `action` should read when the database refuses. `action` is a phrase such as "save the flow". */
 export function storeErrorFrom(error: DbError, action: string): StoreError {
   const code = CODES[error.code ?? ''];
-  if (code === 'forbidden') return new StoreError(code, `You are not allowed to ${action}. Ask the admin if you need this right.`);
+  if (code === 'forbidden') return storeError(code, 'errors.notAllowed', { action });
   // A rule the database raised itself (P0001, P0002) already says what failed and what to do next.
   if (code && (error.code === 'P0001' || error.code === 'P0002' || error.code === '22023')) return new StoreError(code, error.message);
   if (error.code === '23P01') {
-    return new StoreError(code ?? 'conflict', 'These dates overlap another published version. Change the valid-from or valid-to date so the ranges do not share a day.');
+    return storeError(code ?? 'conflict', 'errors.datesOverlap');
   }
   if (error.code === '23505') {
-    return new StoreError('conflict', `Could not ${action}: that name or email is already used. Use another one and try again.`);
+    return storeError('conflict', 'errors.nameTaken', { action });
   }
-  if (code === 'not_found') return new StoreError(code, `This item does not exist or you cannot open it. Go back to the list and try again.`);
-  if (code) return new StoreError(code, `Could not ${action}: ${error.message}. Check what you entered and try again.`);
-  return new StoreError('invalid', `Could not ${action}: ${error.message}. Check the connection and try again.`);
+  if (code === 'not_found') return storeError(code, 'errors.itemNotFound');
+  if (code) return storeError(code, 'errors.couldNotCheck', { action, detail: error.message });
+  return storeError('invalid', 'errors.couldNotConnect', { action, detail: error.message });
 }
 
 const FLOW_COLUMNS = '*, flow_versions(*), flow_group_access(group_id)';
@@ -86,7 +87,7 @@ export class SupabaseStore implements DataStore {
 
   private async mustBeAdmin(what: string): Promise<User> {
     const u = await this.currentUser();
-    if (u.role !== 'admin') throw new StoreError('forbidden', `Only the admin can ${what}. Ask the admin.`);
+    if (u.role !== 'admin') throw storeError('forbidden', 'errors.adminOnly', { what });
     return u;
   }
 
@@ -98,10 +99,10 @@ export class SupabaseStore implements DataStore {
   async currentUser(): Promise<User> {
     const { data, error } = await this.client.auth.getUser();
     const id = data.user?.id;
-    if (error || !id) throw new StoreError('forbidden', 'No user is signed in. Sign in and try again.');
+    if (error || !id) throw storeError('forbidden', 'errors.noUser');
     const profile = await this.client.from('profiles').select('id, name, email, role').eq('id', id).maybeSingle();
     const row = this.ok<ProfileRow | null>(profile, 'read your profile');
-    if (!row) throw new StoreError('forbidden', 'Your account has no profile yet. Ask the admin to add you, then sign in again.');
+    if (!row) throw storeError('forbidden', 'errors.noProfile');
     // A non-admin cannot read group membership (decision D59); the screens only use it on the Admin screen.
     const members = await this.client.from('group_members').select('group_id').eq('user_id', id);
     return userFromRows(row, this.ok<{ group_id: string }[]>(members, 'read your groups').map((m) => m.group_id));
@@ -136,7 +137,7 @@ export class SupabaseStore implements DataStore {
   async getFlow(id: string): Promise<FlowRecord> {
     const [flow, names] = await Promise.all([this.client.from('flows').select(FLOW_COLUMNS).eq('id', id).maybeSingle(), this.names()]);
     const row = this.ok<FlowRow | null>(flow, 'open the flow');
-    if (!row) throw new StoreError('not_found', 'This flow does not exist or you cannot open it. Go back to the Flows list.');
+    if (!row) throw storeError('not_found', 'errors.flowNotFound');
     return flowFromRow(row, names);
   }
 
@@ -170,7 +171,7 @@ export class SupabaseStore implements DataStore {
   private async flowForEdit(id: string): Promise<{ flow: FlowRecord; user: User }> {
     const [flow, user] = await Promise.all([this.getFlow(id), this.currentUser()]);
     if (user.role !== 'admin' && !(flow.scope === 'personal' && flow.ownerId === user.id)) {
-      throw new StoreError('forbidden', 'You can view and run this shared flow, but only the admin can change it. Copy it to a personal flow to edit.');
+      throw storeError('forbidden', 'errors.sharedFlowReadOnly');
     }
     return { flow, user };
   }
@@ -178,7 +179,7 @@ export class SupabaseStore implements DataStore {
   private async refTable(id: string): Promise<RefTableRecord> {
     const result = await this.client.from('ref_tables').select('*, ref_table_versions(*)').eq('id', id).maybeSingle();
     const row = this.ok<RefTableRow | null>(result, 'open the reference table');
-    if (!row) throw new StoreError('not_found', 'This reference table does not exist. Go back to the Reference tables list.');
+    if (!row) throw storeError('not_found', 'errors.refTableNotFound');
     return refTableFromRow(row);
   }
 
@@ -192,33 +193,33 @@ export class SupabaseStore implements DataStore {
     const result = await this.client.from(table).update(patch).match(match).select();
     const rows = this.ok<unknown[]>(result, action);
     if (rows.length === 0) {
-      throw new StoreError('forbidden', `You cannot change ${what}, or it no longer exists. Reload the page and try again.`);
+      throw storeError('forbidden', 'errors.cannotChange', { what });
     }
   }
 
   async saveUser(user: User): Promise<User> {
     await this.mustBeAdmin('change users');
     if (!user.name.trim() || !user.email.includes('@')) {
-      throw new StoreError('invalid', 'A user needs a name and an email address. Fill both and save again.');
+      throw storeError('invalid', 'errors.userNeedsNameEmail');
     }
     if (!user.id) {
-      throw new StoreError('invalid', 'A new user is added in Supabase Auth (see docs/DEPLOY.md). They appear in this list after that; then you can set their role and groups here.');
+      throw storeError('invalid', 'errors.userViaAuth');
     }
     await this.updateRow('profiles', { id: user.id }, { name: user.name.trim(), email: user.email.trim(), role: user.role }, 'save the user', 'this user');
     await this.rpc('set_user_groups', { p_user_id: user.id, p_group_ids: user.groupIds }, 'save the groups of the user');
     const saved = (await this.listUsers()).find((u) => u.id === user.id);
-    if (!saved) throw new StoreError('not_found', 'This user does not exist any more. Reload the page.');
+    if (!saved) throw storeError('not_found', 'errors.userGone');
     return saved;
   }
 
   async saveGroup(group: { id?: string; name: string }): Promise<Group> {
     await this.mustBeAdmin('change groups');
     const name = group.name.trim();
-    if (!name) throw new StoreError('invalid', 'A group needs a name. Type a name and save again.');
+    if (!name) throw storeError('invalid', 'errors.groupNeedsName');
     if (group.id) {
       const result = await this.client.from('groups').update({ name }).eq('id', group.id).select('id, name').maybeSingle();
       const row = this.ok<GroupRow | null>(result, 'save the group');
-      if (!row) throw new StoreError('not_found', 'This group does not exist any more. Reload the page.');
+      if (!row) throw storeError('not_found', 'errors.groupGone');
       return groupFromRow(row);
     }
     const result = await this.client.from('groups').insert({ name }).select('id, name').single();
@@ -229,15 +230,15 @@ export class SupabaseStore implements DataStore {
     await this.mustBeAdmin('delete groups');
     const result = await this.client.from('groups').delete().eq('id', id).select('id');
     if (this.ok<unknown[]>(result, 'delete the group').length === 0) {
-      throw new StoreError('not_found', 'This group does not exist any more. Reload the page.');
+      throw storeError('not_found', 'errors.groupGone');
     }
   }
 
   async createFlow({ name, scope }: { name: string; scope: Scope }): Promise<FlowRecord> {
     const user = await this.currentUser();
-    if (!name.trim()) throw new StoreError('invalid', 'A flow needs a name. Type a name and try again.');
+    if (!name.trim()) throw storeError('invalid', 'errors.flowNeedsName');
     if (scope === 'shared' && user.role !== 'admin') {
-      throw new StoreError('forbidden', 'Only the admin creates shared flows. Create a personal flow instead.');
+      throw storeError('forbidden', 'errors.sharedFlowAdminOnly');
     }
     const id = await this.rpc<string>('create_flow', { p_name: name, p_scope: scope }, 'create the flow');
     return this.getFlow(id);
@@ -278,9 +279,9 @@ export class SupabaseStore implements DataStore {
   async saveFlowVersion(flowId: string, versionNo: number, patch: VersionPatch): Promise<FlowRecord> {
     const { flow } = await this.flowForEdit(flowId);
     const v = flow.versions.find((x) => x.versionNo === versionNo);
-    if (!v) throw new StoreError('not_found', `Version v${versionNo} does not exist. Pick a version from the list.`);
+    if (!v) throw storeError('not_found', 'errors.versionNotFound', { n: versionNo });
     if (v.status === 'published') {
-      throw new StoreError('conflict', `v${versionNo} is published and read-only. Create a new version from it to make changes.`);
+      throw storeError('conflict', 'errors.versionReadOnly', { n: versionNo });
     }
     checkRange(patch.validFrom ?? v.validFrom, patch.validTo === undefined ? v.validTo : patch.validTo);
     await this.updateRow('flow_versions', { flow_id: flowId, version_no: versionNo }, versionPatchToRow(patch), 'save the version', `version v${versionNo}`);
@@ -309,7 +310,7 @@ export class SupabaseStore implements DataStore {
 
   async createRefTable({ name, description, columns }: { name: string; description: string; columns: Column[] }): Promise<RefTableRecord> {
     await this.mustBeAdmin('create reference tables');
-    if (!name.trim()) throw new StoreError('invalid', 'A reference table needs a name. Type a name and try again.');
+    if (!name.trim()) throw storeError('invalid', 'errors.refTableNeedsName');
     const id = await this.rpc<string>('create_ref_table', { p_name: name, p_description: description, p_columns: columns }, 'create the reference table');
     return this.refTable(id);
   }
@@ -318,9 +319,9 @@ export class SupabaseStore implements DataStore {
     await this.mustBeAdmin('change reference tables');
     const table = await this.refTable(tableId);
     const v = table.versions.find((x) => x.versionNo === versionNo);
-    if (!v) throw new StoreError('not_found', `Version v${versionNo} does not exist. Pick a version from the list.`);
+    if (!v) throw storeError('not_found', 'errors.versionNotFound', { n: versionNo });
     if (v.status === 'published') {
-      throw new StoreError('conflict', `v${versionNo} is published and read-only. Create a new version from it to make changes.`);
+      throw storeError('conflict', 'errors.versionReadOnly', { n: versionNo });
     }
     if (patch.rows) checkRowCap(patch.rows.length);
     checkRange(patch.validFrom ?? v.validFrom, patch.validTo === undefined ? v.validTo : patch.validTo);

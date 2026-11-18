@@ -5,7 +5,7 @@ import type { FlowDefinition, NodeType } from '../../engine/flow/types';
 import { Badge, Button, ButtonLink, Dropdown, ErrorState, ToastProvider, useToast } from '../components';
 import { canRunFlow, todayIso } from '../screens/flows-logic';
 import { useLoad, useStore } from '../store-context';
-import { useT } from '../i18n';
+import { useT, errorText } from '../i18n';
 import { CopyFlowDialog, DiscardDialog, NewVersionDialog, PublishDialog } from './builder-dialogs';
 import { Canvas } from './canvas';
 import type { Selection } from './canvas';
@@ -104,7 +104,7 @@ function Builder() {
       flow.reload();
       return true;
     } catch (e) {
-      setError({ what: t('builder.saveFailed'), next: e instanceof Error ? e.message : '' });
+      setError({ what: t('builder.saveFailed'), next: errorText(e) });
       return false;
     } finally {
       setBusy(null);
@@ -129,7 +129,7 @@ function Builder() {
       setDialog(null);
       toast(`${t('builder.publishedToast', { n: version.versionNo })} ${summary.ok ? summary.text.split('. ')[0] + '.' : ''}`.trim());
     } catch (e) {
-      setDialogError(e instanceof Error ? e.message : t('builder.publishFailed'));
+      setDialogError(errorText(e, t('builder.publishFailed')));
     } finally {
       setBusy(null);
     }
@@ -146,7 +146,7 @@ function Builder() {
       navigate(`/flows/${id}/versions/${created}`);
       flow.reload();
     } catch (e) {
-      setDialogError(e instanceof Error ? e.message : t('builder.versionFailed'));
+      setDialogError(errorText(e, t('builder.versionFailed')));
     } finally {
       setBusy(null);
     }
@@ -160,7 +160,7 @@ function Builder() {
       setDialog(null);
       navigate(`/flows/${copy.id}/versions/1`);
     } catch (e) {
-      setDialogError(e instanceof Error ? e.message : t('builder.copyFailed'));
+      setDialogError(errorText(e, t('builder.copyFailed')));
     } finally {
       setBusy(null);
     }

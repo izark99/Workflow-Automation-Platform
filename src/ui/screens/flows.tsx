@@ -4,7 +4,7 @@ import { Badge, Button, ButtonLink, Card, Chip, ChipGroup, Dialog, EmptyState, E
 import type { Column } from '../components';
 import type { ShellContext } from '../shell';
 import { useLoad, useStore } from '../store-context';
-import { translateMessage, useT } from '../i18n';
+import { translateMessage, useT, errorText } from '../i18n';
 import type { FlowRecord } from '../../store/types';
 import { canDeleteFlow, canRunFlow, describeRange, describeSteps, filterFlows, todayIso, versionInEffect, versionToOpen } from './flows-logic';
 import type { ScopeFilter } from './flows-logic';
@@ -31,7 +31,7 @@ export function FlowsScreen() {
       setToDelete(null);
       data.reload();
     } catch (e) {
-      setDeleteError(e instanceof Error ? e.message : t('flows.deleteFailed'));
+      setDeleteError(errorText(e, t('flows.deleteFailed')));
     }
   };
 

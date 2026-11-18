@@ -3,8 +3,8 @@ import * as XLSX from 'xlsx';
 import { runFlow } from '../run';
 import { createNodeRunner } from '../runner/node-runner';
 import { FLOW_SCHEMA_VERSION } from '../flow/types';
+import { engineText, megabytes } from '../messages';
 import { MAX_SAFE_XLSX_BYTES } from '../size-guard';
-import { strings } from '../../ui/strings';
 import { EngineError, type SqlRunner, type TableData } from '../types';
 import { loadInputFile, parseInputSettings, type FileSource } from './load';
 
@@ -162,7 +162,7 @@ describe('xlsx input', () => {
     const file = { ...xlsxFile([['A'], [1]], 'Data', 'big.xlsx'), size: MAX_SAFE_XLSX_BYTES + 1 };
     const err = await load(file).catch((e: unknown) => e);
     expect((err as EngineError).code).toBe('file_too_large');
-    expect((err as EngineError).message).toBe(strings.xlsxTooLarge('big.xlsx', file.size, MAX_SAFE_XLSX_BYTES));
+    expect((err as EngineError).message).toBe(engineText('engine.fileTooLarge', { fileName: 'big.xlsx', size: megabytes(file.size), limit: megabytes(MAX_SAFE_XLSX_BYTES) }));
   });
 });
 
