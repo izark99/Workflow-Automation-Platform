@@ -20,7 +20,8 @@ let shared: Promise<SqlRunner> | null = null;
 export function previewRunner(): Promise<SqlRunner> {
   shared ??= createBrowserRunner().catch((e: unknown) => {
     shared = null;
-    throw new EngineError('node_failed', `The preview engine could not start: ${e instanceof Error ? e.message : String(e)}. Reload the page and try again.`);
+    // The runner's message already says what failed and what to do next (browser-runner.ts).
+    throw new EngineError('node_failed', `${e instanceof Error ? e.message : String(e)}.`);
   });
   return shared;
 }

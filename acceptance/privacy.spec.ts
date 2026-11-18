@@ -4,7 +4,7 @@ import { expect, test } from '@playwright/test';
 import * as XLSX from 'xlsx';
 import { auditRequests } from '../scripts/lib/request-audit';
 import { readWorkbook } from '../scripts/lib/compare-workbooks';
-import { runDataset, watchRequests, type DatasetConfig } from './helpers';
+import { allowedCodeUrls, runDataset, watchRequests, type DatasetConfig } from './helpers';
 
 // CLAUDE.md: input file content never leaves the browser. A run may load the static assets of the app and nothing
 // else, and no request may carry a piece of the files. The files below hold marker texts that no request may contain.
@@ -41,9 +41,10 @@ test('a run of an xlsx file loads only static assets and sends no file content',
   // The markers did go through the engine: they are in the output file.
   const text = await outputText(ran.files[0]!.bytes);
   for (const m of MARKERS) expect(text).toContain(JSON.stringify(m).slice(1, -1));
-  // The engine worker loads its wasm file while the run starts. If the log lacks it, the log does not see worker requests.
-  expect(requests.some((r) => /\/assets\/duckdb-[^/]*\.wasm$/.test(r.url))).toBe(true);
-  expect(auditRequests(requests, ORIGIN, MARKERS)).toEqual([]);
+  // The engine worker loads its wasm file while the run starts (from the app, or from jsDelivr in the Pages build). If
+  // the log lacks it, the log does not see worker requests.
+  expect(requests.some((r) => /\/duckdb-[^/]*\.wasm$/.test(r.url))).toBe(true);
+  expect(auditRequests(requests, ORIGIN, MARKERS, allowedCodeUrls())).toEqual([]);
 });
 
 test('a run of a csv file, which DuckDB reads from the file handle, sends no file content either', async ({ page }, info) => {
@@ -55,7 +56,7 @@ test('a run of a csv file, which DuckDB reads from the file handle, sends no fil
   const ran = await runDataset(page, flowFor(false), dataset(dir, 'data.csv'));
   const text = await outputText(ran.files[0]!.bytes);
   for (const m of MARKERS) expect(text).toContain(JSON.stringify(m).slice(1, -1));
-  expect(auditRequests(requests, ORIGIN, MARKERS)).toEqual([]);
+  expect(auditRequests(requests, ORIGIN, MARKERS, allowedCodeUrls())).toEqual([]);
 });
 
 test('the audit fails when a page leaks: a query, a beacon and another address are all found', async ({ page }) => {
@@ -63,7 +64,7 @@ test('the audit fails when a page leaks: a query, a beacon and another address a
   await page.goto('/acceptance/index.html');
   await page.waitForFunction(() => typeof window.runDataset === 'function');
   const beforeLeaks = requests.length;
-  expect(auditRequests(requests, ORIGIN, MARKERS)).toEqual([]); // loading the page alone is clean
+  expect(auditRequests(requests, ORIGIN, MARKERS, allowedCodeUrls())).toEqual([]); // loading the page alone is clean
   await page.evaluate(async (marker) => {
     await fetch(`/leak?d=${encodeURIComponent(marker)}`).catch(() => undefined);
     navigator.sendBeacon('/beacon', marker);
@@ -80,7 +81,7 @@ test('the audit fails when a page leaks: a query, a beacon and another address a
   }, MARKERS[0]!);
   await page.waitForTimeout(300);
 
-  const violations = auditRequests(requests, ORIGIN, MARKERS);
+  const violations = auditRequests(requests, ORIGIN, MARKERS, allowedCodeUrls());
   expect(violations.some((v) => /carries file content/.test(v))).toBe(true);
   expect(violations.some((v) => /not a static asset/.test(v))).toBe(true);
   expect(violations.some((v) => /another address/.test(v))).toBe(true);
@@ -90,5 +91,5 @@ test('the audit fails when a page leaks: a query, a beacon and another address a
   expect(violations.some((v) => v.includes('/leak-from-worker') && /carries file content/.test(v))).toBe(true);
   // The findings come from the leaks: the requests before them were clean.
   expect(requests.length).toBeGreaterThan(beforeLeaks);
-  expect(auditRequests(requests.slice(0, beforeLeaks), ORIGIN, MARKERS)).toEqual([]);
+  expect(auditRequests(requests.slice(0, beforeLeaks), ORIGIN, MARKERS, allowedCodeUrls())).toEqual([]);
 });
