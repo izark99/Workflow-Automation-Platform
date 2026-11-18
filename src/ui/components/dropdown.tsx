@@ -20,10 +20,14 @@ export interface DropdownProps {
   disabled?: boolean;
   /** Starts open, for the components page. */
   defaultOpen?: boolean;
+  /** A menu: the button always shows this text (the options are actions) and `label` names it for assistive technology. */
+  buttonLabel?: string;
+  /** A 36 px button, for a table row. */
+  compact?: boolean;
 }
 
 /** Button with a chevron and a popover list. Arrow keys, Home, End, Enter, Space, Escape and type-ahead. */
-export function Dropdown({ label, options, value, onChange, width = 260, disabled = false, defaultOpen = false }: DropdownProps) {
+export function Dropdown({ label, options, value, onChange, width = 260, disabled = false, defaultOpen = false, buttonLabel, compact = false }: DropdownProps) {
   const [open, setOpen] = useState(defaultOpen);
   const [active, setActive] = useState(() => (defaultOpen ? Math.max(0, options.findIndex((o) => o.value === value)) : -1));
   const skipFocus = useRef(defaultOpen);
@@ -94,17 +98,17 @@ export function Dropdown({ label, options, value, onChange, width = 260, disable
       <button
         ref={triggerRef}
         type="button"
-        className={`${styles.trigger} ${styles.between}`}
+        className={`${styles.trigger} ${styles.between} ${compact ? styles.compactTrigger : ''}`}
         style={{ width }}
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-controls={open ? listId : undefined}
-        aria-label={`${label}: ${current}`}
+        aria-label={buttonLabel === undefined ? `${label}: ${current}` : label}
         disabled={disabled}
         onClick={() => (open ? close(false) : openList())}
         onKeyDown={onTriggerKey}
       >
-        {current}
+        {buttonLabel ?? current}
         <Icon name="chevronDown" />
       </button>
       {open ? (

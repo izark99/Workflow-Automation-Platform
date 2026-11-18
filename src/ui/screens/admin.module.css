@@ -89,3 +89,14 @@
   gap: 24px;
   padding-top: 24px;
 }
+
+.passwordRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.passwordField {
+  flex: 1;
+  min-width: 0;
+}

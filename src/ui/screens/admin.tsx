@@ -1,17 +1,18 @@
 import { useState } from 'react';
-import { Button, Card, Checkbox, Dialog, Dropdown, EmptyState, ErrorState, Field, InfoTip, ScreenFrame, SkeletonTable, Table, Tabs, useDelayedLoading, useToast } from '../components';
+import { Badge, Button, Card, Checkbox, Dialog, Dropdown, EmptyState, ErrorState, Field, InfoTip, ScreenFrame, SkeletonTable, Table, Tabs, useDelayedLoading, useToast } from '../components';
 import type { Column } from '../components';
 import { StoreError } from '../../store/types';
 import type { FlowRecord, Group, User } from '../../store/types';
-import { useLoad, useStore } from '../store-context';
+import { useAccounts, useLoad, useStore } from '../store-context';
 import { useT, errorText } from '../i18n';
 import type { MessageKey } from '../i18n';
+import { CreateAccountDialog, LockDialog, ResetPasswordDialog } from './admin-accounts';
 import { AdminTexts } from './admin-texts';
 import { deletedOn, groupsText, keptUntil, memberCount, toggleGroup, userFormProblem } from './admin-logic';
 import type { UserForm } from './admin-logic';
 import styles from './admin.module.css';
 
-type Dialogs = { kind: 'user'; user: User | null } | { kind: 'group'; group: Group | null } | { kind: 'deleteGroup'; group: Group } | { kind: 'purge'; flow: FlowRecord } | null;
+type Dialogs = { kind: 'user'; user: User | null } | { kind: 'create' } | { kind: 'reset'; user: User } | { kind: 'lock'; user: User; lock: boolean } | { kind: 'group'; group: Group | null } | { kind: 'deleteGroup'; group: Group } | { kind: 'purge'; flow: FlowRecord } | null;
 
 const message = (e: unknown, fallback: string): string => errorText(e, fallback);
 
@@ -19,6 +20,7 @@ const message = (e: unknown, fallback: string): string => errorText(e, fallback)
 export function AdminScreen() {
   const t = useT();
   const store = useStore();
+  const accounts = useAccounts();
   const toast = useToast();
   const data = useLoad(async (s) => {
     const me = await s.currentUser();
@@ -70,7 +72,36 @@ export function AdminScreen() {
       { key: 'email', header: t('admin.userCols.email'), userContent: true, render: (u) => u.email },
       { key: 'role', header: t('admin.userCols.role'), render: (u) => t(`admin.roles.${u.role}` as MessageKey) },
       { key: 'groups', header: t('admin.userCols.groups'), userContent: true, render: (u) => groupsText(u, d.groups) },
-      { key: 'actions', header: t('admin.userCols.actions'), render: (u) => <Button compact aria-label={t('admin.userDialogEdit', { name: u.name })} onClick={() => open({ kind: 'user', user: u })}>{t('admin.edit')}</Button> },
+      {
+        key: 'status',
+        header: t('admin.userCols.status'),
+        render: (u) => (
+          <div className={styles.actions}>
+            <Badge tone={u.locked ? 'outline' : 'soft'}>{u.locked ? t('admin.status.locked') : t('admin.status.active')}</Badge>
+            {u.mustChangePassword ? <Badge tone="outline">{t('admin.status.mustChange')}</Badge> : null}
+          </div>
+        ),
+      },
+      { key: 'actions', header: t('admin.userCols.actions'), render: (u) => (
+          <div className={styles.actions}>
+            <Button compact aria-label={t('admin.userDialogEdit', { name: u.name })} onClick={() => open({ kind: 'user', user: u })}>
+              {t('admin.edit')}
+            </Button>
+            <Dropdown
+              compact
+              width={96}
+              label={t('admin.menu.moreFor', { name: u.name })}
+              buttonLabel={t('admin.menu.more')}
+              options={[
+                { value: 'reset', label: t('admin.menu.reset') },
+                { value: 'lock', label: u.locked ? t('admin.menu.unlock') : t('admin.menu.lock') },
+              ]}
+              value=""
+              onChange={(v) => open(v === 'reset' ? { kind: 'reset', user: u } : { kind: 'lock', user: u, lock: !u.locked })}
+            />
+          </div>
+        ),
+      },
     ];
     const groupColumns: Column<Group>[] = [
       { key: 'name', header: t('admin.groupCols.name'), userContent: true, render: (g) => <b>{g.name}</b> },
@@ -137,7 +168,7 @@ export function AdminScreen() {
         {section(
           t('admin.usersTitle'),
           null,
-          <Button onClick={() => open({ kind: 'user', user: null })}>{t('admin.invite')}</Button>,
+          <Button onClick={() => open({ kind: 'create' })}>{t('admin.invite')}</Button>,
           <>
             <Table label={t('admin.usersTitle')} columns={userColumns} rows={d.users} rowKey={(u) => u.id} />
             <div className={styles.foot}><p className={styles.note}>{t('admin.usersCount', { n: d.users.length })}</p></div>
@@ -157,6 +188,33 @@ export function AdminScreen() {
           d.deleted.length === 0 ? <div className={styles.foot}><p className={styles.note}>{t('admin.noDeleted')}</p></div> : <Table label={t('admin.deletedTitle')} columns={deletedColumns} rows={d.deleted} rowKey={(f) => f.id} />,
         )}
 
+        {dialog?.kind === 'create' ? (
+          <CreateAccountDialog
+            busy={busy}
+            error={dialogError}
+            onCancel={() => setDialog(null)}
+            onCreate={(f) => void run(() => accounts.createAccount({ email: f.email, name: f.name, password: f.password, role: f.role, mustChangePassword: f.mustChangePassword }), t('admin.userAdded', { name: f.name }), t('admin.accountFailed'), true)}
+          />
+        ) : null}
+        {dialog?.kind === 'reset' ? (
+          <ResetPasswordDialog
+            user={dialog.user}
+            busy={busy}
+            error={dialogError}
+            onCancel={() => setDialog(null)}
+            onReset={(password, mustChange) => void run(() => accounts.resetPassword(dialog.user.id, password, mustChange), t('admin.resetDone', { name: dialog.user.name }), t('admin.accountFailed'), true)}
+          />
+        ) : null}
+        {dialog?.kind === 'lock' ? (
+          <LockDialog
+            user={dialog.user}
+            lock={dialog.lock}
+            busy={busy}
+            error={dialogError}
+            onCancel={() => setDialog(null)}
+            onConfirm={() => void run(() => (dialog.lock ? accounts.lock(dialog.user.id) : accounts.unlock(dialog.user.id)), t(dialog.lock ? 'admin.locked' : 'admin.unlocked', { name: dialog.user.name }), t('admin.accountFailed'), true)}
+          />
+        ) : null}
         {dialog?.kind === 'user' ? (
           <UserDialog
             user={dialog.user}

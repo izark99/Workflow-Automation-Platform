@@ -354,6 +354,48 @@ export const ROUTES: RuleRoute[] = [
   },
   {
     path: '/admin',
+    name: '/admin (add user dialog)',
+    sidebar: true,
+    // The Create account dialog: three fields, the role dropdown, the password row with Generate and Copy, a checkbox.
+    prepare: async (page) => {
+      await page.getByRole('button', { name: /^\W*Add user\W*$/ }).first().click();
+      const dialog = page.getByRole('dialog');
+      await dialog.getByRole('button', { name: /Generate/ }).click();
+      await dialog.getByRole('button', { name: /Copy/ }).waitFor();
+    },
+  },
+  {
+    path: '/admin',
+    name: '/admin (user menu open)',
+    sidebar: true,
+    // The "More" menu of a row with its two actions.
+    prepare: async (page) => {
+      await page.getByRole('button', { name: /More actions for\W*Lan/ }).click();
+      await page.getByRole('option').first().waitFor();
+    },
+  },
+  {
+    path: '/admin',
+    name: '/admin (lock dialog)',
+    sidebar: true,
+    prepare: async (page) => {
+      await page.getByRole('button', { name: /More actions for\W*Lan/ }).click();
+      await page.getByRole('option').nth(1).click();
+      await page.getByRole('dialog').waitFor();
+    },
+  },
+  {
+    path: '/admin',
+    name: '/admin (reset password dialog)',
+    sidebar: true,
+    prepare: async (page) => {
+      await page.getByRole('button', { name: /More actions for\W*Lan/ }).click();
+      await page.getByRole('option').first().click();
+      await page.getByRole('dialog').waitFor();
+    },
+  },
+  {
+    path: '/admin',
     name: '/admin (edit user dialog)',
     sidebar: true,
     // The dialog with text fields, the role dropdown and one checkbox for each group.

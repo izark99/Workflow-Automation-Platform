@@ -50,26 +50,96 @@ test('Edit user changes the role and the groups; an admin shows "All groups"', a
   await expect(rows(page, 'Users').nth(1)).toContainText('All groups');
 });
 
-test('Invite user adds a row; a wrong email or a used one says what to do', async ({ page }) => {
+test('Add user: the checks say what to do, Generate fills a 16 character password, and the new account shows in the list', async ({ page }) => {
   await page.goto(URL);
-  await page.getByRole('button', { name: 'Invite user' }).click();
-  const dialog = page.getByRole('dialog', { name: 'Invite user' });
-  await dialog.getByRole('button', { name: 'Add user' }).click();
+  await page.getByRole('button', { name: 'Add user' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Add user' });
+  await dialog.getByRole('button', { name: 'Create account' }).click();
   await expect(dialog.getByRole('alert')).toContainText('The name is empty');
   await dialog.getByRole('textbox', { name: 'Name' }).fill('Mai');
   await dialog.getByRole('textbox', { name: 'Email' }).fill('mai');
-  await dialog.getByRole('button', { name: 'Add user' }).click();
+  await dialog.getByRole('button', { name: 'Create account' }).click();
   await expect(dialog.getByRole('alert')).toContainText('"mai" is not an email address');
-  await dialog.getByRole('textbox', { name: 'Email' }).fill('LAN@example.com');
-  await dialog.getByRole('button', { name: 'Add user' }).click();
-  await expect(dialog.getByRole('alert')).toContainText('A user with the email LAN@example.com exists');
   await dialog.getByRole('textbox', { name: 'Email' }).fill('mai@example.com');
-  await dialog.getByRole('checkbox', { name: 'HR Analytics' }).click();
-  await dialog.getByRole('button', { name: 'Add user' }).click();
+  await dialog.getByRole('textbox', { name: 'Password' }).fill('short');
+  await dialog.getByRole('button', { name: 'Create account' }).click();
+  await expect(dialog.getByRole('alert')).toContainText('at least 10 characters');
+  await dialog.getByRole('button', { name: 'Generate' }).click();
+  const password = await dialog.getByRole('textbox', { name: 'Password' }).inputValue();
+  expect(password).toMatch(/^[A-Za-z0-9]{16}$/);
+  await dialog.getByRole('textbox', { name: 'Email' }).fill('LAN@example.com');
+  await dialog.getByRole('button', { name: 'Create account' }).click();
+  await expect(dialog.getByRole('alert')).toContainText('An account with the email LAN@example.com exists');
+  await dialog.getByRole('textbox', { name: 'Email' }).fill('mai@example.com');
+  await dialog.getByRole('button', { name: 'Create account' }).click();
   await expect(toastWith(page, 'Mai added.')).toBeVisible();
   await expect(rows(page, 'Users')).toHaveCount(5);
-  await expect(rows(page, 'Users').nth(4)).toContainText('mai@example.com');
-  await expect(rows(page, 'Users').nth(4)).toContainText('HR Analytics');
+  const row = rows(page, 'Users').filter({ hasText: 'mai@example.com' });
+  await expect(row).toContainText('Active');
+  await expect(row).toContainText('Must change password'); // on by default
+});
+
+test('Copy puts the password on the clipboard', async ({ page, context }) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.goto(URL);
+  await page.getByRole('button', { name: 'Add user' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Add user' });
+  await expect(dialog.getByRole('button', { name: 'Copy' })).toBeDisabled();
+  await dialog.getByRole('button', { name: 'Generate' }).click();
+  const password = await dialog.getByRole('textbox', { name: 'Password' }).inputValue();
+  await dialog.getByRole('button', { name: 'Copy' }).click();
+  await expect(toastWith(page, 'Password copied.')).toBeVisible();
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(password);
+});
+
+test('a user can be made without the password flag, and the checkbox is on by default', async ({ page }) => {
+  await page.goto(URL);
+  await page.getByRole('button', { name: 'Add user' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Add user' });
+  await expect(dialog.getByRole('checkbox', { name: 'Must change password at next sign-in' })).toHaveAttribute('aria-checked', 'true');
+  await dialog.getByRole('checkbox', { name: 'Must change password at next sign-in' }).click();
+  await dialog.getByRole('textbox', { name: 'Name' }).fill('Bao');
+  await dialog.getByRole('textbox', { name: 'Email' }).fill('bao@example.com');
+  await dialog.getByRole('textbox', { name: 'Password' }).fill('a-long-password');
+  await dialog.getByRole('button', { name: 'Create account' }).click();
+  await expect(rows(page, 'Users').filter({ hasText: 'bao@example.com' })).not.toContainText('Must change password');
+});
+
+test('Reset password asks for a password of 10 characters and marks the user as having to change it', async ({ page }) => {
+  await page.goto(URL);
+  await page.getByRole('button', { name: 'More actions for Lan' }).click();
+  await page.getByRole('option', { name: 'Reset password' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Reset password for Lan' });
+  await dialog.getByRole('button', { name: 'Reset password' }).click();
+  await expect(dialog.getByRole('alert')).toContainText('at least 10 characters');
+  await dialog.getByRole('button', { name: 'Generate' }).click();
+  await dialog.getByRole('button', { name: 'Reset password' }).click();
+  await expect(toastWith(page, 'Password reset for Lan.')).toBeVisible();
+  await expect(rows(page, 'Users').filter({ hasText: 'Lan' })).toContainText('Must change password');
+});
+
+test('Lock asks first, names the user and says what happens; Unlock brings the account back; nobody locks themselves', async ({ page }) => {
+  await page.goto(URL);
+  await page.getByRole('button', { name: 'More actions for Lan' }).click();
+  await page.getByRole('option', { name: 'Lock account' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Lock Lan?' });
+  await expect(dialog).toContainText('is signed out now');
+  await dialog.getByRole('button', { name: 'Cancel' }).click();
+  await expect(rows(page, 'Users').filter({ hasText: 'Lan' })).toContainText('Active');
+  await page.getByRole('button', { name: 'More actions for Lan' }).click();
+  await page.getByRole('option', { name: 'Lock account' }).click();
+  await page.getByRole('dialog', { name: 'Lock Lan?' }).getByRole('button', { name: 'Lock account' }).click();
+  await expect(toastWith(page, 'Lan locked.')).toBeVisible();
+  await expect(rows(page, 'Users').filter({ hasText: 'Lan' })).toContainText('Locked');
+  await page.getByRole('button', { name: 'More actions for Lan' }).click();
+  await page.getByRole('option', { name: 'Unlock account' }).click();
+  await page.getByRole('dialog', { name: 'Unlock Lan?' }).getByRole('button', { name: 'Unlock account' }).click();
+  await expect(rows(page, 'Users').filter({ hasText: 'Lan' })).toContainText('Active');
+  // the signed-in admin cannot lock themselves
+  await page.getByRole('button', { name: 'More actions for Harold' }).click();
+  await page.getByRole('option', { name: 'Lock account' }).click();
+  await page.getByRole('dialog', { name: 'Lock Harold?' }).getByRole('button', { name: 'Lock account' }).click();
+  await expect(page.getByRole('dialog', { name: 'Lock Harold?' }).getByRole('alert')).toContainText('You cannot lock your own account');
 });
 
 test('the last admin cannot be made a user', async ({ page }) => {
