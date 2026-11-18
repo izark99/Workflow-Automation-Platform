@@ -64,7 +64,8 @@ describe('users and groups', () => {
   });
 
   it('shows the user list and the groups to the admin only', async () => {
-    const users = await stores.admin.listUsers();
+    // Other test files share this database, so look at the four users made here.
+    const users = (await stores.admin.listUsers()).filter((u) => Object.values(ids).includes(u.id));
     expect(users.map((u) => u.name)).toEqual(['Ada Admin', 'Mia Member', 'Olga Owner', 'Otto Other']);
     expect(users.find((u) => u.name === 'Mia Member')?.groupIds).toEqual([hrGroup]);
     expect((await stores.admin.listGroups()).map((g) => g.name)).toEqual(['HR']);
