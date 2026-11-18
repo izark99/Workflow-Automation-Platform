@@ -17,7 +17,8 @@ from (values
 insert into public.profiles (id, name, email, role) values
   ('00000000-0000-0000-0000-00000000000a', 'Admin', 'admin@example.test', 'admin'),
   ('00000000-0000-0000-0000-0000000000a1', 'Owner', 'owner@example.test', 'user'),
-  ('00000000-0000-0000-0000-0000000000a2', 'Member', 'member@example.test', 'user');
+  ('00000000-0000-0000-0000-0000000000a2', 'Member', 'member@example.test', 'user')
+  on conflict (id) do update set name = excluded.name, email = excluded.email, role = excluded.role;
 insert into public.groups (id, name) values ('30000000-0000-0000-0000-000000000001', 'Group G');
 insert into public.group_members (group_id, user_id) values
   ('30000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-0000000000a2');

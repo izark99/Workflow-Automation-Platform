@@ -7,7 +7,8 @@ insert into auth.users (id, instance_id, aud, role, email)
 values ('00000000-0000-0000-0000-0000000000b1', '00000000-0000-0000-0000-000000000000',
         'authenticated', 'authenticated', 'owner@example.test');
 insert into public.profiles (id, name, email, role)
-values ('00000000-0000-0000-0000-0000000000b1', 'Owner', 'owner@example.test', 'admin');
+values ('00000000-0000-0000-0000-0000000000b1', 'Owner', 'owner@example.test', 'admin')
+  on conflict (id) do update set name = excluded.name, email = excluded.email, role = excluded.role;
 insert into public.flows (id, name, owner_id) values
   ('10000000-0000-0000-0000-000000000001', 'Flow A', '00000000-0000-0000-0000-0000000000b1'),
   ('10000000-0000-0000-0000-000000000002', 'Flow B', '00000000-0000-0000-0000-0000000000b1');

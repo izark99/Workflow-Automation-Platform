@@ -21,7 +21,8 @@ insert into public.profiles (id, name, email, role) values
   ('00000000-0000-0000-0000-00000000000a', 'Admin', 'admin@example.test', 'admin'),
   ('00000000-0000-0000-0000-0000000000a1', 'Owner', 'owner@example.test', 'user'),
   ('00000000-0000-0000-0000-0000000000a2', 'Member', 'member@example.test', 'user'),
-  ('00000000-0000-0000-0000-0000000000a3', 'Other', 'other@example.test', 'user');
+  ('00000000-0000-0000-0000-0000000000a3', 'Other', 'other@example.test', 'user')
+  on conflict (id) do update set name = excluded.name, email = excluded.email, role = excluded.role;
 insert into public.groups (id, name) values
   ('30000000-0000-0000-0000-000000000001', 'Group G'),
   ('30000000-0000-0000-0000-000000000002', 'Group H');

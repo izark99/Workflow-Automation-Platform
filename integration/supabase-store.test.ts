@@ -42,7 +42,7 @@ beforeAll(async () => {
     const { data, error } = await service.auth.admin.createUser({ email: `${p.key}@example.test`, password: PASSWORD, email_confirm: true });
     if (error || !data.user) throw new Error(`Could not create ${p.key}: ${error?.message}`);
     ids[p.key] = data.user.id;
-    const profile = await service.from('profiles').insert({ id: data.user.id, name: p.name, email: `${p.key}@example.test`, role: p.role });
+    const profile = await service.from('profiles').upsert({ id: data.user.id, name: p.name, email: `${p.key}@example.test`, role: p.role });
     if (profile.error) throw new Error(`Could not create the profile of ${p.key}: ${profile.error.message}`);
   }
   const group = await service.from('groups').insert({ name: 'HR' }).select('id').single();
@@ -87,7 +87,7 @@ describe('users and groups', () => {
 
     const lastAdmin = await refused(stores.admin.saveUser({ id: ids.admin, name: 'Ada Admin', email: 'admin@example.test', role: 'user', groupIds: [] }));
     expect(lastAdmin.message).toContain('At least one admin is needed');
-    expect((await refused(stores.admin.saveUser({ id: '', name: 'New', email: 'new@example.test', role: 'user', groupIds: [] }))).message).toContain('sign in once');
+    expect((await refused(stores.admin.saveUser({ id: '', name: 'New', email: 'new@example.test', role: 'user', groupIds: [] }))).message).toContain('Supabase Auth');
   });
 });
 

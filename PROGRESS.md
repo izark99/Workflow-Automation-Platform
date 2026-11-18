@@ -83,7 +83,8 @@ before it passes, except where a task says otherwise.
 - [x] T3.6b2 `SupabaseStore`, part 2: the write methods, calling those functions and the functions of T3.2 and T3.5; table updates for saving versions, groups and users; run log insert; friendlier messages for overlap and duplicates in `storeErrorFrom`.
 - [x] T3.6c1 Selection by environment variables: `createDataStore()` (Supabase when `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are both set, `LocalStore` otherwise; one set is an error), `.env.example`, the e2e and UI-rules builds pinned to the local store.
 - [x] T3.6c2 Integration test of `SupabaseStore` against the full local stack (`npm run test:store`, not part of `gates`; it needs the API and Auth containers): roles, flows, versions, publish, soft delete, reference tables, groups, run log. Settles the owner-name and group-name limit for non-admins from T3.6a.
-- [ ] T3.7 Sign-in screen and session handling.
+- [x] T3.7a A profile appears when an Auth user is created (trigger, role always `user`, never taken from user-editable metadata; the first admin is made by a documented SQL step in T3.9), with pgTAP tests; the new-user message of `saveUser` says so.
+- [ ] T3.7b Sign-in screen and session handling in the app when the Supabase store is selected (sign in, session restore, sign out, session ended message); the local store keeps working without sign-in; the screen is covered by the UI rules and an e2e test.
 - [ ] T3.8 Keep-alive: a small scheduled request that touches the database once a day, as code plus instructions.
 - [ ] T3.9 `docs/DEPLOY.md`: steps for a human to create the Supabase project, run migrations, set variables on Cloudflare Pages, and create the first admin.
 
@@ -108,6 +109,13 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-18 T3.7a A profile appears when an Auth user is created (T3.7 split into T3.7a and T3.7b)
+Changed: supabase/migrations/20261118000008_new_user_profile.sql (trigger `handle_new_user`), supabase/tests/database/080-new-user-profile.test.sql (8 assertions), the profile fixtures of the other database tests (now an upsert, because the trigger makes the profile first), integration/supabase-store.test.ts (same), the new-user message of `saveUser`, docs/DECISIONS.md (D66). PROGRESS: T3.7 split.
+Tests: name from metadata (trimmed) or from the email, role always user even with role admin in the metadata, no email gives no profile and no error, a clashing email does not block the Auth user. Mutation check: reading the role from the metadata fails the test; migration restored afterwards.
+Test mistake of mine: I planned a test with a profile that exists before its Auth user; the foreign key forbids that, so it is gone.
+Gates run: check PASS (646 tests), test:db PASS (9 files, exit 0), test:store PASS (12 tests, exit 0). The UI gates were not rerun: nothing in src/ui changed.
+Next: T3.7b (sign-in screen and session handling).
 
 ### 2026-11-18 T3.6c2 Integration test of SupabaseStore on the full local stack
 Changed: integration/supabase-store.test.ts (12 tests, four real users through Auth), scripts/test-store.mjs and `npm run test:store`, scripts/lib/local-supabase.mjs (shared by test-db.mjs and test-store.mjs), vitest.store.config.ts, tsconfig.json (includes integration/), supabase/migrations/20261118000007_visible_names.sql and supabase/tests/database/070-visible-names.test.sql (7 assertions), `namesFromRows` (+2 tests) and the store's use of it, docs/DECISIONS.md (D65).

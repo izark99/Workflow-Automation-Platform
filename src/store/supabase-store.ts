@@ -202,7 +202,7 @@ export class SupabaseStore implements DataStore {
       throw new StoreError('invalid', 'A user needs a name and an email address. Fill both and save again.');
     }
     if (!user.id) {
-      throw new StoreError('invalid', 'A new user must sign in once before you can edit them. Ask them to sign in, then they appear in this list.');
+      throw new StoreError('invalid', 'A new user is added in Supabase Auth (see docs/DEPLOY.md). They appear in this list after that; then you can set their role and groups here.');
     }
     await this.updateRow('profiles', { id: user.id }, { name: user.name.trim(), email: user.email.trim(), role: user.role }, 'save the user', 'this user');
     await this.rpc('set_user_groups', { p_user_id: user.id, p_group_ids: user.groupIds }, 'save the groups of the user');
