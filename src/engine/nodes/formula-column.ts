@@ -9,7 +9,7 @@ import type { NodeModule } from './types';
  */
 export const formulaColumnNode: NodeModule = {
   type: 'formula_column',
-  compile: ({ node, inputs, effectiveDate }) => {
+  compile: ({ node, inputs, effectiveDate, parameters }) => {
     const input = inputs.in!;
     const name = node.settings.name;
     if (typeof name !== 'string' || name.trim() === '') {
@@ -29,7 +29,7 @@ export const formulaColumnNode: NodeModule = {
     }
     const compiled = compileStepFormula(
       node.settings.expression,
-      { columns: input.columns, effectiveDate },
+      { columns: input.columns, effectiveDate, parameters },
       { id: node.id, label: 'Formula column', setting: 'expression' },
     );
 

@@ -1,3 +1,4 @@
+import { parameterLiteral } from '../flow/parameter-values';
 import { quoteIdent } from '../sql';
 import { EngineError, type Column, type ColumnType } from '../types';
 import type { NodeModule } from './types';
@@ -77,7 +78,7 @@ function columnType(name: string, duckType: string, nodeId: string): ColumnType 
  */
 export const sqlNode: NodeModule = {
   type: 'sql',
-  compile: async ({ node, inputs, query }) => {
+  compile: async ({ node, inputs, query, parameters }) => {
     const sql = node.settings.sql;
     if (typeof sql !== 'string' || sql.trim() === '') {
       throw new EngineError(
@@ -90,7 +91,11 @@ export const sqlNode: NodeModule = {
     if (refusal) throw new EngineError('invalid_settings', `SQL step "${node.id}": ${refusal}`, node.id);
 
     const handles = Object.keys(inputs).sort((a, b) => Number(a.slice(2)) - Number(b.slice(2)));
-    const ctes = handles.map((h) => `${h} AS (SELECT * FROM ${quoteIdent(inputs[h]!.relation)})`).join(', ');
+    const keys = Object.keys(parameters);
+    const list = handles.map((h) => `${h} AS (SELECT * FROM ${quoteIdent(inputs[h]!.relation)})`);
+    // One row, one column per parameter, so a query can read the values with `params`.
+    if (keys.length > 0) list.push(`params AS (SELECT ${keys.map((k) => `${parameterLiteral(parameters[k]!)} AS ${quoteIdent(k)}`).join(', ')})`);
+    const ctes = list.join(', ');
     // The query runs as the top statement, so that DESCRIBE sees its own column names (a wrapper would rename duplicates).
     // A trailing line comment needs a newline before anything that follows it.
     const body = sql.replace(/[\s;]+$/, '').replace(/^(?:\s+|--[^\n]*(?:\n|$)|\/\*[\s\S]*?\*\/)*/, '');
@@ -102,6 +107,13 @@ export const sqlNode: NodeModule = {
       described = (await query(`DESCRIBE ${inner}`)).rows;
     } catch (e) {
       const reason = e instanceof Error ? e.message : String(e);
+      if (keys.length === 0 && /\bparams\b/i.test(sql) && /params/i.test(reason)) {
+        throw new EngineError(
+          'invalid_settings',
+          `SQL step "${node.id}": the query reads "params", but this flow has no parameters. Add a parameter in the Parameters panel of the builder, or remove "params" from the query.`,
+          node.id,
+        );
+      }
       throw new EngineError('node_failed', `SQL step "${node.id}": the SQL has an error: ${reason} Fix the query in the step settings.`, node.id);
     }
     const columns: Column[] = described.map((row) => ({
@@ -119,7 +131,7 @@ export const sqlNode: NodeModule = {
       }
       seen.add(c.name.toLowerCase());
     }
-    const list = columns.map((c) => (c.type === 'number' ? `CAST(${quoteIdent(c.name)} AS DOUBLE) AS ${quoteIdent(c.name)}` : quoteIdent(c.name)));
-    return { out: { sql: `SELECT ${list.join(', ')} FROM (${inner})`, columns } };
+    const select = columns.map((c) => (c.type === 'number' ? `CAST(${quoteIdent(c.name)} AS DOUBLE) AS ${quoteIdent(c.name)}` : quoteIdent(c.name)));
+    return { out: { sql: `SELECT ${select.join(', ')} FROM (${inner})`, columns } };
   },
 };

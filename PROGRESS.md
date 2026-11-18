@@ -130,7 +130,7 @@ Accounts (SPEC 11.1)
 
 Parameters (SPEC 11.5)
 - [x] T4.9a Definition format: new schema version with `parameters`; JSON schema and validation (unique keys, key pattern, types, list options, default of the right type); older definitions load with an empty list. `flows/monthly-timesheet.flow.json` stays unchanged and G1 still passes.
-- [ ] T4.9b Engine: a run takes parameter values; checks required, type and list option before any step runs, with clear errors; `PARAM("key")` in the formula compiler with the parameter type; `params` view for the SQL step. Unit tests for every type.
+- [x] T4.9b Engine: a run takes parameter values; checks required, type and list option before any step runs, with clear errors; `PARAM("key")` in the formula compiler with the parameter type; `params` view for the SQL step. Unit tests for every type.
 - [ ] T4.9c Builder: Parameters panel (add, edit, delete, Move up, Move down, read-only when published); the formula editor lists `PARAM` with the keys of the version.
 - [ ] T4.9d Test tab asks for test values of the parameters used upstream of the selected step.
 - [ ] T4.9e Run screen: Parameters card above Files; errors under each field; Run disabled until the values are valid. e2e journey: a flow with a date parameter used in a Filter runs and gives the expected rows. Extend the privacy acceptance test: parameter values appear in no request.
@@ -173,6 +173,12 @@ None. The Pages file size blocker of T3.9 is solved by D71.
 ## Log
 
 Newest first.
+
+### 2026-11-18 T4.9b Parameters: the engine side (turn 28)
+Advisor not consulted: the format and the open choices were settled in turn 27; the one change from the plan (typed literal and a `params` CTE instead of a view) is D78.
+Changed: src/engine/flow/parameter-values.ts (new: `resolveParameterValues`, `parameterLiteral`, `parameterColumnType`), formula/compile.ts (`PARAM`, `CompileEnv.parameters`), run.ts (`parameterValues`, checked before any step), nodes/types.ts (`CompileContext.parameters`), filter, formula-column, output (sort) and sql-node (`params` CTE, clear error without parameters), messages.ts, i18n en and vi (3 new ids), src/engine/parameters-run.test.ts (28 tests: every type, errors before any step, quote safety, `params` table).
+Gates run: `npm run check` exit 0 (968 tests); `npm run test:acceptance` exit 0 (7 passed, 1 skipped); `npm run test:acceptance:pages` exit 0 (8 passed); `git diff main -- flows/monthly-timesheet.flow.json` empty; `git status --porcelain testcase` empty. No UI change, so test:ui-rules was not re-run.
+Next: T4.9c (builder Parameters panel, only through `withParameters`).
 
 ### 2026-11-18 T4.9a Parameters: the definition format (turn 27)
 Advisor consulted (the schema version, hard to undo); its points are in D77: versions 1 and 2 are read, a stored definition is never rewritten, `validateFlow` returns a copy, only `withParameters` writes version 2 (the builder of T4.9c must use only it, so opening a draft never shows "Unsaved changes"), a version 1 definition with parameters is refused, keys are unique without regard to case, and the choices for `PARAM` and the `params` view (T4.9b).

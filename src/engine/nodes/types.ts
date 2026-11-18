@@ -1,3 +1,4 @@
+import type { ResolvedParameters } from '../flow/parameter-values';
 import type { FlowNode, NodeType } from '../flow/types';
 import type { Column, LoadedTable, QueryResult } from '../types';
 
@@ -11,6 +12,8 @@ export interface CompileContext {
   refTables: Readonly<Record<string, LoadedTable>>;
   /** ISO date, for example `2026-09-30`. */
   effectiveDate: string;
+  /** The values of the flow parameters in this run. Empty when the flow has none. */
+  parameters: ResolvedParameters;
   /** Runs a query on the tables of this run. For nodes whose output columns depend on values, such as Pivot. */
   query(sql: string): Promise<QueryResult>;
 }

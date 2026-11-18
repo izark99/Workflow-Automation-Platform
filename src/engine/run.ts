@@ -1,3 +1,5 @@
+import { resolveParameterValues, type ParameterValues } from './flow/parameter-values';
+import { parametersOf } from './flow/parameters';
 import { resolveEdgeHandles, topologicalOrder, validateFlow } from './flow/validate';
 import { loadInputFile, parseInputSettings, type FileSource } from './input/load';
 import { checkOutputNodes } from './nodes/output';
@@ -19,6 +21,8 @@ export interface RunOptions {
   files?: Record<string, FileSource>;
   /** Reference tables by name, already resolved to the version valid on the effective date. */
   refTables?: Record<string, TableData>;
+  /** The values of the flow parameters, by key. Checked before any step runs. */
+  parameterValues?: ParameterValues;
   registry?: NodeRegistry;
   signal?: AbortSignal;
   onNode?: (event: { nodeId: string; status: 'start' | 'done' }) => void;
@@ -50,6 +54,7 @@ export async function runFlow(runner: SqlRunner, options: RunOptions): Promise<R
   }
   const flow = validation.flow;
   checkOutputNodes(flow);
+  const parameters = resolveParameterValues(parametersOf(flow), options.parameterValues);
   const registry = options.registry ?? defaultRegistry;
   const prefix = `r${++runCounter}_`;
   const created: string[] = [];
@@ -122,6 +127,7 @@ export async function runFlow(runner: SqlRunner, options: RunOptions): Promise<R
         inputTables,
         refTables,
         effectiveDate: options.effectiveDate,
+        parameters,
         query: (sql) => runner.query(sql),
       });
 
