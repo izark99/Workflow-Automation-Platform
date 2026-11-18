@@ -1,4 +1,5 @@
 import { formatDate } from '../../engine/versions';
+import type { Message } from '../i18n';
 import type { FlowRecord, FlowVersionRecord, User } from '../../store/types';
 
 export type ScopeFilter = 'all' | 'personal' | 'shared';
@@ -27,18 +28,16 @@ export function countSteps(definition: unknown): { steps: number; outputs: numbe
   return { steps: nodes.length, outputs: nodes.filter((n) => n.type === 'output').length };
 }
 
-const plural = (n: number, one: string, many: string): string => `${n} ${n === 1 ? one : many}`;
-
-export function describeSteps(definition: unknown): string {
+export function describeSteps(definition: unknown): Message {
   const { steps, outputs } = countSteps(definition);
-  return `${plural(steps, 'step', 'steps')}, ${plural(outputs, 'output sheet', 'output sheets')}`;
+  return { key: 'flows.steps', params: { steps, outputs } };
 }
 
 /** `From 01 Jul 2026`, `01 Jan 2026 to 30 Jun 2026`, or `Not published yet`. The screens write days with two digits. */
-export function describeRange(v: FlowVersionRecord | undefined): string {
-  if (!v || v.status === 'draft') return 'Not published yet';
+export function describeRange(v: FlowVersionRecord | undefined): Message {
+  if (!v || v.status === 'draft') return { key: 'flows.range.notPublished' };
   const two = (iso: string): string => formatDate(iso).replace(/^(\d) /, '0$1 ');
-  return v.validTo === null ? `From ${two(v.validFrom)}` : `${two(v.validFrom)} to ${two(v.validTo)}`;
+  return v.validTo === null ? { key: 'flows.range.from', params: { from: two(v.validFrom) } } : { key: 'flows.range.between', params: { from: two(v.validFrom), to: two(v.validTo) } };
 }
 
 export function filterFlows(flows: FlowRecord[], scope: ScopeFilter, search: string): FlowRecord[] {

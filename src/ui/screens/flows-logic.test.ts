@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { seedSnapshot } from '../../store/seed';
 import type { FlowRecord, User } from '../../store/types';
+import { translateMessage } from '../i18n';
 import { canDeleteFlow, canRunFlow, countSteps, describeRange, describeSteps, filterFlows, todayIso, versionInEffect, versionToOpen } from './flows-logic';
 
 const flows = seedSnapshot().flows.filter((f) => !f.deletedAt);
@@ -30,17 +31,17 @@ describe('versions of a flow', () => {
 describe('texts', () => {
   it('describes the range as the screens do', () => {
     const f = byId('flow-ot-department');
-    expect(describeRange(f.versions[1])).toBe('From 01 Jul 2026');
-    expect(describeRange(f.versions[0])).toBe('01 Jan 2026 to 30 Jun 2026');
-    expect(describeRange(byId('flow-insurance').versions[0])).toBe('Not published yet');
-    expect(describeRange(undefined)).toBe('Not published yet');
+    expect(translateMessage(describeRange(f.versions[1]))).toBe('From 01 Jul 2026');
+    expect(translateMessage(describeRange(f.versions[0]))).toBe('01 Jan 2026 to 30 Jun 2026');
+    expect(translateMessage(describeRange(byId('flow-insurance').versions[0]))).toBe('Not published yet');
+    expect(translateMessage(describeRange(undefined))).toBe('Not published yet');
   });
   it('counts steps and output nodes from the definition', () => {
     const def = { nodes: [{ type: 'input_file' }, { type: 'filter' }, { type: 'output' }, { type: 'output' }] };
     expect(countSteps(def)).toEqual({ steps: 4, outputs: 2 });
-    expect(describeSteps(def)).toBe('4 steps, 2 output sheets');
-    expect(describeSteps({ nodes: [{ type: 'output' }] })).toBe('1 step, 1 output sheet');
-    expect(describeSteps(null)).toBe('0 steps, 0 output sheets');
+    expect(translateMessage(describeSteps(def))).toBe('4 steps, 2 output sheets');
+    expect(translateMessage(describeSteps({ nodes: [{ type: 'output' }] }))).toBe('1 step, 1 output sheet');
+    expect(translateMessage(describeSteps(null))).toBe('0 steps, 0 output sheets');
   });
   it('writes the local date as ISO text', () => {
     expect(todayIso(new Date(2026, 8, 5))).toBe('2026-09-05');

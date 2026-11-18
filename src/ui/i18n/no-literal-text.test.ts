@@ -12,6 +12,11 @@ const MIGRATED = [
   'src/ui/theme-switch.tsx',
   'src/ui/components/info-tip.tsx',
   'src/ui/components/toast.tsx',
+  'src/ui/components/page-header.tsx',
+  'src/ui/components/screen-frame.tsx',
+  'src/ui/components/field.tsx',
+  'src/ui/components/states.tsx',
+  'src/ui/screens/flows.tsx',
 ];
 
 const TEXT_ATTRIBUTES = new Set(['label', 'title', 'placeholder', 'aria-label', 'alt', 'aria-description', 'text', 'what', 'next']);

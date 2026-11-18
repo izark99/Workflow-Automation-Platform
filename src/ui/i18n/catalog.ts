@@ -71,6 +71,16 @@ export function t(key: MessageKey, params?: MessageParams): string {
   return translate(key, params);
 }
 
+/** A text as data: logic modules return it, the component turns it into text with `t(m.key, m.params)`. */
+export interface Message {
+  key: MessageKey;
+  params?: MessageParams;
+}
+
+export function translateMessage(m: Message, loc: Locale = locale): string {
+  return translate(m.key, m.params, loc);
+}
+
 export function subscribe(listener: () => void): () => void {
   listeners.add(listener);
   return () => listeners.delete(listener);

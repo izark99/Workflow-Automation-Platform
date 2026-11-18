@@ -7,6 +7,7 @@ import type { Cell } from '../../engine/types';
 import type { RefTableRecord, RefTableVersionRecord } from '../../store/types';
 import { NewVersionDialog, PublishDialog } from '../builder/builder-dialogs';
 import { publishSummaryFor, versionOptionLabel } from '../builder/version-logic';
+import { translate } from '../i18n';
 import { useLoad, useStore } from '../store-context';
 import { refStrings as t, strings } from '../strings';
 import { todayIso } from './flows-logic';
@@ -210,7 +211,7 @@ export function ReferenceTablesScreen() {
 
   let body;
   if (data.error) {
-    body = <ErrorState what={t.loadFailed} next={t.loadFailedNext} actions={<Button compact onClick={data.reload}>{strings.flowsScreen.retry}</Button>} />;
+    body = <ErrorState what={t.loadFailed} next={t.loadFailedNext} actions={<Button compact onClick={data.reload}>{translate('flows.retry')}</Button>} />;
   } else if (data.loading && !data.data) {
     body = showSkeleton ? <SkeletonTable weights={[10, 16, 12, 12, 14]} rows={3} label="Loading the reference tables" /> : null;
   } else if (tables.length === 0 || !table || !version) {
