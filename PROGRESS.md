@@ -79,7 +79,8 @@ before it passes, except where a task says otherwise.
 - [x] T3.4 Row-level security for reference tables, profiles, groups and run log, with tests.
 - [x] T3.5 Soft delete, restore, and removal after 30 days.
 - [x] T3.6a `SupabaseStore`, part 1: `@supabase/supabase-js` pinned, pure row mappers with unit tests, and the read side of `DataStore` (current user, users, groups, flows, deleted flows, reference tables, run log). Write methods fail with a clear "not available yet" error until T3.6b. Not selected by the app yet.
-- [ ] T3.6b `SupabaseStore`, part 2: the write side (flows, copy, versions, publish through the publish functions, delete, restore, purge through the functions of T3.5, groups, users, reference tables, run log).
+- [x] T3.6b1 Server functions for the write side, with pgTAP tests: `create_flow`, `copy_flow`, `create_flow_version`, `create_ref_table`, `create_ref_table_version`, `set_flow_groups`, `set_user_groups`, and a rule that the last admin cannot be demoted or removed. They make multi-row writes atomic and take the next version number inside the database.
+- [ ] T3.6b2 `SupabaseStore`, part 2: the write methods, calling those functions and the functions of T3.2 and T3.5; table updates for saving versions, groups and users; run log insert; friendlier messages for overlap and duplicates in `storeErrorFrom`.
 - [ ] T3.6c Selection by environment variables (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`; `LocalStore` stays the default and the one used by G3 and G4), and an integration test of `SupabaseStore` against the full local stack (`npm run test:store`, not part of `gates`; it needs the API and Auth containers).
 - [ ] T3.7 Sign-in screen and session handling.
 - [ ] T3.8 Keep-alive: a small scheduled request that touches the database once a day, as code plus instructions.
@@ -106,6 +107,14 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-18 T3.6b1 Server functions for the write side (T3.6b split into T3.6b1 and T3.6b2)
+Changed: supabase/migrations/20261118000006_store_functions.sql (`create_flow`, `copy_flow`, `create_flow_version`, `create_ref_table`, `create_ref_table_version`, `set_flow_groups`, `set_user_groups`, last-admin trigger), supabase/tests/database/060-store-functions.test.sql (49 assertions), docs/DECISIONS.md (D62). PROGRESS: T3.6b split.
+Tests cover: defaults and ownership of a new flow, a user cannot create a shared flow, name and scope checks; copy of a shared flow by a member, default and given names, a flow the caller cannot see; next version numbers with and without a source, missing source, no rights; reference table creation (admin only, duplicate name ignoring case, blank name), versions copied or empty; group access replaced, cleared, refused for a member even with an empty list, personal flows refused; user groups; the last admin cannot be demoted or removed.
+Real finding by the design check: `insert ... returning` on `flows` is refused by the select policy (a stable helper cannot see a row inserted by its own statement). The functions generate the id first. Mutation checks: using RETURNING fails with the policy error; removing the last-admin trigger fails 3 tests. Migration restored after each.
+Test mistake of mine: jsonb prints keys in its own order (edges, nodes, schemaVersion); the expectations were fixed, not the functions.
+Gates run: check PASS (631 tests), test:db PASS (7 files, exit 0). Other gates not rerun: nothing under src/ changed.
+Next: T3.6b2 (the write methods of `SupabaseStore`).
 
 ### 2026-11-18 T3.6a SupabaseStore, read side (T3.6 split into T3.6a, T3.6b, T3.6c)
 Changed: package.json (`@supabase/supabase-js` 2.118.0 pinned), src/store/supabase-mapping.ts (+8 tests), src/store/supabase-store.ts (read side; write methods say "not available on the server yet"; `storeErrorFrom`, +4 tests), docs/DECISIONS.md (D61). PROGRESS: T3.6 split.
