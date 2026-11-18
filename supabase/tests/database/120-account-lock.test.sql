@@ -154,7 +154,7 @@ select is(
 select is(
   (select array_agg(p.proname::text order by p.proname) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'public' and p.prosecdef),
-  array['account_status', 'admin_set_locked', 'admin_set_must_change_password', 'can_edit_flow', 'can_view_flow', 'clear_must_change_password',
+  array['account_status', 'admin_end_sessions', 'admin_set_locked', 'admin_set_must_change_password', 'can_edit_flow', 'can_view_flow', 'clear_must_change_password',
         'handle_new_user', 'is_active_user', 'is_admin', 'is_group_member', 'keep_alive', 'stamp_ui_text', 'visible_names'],
   'the security definer functions are the reviewed ones');
 
