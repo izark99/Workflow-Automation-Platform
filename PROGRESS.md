@@ -108,7 +108,7 @@ Info button (SPEC 11.2)
 
 Texts (SPEC 11.3)
 - [x] T4.7a1 Message catalog core in `src/ui/i18n/`: flat dotted keys with a fixed list of screen prefixes, `{name}` placeholders, plural forms (`Intl.PluralRules`), `placeholdersOf`, lookup order (override of the locale, locale, override of `en`, `en`, key), `en` as default and fallback, pseudo-locale (markers `⟦` `⟧`), `t()` and `useT()` hook. Unit tests.
-- [ ] T4.7a2 Migrate the shell, the shared components (InfoTip, Field, ErrorState, Dropdown, Dialog and the rest that the shell and the sign-in screen render) and the sign-in screen to catalog keys, with the pseudo-locale UI rule (its own test per route, markers and `data-user-content`, `placeholder` attributes) and a static scan of migrated files for literal UI text. The rule checks only migrated routes until T4.7c. Keep the "sign-in screen with an error" route out of the rule until T4.7d (log it).
+- [x] T4.7a2 Migrate the shell, the shared components (InfoTip, Field, ErrorState, Dropdown, Dialog and the rest that the shell and the sign-in screen render) and the sign-in screen to catalog keys, with the pseudo-locale UI rule (its own test per route, markers and `data-user-content`, `placeholder` attributes) and a static scan of migrated files for literal UI text. The rule checks only migrated routes until T4.7c. Keep the "sign-in screen with an error" route out of the rule until T4.7d (log it).
 - [ ] T4.7b Migrate the Flows screen, the builder, every settings form and the formula editor messages to catalog keys. Remove their entries from `strings.ts`.
 - [ ] T4.7c Migrate Run, Versions, Reference tables, Admin and every dialog. Remove `strings.ts` when it is empty. The pseudo-locale rule now covers every route.
 - [ ] T4.7d Errors as codes: the store, the auth service and the engine return a code with parameters; the UI shows the catalog text for the code. The engine keeps its English text as the fallback and imports nothing from the UI. Unit test: every code has an `en` text with the same placeholders.
@@ -168,6 +168,13 @@ None. The Pages file size blocker of T3.9 is solved by D71.
 ## Log
 
 Newest first.
+
+### 2026-11-18 T4.7a2 Shell, shared components and sign-in on the catalog (turn 10)
+Changed: src/ui/i18n/messages/en.ts (49 keys: app, common, nav, theme, signIn, flows.createDialog), shell.tsx, sign-in.tsx, auth-gate.tsx, theme-switch.tsx, components/info-tip.tsx, components/toast.tsx, screens/flows.tsx (one key), main.tsx (locale read at start; `pseudo` only when the build has the dev routes), i18n/catalog.ts (`readLocale`), store/auth.ts (`signInProblem` returns a code, the UI maps it to `signIn.problem.{code}`), strings.ts (migrated entries removed), ui-rules/pseudo-locale.spec.ts and `untranslatedText` rule with a self-check, src/ui/i18n/no-literal-text.test.ts (a TypeScript-parser scan of the migrated files for JSX text, string expressions and text attributes).
+Scope of the pseudo-locale rule now: the sidebar of every sidebar route, and the whole page of two sign-in routes. Left out until T4.7d: "sign-in screen with an error" (the stand-in auth service still returns English text). The user's name in the sidebar is marked `data-user-content`.
+Not migrated yet (T4.7e or later): month and weekday names and the aria-labels of the date picker; they are on routes the rule does not cover yet.
+Gates run: check PASS (751 tests, exit 0); `npm run test:e2e` exit 0 (177 passed); `npm run test:acceptance:pages` exit 0 (8 passed); `npm run test:ui-rules` exit 0, 1164 passed in 17.8 min (388 each in light-1280, light-1440, dark-1440).
+Next: T4.7b (split it first).
 
 ### 2026-11-18 T4.7a1 Message catalog core (turn 9)
 Advisor consulted (catalog design, hard to undo). Decisions (also in docs/DECISIONS.md D72): flat dotted keys, first segment a fixed screen prefix (`app common nav signIn theme language flows builder run versions refTables admin errors engine dev`); no functions in texts, only `{name}` and `{count, plural, one {# row} other {# rows}}`; lookup order override of the locale, locale, override of `en`, `en`, the key; an override with other placeholders than the default is dropped; `useT()` on `useSyncExternalStore` so a language switch never remounts; pseudo-locale wraps texts in `⟦ ⟧`; `vi` typed `Record<MessageKey, string>` in T4.7e; `lang` set on `<html>`.

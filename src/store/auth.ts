@@ -25,12 +25,18 @@ export class AuthError extends Error {
   }
 }
 
-/** What is wrong with the form before it is sent, or null. */
-export function signInProblem(email: string, password: string): string | null {
+/** What is wrong with the form before it is sent. The UI turns the code into a text of the catalog (`signIn.problem.{code}`). */
+export interface SignInProblem {
+  code: 'emailMissing' | 'emailInvalid' | 'passwordMissing';
+  /** The address as typed, for `emailInvalid`. */
+  email?: string;
+}
+
+export function signInProblem(email: string, password: string): SignInProblem | null {
   const e = email.trim();
-  if (!e) return 'Enter your email address, then sign in.';
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) return `"${e}" is not an email address. Type it like name@company.com.`;
-  if (!password) return 'Enter your password, then sign in.';
+  if (!e) return { code: 'emailMissing' };
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) return { code: 'emailInvalid', email: e };
+  if (!password) return { code: 'passwordMissing' };
   return null;
 }
 

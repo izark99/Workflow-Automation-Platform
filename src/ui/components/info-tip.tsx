@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { strings } from '../strings';
+import { useT } from '../i18n';
 import { Icon } from './icons';
 import { INFO_TIP_CLOSED, INFO_TIP_HOVER_MS, infoTipNext } from './info-tip-logic';
 import type { InfoTipEvent, InfoTipState } from './info-tip-logic';
@@ -21,6 +21,7 @@ const POPOVER_WIDTH = 320;
 
 /** The info button: a 24 x 24 px toggletip placed after the title or label it explains. */
 export function InfoTip({ label, children, defaultOpen = false }: InfoTipProps) {
+  const t = useT();
   const [state, setState] = useState<InfoTipState>(defaultOpen ? { open: true, pinned: true } : INFO_TIP_CLOSED);
   const [up, setUp] = useState(false);
   const [alignEnd, setAlignEnd] = useState(false);
@@ -68,7 +69,7 @@ export function InfoTip({ label, children, defaultOpen = false }: InfoTipProps) 
         type="button"
         className={styles.button}
         data-infotip=""
-        aria-label={strings.infoTip.about(label)}
+        aria-label={t('common.infoTip.about', { label })}
         aria-expanded={state.open}
         aria-controls={id}
         onClick={() => send('click')}

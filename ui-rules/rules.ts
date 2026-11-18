@@ -209,3 +209,37 @@ export const COMMON_RULES: Record<string, Rule> = {
   'keyboard focus ring': keyboardFocusRing,
   'accessibility (axe)': axeSeriousOrCritical,
 };
+
+/**
+ * SPEC 11.3: every visible text comes from the catalog. With the pseudo-locale on, the catalog wraps each text in the
+ * markers and so any visible text or text attribute outside the markers is a literal. Text inside `[data-user-content]`
+ * is user data (names, file content) and is never translated. Text without a letter (digits, punctuation) is allowed.
+ */
+export async function untranslatedText(page: Page, selector: string): Promise<string[]> {
+  return page.evaluate((sel) => {
+    const bad: string[] = [];
+    const root = document.querySelector(sel);
+    if (!root) return [`no element matches ${sel}`];
+    const outside = (text: string): boolean => /\p{L}/u.test(text.replace(/\u27E6[^\u27E7]*\u27E7/gu, ''));
+    const visible = (el: Element): boolean => {
+      const r = el.getBoundingClientRect();
+      const s = getComputedStyle(el);
+      return (r.width > 0 || r.height > 0) && s.visibility !== 'hidden' && s.display !== 'none';
+    };
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+      const el = n.parentElement;
+      const text = n.textContent ?? '';
+      if (!el || !text.trim() || el.closest('[data-user-content]') || el.closest('script, style') || !visible(el)) continue;
+      if (outside(text)) bad.push(`text outside the catalog: "${text.trim().slice(0, 60)}"`);
+    }
+    for (const el of [root, ...root.querySelectorAll('*')]) {
+      if (el.closest('[data-user-content]') || !visible(el)) continue;
+      for (const attr of ['placeholder', 'aria-label', 'title', 'alt']) {
+        const value = el.getAttribute(attr);
+        if (value && outside(value)) bad.push(`${attr} outside the catalog: "${value.slice(0, 60)}"`);
+      }
+    }
+    return bad;
+  }, selector);
+}

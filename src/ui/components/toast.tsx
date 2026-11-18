@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useReducer, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { Icon } from './icons';
+import { useT } from '../i18n';
 import { toastReducer } from './toast-state';
 import styles from './toast.module.css';
 
@@ -10,6 +11,7 @@ const ToastContext = createContext<(message: string) => void>(() => undefined);
 export const useToast = (): ((message: string) => void) => useContext(ToastContext);
 
 export function ToastProvider({ children, durationMs = 5000 }: { children: ReactNode; durationMs?: number }) {
+  const tr = useT();
   const [items, dispatch] = useReducer(toastReducer, []);
   const next = useRef(1);
   const show = useCallback(
@@ -27,7 +29,7 @@ export function ToastProvider({ children, durationMs = 5000 }: { children: React
         {items.map((t) => (
           <div key={t.id} className={styles.toast}>
             {t.message}
-            <button type="button" className={styles.dismiss} aria-label="Dismiss message" onClick={() => dispatch({ type: 'remove', id: t.id })}>
+            <button type="button" className={styles.dismiss} aria-label={tr('common.toast.dismiss')} onClick={() => dispatch({ type: 'remove', id: t.id })}>
               <Icon name="close" />
             </button>
           </div>

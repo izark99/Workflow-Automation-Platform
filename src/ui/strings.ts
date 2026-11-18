@@ -3,24 +3,6 @@
 const mb = (bytes: number): string => `${(bytes / 1e6).toFixed(1)} MB`;
 
 export const strings = {
-  brand: 'Data Flow',
-  nav: { label: 'Main', flows: 'Flows', refTables: 'Reference tables', admin: 'Admin', createFlow: 'Create flow' },
-  infoTip: { about: (label: string) => `About ${label}` },
-  theme: { label: 'Theme', light: 'Light', dark: 'Dark', system: 'System' },
-  roles: { admin: 'Admin', user: 'User' },
-  signIn: {
-    title: 'Sign in',
-    subtitle: 'Use the email address and password your admin set up for you.',
-    email: 'Email',
-    password: 'Password',
-    submit: 'Sign in',
-    failed: 'You could not be signed in.',
-    ended: 'Your session ended.',
-    endedNext: 'Sign in again to continue.',
-    checking: 'Checking your session',
-    signOut: 'Sign out',
-    signOutFailed: 'Could not sign out. Close this tab, or try again.',
-  },
   screens: {
     flows: { crumb: 'Workspace', title: 'Flows', subtitle: 'Build a flow once, then run it for any effective date.' },
     refTables: { crumb: 'Workspace', title: 'Reference tables', subtitle: 'Shared rules that flows look up. Each table keeps versions with an effective date range.' },
@@ -28,19 +10,6 @@ export const strings = {
     run: { crumb: 'Flows', title: 'Run a flow', subtitle: 'Pick the effective date and the files, then run the flow in this browser.' },
     versions: { crumb: 'Flows', title: 'Versions', subtitle: 'Each version is valid for a date range. A run uses the version valid on its effective date.' },
     notBuilt: 'This screen is not built yet.',
-  },
-  createFlowDialog: {
-    title: 'Create flow',
-    name: 'Flow name',
-    namePlaceholder: 'Monthly timesheet summary',
-    scope: 'Scope',
-    personal: 'Personal',
-    shared: 'Shared',
-    cancel: 'Cancel',
-    create: 'Create flow',
-    emptyName: 'The flow has no name.',
-    emptyNameNext: 'Type a name and create the flow again.',
-    failed: 'The flow could not be created.',
   },
   builder: {
     stepTypes: 'Step types',

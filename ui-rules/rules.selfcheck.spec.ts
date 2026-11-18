@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { axeSeriousOrCritical, buttonHeights, dangerSpacing, noHintParagraphs, duplicateButtonNames, forbiddenElements, headerPosition, keyboardFocusRing, noHorizontalScroll, oneCta, sidebarWidth, tableRows } from './rules';
+import { axeSeriousOrCritical, buttonHeights, dangerSpacing, noHintParagraphs, untranslatedText, duplicateButtonNames, forbiddenElements, headerPosition, keyboardFocusRing, noHorizontalScroll, oneCta, sidebarWidth, tableRows } from './rules';
 
 // Each rule must fail on a page that breaks it, and pass on a page that does not.
 const bad = (html: string) => `<!doctype html><html lang="en"><head><title>t</title></head><body style="margin:0">${html}</body></html>`;
@@ -100,4 +100,13 @@ test('keyboard focus ring: a button with no outline fails, one with a 2 px outli
   expect(await keyboardFocusRing(page)).toEqual([]);
   await page.setContent(bad('<label style="display:inline-block" class="w"><style>.w:focus-within{outline:2px solid #0d9488}</style><input type="text" style="outline:0"></label>'));
   expect(await keyboardFocusRing(page)).toEqual([]);
+});
+
+test('pseudo-locale: a text outside the markers fails, marked text, user content and digits pass', async ({ page }) => {
+  await page.setContent(bad('<main><p>Plain text</p></main>'));
+  expect((await untranslatedText(page, 'main')).length).toBe(1);
+  await page.setContent(bad('<main><p>\u27E6Flows\u27E7</p><p data-user-content>Harold</p><p>12 / 30</p><input placeholder="\u27E6Name\u27E7"></main>'));
+  expect(await untranslatedText(page, 'main')).toEqual([]);
+  await page.setContent(bad('<main><input placeholder="Name"><button aria-label="Close">1</button></main>'));
+  expect((await untranslatedText(page, 'main')).length).toBe(2);
 });

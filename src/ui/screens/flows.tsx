@@ -4,6 +4,7 @@ import { Badge, Button, ButtonLink, Card, Chip, ChipGroup, Dialog, EmptyState, E
 import type { Column } from '../components';
 import type { ShellContext } from '../shell';
 import { useLoad, useStore } from '../store-context';
+import { useT } from '../i18n';
 import { strings } from '../strings';
 import type { FlowRecord } from '../../store/types';
 import { canDeleteFlow, canRunFlow, describeRange, describeSteps, filterFlows, todayIso, versionInEffect, versionToOpen } from './flows-logic';
@@ -13,6 +14,7 @@ import styles from './flows.module.css';
 const t = strings.flowsScreen;
 
 export function FlowsScreen() {
+  const tr = useT();
   const store = useStore();
   const toast = useToast();
   const { openCreateFlow } = useOutletContext<ShellContext>();
@@ -109,7 +111,7 @@ export function FlowsScreen() {
   } else if (data.loading) {
     body = showSkeleton ? <SkeletonTable weights={[30, 16, 8, 14, 14, 18]} rows={3} label={t.loading} /> : null;
   } else if (flows.length === 0) {
-    body = <EmptyState title={t.emptyTitle} text={t.emptyText} action={<Button variant="primary" onClick={openCreateFlow}>{strings.nav.createFlow}</Button>} />;
+    body = <EmptyState title={t.emptyTitle} text={t.emptyText} action={<Button variant="primary" onClick={openCreateFlow}>{tr('nav.createFlow')}</Button>} />;
   } else if (shown.length === 0) {
     body = (
       <EmptyState

@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import type { AuthService, AuthSession } from '../store/auth';
 import { gateAfterEvent, gateAfterSession, type GateState } from './auth-gate-logic';
 import { SignInScreen } from './sign-in';
-import { strings } from './strings';
+import { useT } from './i18n';
 import styles from './sign-in.module.css';
 
 interface AuthInfo {
@@ -21,6 +21,7 @@ export const useAuth = (): AuthInfo | null => useContext(AuthContext);
  * when another person signs in nothing of the previous person's screens is kept.
  */
 export function AuthGate({ auth, children }: { auth: AuthService; children: ReactNode }) {
+  const tr = useT();
   const [state, setState] = useState<GateState>({ status: 'loading' });
 
   useEffect(() => {
@@ -41,7 +42,7 @@ export function AuthGate({ auth, children }: { auth: AuthService; children: Reac
   const session = state.status === 'signedIn' ? state.session : null;
   const info = useMemo<AuthInfo | null>(() => (session ? { session, signOut: () => auth.signOut() } : null), [session, auth]);
 
-  if (state.status === 'loading') return <div className={styles.page} role="status" aria-busy="true" aria-label={strings.signIn.checking} />;
+  if (state.status === 'loading') return <div className={styles.page} role="status" aria-busy="true" aria-label={tr('signIn.checking')} />;
   if (state.status === 'signedOut') return <SignInScreen auth={auth} ended={state.notice === 'ended'} />;
   return (
     <AuthContext.Provider key={state.session.userId} value={info}>

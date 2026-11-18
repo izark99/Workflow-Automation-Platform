@@ -91,3 +91,17 @@ describe('catalog content', () => {
     }
   });
 });
+
+import { readLocale } from './catalog';
+
+describe('readLocale', () => {
+  const store = (v: string | null) => ({ getItem: () => v });
+  it('accepts vi, accepts pseudo only when allowed, and falls back to English', () => {
+    expect(readLocale(store('vi'), false)).toBe('vi');
+    expect(readLocale(store('pseudo'), true)).toBe('pseudo');
+    expect(readLocale(store('pseudo'), false)).toBe('en');
+    expect(readLocale(store('fr'), true)).toBe('en');
+    expect(readLocale(undefined, true)).toBe('en');
+    expect(readLocale({ getItem: () => { throw new Error('blocked'); } }, true)).toBe('en');
+  });
+});

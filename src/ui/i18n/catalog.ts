@@ -87,3 +87,20 @@ export function resetCatalog(): void {
   overrides = {};
   changed();
 }
+
+export const LOCALE_STORAGE_KEY = 'dfw.locale';
+
+/**
+ * The locale kept in the browser. `pseudo` is for the UI rule only: it is accepted when the build has the development
+ * routes (`allowPseudo`) and is never offered in the language switch.
+ */
+export function readLocale(storage: Pick<Storage, 'getItem'> | undefined, allowPseudo: boolean): Locale {
+  try {
+    const raw = storage?.getItem(LOCALE_STORAGE_KEY);
+    if (raw === 'vi') return 'vi';
+    if (raw === 'pseudo' && allowPseudo) return 'pseudo';
+  } catch {
+    // Storage blocked: English.
+  }
+  return 'en';
+}
