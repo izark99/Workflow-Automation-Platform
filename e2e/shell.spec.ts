@@ -27,6 +27,7 @@ test('the sidebar links open Reference tables and Admin, and the title stays at 
   expect(await titleY()).toBe(flowsY);
   await nav.getByRole('link', { name: 'Admin' }).click();
   await expect(page).toHaveURL(/\/admin$/);
+  await expect(page.getByRole('heading', { name: 'Admin', level: 1 })).toBeVisible();
   expect(await titleY()).toBe(63);
 });
 

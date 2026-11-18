@@ -67,7 +67,7 @@ before it passes, except where a task says otherwise.
 - [x] T2.17 Versions screen: timeline, table, new version from copy, no-overlap check, date checker.
 - [x] T2.18 Reference tables screen: list, versions, grid with paste from Excel, read-only published versions.
 - [x] T2.19 Admin screen: users, groups, access to shared flows, deleted flows with restore.
-- [ ] T2.20 End-to-end journeys for gate G3.
+- [x] T2.20 End-to-end journeys for gate G3.
 - [ ] T2.21 UI rules and accessibility tests for gate G4 on every route.
 
 ## Phase 3: Server (gate G5)
@@ -103,6 +103,14 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-18 T2.20 End-to-end journeys for gate G3
+Changed: e2e/journeys.spec.ts (5 tests), e2e/journey-data.ts (the real flow and reference tables into the store, date picker keys, user switch), docs/DECISIONS.md (D53).
+Journeys: (1) build a flow on an empty canvas, connect by dragging and from the Setup tab, configure four steps, preview the Filter, publish, run, download and compare the workbook with the expected one; (2) the monthly timesheet flow on the September and the October files, the downloaded workbook equals the expected workbook ("Workbooks are equal: 3 sheets, 282 cells" and "336 cells", the acceptance comparison); (3) a new version of a reference table published from 01 Jul 2026 is used for later dates and the old one for earlier dates (limit 16 on 15 Jun, 20 on 30 Sep); (4) group access, a member who can view and run but not change, delete with confirmation and restore by the admin.
+Test mistake of mine found by the first run: option labels carry the step number, which changes while steps are unconnected; the journeys select by name without the number.
+One older shell test failed once in the full run (it measured the Admin title before the Admin heading was on the page; the Admin screen now loads data first, so it is no longer an instant placeholder); it now waits for the heading.
+Gates run: check PASS (610 tests), test:e2e PASS (159 tests, 2.6 min; the first full run had that one failure), test:acceptance PASS (7 tests). test:ui-rules not rerun this turn (no change under src/ or ui-rules/; last run exit 0, 396 tests, turn 22); T2.21 runs it.
+Next: T2.21 (UI rules and accessibility tests for gate G4 on every route).
 
 ### 2026-11-18 T2.19 Admin screen
 Changed: src/ui/screens/{admin.tsx,admin.module.css,admin-logic.ts(+5 tests)}, store `saveGroup`, `deleteGroup`, last-admin rule, unique email, group-id clean-up (+4 test groups, 34 store tests), `adminStrings`, e2e/admin.spec.ts (10 tests), UI-rules (table and skeleton for `/admin`, two dialog states), the placeholder screen is gone, docs/DECISIONS.md (D52).
