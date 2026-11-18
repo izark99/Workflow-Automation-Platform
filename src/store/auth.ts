@@ -16,6 +16,8 @@ export interface AuthService {
   /** Throws AuthError with a message that says what to do. */
   signIn(email: string, password: string): Promise<AuthSession>;
   signOut(): Promise<void>;
+  /** Sets a new password for the signed-in person. Throws AuthError with a message that says what to do. */
+  changePassword(newPassword: string): Promise<void>;
   /** Called on every change from now on. Returns the function that stops it. */
   onChange(listener: (session: AuthSession | null, event: AuthEvent) => void): () => void;
 }
@@ -58,6 +60,7 @@ interface AuthFailure {
 export function authFailure(error: AuthFailure): { id: StoreMessageId; params: Record<string, string> } {
   if (error.code === 'invalid_credentials') return { id: 'errors.auth.invalidCredentials', params: {} };
   if (error.code === 'user_banned') return { id: 'errors.auth.locked', params: {} };
+  if (error.code === 'same_password') return { id: 'errors.auth.samePassword', params: {} };
   if (error.code === 'email_not_confirmed') return { id: 'errors.auth.emailNotConfirmed', params: {} };
   if (error.code === 'over_request_rate_limit' || error.code === 'over_email_send_rate_limit' || error.status === 429) return { id: 'errors.auth.tooManyAttempts', params: {} };
   if (error.name === 'AuthRetryableFetchError' || error.status === 0) return { id: 'errors.auth.unreachable', params: {} };
@@ -157,6 +160,15 @@ export class MemoryAuth implements AuthService {
     this.write(session);
     this.emit(session, 'signed_in');
     return Promise.resolve(session);
+  }
+
+  changePassword(newPassword: string): Promise<void> {
+    const session = this.current();
+    if (!session) return Promise.reject(authErrorFrom({ code: 'session_not_found' }));
+    const user = this.users.find((u) => u.email.toLowerCase() === session.email.toLowerCase());
+    if (user?.password === newPassword) return Promise.reject(authErrorFrom({ code: 'same_password' }));
+    this.setUser(session.email, newPassword);
+    return Promise.resolve();
   }
 
   signOut(): Promise<void> {

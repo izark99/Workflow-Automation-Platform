@@ -104,7 +104,11 @@ export class SupabaseStore implements DataStore {
     if (error || !id) throw storeError('forbidden', 'errors.noUser');
     const profile = await this.client.from('profiles').select('id, name, email, role, locked_at, must_change_password').eq('id', id).maybeSingle();
     const row = this.ok<ProfileRow | null>(profile, 'read your profile');
-    if (!row) throw storeError('forbidden', 'errors.noProfile');
+    if (!row) {
+      // A locked account cannot read its own profile (D75); say so instead of "no profile".
+      if ((await this.statusRow())?.locked) throw storeError('forbidden', 'errors.accountLocked');
+      throw storeError('forbidden', 'errors.noProfile');
+    }
     // A non-admin cannot read group membership (decision D59); the screens only use it on the Admin screen.
     const members = await this.client.from('group_members').select('group_id').eq('user_id', id);
     return userFromRows(row, this.ok<{ group_id: string }[]>(members, 'read your groups').map((m) => m.group_id));
@@ -126,6 +130,22 @@ export class SupabaseStore implements DataStore {
     await this.mustBeAdmin('see the groups');
     const result = await this.client.from('groups').select('id, name').order('name');
     return this.ok<GroupRow[]>(result, 'read the groups').map(groupFromRow);
+  }
+
+  private async statusRow(): Promise<{ locked: boolean; must_change_password: boolean } | null> {
+    const result = await this.client.rpc('account_status');
+    const rows = this.ok<{ locked: boolean; must_change_password: boolean }[] | null>(result, 'read your account');
+    return rows?.[0] ?? null;
+  }
+
+  async accountStatus(): Promise<{ locked: boolean; mustChangePassword: boolean }> {
+    const row = await this.statusRow();
+    if (!row) throw storeError('forbidden', 'errors.noProfile');
+    return { locked: row.locked, mustChangePassword: row.must_change_password };
+  }
+
+  async clearMustChangePassword(): Promise<void> {
+    await this.rpc<unknown>('clear_must_change_password', {}, 'save your password choice');
   }
 
   async listUiTexts(): Promise<UiText[]> {

@@ -929,6 +929,7 @@ export const en = {
   'errors.account.lastAdmin': 'At least one active admin is needed. Make another user an admin first, then change this user.',
   'errors.account.failed': 'The account could not be changed: {detail}. Try again.',
   'errors.account.unreachable': 'Could not reach the account service. Check your connection and try again.',
+  'errors.auth.samePassword': 'The new password is the same as the old one. Choose a different password.',
   'errors.noProfile': 'Your account has no profile yet. Ask the admin to add you, then sign in again.',
   'errors.adminOnly': 'Only the admin can {what}. Ask the admin.',
   'errors.notAllowed': 'You are not allowed to {action}. Ask the admin if you need this right.',
@@ -1056,6 +1057,23 @@ export const en = {
   'admin.unlockConfirm': 'Unlock account',
   'admin.unlocked': '{name} unlocked.',
   'admin.accountFailed': 'The account could not be changed.',
+
+  // Added by T4.8e: the change-password screen, the locked-account screen and the sidebar action
+  'signIn.change.title': 'Choose a new password',
+  'signIn.change.subtitle': 'An admin set your password. Choose a password of your own to continue.',
+  'signIn.change.new': 'New password',
+  'signIn.change.newHint': 'At least 10 characters.',
+  'signIn.change.confirm': 'Confirm new password',
+  'signIn.change.submit': 'Save password',
+  'signIn.change.mismatch': 'The two passwords are not the same. Type the same password in both fields.',
+  'signIn.change.failed': 'The password could not be changed.',
+  'signIn.locked.title': 'Your account is locked',
+  'signIn.locked.what': 'You cannot use the app now.',
+  'signIn.locked.text': 'An admin locked this account. Ask the admin to unlock it, then sign in again.',
+  'nav.changePassword': 'Change password',
+  'nav.changePasswordTitle': 'Change password',
+  'nav.passwordChanged': 'Password changed.',
+  'nav.cancel': 'Cancel',
 } as const;
 
 export type MessageKey = keyof typeof en;

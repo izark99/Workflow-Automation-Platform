@@ -151,6 +151,10 @@ export interface DataStore {
   purgeFlow(id: string): Promise<void>;
   /** Admin only. Removes the deleted flows that were kept longer than 30 days. Returns how many. */
   purgeExpired(): Promise<number>;
+  /** The own account: locked by an admin, or the password must be changed. Readable even when the account is locked. */
+  accountStatus(): Promise<{ locked: boolean; mustChangePassword: boolean }>;
+  /** After the user chose a new password. */
+  clearMustChangePassword(): Promise<void>;
   /** The edited UI texts (SPEC 11.3). Everyone reads them, also before signing in; only an admin changes them. */
   listUiTexts(): Promise<UiText[]>;
   saveUiText(input: { locale: UiTextLocale; key: string; value: string }): Promise<UiText>;

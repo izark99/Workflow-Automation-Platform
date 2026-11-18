@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { Button, Dialog, Dropdown, ErrorState, Field, Icon, ToastProvider } from './components';
+import { Button, Dialog, Dropdown, ErrorState, Field, Icon, ToastProvider, useToast } from './components';
 import type { IconName } from './components';
 import { useAuth } from './auth-gate';
 import { useLoad, useStore } from './store-context';
+import { NewPasswordForm } from './change-password';
 import { LanguageSwitch } from './language-switch';
 import { ThemeSwitch } from './theme-switch';
 import { useT, errorText } from './i18n';
@@ -20,6 +21,24 @@ function NavItem({ to, icon, children }: { to: string; icon: IconName; children:
       <Icon name={icon} size={18} />
       {children}
     </NavLink>
+  );
+}
+
+function ChangePasswordDialog({ onClose }: { onClose: () => void }) {
+  const t = useT();
+  const auth = useAuth();
+  const toast = useToast();
+  return (
+    <Dialog title={t('nav.changePasswordTitle')} onClose={onClose} actions={<Button onClick={onClose}>{t('nav.cancel')}</Button>}>
+      <NewPasswordForm
+        submitLabel={t('nav.changePassword')}
+        onSave={async (password) => {
+          await auth?.changePassword(password);
+          toast(t('nav.passwordChanged'));
+          onClose();
+        }}
+      />
+    </Dialog>
   );
 }
 
@@ -93,6 +112,7 @@ export function Shell() {
   const user = useLoad((s) => s.currentUser());
   const [creating, setCreating] = useState(false);
   const [signOutProblem, setSignOutProblem] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
   const auth = useAuth();
   const me = user.data;
   return (
@@ -129,6 +149,9 @@ export function Shell() {
             </div>
             {auth ? (
               <div className={styles.signOut}>
+                <Button compact onClick={() => setChangingPassword(true)}>
+                  {t('nav.changePassword')}
+                </Button>
                 <Button
                   compact
                   onClick={() => {
@@ -147,6 +170,7 @@ export function Shell() {
       <main className={styles.main}>
         <Outlet context={{ openCreateFlow: () => setCreating(true) } satisfies ShellContext} />
       </main>
+      {changingPassword ? <ChangePasswordDialog onClose={() => setChangingPassword(false)} /> : null}
       {creating ? <CreateFlowDialog admin={me?.role === 'admin'} onClose={() => setCreating(false)} /> : null}
     </div>
     </ToastProvider>

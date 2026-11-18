@@ -22,6 +22,7 @@ export const STORE_MESSAGES = {
   'errors.account.lastAdmin': 'At least one active admin is needed. Make another user an admin first, then change this user.',
   'errors.account.failed': 'The account could not be changed: {detail}. Try again.',
   'errors.account.unreachable': 'Could not reach the account service. Check your connection and try again.',
+  'errors.auth.samePassword': 'The new password is the same as the old one. Choose a different password.',
   'errors.noProfile': 'Your account has no profile yet. Ask the admin to add you, then sign in again.',
   'errors.adminOnly': 'Only the admin can {what}. Ask the admin.',
   'errors.notAllowed': 'You are not allowed to {action}. Ask the admin if you need this right.',

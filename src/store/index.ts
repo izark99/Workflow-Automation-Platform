@@ -67,6 +67,8 @@ export function createBackend(): Backend {
     return { store: new SupabaseStore(client), auth: new SupabaseAuth(client), accounts: new SupabaseAccountAdmin(client) };
   }
   const store = createLocalStore();
+  // The dev and test builds expose the local store, so a test can lock the signed-in account while the app is open.
+  if (DEV_TOOLS) (window as unknown as { dfwStore?: LocalStore }).dfwStore = store;
   const injected = DEV_TOOLS ? readKey('dfw.auth') : null;
   if (!injected) return { store, auth: null, accounts: new LocalAccountAdmin(store) };
   const auth = new MemoryAuth({ users: JSON.parse(injected) as { email: string; password: string }[], storage: localStorage });

@@ -24,6 +24,11 @@ export class SupabaseAuth implements AuthService {
     return session;
   }
 
+  async changePassword(newPassword: string): Promise<void> {
+    const { error } = await this.client.auth.updateUser({ password: newPassword });
+    if (error) throw authErrorFrom({ code: (error as { code?: string }).code, name: error.name, status: (error as { status?: number }).status, message: error.message });
+  }
+
   async signOut(): Promise<void> {
     this.signingOut = true;
     try {

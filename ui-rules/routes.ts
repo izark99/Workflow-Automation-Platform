@@ -43,6 +43,21 @@ const withSignIn = async (page: Page): Promise<void> => {
   await page.addInitScript((json) => localStorage.setItem('dfw.auth', json), USERS_JSON);
 };
 
+/** A signed-in person whose account has a flag (the change-password screen, the locked screen). */
+const withAccountFlag = (flag: 'mustChangePassword' | 'locked') => async (page: Page): Promise<void> => {
+  const snapshot = seedSnapshot();
+  snapshot.users.find((u) => u.id === 'user-harold')![flag] = true;
+  await page.addInitScript(([auth, seed]) => {
+    localStorage.setItem('dfw.auth', auth!);
+    localStorage.setItem('dfw.seed', seed!);
+  }, [USERS_JSON, JSON.stringify(snapshot)] as const);
+};
+const signInAs = async (page: Page): Promise<void> => {
+  await page.getByLabel(/Email/).fill('harold@example.com');
+  await page.getByLabel(/^\W*Password\W*$/).fill('correct horse battery');
+  await page.getByRole('button', { name: /^\W*Sign in\W*$/ }).click();
+};
+
 export const ROUTES: RuleRoute[] = [
   // The sign-in screen has no sidebar and no page header. It is shown instead of any route when nobody is signed in.
   { path: '/flows', name: 'sign-in screen', sidebar: false, nav: false, before: withSignIn },
@@ -54,6 +69,30 @@ export const ROUTES: RuleRoute[] = [
     before: withSignIn,
     prepare: async (page) => {
       await page.getByRole('button', { name: /^\W*Sign in\W*$/ }).click();
+      await page.getByRole('alert').first().waitFor();
+    },
+  },
+  {
+    path: '/flows',
+    name: 'change-password screen',
+    sidebar: false,
+    nav: false,
+    before: withAccountFlag('mustChangePassword'),
+    prepare: async (page) => {
+      await signInAs(page);
+      await page.getByRole('button', { name: /Save password/ }).waitFor();
+      await page.getByRole('button', { name: /Save password/ }).click(); // the empty form shows its error
+      await page.getByRole('alert').first().waitFor();
+    },
+  },
+  {
+    path: '/flows',
+    name: 'locked-account screen',
+    sidebar: false,
+    nav: false,
+    before: withAccountFlag('locked'),
+    prepare: async (page) => {
+      await signInAs(page);
       await page.getByRole('alert').first().waitFor();
     },
   },

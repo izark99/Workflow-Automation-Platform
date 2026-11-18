@@ -208,6 +208,18 @@ export class LocalStore implements DataStore {
     await this.commit(s);
   }
 
+  async accountStatus(): Promise<{ locked: boolean; mustChangePassword: boolean }> {
+    const s = await this.open();
+    const user = s.users.find((u) => u.id === s.currentUserId) ?? fail('forbidden', 'errors.noUser');
+    return { locked: user.locked === true, mustChangePassword: user.mustChangePassword === true };
+  }
+
+  async clearMustChangePassword(): Promise<void> {
+    const s = await this.open();
+    this.who(s).mustChangePassword = false;
+    await this.commit(s);
+  }
+
   async listUiTexts(): Promise<UiText[]> {
     const s = await this.open();
     return structuredClone(s.uiTexts ?? []);
