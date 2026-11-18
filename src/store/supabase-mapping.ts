@@ -8,9 +8,11 @@ import type {
   RefTableRecord,
   RefTableVersionRecord,
   Role,
+  RefVersionPatch,
   RunLogEntry,
   Scope,
   User,
+  VersionPatch,
 } from './types';
 
 export interface ProfileRow {
@@ -142,4 +144,33 @@ export const runLogFromRow = (r: RunLogRow): RunLogEntry => ({
   inputRows: r.input_rows,
   outputRows: r.output_rows,
   status: r.status,
+});
+
+/** Only the fields that are in the patch, so an update never writes a field the caller did not set. */
+export function versionPatchToRow(patch: VersionPatch): Record<string, unknown> {
+  const row: Record<string, unknown> = {};
+  if (patch.validFrom !== undefined) row.valid_from = patch.validFrom;
+  if (patch.validTo !== undefined) row.valid_to = patch.validTo;
+  if (patch.changeNote !== undefined) row.change_note = patch.changeNote;
+  if (patch.definition !== undefined) row.definition = patch.definition;
+  return row;
+}
+
+export function refPatchToRow(patch: RefVersionPatch): Record<string, unknown> {
+  const row: Record<string, unknown> = {};
+  if (patch.validFrom !== undefined) row.valid_from = patch.validFrom;
+  if (patch.validTo !== undefined) row.valid_to = patch.validTo;
+  if (patch.columns !== undefined) row.columns = patch.columns;
+  if (patch.rows !== undefined) row.rows = patch.rows;
+  return row;
+}
+
+export const runLogToRow = (entry: Omit<RunLogEntry, 'id' | 'userId' | 'runAt'>, userId: string): Record<string, unknown> => ({
+  flow_id: entry.flowId,
+  version_no: entry.versionNo,
+  user_id: userId,
+  effective_date: entry.effectiveDate,
+  input_rows: entry.inputRows,
+  output_rows: entry.outputRows,
+  status: entry.status,
 });

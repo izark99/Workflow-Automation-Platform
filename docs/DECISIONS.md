@@ -737,3 +737,12 @@ blank or mixed column in one month cannot change the types of another month.
 - The last admin cannot be demoted or removed (trigger on `profiles`), as in the local store. A cascade from the Auth user is blocked the same way.
 - Error codes the client maps (T3.6b2): 22023 (invalid input, message written for the user), P0002 (not found or not allowed), P0001 (a rule), 42501 (forbidden).
 - Not done here: adding a user. A profile belongs to an Auth user, which only the Auth service can create; T3.7 decides how the first profile and invited users appear.
+
+## D63 SupabaseStore, write side (T3.6b2)
+
+- Every write goes through a database function where it touches more than one row or needs a number from the database (D62, T3.2, T3.5): create, copy, new versions, group lists, publish, delete, restore, purge. Single-row writes use a table update with only the fields of the patch (`versionPatchToRow`, `refPatchToRow`): saving a version, a user's profile, a group name, a run log row.
+- Before writing, the store runs the same checks as `LocalStore`, so a person reads the same message on both: `checkRange` and `checkRowCap` (moved to `src/store/checks.ts`, now also used by `LocalStore`), the rule that a published version is read-only, the "view and run only" message for a shared flow, and `planPublish` (names the version a publish would overlap). The database enforces all of it again; the client checks are for the message, not for safety.
+- An update that matches no row (row-level security hid it, or it is gone) says "You cannot change ..., or it no longer exists. Reload the page and try again."
+- `storeErrorFrom` now also maps the overlap (23P01) to a sentence with what to do, a duplicate (23505) to "that name or email is already used", and keeps the database's own message for 22023.
+- Adding a user is not possible from the client: a profile belongs to an Auth user, which only the Auth service creates. `saveUser` without an id says that a new user must sign in once first. T3.7 settles how the first profile and later profiles appear.
+- Verified for real in T3.6c against the full local stack; here the pure parts (mappers, checks, error mapping) are unit-tested and the app gates were rerun because `local-store.ts` changed.

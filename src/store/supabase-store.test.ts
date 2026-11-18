@@ -15,6 +15,21 @@ describe('storeErrorFrom', () => {
     expect(storeErrorFrom({ code: '23514', message: 'check constraint' }, 'save').code).toBe('invalid');
   });
 
+  it('says in plain words that an overlap or a duplicate was refused', () => {
+    const overlap = storeErrorFrom({ code: '23P01', message: 'conflicting key value violates exclusion constraint "flow_versions_no_overlap"' }, 'publish the version');
+    expect(overlap.code).toBe('conflict');
+    expect(overlap.message).toBe('These dates overlap another published version. Change the valid-from or valid-to date so the ranges do not share a day.');
+    const duplicate = storeErrorFrom({ code: '23505', message: 'duplicate key value violates unique constraint "groups_name_key"' }, 'save the group');
+    expect(duplicate.code).toBe('conflict');
+    expect(duplicate.message).toBe('Could not save the group: that name or email is already used. Use another one and try again.');
+  });
+
+  it('keeps the message of an input check the database wrote itself (22023)', () => {
+    const e = storeErrorFrom({ code: '22023', message: 'A flow needs a name. Type a name and try again.' }, 'create the flow');
+    expect(e.code).toBe('invalid');
+    expect(e.message).toBe('A flow needs a name. Type a name and try again.');
+  });
+
   it('maps "nothing found" to not_found', () => {
     expect(storeErrorFrom({ code: 'P0002', message: 'This flow does not exist' }, 'delete').code).toBe('not_found');
     expect(storeErrorFrom({ code: 'PGRST116', message: 'no rows' }, 'open').code).toBe('not_found');

@@ -3,8 +3,11 @@ import {
   groupFromRow,
   flowFromRow,
   refTableFromRow,
+  refPatchToRow,
   runLogFromRow,
+  runLogToRow,
   userFromRows,
+  versionPatchToRow,
   type FlowRow,
   type RefTableRow,
 } from './supabase-mapping';
@@ -137,6 +140,45 @@ describe('runLogFromRow', () => {
       inputRows: 10,
       outputRows: 4,
       status: 'ok',
+    });
+  });
+});
+
+describe('versionPatchToRow', () => {
+  it('maps only the fields that are in the patch', () => {
+    expect(versionPatchToRow({ validFrom: '2026-02-01', changeNote: 'n' })).toEqual({ valid_from: '2026-02-01', change_note: 'n' });
+    expect(versionPatchToRow({})).toEqual({});
+  });
+
+  it('keeps an explicit null end date and a definition', () => {
+    expect(versionPatchToRow({ validTo: null, definition: { nodes: [] } })).toEqual({ valid_to: null, definition: { nodes: [] } });
+  });
+});
+
+describe('refPatchToRow', () => {
+  it('maps dates, columns and rows', () => {
+    expect(refPatchToRow({ validFrom: '2026-02-01', validTo: '2026-03-01', columns: [{ name: 'A', type: 'text' }], rows: [['x']] })).toEqual({
+      valid_from: '2026-02-01',
+      valid_to: '2026-03-01',
+      columns: [{ name: 'A', type: 'text' }],
+      rows: [['x']],
+    });
+    expect(refPatchToRow({})).toEqual({});
+  });
+});
+
+describe('runLogToRow', () => {
+  it('writes counts and ids only, with the caller as the user', () => {
+    expect(
+      runLogToRow({ flowId: 'f1', versionNo: 2, effectiveDate: '2026-09-30', inputRows: 5, outputRows: 3, status: 'failed' }, 'u9'),
+    ).toEqual({
+      flow_id: 'f1',
+      version_no: 2,
+      user_id: 'u9',
+      effective_date: '2026-09-30',
+      input_rows: 5,
+      output_rows: 3,
+      status: 'failed',
     });
   });
 });

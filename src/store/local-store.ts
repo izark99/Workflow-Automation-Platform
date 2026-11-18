@@ -1,6 +1,7 @@
-import { formatDate, isIsoDate, planPublish } from '../engine/versions';
+import { planPublish } from '../engine/versions';
 import type { VersionRange } from '../engine/versions';
-import { KEEP_DELETED_DAYS, MAX_REF_ROWS, StoreError } from './types';
+import { checkRange, checkRowCap } from './checks';
+import { KEEP_DELETED_DAYS, StoreError } from './types';
 import type {
   DataStore,
   FlowRecord,
@@ -359,9 +360,7 @@ export class LocalStore implements DataStore {
     const s = await this.open();
     const t = this.tableFor(s, tableId);
     const v = this.versionOf(t.versions, versionNo, true);
-    if (patch.rows && patch.rows.length > MAX_REF_ROWS) {
-      fail('invalid', `A reference table version holds at most ${MAX_REF_ROWS.toLocaleString('en-US')} rows, and this one has ${patch.rows.length.toLocaleString('en-US')}. Remove rows and save again.`);
-    }
+    if (patch.rows) checkRowCap(patch.rows.length);
     checkRange(patch.validFrom ?? v.validFrom, patch.validTo === undefined ? v.validTo : patch.validTo);
     Object.assign(v, patch);
     await this.commit(s);
@@ -413,11 +412,6 @@ const draftVersion = (versionNo: number, validFrom: string, changeNote: string, 
   definition,
 });
 
-function checkRange(from: string, to: string | null): void {
-  if (!isIsoDate(from)) fail('invalid', `"${from}" is not a date. Pick a start date in the date picker.`);
-  if (to !== null && !isIsoDate(to)) fail('invalid', `"${to}" is not a date. Pick an end date or leave it empty.`);
-  if (to !== null && to < from) fail('invalid', `The end date ${formatDate(to)} is before the start date ${formatDate(from)}. Change one of them.`);
-}
 
 /**
  * Publishes a draft (rules 5 and 6 of SPEC section 4): the previous open-ended published version ends the day before this

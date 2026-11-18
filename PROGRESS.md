@@ -80,7 +80,7 @@ before it passes, except where a task says otherwise.
 - [x] T3.5 Soft delete, restore, and removal after 30 days.
 - [x] T3.6a `SupabaseStore`, part 1: `@supabase/supabase-js` pinned, pure row mappers with unit tests, and the read side of `DataStore` (current user, users, groups, flows, deleted flows, reference tables, run log). Write methods fail with a clear "not available yet" error until T3.6b. Not selected by the app yet.
 - [x] T3.6b1 Server functions for the write side, with pgTAP tests: `create_flow`, `copy_flow`, `create_flow_version`, `create_ref_table`, `create_ref_table_version`, `set_flow_groups`, `set_user_groups`, and a rule that the last admin cannot be demoted or removed. They make multi-row writes atomic and take the next version number inside the database.
-- [ ] T3.6b2 `SupabaseStore`, part 2: the write methods, calling those functions and the functions of T3.2 and T3.5; table updates for saving versions, groups and users; run log insert; friendlier messages for overlap and duplicates in `storeErrorFrom`.
+- [x] T3.6b2 `SupabaseStore`, part 2: the write methods, calling those functions and the functions of T3.2 and T3.5; table updates for saving versions, groups and users; run log insert; friendlier messages for overlap and duplicates in `storeErrorFrom`.
 - [ ] T3.6c Selection by environment variables (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`; `LocalStore` stays the default and the one used by G3 and G4), and an integration test of `SupabaseStore` against the full local stack (`npm run test:store`, not part of `gates`; it needs the API and Auth containers).
 - [ ] T3.7 Sign-in screen and session handling.
 - [ ] T3.8 Keep-alive: a small scheduled request that touches the database once a day, as code plus instructions.
@@ -107,6 +107,13 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-18 T3.6b2 SupabaseStore, write side
+Changed: src/store/supabase-store.ts (all write methods; no more "not available" stubs), src/store/checks.ts (`checkRange`, `checkRowCap`, shared with `LocalStore`), src/store/supabase-mapping.ts (`versionPatchToRow`, `refPatchToRow`, `runLogToRow`), local-store.ts (uses the shared checks), tests for each (+9 tests), docs/DECISIONS.md (D63).
+How: functions of T3.2, T3.5 and T3.6b1 for multi-row writes, table updates for the rest, the same client checks and messages as the local store, friendlier messages for overlap and duplicates. `saveUser` for a new user says the person must sign in once first (T3.7).
+Test mistake of mine: I expected "01 Jun 2026"; the date format of the UI is "1 Jun 2026".
+Gates run: check PASS (640 tests), test:e2e PASS (159 tests, because local-store.ts changed). test:db not rerun (no change under supabase/). Real queries are verified in T3.6c.
+Next: T3.6c (selection by environment variables and an integration test against the full local stack).
 
 ### 2026-11-18 T3.6b1 Server functions for the write side (T3.6b split into T3.6b1 and T3.6b2)
 Changed: supabase/migrations/20261118000006_store_functions.sql (`create_flow`, `copy_flow`, `create_flow_version`, `create_ref_table`, `create_ref_table_version`, `set_flow_groups`, `set_user_groups`, last-admin trigger), supabase/tests/database/060-store-functions.test.sql (49 assertions), docs/DECISIONS.md (D62). PROGRESS: T3.6b split.
