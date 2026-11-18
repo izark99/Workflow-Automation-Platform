@@ -20,7 +20,8 @@ date range. All data processing runs in the browser.
 | `src/engine/` | Flow engine. No React, no Supabase |
 | `src/ui/` | Components and screens |
 | `src/store/` | `DataStore` interface, `LocalStore`, `SupabaseStore` |
-| `supabase/` | Migrations and database tests |
+| `supabase/` | Migrations, database tests, and from Phase 4 the `admin-users` Edge Function in `supabase/functions/` |
+| `src/ui/i18n/` | From Phase 4: the message catalog, `en` defaults and `vi` translations |
 
 ## Commands
 
@@ -35,7 +36,9 @@ Task T0.1 creates these scripts. Keep the names.
 | `npm run test:e2e` | Browser journeys |
 | `npm run test:ui-rules` | Design rules and accessibility |
 | `npm run test:db` | Migrations and row-level security on a local Supabase |
+| `npm run test:functions` | From Phase 4: the `admin-users` Edge Function on a local Supabase |
 | `npm run gates` | All of the above, in that order, stops at the first failure |
+| `npm run build:pages` | The Cloudflare Pages build (DuckDB-WASM from jsDelivr, D71). `npm run test:acceptance:pages` tests it |
 
 ## Rules that never change
 
@@ -44,7 +47,7 @@ Task T0.1 creates these scripts. Keep the names.
 - Input file content never leaves the browser.
 - One small task per iteration. Tests first. Commit only when the touched gates pass.
 - Report gate results exactly as they ran.
-- English only in code, comments, UI text and commit messages.
+- English only in code, comments and commit messages. Default UI text is English; from Phase 4 other languages live as data in the catalog.
 - No deployment and no real credentials. Local Supabase only.
 
 ## Cloud session notes

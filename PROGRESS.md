@@ -1,4 +1,4 @@
-STATUS: COMPLETE
+STATUS: IN PROGRESS
 
 # Progress
 
@@ -89,6 +89,53 @@ before it passes, except where a task says otherwise.
 - [x] T3.8 Keep-alive: a small scheduled request that touches the database once a day, as code plus instructions.
 - [x] T3.9 `docs/DEPLOY.md`: steps for a human to create the Supabase project, run migrations, set variables on Cloudflare Pages, and create the first admin.
 
+## Phase 4: Accounts, themes, texts, parameters (gates G1 to G6)
+
+Read SPEC section 11 and the Phase 4 parts of `docs/DESIGN.md` first. Order: themes, info button, texts, accounts,
+parameters, quality pass, docs, final run. A task may start before an earlier group ends only where it says so.
+
+Themes (SPEC 11.4)
+- [ ] T4.1 Dark tokens in `tokens.css` under `:root[data-theme="dark"]`, the two new tokens `--color-on-primary` and `--color-on-cta` used by filled buttons, and a unit test that computes the contrast of every pair listed in DESIGN for both themes. Replace any raw colour left outside `tokens.css`.
+- [ ] T4.2 Theme setting: Light, Dark, System; inline script in `index.html` sets `data-theme` and `color-scheme` before first paint; System follows `prefers-color-scheme` live; choice kept in browser storage; switch in the sidebar footer and on the sign-in screen. Unit tests for the choice logic, e2e for the switch and for no flash on reload.
+- [ ] T4.3 Fix: React Flow follows the app theme, not the operating system. First a failing e2e test: operating system dark (`emulateMedia`), app Light, the canvas background, dots, edges and controls are light; then app Dark and the canvas is dark. Then pass `colorMode` from the theme and map React Flow colours to tokens.
+- [ ] T4.4 UI rules in the dark theme: `test:ui-rules` runs every route in dark at 1440 px as well (axe contrast included). Fix what it finds in the same task, or split.
+
+Info button (SPEC 11.2)
+- [ ] T4.5 `InfoTip` component as in DESIGN "Info button": toggletip, hover delay, Escape, outside click, live region, placement; on `/dev/components`; unit and e2e keyboard tests; the UI rule accepts it only at exactly 24 x 24 px.
+- [ ] T4.6a Page header: subtitle moves into an InfoTip after the title on every screen; measure the new y of the first block, write it in DESIGN, update the UI rule in the same commit. `Field` and `TextAreaField`: `hint` renders an InfoTip after the label, not a paragraph.
+- [ ] T4.6b Builder: every explanation in the step list, settings panel, forms and Test tab moves into InfoTips. A UI rule fails when a hint paragraph is visible.
+- [ ] T4.6c Run, Versions, Reference tables, Admin, dialogs and the sign-in screen: the same.
+
+Texts (SPEC 11.3)
+- [ ] T4.7a Message catalog in `src/ui/i18n/`: typed keys, `{name}` placeholders, plural forms, `t()` and a React hook, `en` as default and fallback. A pseudo-locale for tests wraps every value in markers; a UI rule renders every route in it and fails on visible text outside the markers, except regions marked as user data (`data-user-content`). Migrate the shell and the sign-in screen in this task to prove the path; the rule checks only migrated routes until T4.7d.
+- [ ] T4.7b Migrate the Flows screen, the builder, every settings form and the formula editor messages to catalog keys. Remove their entries from `strings.ts`.
+- [ ] T4.7c Migrate Run, Versions, Reference tables, Admin and every dialog. Remove `strings.ts` when it is empty. The pseudo-locale rule now covers every route.
+- [ ] T4.7d Errors as codes: the store, the auth service and the engine return a code with parameters; the UI shows the catalog text for the code. The engine keeps its English text as the fallback and imports nothing from the UI. Unit test: every code has an `en` text with the same placeholders.
+- [ ] T4.7e `vi` catalog: a Vietnamese value for every key, placeholders identical (unit test). Month and weekday names in the catalog; dates still `30 Sep 2026` in English. Language switch in the sidebar footer and on the sign-in screen, kept in browser storage. Ask Harold to review the wording later (Needs Harold); do not wait for it.
+- [ ] T4.7f `ui_texts` table: migration, row-level security (read for everyone including anon, write for active admins), pgTAP tests; `DataStore` methods to read and save overrides, in `LocalStore` and `SupabaseStore`; overrides applied over the catalog at app start.
+- [ ] T4.7g Admin tab Texts: search by key or text, filter by screen, language picker, default next to current value, edit with placeholder check, reset to default. e2e: an edited button label shows after a reload; a missing placeholder is refused with the name of the placeholder.
+
+Accounts (SPEC 11.1)
+- [ ] T4.8a Database: `profiles.locked_at` and `must_change_password`; `is_active_user()` helper; every policy and every helper used by policies requires an active profile; an admin cannot lock themselves; the last active admin cannot be locked or demoted; `clear_must_change_password()` for the user's own row. pgTAP: a locked user with a valid token reads and writes nothing.
+- [ ] T4.8b Edge Function `supabase/functions/admin-users`: actions create, reset_password, lock, unlock; checks the caller's token and an active admin profile; validates input (email, password length 10 or more, role); ban in Auth plus `locked_at` for lock; ends sessions on reset and lock; clear error messages. `npm run test:functions` (G6) starts the local stack with functions and runs integration tests for every case in PROMPT G6. Add it to `npm run gates`. If the Edge Runtime image cannot be pulled, write the host under Blockers.
+- [ ] T4.8c `AccountAdmin` service: interface, Supabase implementation calling the function, in-memory implementation for the local store; unit tests; wired into `createBackend()`.
+- [ ] T4.8d Admin, Users tab: status badges, Add user (Create account dialog), Reset password, Lock and Unlock with confirm, Generate and Copy password. e2e on the local store, UI rules.
+- [ ] T4.8e Change password screen: required after sign-in when `must_change_password` is set; "Change password" in the sidebar; locked-account message at sign-in and when a session is locked. e2e, and an integration test on the local stack.
+
+Parameters (SPEC 11.5)
+- [ ] T4.9a Definition format: new schema version with `parameters`; JSON schema and validation (unique keys, key pattern, types, list options, default of the right type); older definitions load with an empty list. `flows/monthly-timesheet.flow.json` stays unchanged and G1 still passes.
+- [ ] T4.9b Engine: a run takes parameter values; checks required, type and list option before any step runs, with clear errors; `PARAM("key")` in the formula compiler with the parameter type; `params` view for the SQL step. Unit tests for every type.
+- [ ] T4.9c Builder: Parameters panel (add, edit, delete, Move up, Move down, read-only when published); the formula editor lists `PARAM` with the keys of the version.
+- [ ] T4.9d Test tab asks for test values of the parameters used upstream of the selected step.
+- [ ] T4.9e Run screen: Parameters card above Files; errors under each field; Run disabled until the values are valid. e2e journey: a flow with a date parameter used in a Filter runs and gives the expected rows. Extend the privacy acceptance test: parameter values appear in no request.
+
+Quality pass (SPEC 11.6)
+- [ ] T4.10a UI review: screenshots of every route in both themes at 1440 px, checked against the DESIGN "UI quality checklist"; `docs/UI_AUDIT.md` with numbered findings, each with screen, item of the checklist, severity and fix; add one task per finding below (T4.10b, T4.10c, ...), at most 12, the rest listed as later in the audit.
+
+Close
+- [ ] T4.11 `docs/DEPLOY.md`: a section "Upgrade an existing deployment" (back up, `npx supabase db push` for the new migrations, `npx supabase functions deploy admin-users`, check list for accounts, themes, texts and parameters); remove the limits that Phase 4 lifted; `scripts/deploy-doc.test.ts` updated. `README.md` mentions the new features.
+- [ ] T4.12 Final run: `npm ci`, then `npm run gates` (seven gates) and `npm run test:acceptance:pages`; set `STATUS: COMPLETE` only if both pass.
+
 ## Needs Harold
 
 Decisions with a default. Build with the default unless this list says otherwise.
@@ -101,8 +148,17 @@ Decisions with a default. Build with the default unless this list says otherwise
 | Formula language | Tier 1 only |
 | Approval before a version takes effect | None |
 | Reference tables by non-admin users | Not allowed |
-| UI language | English |
+| UI language | English (Phase 4: English default plus Vietnamese, see below) |
 | Where the two DuckDB-WASM files are served (above the 25 MiB per-file limit of Cloudflare Pages) | Decided by Harold on 2026-11-18: from jsDelivr in the Pages build (`npm run build:pages`, D71). Other builds still serve them (D7) |
+| Phase 4: default theme | System (follows the operating system) |
+| Phase 4: Vietnamese texts | The build writes a first Vietnamese translation of every key (T4.7e). Harold reviews the wording on the Texts tab after the phase; the build does not wait for it |
+| Phase 4: who may edit texts | Active admins only |
+| Phase 4: texts before sign-in | Readable without signing in (they hold no personal data), so the sign-in screen can show edited texts |
+| Phase 4: password rule | At least 10 characters; Generate makes 16 characters. No other complexity rule |
+| Phase 4: effect of Lock | Immediate: the open session loses all access through row-level security, and Auth refuses new sign-ins |
+| Phase 4: delete a user | Not offered. Lock instead (the user's flows and run history stay) |
+| Phase 4: parameter in formulas | `PARAM("key")`; in the SQL step a one-row view `params` |
+| Phase 4: remember parameter values between runs | No (values may be personal data); the defaults of the definition fill the form |
 
 ## Blockers
 
@@ -111,6 +167,12 @@ None. The Pages file size blocker of T3.9 is solved by D71.
 ## Log
 
 Newest first.
+
+### 2026-11-18 Phase 4 planned (docs only)
+Changed: docs/SPEC.md (section 11 and the rows it touches in sections 1, 2, 4, 7, 10), docs/DESIGN.md (dark tokens with checked contrast, theme rules, Info button, account dialogs, parameters, UI quality checklist, header rule), PROMPT.md (G4 and G5 extended, new G6, rules on texts and the Edge Function), GOALS.md (Phase 4 goal), CLAUDE.md (paths, commands, text rule), PROGRESS.md (status, Phase 4 tasks, Phase 4 defaults under Needs Harold).
+Requested by Harold: account management by the admin, help text behind info buttons, editable texts (i18n), light and dark themes, React Flow following the system theme (bug), flow parameters on the Run screen, UI quality pass.
+No code changed and no gate run. Status set to IN PROGRESS, so the loop starts Phase 4 instead of re-running the final gates.
+Live deployment (not part of the loop): Supabase project `workflow-automation-platform` (ap-southeast-1) and https://workflow-automation-platform.pages.dev, set up on 2026-11-18 with the nine Phase 3 migrations. Phase 4 changes reach it only through the upgrade steps of T4.11.
 
 ### 2026-11-18 Pages build loads DuckDB-WASM from jsDelivr (owner's choice A', D71)
 Changed: src/engine/runner/{browser-runner.ts,duckdb-bundles.ts,duckdb-bundles.test.ts,duckdb-self-hosted.ts}, src/ui/builder/preview-runner.ts (passes the runner's message through), vite.config.ts (`--mode pages`), scripts/check-dist-size.mjs, scripts/lib/request-audit.{ts,test.ts} (exact list of allowed code addresses), acceptance/{helpers.ts,privacy.spec.ts,timesheet.spec.ts,cdn.spec.ts}, package.json (`build:pages`, `test:acceptance:pages`), docs/DEPLOY.md, scripts/deploy-doc.test.ts, docs/DECISIONS.md (D71).
