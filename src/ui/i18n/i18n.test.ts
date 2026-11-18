@@ -72,6 +72,11 @@ describe('catalog lookup', () => {
     expect(t('app.brand')).toBe(`${PSEUDO_OPEN}Data Flow${PSEUDO_CLOSE}`);
     expect(t('common.infoTip.about', { label: 'Run' })).toBe(`${PSEUDO_OPEN}About Run${PSEUDO_CLOSE}`);
   });
+  it('the pseudo-locale wraps a message once, also when a parameter is a pseudo text', () => {
+    setLocale('pseudo');
+    const inner = t('app.brand');
+    expect(t('common.infoTip.about', { label: inner })).toBe(`${PSEUDO_OPEN}About Data Flow${PSEUDO_CLOSE}`);
+  });
   it('translate takes the locale of the call', () => {
     setOverrides({ vi: { 'app.brand': 'Luồng' } });
     expect(translate('app.brand', undefined, 'vi')).toBe('Luồng');

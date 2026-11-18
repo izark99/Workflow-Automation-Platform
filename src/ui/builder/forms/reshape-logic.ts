@@ -1,3 +1,4 @@
+import { translate } from '../../i18n';
 // Pure part of the Unpivot and Pivot forms.
 
 // ---- Unpivot
@@ -26,16 +27,16 @@ export function unpivotToSettings(v: UnpivotValues, previous: Record<string, unk
 export function addColumn(list: string[], other: string[], otherName: string, name: string): { list: string[]; error?: string } {
   const n = name.trim();
   if (!n || list.includes(n)) return { list };
-  if (other.includes(n)) return { list, error: `"${n}" is already in ${otherName}. Remove it there first, then add it here.` };
+  if (other.includes(n)) return { list, error: translate('builder.reshape.error.alreadyIn', { name: n, other: otherName }) };
   return { list: [...list, n] };
 }
 
 export function unpivotMissing(v: UnpivotValues): string[] {
   const m: string[] = [];
-  if (v.unpivot.length === 0) m.push('Choose at least one column to unpivot.');
-  if (v.nameColumn.trim() === '') m.push('Name the column that will hold the old column names.');
-  if (v.valueColumn.trim() === '') m.push('Name the column that will hold the values.');
-  if (v.nameColumn.trim() !== '' && v.nameColumn.trim().toLowerCase() === v.valueColumn.trim().toLowerCase()) m.push('The name column and the value column need different names.');
+  if (v.unpivot.length === 0) m.push(translate('builder.reshape.missing.unpivot'));
+  if (v.nameColumn.trim() === '') m.push(translate('builder.reshape.missing.nameColumn'));
+  if (v.valueColumn.trim() === '') m.push(translate('builder.reshape.missing.valueColumn'));
+  if (v.nameColumn.trim() !== '' && v.nameColumn.trim().toLowerCase() === v.valueColumn.trim().toLowerCase()) m.push(translate('builder.reshape.missing.differentNames'));
   return m;
 }
 
@@ -87,7 +88,7 @@ export function parseFill(text: string): FillResult {
   if (t.toLowerCase() === 'blank') return { ok: true, fill: null };
   const n = Number(t);
   if (Number.isFinite(n) && /^[-+]?(\d+\.?\d*|\.\d+)$/.test(t)) return { ok: true, fill: n };
-  return { ok: false, message: `"${t}" is not a number. Type a number, the word blank, or leave the field empty.` };
+  return { ok: false, message: translate('builder.reshape.error.fill', { value: t }) };
 }
 
 /** Settings for the values. Only what differs from the engine's default is written. The fill value must be valid. */
@@ -111,8 +112,8 @@ export function pivotToSettings(v: PivotValues, previous: Record<string, unknown
 
 export function pivotMissing(v: PivotValues): string[] {
   const m: string[] = [];
-  if (v.columnSource.trim() === '') m.push('Choose the column whose values become the new columns.');
-  if (v.aggregation !== 'count' && v.value.trim() === '') m.push(`Choose the value column to ${v.aggregation === 'average' ? 'average' : v.aggregation}.`);
-  if (v.from === 'reference' && (v.table === '' || v.column === '')) m.push('Choose the reference table and the column that lists the new columns.');
+  if (v.columnSource.trim() === '') m.push(translate('builder.reshape.missing.columnSource'));
+  if (v.aggregation !== 'count' && v.value.trim() === '') m.push(translate('builder.reshape.missing.pivotValue', { fn: v.aggregation }));
+  if (v.from === 'reference' && (v.table === '' || v.column === '')) m.push(translate('builder.reshape.missing.reference'));
   return m;
 }

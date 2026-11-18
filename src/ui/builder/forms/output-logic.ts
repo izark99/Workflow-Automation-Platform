@@ -1,5 +1,6 @@
 // Pure part of the Output, Append and SQL forms.
 import { checkSqlText } from '../../../engine/nodes/sql-node';
+import { translate } from '../../i18n';
 
 export type OutputFormat = 'xlsx' | 'csv';
 export interface SortRow {
@@ -22,9 +23,9 @@ const SHEET_NAME = /^[^[\]:*?/\\]{1,31}$/;
 
 /** The rule of the engine for an xlsx sheet name, as a message that says what to do. */
 export function validateSheetName(name: string): string | undefined {
-  if (name === '') return 'The sheet name is empty. Type a name of 1 to 31 characters.';
+  if (name === '') return translate('builder.output.error.sheetEmpty');
   if (!SHEET_NAME.test(name) || /^'|'$/.test(name)) {
-    return 'A sheet name has 1 to 31 characters, none of [ ] : * ? / \\ and no apostrophe at the start or end. Change the name.';
+    return translate('builder.output.error.sheetInvalid');
   }
   return undefined;
 }
@@ -61,7 +62,7 @@ export interface OutputErrors {
 export function outputToSettings(v: OutputValues, previous: Record<string, unknown>): { settings?: Record<string, unknown>; errors: OutputErrors } {
   const errors: OutputErrors = {};
   const file = v.file.trim();
-  if (file === '') errors.file = 'The file name is empty. Type the name of the file, for example Result.';
+  if (file === '') errors.file = translate('builder.output.error.fileEmpty');
   const sheet = v.sheet.trim();
   if (v.format === 'xlsx') {
     const bad = validateSheetName(sheet);
@@ -89,8 +90,8 @@ export function outputToSettings(v: OutputValues, previous: Record<string, unkno
 
 export function outputMissing(v: OutputValues): string[] {
   const m: string[] = [];
-  if (!v.allColumns && v.columns.length === 0) m.push('Add at least one column to write, or tick "Write all columns".');
-  if (v.sort.some((k) => (k.kind === 'column' ? k.column.trim() === '' : k.expression.trim() === ''))) m.push('A sort row has no column or formula yet; it is ignored until you fill it.');
+  if (!v.allColumns && v.columns.length === 0) m.push(translate('builder.output.missing.columns'));
+  if (v.sort.some((k) => (k.kind === 'column' ? k.column.trim() === '' : k.expression.trim() === ''))) m.push(translate('builder.output.missing.sortRow'));
   return m;
 }
 
@@ -103,8 +104,8 @@ export type SqlCheck = { kind: 'empty' | 'refused'; message: string } | { kind: 
 
 /** The check that does not need data: an empty query, or one that the engine refuses (writes, files, addresses). Errors in the query itself appear in the preview. */
 export function checkSql(sql: string): SqlCheck {
-  if (sql.trim() === '') return { kind: 'empty', message: 'The query is empty. Write a SELECT query; the inputs are called in1, in2, ...' };
+  if (sql.trim() === '') return { kind: 'empty', message: translate('builder.sql.state.empty') };
   const refusal = checkSqlText(sql);
   if (refusal) return { kind: 'refused', message: refusal };
-  return { kind: 'ok', message: 'The query is allowed. Preview the step to check the tables and columns.' };
+  return { kind: 'ok', message: translate('builder.sql.state.ok') };
 }

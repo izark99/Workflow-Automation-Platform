@@ -174,7 +174,7 @@ export const ROUTES: RuleRoute[] = [
       const panel = page.getByRole('complementary', { name: 'Step settings' });
       await panel.getByRole('tab', { name: 'Configure' }).click();
       await panel.getByRole('textbox', { name: 'Column name' }).fill('dept');
-      await panel.getByRole('button', { name: 'Add', exact: true }).click();
+      await panel.getByRole('button', { name: /^\W*Add\W*$/ }).click();
       await panel.getByRole('button', { name: 'Add aggregation' }).click();
       await panel.getByRole('button', { name: 'Remove aggregation 1' }).waitFor();
     },
@@ -190,7 +190,7 @@ export const ROUTES: RuleRoute[] = [
       await panel.getByRole('tab', { name: 'Configure' }).click();
       const keep = panel.getByRole('group', { name: 'Columns to keep' });
       await keep.getByRole('textbox', { name: 'Column name' }).fill('id');
-      await keep.getByRole('button', { name: 'Add', exact: true }).click();
+      await keep.getByRole('button', { name: /^\W*Add\W*$/ }).click();
       await keep.getByRole('button', { name: 'Remove id from Columns to keep' }).waitFor();
     },
   },
@@ -203,9 +203,9 @@ export const ROUTES: RuleRoute[] = [
       await page.getByRole('button', { name: 'Add step Pivot' }).click();
       const panel = page.getByRole('complementary', { name: 'Step settings' });
       await panel.getByRole('tab', { name: 'Configure' }).click();
-      await panel.getByRole('button', { name: /^The new columns come from/ }).click();
-      await page.getByRole('option', { name: /^A reference table/ }).click();
-      await panel.getByRole('button', { name: /^Reference table/ }).waitFor();
+      await panel.getByRole('button', { name: /^\W*The new columns come from/ }).click();
+      await page.getByRole('option', { name: /^\W*A reference table/ }).click();
+      await panel.getByRole('button', { name: /^\W*Reference table/ }).waitFor();
     },
   },
   {
@@ -230,7 +230,7 @@ export const ROUTES: RuleRoute[] = [
       await page.getByRole('button', { name: 'Add step Append' }).click();
       const panel = page.getByRole('complementary', { name: 'Step settings' });
       await panel.getByRole('tab', { name: 'Configure' }).click();
-      await panel.getByRole('button', { name: /^Match columns/ }).waitFor();
+      await panel.getByRole('button', { name: /^\W*Match columns/ }).waitFor();
     },
   },
   {

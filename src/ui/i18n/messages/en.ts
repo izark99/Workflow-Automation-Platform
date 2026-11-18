@@ -723,6 +723,32 @@ export const en = {
   'builder.formula.state.needBoolean': 'true or false',
   'builder.formula.state.needType': 'a {type}',
   'builder.formula.state.valid': 'Formula is valid. Result type: {type}.',
+
+  // Added by T4.7b4
+  'common.numbered': '{label} {n}',
+  'common.pair': '{a} {b}',
+  'builder.reshape.chooseTable': 'Choose a table',
+  'builder.join.missing.rightInput': 'Connect the step to read from to the right input (Setup tab), or choose a reference table.',
+  'builder.join.missing.keyPair': 'Add a key pair: the column in your data and the column in the source that must match.',
+  'builder.join.missing.bring': 'Choose at least one column to bring.',
+  'builder.group.missing.groupOrAggregation': 'Add a group column or an aggregation.',
+  'builder.group.missing.aggregationColumn': 'Choose the column to {fn}.',
+  'builder.reshape.error.alreadyIn': '"{name}" is already in {other}. Remove it there first, then add it here.',
+  'builder.reshape.missing.unpivot': 'Choose at least one column to unpivot.',
+  'builder.reshape.missing.nameColumn': 'Name the column that will hold the old column names.',
+  'builder.reshape.missing.valueColumn': 'Name the column that will hold the values.',
+  'builder.reshape.missing.differentNames': 'The name column and the value column need different names.',
+  'builder.reshape.error.fill': '"{value}" is not a number. Type a number, the word blank, or leave the field empty.',
+  'builder.reshape.missing.columnSource': 'Choose the column whose values become the new columns.',
+  'builder.reshape.missing.pivotValue': 'Choose the value column to {fn}.',
+  'builder.reshape.missing.reference': 'Choose the reference table and the column that lists the new columns.',
+  'builder.output.error.sheetEmpty': 'The sheet name is empty. Type a name of 1 to 31 characters.',
+  'builder.output.error.sheetInvalid': 'A sheet name has 1 to 31 characters, none of [ ] : * ? / \\ and no apostrophe at the start or end. Change the name.',
+  'builder.output.error.fileEmpty': 'The file name is empty. Type the name of the file, for example Result.',
+  'builder.output.missing.columns': 'Add at least one column to write, or tick "Write all columns".',
+  'builder.output.missing.sortRow': 'A sort row has no column or formula yet; it is ignored until you fill it.',
+  'builder.sql.state.empty': 'The query is empty. Write a SELECT query; the inputs are called in1, in2, ...',
+  'builder.sql.state.ok': 'The query is allowed. Preview the step to check the tables and columns.',
 } as const;
 
 export type MessageKey = keyof typeof en;

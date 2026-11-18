@@ -1,5 +1,6 @@
 // Pure part of the Lookup / Join and Group by forms: settings in, rows out, and back.
 import type { RefTable } from '../../../engine/versions';
+import { translate } from '../../i18n';
 
 export type NoMatch = 'blank' | 'drop' | 'fail';
 export const NO_MATCH: NoMatch[] = ['blank', 'drop', 'fail'];
@@ -47,9 +48,9 @@ export function lookupToSettings(v: LookupValues, previous: Record<string, unkno
 /** What is still missing, in words, for the hint under the form. Empty when the form is complete. */
 export function lookupMissing(v: LookupValues, rightConnected: boolean): string[] {
   const missing: string[] = [];
-  if (v.source.kind === 'node' && !rightConnected) missing.push('Connect the step to read from to the right input (Setup tab), or choose a reference table.');
-  if (!v.keys.some((k) => k.left.trim() && k.right.trim())) missing.push('Add a key pair: the column in your data and the column in the source that must match.');
-  if (!v.bring.some((b) => b.column.trim())) missing.push('Choose at least one column to bring.');
+  if (v.source.kind === 'node' && !rightConnected) missing.push(translate('builder.join.missing.rightInput'));
+  if (!v.keys.some((k) => k.left.trim() && k.right.trim())) missing.push(translate('builder.join.missing.keyPair'));
+  if (!v.bring.some((b) => b.column.trim())) missing.push(translate('builder.join.missing.bring'));
   return missing;
 }
 
@@ -108,7 +109,7 @@ export function groupByToSettings(v: GroupByValues, previous: Record<string, unk
 
 export function groupByMissing(v: GroupByValues): string[] {
   const missing: string[] = [];
-  if (v.groupBy.length === 0 && !v.aggregations.some(aggComplete)) missing.push('Add a group column or an aggregation.');
-  for (const a of v.aggregations) if (!aggComplete(a)) missing.push(`Choose the column to ${a.fn === 'average' ? 'average' : a.fn}.`);
+  if (v.groupBy.length === 0 && !v.aggregations.some(aggComplete)) missing.push(translate('builder.group.missing.groupOrAggregation'));
+  for (const a of v.aggregations) if (!aggComplete(a)) missing.push(translate('builder.group.missing.aggregationColumn', { fn: a.fn }));
   return missing;
 }

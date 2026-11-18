@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Dropdown } from '../../components';
-import { appendStrings as t } from '../../strings';
+import { useT } from '../../i18n';
 import { appendFromSettings } from './output-logic';
 import type { AppendMatch } from './output-logic';
 import type { FormProps } from './types';
@@ -9,14 +9,15 @@ import styles from './column-pickers.module.css';
 
 /** Append: stack the inputs by column name or by position. */
 export function AppendForm({ step, onSettings, readOnly }: FormProps) {
+  const t = useT();
   const [match, setMatch] = useState<AppendMatch>(() => appendFromSettings(step.settings));
   return (
     <div className={styles.rowCard} style={{ gap: 12, borderBottom: 0, padding: 0 }}>
       <div>
-        <SectionLabel label={t.match} hint={t.hint} />
+        <SectionLabel label={t('builder.append.match')} hint={t('builder.append.hint')} />
         <Dropdown
-          label={t.match}
-          options={[{ value: 'name', label: t.byName }, { value: 'position', label: t.byPosition }]}
+          label={t('builder.append.match')}
+          options={[{ value: 'name', label: t('builder.append.byName') }, { value: 'position', label: t('builder.append.byPosition') }]}
           value={match}
           disabled={readOnly}
           width={338}

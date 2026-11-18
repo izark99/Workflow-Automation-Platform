@@ -32,6 +32,13 @@ const MIGRATED = [
   'src/ui/builder/forms/formula-editor.tsx',
   'src/ui/builder/forms/column-mapping-form.tsx',
   'src/ui/builder/forms/column-pickers.tsx',
+  'src/ui/builder/forms/lookup-form.tsx',
+  'src/ui/builder/forms/group-by-form.tsx',
+  'src/ui/builder/forms/unpivot-form.tsx',
+  'src/ui/builder/forms/pivot-form.tsx',
+  'src/ui/builder/forms/output-form.tsx',
+  'src/ui/builder/forms/append-form.tsx',
+  'src/ui/builder/forms/sql-form.tsx',
 ];
 
 const TEXT_ATTRIBUTES = new Set(['label', 'title', 'placeholder', 'aria-label', 'alt', 'aria-description', 'text', 'what', 'next']);
@@ -51,6 +58,10 @@ export function literalUiText(path: string, source: string = readFileSync(path, 
       const literal = ts.isStringLiteral(init) ? init.text : ts.isJsxExpression(init) && init.expression && ts.isStringLiteral(init.expression) ? init.expression.text : null;
       if (literal !== null && hasLetter(literal)) found.push(`${at(node)} attribute ${node.name.getText()}="${literal.slice(0, 40)}"`);
     }
+    // Object properties that carry text, such as the options of a dropdown: { value: '', label: 'Choose' }.
+    if (ts.isPropertyAssignment(node) && ts.isIdentifier(node.name) && ['label', 'title', 'text', 'placeholder', 'what', 'next'].includes(node.name.text) && (ts.isStringLiteral(node.initializer) || ts.isNoSubstitutionTemplateLiteral(node.initializer)) && hasLetter(node.initializer.text)) {
+      found.push(`${at(node)} property ${node.name.text}: "${node.initializer.text.slice(0, 40)}"`);
+    }
     ts.forEachChild(node, visit);
   };
   visit(file);
@@ -65,5 +76,6 @@ describe('no literal UI text in migrated files', () => {
     const sample = `const a = <div title="Hello"><b>Plain</b>{'More'}<i>{t('k')}</i></div>;`;
     expect(literalUiText('sample.tsx', sample)).toHaveLength(3);
     expect(literalUiText('sample.tsx', `const a = <div title={t('k')}>{t('k')}</div>;`)).toEqual([]);
+    expect(literalUiText('sample.tsx', `const o = [{ value: '', label: 'Choose a table' }];`)).toHaveLength(1);
   });
 });

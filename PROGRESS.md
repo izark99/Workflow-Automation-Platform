@@ -112,7 +112,7 @@ Texts (SPEC 11.3)
 - [x] T4.7b1 Catalog: every key of the former `strings.ts` generated into `en.ts` (text unchanged; plural forms by hand). Migrate the Flows screen (list, filters, delete dialog, empty and error states) and the screen headers to keys; remove their entries from `strings.ts`; the pseudo-locale rule and the static scan cover the Flows route.
 - [x] T4.7b2 Migrate the builder frame: header, save and publish, version dialogs, step catalog (`STEP_CATALOG` returns keys), step list, canvas, zoom controls, settings panel, Test tab. Rule and scan cover the builder route.
 - [x] T4.7b3 Migrate the settings forms, part 1: input file, filter, formula column, the formula editor and its messages, column mapping, column pickers.
-- [ ] T4.7b4 Migrate the settings forms, part 2: lookup, group by, unpivot and pivot, output, append, SQL.
+- [x] T4.7b4 Migrate the settings forms, part 2: lookup, group by, unpivot and pivot, output, append, SQL.
 - [ ] T4.7c1 Migrate Run (with the engine messages shown there) and Versions to keys.
 - [ ] T4.7c2 Migrate Reference tables and every dialog of it, and the date picker (month and weekday names stay for T4.7e).
 - [ ] T4.7c3 Migrate Admin (users, groups, access, deleted flows) and `/dev/components` (`dev.*` keys). Remove `strings.ts` when it is empty. The pseudo-locale rule and the static scan now cover `body` on every route and every `.tsx` file of `src/ui`.
@@ -173,6 +173,11 @@ None. The Pages file size blocker of T3.9 is solved by D71.
 ## Log
 
 Newest first.
+
+### 2026-11-18 T4.7b4 Settings forms part 2 on the catalog (turn 14)
+Changed: forms lookup, group-by, unpivot, pivot, output, append, sql and their logic (lookup-logic, reshape-logic, output-logic: "still missing" lists, sheet and file name errors, query state), en.ts (about 25 keys, plus `common.numbered` and `common.pair` for "Function 1" and "text list"), strings.ts (`joinStrings`, `groupStrings`, `reshapeStrings`, `outputStrings`, `appendStrings`, `sqlStrings` removed; only the Run, Versions, Reference tables, Admin, dev and engine entries remain), i18n/catalog.ts (a pseudo text passed as a parameter loses its markers, so a message is wrapped once), no-literal-text.test.ts (these seven files, and the scan now also finds text in object properties such as `{ label: 'Choose' }`; it found one literal in pivot-form), ui-rules (pseudo-locale covers every state of the builder; chips of column names are `data-user-content`; the placeholder of a result name and the SQL text are `data-code`; route locators tolerant of the markers).
+Gates run: check PASS (779 tests, exit 0); `npm run test:e2e` exit 0 (177 passed); `npm run test:ui-rules` limited with `-g "versions/4|pseudo-locale"` (every builder route and every pseudo-locale test): exit 0, 504 passed in 8.1 min (168 each in light-1280, light-1440, dark-1440). Full ui-rules not repeated.
+Next: T4.7c1 (Run and Versions).
 
 ### 2026-11-18 T4.7b3 Settings forms part 1 on the catalog (turn 13)
 Changed: forms input-file, filter, formula-column, formula-editor, column-mapping, column-pickers, load-columns; their logic modules (input-file-logic, column-mapping-logic, formula-logic) now build messages with `translate()` and placeholders (row numbers and values are parameters); function-docs.ts (the 50 function descriptions are catalog keys `builder.fn.NAME`, read through a getter; group names are `builder.fnGroup.*`); en.ts (about 60 keys added); strings.ts (`formStrings`, `formulaStrings`, `pickerStrings` removed); ui-rules (pseudo-locale scope adds the Configure tab, Column mapping grid, Formula editor and function list routes; `data-code` marks formula syntax such as function names and signatures, which is not translated; two route locators made tolerant of the markers); no-literal-text.test.ts (the six form files).

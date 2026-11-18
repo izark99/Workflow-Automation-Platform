@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button, Checkbox, ErrorState, Field } from '../../components';
-import { reshapeStrings as t } from '../../strings';
+import { useT } from '../../i18n';
 import { ColumnList, LoadColumnsBar } from './column-pickers';
 import { addColumn, unpivotFromSettings, unpivotMissing, unpivotToSettings } from './reshape-logic';
 import type { UnpivotValues } from './reshape-logic';
@@ -10,6 +10,7 @@ import styles from './column-pickers.module.css';
 
 /** Unpivot: which columns to keep, which to turn into rows, and the names of the two new columns. */
 export function UnpivotForm(props: FormProps) {
+  const t = useT();
   const { step, onSettings, readOnly } = props;
   const [v, setV] = useState<UnpivotValues>(() => unpivotFromSettings(step.settings));
   const [clash, setClash] = useState<string | null>(null);
@@ -28,7 +29,7 @@ export function UnpivotForm(props: FormProps) {
     const other = which === 'keep' ? v.unpivot : v.keep;
     const clashing = added && other.includes(added) ? added : undefined;
     if (clashing) {
-      setClash(addColumn(v[which], other, which === 'keep' ? t.unpivotList : t.keepList, clashing).error ?? null);
+      setClash(addColumn(v[which], other, which === 'keep' ? t('builder.reshape.unpivotList') : t('builder.reshape.keepList'), clashing).error ?? null);
       return;
     }
     setClash(null);
@@ -40,23 +41,23 @@ export function UnpivotForm(props: FormProps) {
   return (
     <div className={styles.rowCard} style={{ gap: 16, borderBottom: 0, padding: 0 }}>
       <LoadColumnsBar source={source} />
-      <ColumnList label={t.keep} values={v.keep} columns={offer(v.unpivot)} disabled={readOnly} onChange={pick('keep')} />
-      <ColumnList label={t.unpivot} hint={t.unpivotHint} values={v.unpivot} columns={offer(v.keep)} disabled={readOnly} onChange={pick('unpivot')} />
+      <ColumnList label={t('builder.reshape.keep')} values={v.keep} columns={offer(v.unpivot)} disabled={readOnly} onChange={pick('keep')} />
+      <ColumnList label={t('builder.reshape.unpivot')} hint={t('builder.reshape.unpivotHint')} values={v.unpivot} columns={offer(v.keep)} disabled={readOnly} onChange={pick('unpivot')} />
       {names ? (
         <div>
           <Button compact disabled={readOnly} onClick={() => apply({ ...v, unpivot: names.filter((n) => !v.keep.includes(n)) })}>
-            {t.unpivotRest}
+            {t('builder.reshape.unpivotRest')}
           </Button>
         </div>
       ) : null}
-      {clash ? <ErrorState what={t.clash} next={clash} /> : null}
-      <Field label={t.nameColumn} hint={t.nameColumnHint} value={v.nameColumn} disabled={readOnly} onChange={(e) => apply({ ...v, nameColumn: e.target.value })} />
-      <Field label={t.valueColumn} hint={t.valueColumnHint} value={v.valueColumn} disabled={readOnly} onChange={(e) => apply({ ...v, valueColumn: e.target.value })} />
+      {clash ? <ErrorState what={t('builder.reshape.clash')} next={clash} /> : null}
+      <Field label={t('builder.reshape.nameColumn')} hint={t('builder.reshape.nameColumnHint')} value={v.nameColumn} disabled={readOnly} onChange={(e) => apply({ ...v, nameColumn: e.target.value })} />
+      <Field label={t('builder.reshape.valueColumn')} hint={t('builder.reshape.valueColumnHint')} value={v.valueColumn} disabled={readOnly} onChange={(e) => apply({ ...v, valueColumn: e.target.value })} />
       <Checkbox checked={v.skipBlank} disabled={readOnly} onChange={(skipBlank) => apply({ ...v, skipBlank })}>
-        {t.skipBlank}
+        {t('builder.reshape.skipBlank')}
       </Checkbox>
       <p className={styles.note} role="status">
-        {missing.length === 0 ? t.completeUnpivot : `${t.stillMissing} ${missing.join(' ')}`}
+        {missing.length === 0 ? t('builder.reshape.completeUnpivot') : t('common.numbered', { label: t('builder.reshape.stillMissing'), n: missing.join(' ') })}
       </p>
     </div>
   );

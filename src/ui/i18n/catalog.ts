@@ -62,7 +62,11 @@ export function lookup(key: string, loc: 'en' | 'vi'): string {
 }
 
 export function translate(key: MessageKey, params?: MessageParams, loc: Locale = locale): string {
-  if (loc === 'pseudo') return `${PSEUDO_OPEN}${formatMessage(lookup(key, 'en'), params, 'en')}${PSEUDO_CLOSE}`;
+  if (loc === 'pseudo') {
+    // A parameter that is itself a pseudo text loses its markers, so a message is wrapped once, not in nested pairs.
+    const plain = params && Object.fromEntries(Object.entries(params).map(([k, v]) => [k, typeof v === 'string' ? v.split(PSEUDO_OPEN).join('').split(PSEUDO_CLOSE).join('') : v]));
+    return `${PSEUDO_OPEN}${formatMessage(lookup(key, 'en'), plain, 'en')}${PSEUDO_CLOSE}`;
+  }
   return formatMessage(lookup(key, loc), params, loc);
 }
 

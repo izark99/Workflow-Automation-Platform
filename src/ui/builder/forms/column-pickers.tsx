@@ -48,7 +48,7 @@ export function ColumnList({ label, hint, values, onChange, columns, disabled }:
       <div className={styles.chips}>
         {values.map((v) => (
           <span key={v} className={styles.chip}>
-            {v}
+            <span data-user-content>{v}</span>
             <Button compact disabled={disabled} aria-label={t('builder.picker.remove', { name: v, label })} onClick={() => onChange(values.filter((x) => x !== v))}>
               <Icon name="close" />
             </Button>
