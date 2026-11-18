@@ -113,7 +113,7 @@ Texts (SPEC 11.3)
 - [x] T4.7b2 Migrate the builder frame: header, save and publish, version dialogs, step catalog (`STEP_CATALOG` returns keys), step list, canvas, zoom controls, settings panel, Test tab. Rule and scan cover the builder route.
 - [x] T4.7b3 Migrate the settings forms, part 1: input file, filter, formula column, the formula editor and its messages, column mapping, column pickers.
 - [x] T4.7b4 Migrate the settings forms, part 2: lookup, group by, unpivot and pivot, output, append, SQL.
-- [ ] T4.7c1 Migrate Run (with the engine messages shown there) and Versions to keys.
+- [x] T4.7c1 Migrate Run (with the engine messages shown there) and Versions to keys.
 - [ ] T4.7c2 Migrate Reference tables and every dialog of it, and the date picker (month and weekday names stay for T4.7e).
 - [ ] T4.7c3 Migrate Admin (users, groups, access, deleted flows) and `/dev/components` (`dev.*` keys). Remove `strings.ts` when it is empty. The pseudo-locale rule and the static scan now cover `body` on every route and every `.tsx` file of `src/ui`.
 - [ ] T4.7d Errors as codes: the store, the auth service and the engine return a code with parameters; the UI shows the catalog text for the code. The engine keeps its English text as the fallback and imports nothing from the UI. Unit test: every code has an `en` text with the same placeholders.
@@ -173,6 +173,11 @@ None. The Pages file size blocker of T3.9 is solved by D71.
 ## Log
 
 Newest first.
+
+### 2026-11-18 T4.7c1 Run and Versions on the catalog (turn 15)
+Changed: screens/run.tsx, run-logic.ts (progress text, file sizes, version rows and sheet labels through keys), versions.tsx, versions-logic.ts (state texts, timeline segments, date check, notes under the timeline, overlap problems), en.ts (about 45 keys), strings.ts (`runStrings`, `versionsStrings` and the Run and Versions screen headers removed), no-literal-text.test.ts (run, versions, versions-dialogs), ui-rules (pseudo-locale covers Run and Versions routes; the rule message names the element; month-and-year dates such as `Jan 2026` are tolerated until T4.7e; user data marked: flow name in the crumb, change notes, step labels of the file rows, the result table; one route locator made tolerant).
+Gates run: check PASS (782 tests, exit 0); `npm run test:e2e` exit 0 (177 passed); `npm run test:ui-rules` limited to the Run and Versions routes plus every pseudo-locale test: exit 0, 243 passed in 4.3 min (81 each in light-1280, light-1440, dark-1440). Full ui-rules not repeated.
+Next: T4.7c2.
 
 ### 2026-11-18 T4.7b4 Settings forms part 2 on the catalog (turn 14)
 Changed: forms lookup, group-by, unpivot, pivot, output, append, sql and their logic (lookup-logic, reshape-logic, output-logic: "still missing" lists, sheet and file name errors, query state), en.ts (about 25 keys, plus `common.numbered` and `common.pair` for "Function 1" and "text list"), strings.ts (`joinStrings`, `groupStrings`, `reshapeStrings`, `outputStrings`, `appendStrings`, `sqlStrings` removed; only the Run, Versions, Reference tables, Admin, dev and engine entries remain), i18n/catalog.ts (a pseudo text passed as a parameter loses its markers, so a message is wrapped once), no-literal-text.test.ts (these seven files, and the scan now also finds text in object properties such as `{ label: 'Choose' }`; it found one literal in pivot-form), ui-rules (pseudo-locale covers every state of the builder; chips of column names are `data-user-content`; the placeholder of a result name and the SQL text are `data-code`; route locators tolerant of the markers).

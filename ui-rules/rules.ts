@@ -222,7 +222,7 @@ export async function untranslatedText(page: Page, selector: string): Promise<st
     if (!root) return [`no element matches ${sel}`];
     // Markers can nest (a text passed as a parameter of another text): strip the innermost pairs until none are left.
     // Dates such as 30 Sep 2026 keep their English month name until T4.7e puts month names in the catalog.
-    const date = /\b\d{1,2} (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d{4}\b/g;
+    const date = /\b(?:\d{1,2} )?(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d{4}\b/g;
     const outside = (text: string): boolean => {
       let rest = text.replace(date, '');
       for (let prev = ''; prev !== rest; ) {
@@ -242,7 +242,7 @@ export async function untranslatedText(page: Page, selector: string): Promise<st
       const el = n.parentElement;
       const text = n.textContent ?? '';
       if (!el || !text.trim() || el.closest(skip) || el.closest('script, style') || !visible(el)) continue;
-      if (outside(text)) bad.push(`text outside the catalog: "${text.trim().slice(0, 60)}"`);
+      if (outside(text)) bad.push(`text outside the catalog: "${text.trim().slice(0, 60)}" in <${el.tagName.toLowerCase()}${el.className && typeof el.className === 'string' ? '.' + el.className.split(' ')[0] : ''}>`);
     }
     for (const el of [root, ...root.querySelectorAll('*')]) {
       if (el.closest(skip) || !visible(el)) continue;

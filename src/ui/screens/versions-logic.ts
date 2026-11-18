@@ -1,5 +1,6 @@
 import { dayAfter, findOverlaps, formatDate, planPublish } from '../../engine/versions';
 import type { FlowVersionRecord } from '../../store/types';
+import { translate } from '../i18n';
 
 const two = (iso: string): string => formatDate(iso).replace(/^(\d) /, '0$1 ');
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -18,9 +19,9 @@ export function versionState(v: Pick<FlowVersionRecord, 'status' | 'validFrom' |
   return 'in_effect';
 }
 
-export const stateText = (s: VersionState): string => ({ draft: 'Draft', in_effect: 'Published, in effect', ended: 'Published, ended', upcoming: 'Published, starts later' })[s];
+export const stateText = (s: VersionState): string => translate(`versions.state.${s}`);
 
-export const rangeEnd = (v: Pick<FlowVersionRecord, 'validTo'>): string => (v.validTo === null ? 'No end date' : two(v.validTo));
+export const rangeEnd = (v: Pick<FlowVersionRecord, 'validTo'>): string => (v.validTo === null ? translate('versions.noEnd') : two(v.validTo));
 
 export interface Segment {
   versionNo: number;
@@ -43,11 +44,14 @@ export function timeline(versions: FlowVersionRecord[], today: string): Segment[
     .map((v) => {
       const state = versionState(v, today);
       const span = v.validTo === null ? 120 : days(v.validFrom, v.validTo);
-      const sub = v.validTo === null ? `From ${monthYear(v.validFrom)}${v.status === 'published' ? ', no end date' : ''}` : `${monthYear(v.validFrom).slice(0, 3)} to ${monthYear(v.validTo)}`;
+      const sub =
+        v.validTo === null
+          ? translate(v.status === 'published' ? 'versions.segment.fromNoEnd' : 'versions.segment.from', { from: monthYear(v.validFrom) })
+          : translate('versions.segment.between', { from: monthYear(v.validFrom).slice(0, 3), to: monthYear(v.validTo) });
       return {
         versionNo: v.versionNo,
         state,
-        title: `v${v.versionNo}${state === 'in_effect' ? ', in effect' : state === 'draft' ? ', draft' : ''}`,
+        title: translate(state === 'in_effect' ? 'versions.segment.titleInEffect' : state === 'draft' ? 'versions.segment.titleDraft' : 'versions.segment.title', { n: v.versionNo }),
         sub,
         weight: Math.max(30, span),
         axis: monthYear(v.validFrom),
@@ -58,24 +62,24 @@ export function timeline(versions: FlowVersionRecord[], today: string): Segment[
 /** The version a run on `date` uses: the published one that covers it, or a message that says what happens. */
 export function dateCheck(versions: FlowVersionRecord[], date: string): { version?: number; text: string } {
   const hit = versions.find((v) => v.status === 'published' && v.validFrom <= date && (v.validTo === null || date <= v.validTo));
-  if (hit) return { version: hit.versionNo, text: `A run with effective date ${two(date)} uses v${hit.versionNo}.` };
+  if (hit) return { version: hit.versionNo, text: translate('versions.check.uses', { date: two(date), n: hit.versionNo }) };
   const published = versions.filter((v) => v.status === 'published');
   return {
     text: published.length === 0
-      ? `No version is published, so a run with effective date ${two(date)} stops with an error. Publish a version first.`
-      : `No published version covers ${two(date)}, so a run with that effective date stops with an error. Choose a date inside a version, or add a version for it.`,
+      ? translate('versions.check.nonePublished', { date: two(date) })
+      : translate('versions.check.notCovered', { date: two(date) }),
   };
 }
 
 /** The note under the timeline: what publishing the newest draft does, or the rule when there is no draft. */
 export function timelineNote(versions: FlowVersionRecord[], flowName: string): { text: string; problem: boolean } {
   const overlaps = findOverlaps(versions.filter((v) => v.status === 'published'));
-  if (overlaps.length > 0) return { text: `The published versions v${overlaps[0]![0]} and v${overlaps[0]![1]} share a day. Versions cannot overlap: change the dates of one of them.`, problem: true };
+  if (overlaps.length > 0) return { text: translate('versions.note.overlap', { a: overlaps[0]![0], b: overlaps[0]![1] }), problem: true };
   const draft = [...versions].filter((v) => v.status === 'draft').sort((a, b) => b.versionNo - a.versionNo)[0];
-  if (!draft) return { text: 'Versions cannot overlap. A new version starts after the one before it.', problem: false };
+  if (!draft) return { text: translate('versions.note.noDraft'), problem: false };
   const plan = planPublish(versions, draft.versionNo, `flow "${flowName}"`);
-  if (!plan.ok) return { text: `Versions cannot overlap. ${plan.message}`, problem: true };
-  return { text: `Versions cannot overlap. Publishing v${draft.versionNo} will ${plan.ends ? `end v${plan.ends.versionNo} on ${two(plan.ends.validTo)}` : `make it valid from ${two(draft.validFrom)}`}.`, problem: false };
+  if (!plan.ok) return { text: translate('versions.note.planFailed', { message: plan.message }), problem: true };
+  return { text: plan.ends ? translate('versions.note.publishEnds', { n: draft.versionNo, prev: plan.ends.versionNo, prevEnd: two(plan.ends.validTo) }) : translate('versions.note.publishValid', { n: draft.versionNo, from: two(draft.validFrom) }), problem: false };
 }
 
 /**
@@ -85,10 +89,10 @@ export function timelineNote(versions: FlowVersionRecord[], flowName: string): {
 export function newVersionProblem(versions: VersionLike[], date: string): string | undefined {
   for (const p of versions.filter((v) => v.status === 'published')) {
     if (p.validTo !== null && p.validTo >= date) {
-      return `${two(date)} is inside v${p.versionNo} (${two(p.validFrom)} to ${two(p.validTo)}). Choose a day after ${two(p.validTo)}.`;
+      return translate('versions.problem.inside', { date: two(date), n: p.versionNo, from: two(p.validFrom), to: two(p.validTo) });
     }
     if (p.validTo === null && p.validFrom >= date) {
-      return `v${p.versionNo} starts on ${two(p.validFrom)}, which is not before ${two(date)}. Choose a day after ${two(p.validFrom)}.`;
+      return translate('versions.problem.notBefore', { n: p.versionNo, from: two(p.validFrom), date: two(date) });
     }
   }
   return undefined;
