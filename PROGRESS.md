@@ -98,7 +98,7 @@ Themes (SPEC 11.4)
 - [x] T4.1 Dark tokens in `tokens.css` under `:root[data-theme="dark"]`, the two new tokens `--color-on-primary` and `--color-on-cta` used by filled buttons, and a unit test that computes the contrast of every pair listed in DESIGN for both themes. Replace any raw colour left outside `tokens.css`.
 - [x] T4.2 Theme setting: Light, Dark, System; inline script in `index.html` sets `data-theme` and `color-scheme` before first paint; System follows `prefers-color-scheme` live; choice kept in browser storage; switch in the sidebar footer and on the sign-in screen. Unit tests for the choice logic, e2e for the switch and for no flash on reload.
 - [x] T4.3 Fix: React Flow follows the app theme, not the operating system. First a failing e2e test: operating system dark (`emulateMedia`), app Light, the canvas background, dots, edges and controls are light; then app Dark and the canvas is dark. Then pass `colorMode` from the theme and map React Flow colours to tokens.
-- [ ] T4.4 UI rules in the dark theme: `test:ui-rules` runs every route in dark at 1440 px as well (axe contrast included). Fix what it finds in the same task, or split.
+- [x] T4.4 UI rules in the dark theme: `test:ui-rules` runs every route in dark at 1440 px as well (axe contrast included). Fix what it finds in the same task, or split.
 
 Info button (SPEC 11.2)
 - [ ] T4.5 `InfoTip` component as in DESIGN "Info button": toggletip, hover delay, Escape, outside click, live region, placement; on `/dev/components`; unit and e2e keyboard tests; the UI rule accepts it only at exactly 24 x 24 px.
@@ -167,6 +167,12 @@ None. The Pages file size blocker of T3.9 is solved by D71.
 ## Log
 
 Newest first.
+
+### 2026-11-18 T4.4 UI rules in the dark theme (turn 4)
+Changed: playwright.ui-rules.config.ts (three named projects: `light-1280`, `light-1440`, `dark-1440`; the theme comes from the OS setting, which the default choice System follows), ui-rules/routes.spec.ts (a test that the app really runs in the theme of the project, by `data-theme` and the page background colour).
+Result: every route passed in the dark theme with no code fix, axe contrast included. The new check proves the dark project is in the dark theme.
+Gates run: check PASS (68 files, 723 tests, exit 0); `npm run test:ui-rules` exit 0, 1017 passed in 15.7 min: light-1280 339, light-1440 339, dark-1440 339 (counted from the list log).
+Next: T4.5.
 
 ### 2026-11-18 T4.3 React Flow follows the app theme (turn 3)
 Changed: src/ui/builder/canvas.tsx, builder.module.css (React Flow variables mapped to tokens), e2e/canvas-theme.spec.ts (2 tests: OS dark with app Light gives a light canvas, OS light with app Dark gives a dark canvas; background, dots, edge colours and colour-scheme checked).
