@@ -700,3 +700,12 @@ blank or mixed column in one month cannot change the types of another month.
 - `flow_group_access`: admin writes; a member sees the rows of the groups they belong to.
 - Policies grant to `authenticated` only; `anon` has none and so sees nothing.
 - Tests (`030-rls-flows.test.sql`) act as the admin, an owner, a group member and another user through `set local role` and `request.jwt.claims`. A mutation check (delete policy `true`, view helper `true`) fails 13 of them.
+
+## D59 Row-level security for reference tables, profiles, groups and the run log (T3.4)
+
+- Reference tables and their versions: every signed-in user reads all (drafts included); only the admin writes. Published versions stay read-only for the admin too (D57). The publish function checks rights through the policies.
+- Profiles: a user reads the own row only (the app needs the own role and name); the admin reads and manages all. A user cannot update the own row, so nobody can make themselves admin. The SPEC says users and groups are "no access" for non-admins; the own profile row is the one exception, because sign-in (T3.7) needs it. Profile rows are created by the admin; a trigger that creates one when a user signs up is left to T3.7.
+- Groups and group members: admin only, so a member cannot read groups or add themselves to one. A member's own group membership reaches the policies through the definer helper `is_group_member` (D58), not through a read of the table.
+- Run log: append only. A user inserts a row as themselves (`user_id = auth.uid()`) for a flow they can view; they read their own rows; the admin reads all. There is no update or delete policy; rows leave with their flow by cascade.
+- `anon` has no table privileges (revoked, and removed from the default privileges of `public`), so a signed-out request fails with a permission error even before the policies.
+- Tests (`040-rls-other-tables.test.sql`) use the four personas plus `anon`. A mutation check (profiles, group members and the run log insert opened up) fails the tests.

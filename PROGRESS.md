@@ -76,7 +76,7 @@ before it passes, except where a task says otherwise.
 - [x] T3.1b First migration with all tables of SPEC section 4, and a pgTAP test that each table exists.
 - [x] T3.2 Constraints: no overlapping versions per flow and per reference table, published versions read-only, at most 50,000 rows per reference table version.
 - [x] T3.3 Row-level security for flows, versions and group access, with tests for every cell of the permission table.
-- [ ] T3.4 Row-level security for reference tables, profiles, groups and run log, with tests.
+- [x] T3.4 Row-level security for reference tables, profiles, groups and run log, with tests.
 - [ ] T3.5 Soft delete, restore, and removal after 30 days.
 - [ ] T3.6 `SupabaseStore` that implements `DataStore`, selected by environment variables.
 - [ ] T3.7 Sign-in screen and session handling.
@@ -104,6 +104,13 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-18 T3.4 Row-level security for reference tables, profiles, groups and run log
+Changed: supabase/migrations/20261118000004_rls_other_tables.sql (policies, `anon` loses all table rights), supabase/tests/database/040-rls-other-tables.test.sql (about 60 assertions), docs/DECISIONS.md (D59).
+Tests cover the permission table for these tables: every signed-in user reads reference tables and versions, only the admin writes, not even the admin edits a published version; a user reads only the own profile and cannot make themselves admin, edit or add profiles; groups and members are admin only (a member cannot add themselves to a group); the run log is append only, own rows only, a user cannot log a run for someone else or for a flow they cannot see; `anon` is refused everywhere.
+Mutation check: with the profiles, group members and run log insert policies opened up, tests fail (profile tests first); migration restored afterwards.
+Gates run: check PASS (619 tests), test:db PASS (5 files, exit 0). Other gates not rerun: nothing under src/ changed.
+Next: T3.5 (soft delete, restore, removal after 30 days).
 
 ### 2026-11-18 T3.3 Row-level security for flows, versions and group access
 Changed: supabase/migrations/20261118000003_rls_flows.sql (helpers `is_admin`, `can_view_flow`, `can_edit_flow`, `is_group_member`; policies on flows, flow_versions, flow_group_access; admin-only restore trigger), supabase/tests/database/030-rls-flows.test.sql (about 55 assertions), the publish functions' not-found message now also says "or you may not change it", docs/DECISIONS.md (D58).
