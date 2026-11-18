@@ -78,7 +78,9 @@ before it passes, except where a task says otherwise.
 - [x] T3.3 Row-level security for flows, versions and group access, with tests for every cell of the permission table.
 - [x] T3.4 Row-level security for reference tables, profiles, groups and run log, with tests.
 - [x] T3.5 Soft delete, restore, and removal after 30 days.
-- [ ] T3.6 `SupabaseStore` that implements `DataStore`, selected by environment variables.
+- [x] T3.6a `SupabaseStore`, part 1: `@supabase/supabase-js` pinned, pure row mappers with unit tests, and the read side of `DataStore` (current user, users, groups, flows, deleted flows, reference tables, run log). Write methods fail with a clear "not available yet" error until T3.6b. Not selected by the app yet.
+- [ ] T3.6b `SupabaseStore`, part 2: the write side (flows, copy, versions, publish through the publish functions, delete, restore, purge through the functions of T3.5, groups, users, reference tables, run log).
+- [ ] T3.6c Selection by environment variables (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`; `LocalStore` stays the default and the one used by G3 and G4), and an integration test of `SupabaseStore` against the full local stack (`npm run test:store`, not part of `gates`; it needs the API and Auth containers).
 - [ ] T3.7 Sign-in screen and session handling.
 - [ ] T3.8 Keep-alive: a small scheduled request that touches the database once a day, as code plus instructions.
 - [ ] T3.9 `docs/DEPLOY.md`: steps for a human to create the Supabase project, run migrations, set variables on Cloudflare Pages, and create the first admin.
@@ -104,6 +106,13 @@ None.
 ## Log
 
 Newest first.
+
+### 2026-11-18 T3.6a SupabaseStore, read side (T3.6 split into T3.6a, T3.6b, T3.6c)
+Changed: package.json (`@supabase/supabase-js` 2.118.0 pinned), src/store/supabase-mapping.ts (+8 tests), src/store/supabase-store.ts (read side; write methods say "not available on the server yet"; `storeErrorFrom`, +4 tests), docs/DECISIONS.md (D61). PROGRESS: T3.6 split.
+Read side: current user (profile and groups), users and groups (admin only), flows with versions and group access, one flow, deleted flows (admin), reference tables with versions, run log of a flow.
+Known limit, to settle against the real stack in T3.6c: for a non-admin the owner of a shared flow shows as "Unknown" and group names are empty, because users and groups are admin-only (D59).
+Gates run: check PASS (631 tests), test:db not rerun (no change under supabase/). Other gates not rerun: the app does not import the new files yet.
+Next: T3.6b (write side).
 
 ### 2026-11-18 T3.5 Soft delete, restore, removal after 30 days
 Changed: supabase/migrations/20261118000005_soft_delete.sql (`delete_flow`, `restore_flow`, `purge_flow`, `purge_expired_flows`; execute rights for the publish functions too), supabase/tests/database/050-soft-delete.test.sql (about 28 assertions), docs/DECISIONS.md (D60).

@@ -718,3 +718,12 @@ blank or mixed column in one month cannot change the types of another month.
 - Who triggers the removal: the Admin screen, when it opens (as the local store does), and the daily keep-alive of T3.8 with the service role, which bypasses row-level security. No database scheduler (pg_cron) is used, so the local stack needs no extra extension.
 - Hiding a deleted flow is done by `can_view_flow` (D58); restore stays admin-only through the trigger of T3.3.
 - Execute on these functions and on the publish functions is granted to `authenticated` and `service_role`, not to `anon`.
+
+## D61 SupabaseStore, read side (T3.6a)
+
+- `@supabase/supabase-js` 2.118.0 is pinned. It is the client of the Supabase part of the fixed stack, not an extra dependency.
+- `SupabaseStore` takes a client in its constructor, so tests and the app decide how it is made. It is not selected by the app yet (T3.6c does that); the write methods throw a StoreError that says they are not available on the server yet (T3.6b).
+- Row mapping is in `supabase-mapping.ts`: pure functions from snake_case rows to the store records, with unit tests. Versions are sorted by number; group ids by group name.
+- Database errors become StoreErrors in one place (`storeErrorFrom`): 42501 is forbidden, 23P01 (overlap) and 23505 are conflict, 23514 is invalid, P0002 and PGRST116 are not_found; a rule the database raised itself (P0001, P0002) keeps its own message, which already says what to do.
+- What a non-admin cannot read, by D59, shows as follows: `currentUser().groupIds` is empty (only the Admin screen uses it); `ownerName` of a flow owned by someone else is "Unknown" and `groupNames` is empty. T3.6c checks against the real stack whether the Flows list needs the owner's name for non-admins and, if it does, adds a small security-definer function for it.
+- The read methods are verified against the real local stack in T3.6c, not with a fake client: a fake of the query builder would only test the fake.
