@@ -102,7 +102,7 @@ export class SupabaseStore implements DataStore {
     const { data, error } = await this.client.auth.getUser();
     const id = data.user?.id;
     if (error || !id) throw storeError('forbidden', 'errors.noUser');
-    const profile = await this.client.from('profiles').select('id, name, email, role').eq('id', id).maybeSingle();
+    const profile = await this.client.from('profiles').select('id, name, email, role, locked_at, must_change_password').eq('id', id).maybeSingle();
     const row = this.ok<ProfileRow | null>(profile, 'read your profile');
     if (!row) throw storeError('forbidden', 'errors.noProfile');
     // A non-admin cannot read group membership (decision D59); the screens only use it on the Admin screen.
@@ -113,7 +113,7 @@ export class SupabaseStore implements DataStore {
   async listUsers(): Promise<User[]> {
     await this.mustBeAdmin('see the user list');
     const [profiles, members] = await Promise.all([
-      this.client.from('profiles').select('id, name, email, role').order('name'),
+      this.client.from('profiles').select('id, name, email, role, locked_at, must_change_password').order('name'),
       this.client.from('group_members').select('group_id, user_id'),
     ]);
     const memberRows = this.ok<{ group_id: string; user_id: string }[]>(members, 'read the group members');

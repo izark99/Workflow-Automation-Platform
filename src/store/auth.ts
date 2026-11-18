@@ -57,6 +57,7 @@ interface AuthFailure {
 /** Which message a person reads when sign-in fails. It never says which of email and password is wrong. */
 export function authFailure(error: AuthFailure): { id: StoreMessageId; params: Record<string, string> } {
   if (error.code === 'invalid_credentials') return { id: 'errors.auth.invalidCredentials', params: {} };
+  if (error.code === 'user_banned') return { id: 'errors.auth.locked', params: {} };
   if (error.code === 'email_not_confirmed') return { id: 'errors.auth.emailNotConfirmed', params: {} };
   if (error.code === 'over_request_rate_limit' || error.code === 'over_email_send_rate_limit' || error.status === 429) return { id: 'errors.auth.tooManyAttempts', params: {} };
   if (error.name === 'AuthRetryableFetchError' || error.status === 0) return { id: 'errors.auth.unreachable', params: {} };
@@ -84,12 +85,12 @@ type KeyValueStorage = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
  * the session from storage, like the real service does.
  */
 export class MemoryAuth implements AuthService {
-  private readonly users: { email: string; password: string }[];
+  private readonly users: { email: string; password: string; locked?: boolean }[];
   private readonly storage: KeyValueStorage | null;
   private readonly key: string;
   private listeners = new Set<(session: AuthSession | null, event: AuthEvent) => void>();
 
-  constructor(options: { users: { email: string; password: string }[]; storage?: KeyValueStorage | null; key?: string }) {
+  constructor(options: { users: { email: string; password: string; locked?: boolean }[]; storage?: KeyValueStorage | null; key?: string }) {
     this.users = options.users;
     this.storage = options.storage ?? null;
     this.key = options.key ?? 'dfw.authSession';
@@ -124,6 +125,23 @@ export class MemoryAuth implements AuthService {
     for (const l of [...this.listeners]) l(session, event);
   }
 
+  /** Adds a user or changes the password of one (the local account service). */
+  setUser(email: string, password: string): void {
+    const found = this.users.find((u) => u.email.toLowerCase() === email.toLowerCase());
+    if (found) found.password = password;
+    else this.users.push({ email, password });
+  }
+
+  setLocked(email: string, locked: boolean): void {
+    const found = this.users.find((u) => u.email.toLowerCase() === email.toLowerCase());
+    if (found) found.locked = locked;
+  }
+
+  /** Ends the session of that user when it is the open one (a lock or a password reset). */
+  endSessionOf(email: string): void {
+    if (this.current()?.email.toLowerCase() === email.toLowerCase()) this.expire();
+  }
+
   getSession(): Promise<AuthSession | null> {
     return Promise.resolve(this.current());
   }
@@ -133,6 +151,7 @@ export class MemoryAuth implements AuthService {
     if (!user || user.password !== password) {
       return Promise.reject(authErrorFrom({ code: 'invalid_credentials' }));
     }
+    if (user.locked) return Promise.reject(authErrorFrom({ code: 'user_banned' }));
     const session = { userId: `memory-${user.email.toLowerCase()}`, email: user.email };
     this.session = session;
     this.write(session);

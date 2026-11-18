@@ -24,6 +24,11 @@ const version = (no: number, extra: object = {}) => ({
 });
 
 describe('userFromRows', () => {
+  it('maps the lock and the password flag of a profile', () => {
+    const u = userFromRows({ id: 'u2', name: 'Bo', email: 'bo@example.test', role: 'user', locked_at: '2026-11-18T08:00:00Z', must_change_password: true }, []);
+    expect(u).toMatchObject({ locked: true, mustChangePassword: true });
+  });
+
   it('maps a profile and its group ids', () => {
     expect(userFromRows({ id: 'u1', name: 'Ann', email: 'ann@example.test', role: 'admin' }, ['g1', 'g2'])).toEqual({
       id: 'u1',
@@ -31,6 +36,8 @@ describe('userFromRows', () => {
       email: 'ann@example.test',
       role: 'admin',
       groupIds: ['g1', 'g2'],
+      locked: false,
+      mustChangePassword: false,
     });
   });
 });

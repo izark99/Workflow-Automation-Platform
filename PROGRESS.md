@@ -124,7 +124,7 @@ Texts (SPEC 11.3)
 Accounts (SPEC 11.1)
 - [x] T4.8a Database: `profiles.locked_at` and `must_change_password`; `is_active_user()` helper; every policy and every helper used by policies requires an active profile; an admin cannot lock themselves; the last active admin cannot be locked or demoted; `clear_must_change_password()` for the user's own row. pgTAP: a locked user with a valid token reads and writes nothing.
 - [x] T4.8b Edge Function `supabase/functions/admin-users`: actions create, reset_password, lock, unlock; checks the caller's token and an active admin profile; validates input (email, password length 10 or more, role); ban in Auth plus `locked_at` for lock; ends sessions on reset and lock; clear error messages. `npm run test:functions` (G6) starts the local stack with functions and runs integration tests for every case in PROMPT G6. Add it to `npm run gates`. If the Edge Runtime image cannot be pulled, write the host under Blockers.
-- [ ] T4.8c `AccountAdmin` service: interface, Supabase implementation calling the function, in-memory implementation for the local store; unit tests; wired into `createBackend()`.
+- [x] T4.8c `AccountAdmin` service: interface, Supabase implementation calling the function, in-memory implementation for the local store; unit tests; wired into `createBackend()`.
 - [ ] T4.8d Admin, Users tab: status badges, Add user (Create account dialog), Reset password, Lock and Unlock with confirm, Generate and Copy password. e2e on the local store, UI rules.
 - [ ] T4.8e Change password screen: required after sign-in when `must_change_password` is set; "Change password" in the sidebar; locked-account message at sign-in and when a session is locked. e2e, and an integration test on the local stack.
 
@@ -173,6 +173,12 @@ None. The Pages file size blocker of T3.9 is solved by D71.
 ## Log
 
 Newest first.
+
+### 2026-11-18 T4.8c AccountAdmin service (turn 24)
+Changed: src/store/accounts.ts (the `AccountAdmin` interface: createAccount, resetPassword, lock, unlock; `generatePassword` of 16 characters from the secure random source, alphabet without look-alike pairs; `checkAccountInput`; `accountErrorFrom` turns the JSON of the Edge Function into a `StoreError` with its message id; `SupabaseAccountAdmin` calls `admin-users` through `functions.invoke`; `LocalAccountAdmin` changes the snapshot and the stand-in sign-in), store/index.ts (`createBackend()` returns `accounts`), ui/store-context.tsx (`useAccounts()`), ui/app.tsx, types.ts (`User.locked`, `User.mustChangePassword`), supabase-mapping.ts and supabase-store.ts (read `locked_at` and `must_change_password`), local-store.ts (`changeAccounts`; a locked user is refused with `errors.accountLocked` like the database), auth.ts (`MemoryAuth` can add users, set passwords, lock and end a session; a banned user gets `errors.auth.locked`), messages.ts, en.ts, vi.ts (14 keys), accounts.test.ts (25 unit tests), supabase-mapping.test.ts, integration/supabase-store.test.ts (the last-admin text now says "active").
+Tests: the Edge Function keeps its own copy of the English templates; a unit test reads the function file and compares each `errors.account.*` template with the store messages. The local service gives the same answers as the function for bad input, an existing email, a non-admin caller, self-lock and an unknown user.
+Gates run: check PASS (908 tests, exit 0); `npm run test:e2e` exit 0 (185 passed); `npm run test:store` exit 0 on the full local stack (3 files, 21 tests, run because the store, policies and last-admin text changed). The UI is not changed yet (T4.8d), so ui-rules were not run.
+Next: T4.8d (Admin, Users tab).
 
 ### 2026-11-18 T4.8b Edge Function admin-users and gate G6 (turn 23)
 Changed: supabase/functions/admin-users/index.ts (create, reset_password, lock, unlock; fetch only), supabase/migrations/20261118000012_end_sessions.sql (`admin_end_sessions`), supabase/config.toml (Edge Runtime on, function entry), scripts/test-functions.mjs and vitest.functions.config.ts, integration-functions/admin-users.test.ts (14 tests), package.json (`test:functions`, and `npm run gates` now ends with it), scripts/test-db.mjs (skips the Edge Runtime like the other services), 120-account-lock.test.sql (the definer list has the new function). D76 records the design.

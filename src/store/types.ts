@@ -16,6 +16,10 @@ export interface User {
   email: string;
   role: Role;
   groupIds: string[];
+  /** The account is locked by an admin (SPEC 11.1): it cannot sign in and reads nothing. */
+  locked?: boolean;
+  /** The user must choose a new password at the next sign-in. */
+  mustChangePassword?: boolean;
 }
 
 export interface Group {

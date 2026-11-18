@@ -1,11 +1,24 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
+import type { AccountAdmin } from '../store/accounts';
 import type { DataStore } from '../store/types';
 
 const StoreContext = createContext<DataStore | null>(null);
+const AccountsContext = createContext<AccountAdmin | null>(null);
 
-export function StoreProvider({ store, children }: { store: DataStore; children: ReactNode }) {
-  return <StoreContext.Provider value={store}>{children}</StoreContext.Provider>;
+export function StoreProvider({ store, accounts, children }: { store: DataStore; accounts?: AccountAdmin; children: ReactNode }) {
+  return (
+    <StoreContext.Provider value={store}>
+      <AccountsContext.Provider value={accounts ?? null}>{children}</AccountsContext.Provider>
+    </StoreContext.Provider>
+  );
+}
+
+/** The account service for the Users tab. */
+export function useAccounts(): AccountAdmin {
+  const accounts = useContext(AccountsContext);
+  if (!accounts) throw new Error('useAccounts needs a StoreProvider with an account service above it.');
+  return accounts;
 }
 
 export function useStore(): DataStore {

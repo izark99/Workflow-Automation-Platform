@@ -87,7 +87,7 @@ describe('users and groups', () => {
     expect((await refused(stores.admin.deleteGroup(g.id))).code).toBe('not_found');
 
     const lastAdmin = await refused(stores.admin.saveUser({ id: ids.admin, name: 'Ada Admin', email: 'admin@example.test', role: 'user', groupIds: [] }));
-    expect(lastAdmin.message).toContain('At least one admin is needed');
+    expect(lastAdmin.message).toContain('At least one active admin is needed');
     expect((await refused(stores.admin.saveUser({ id: '', name: 'New', email: 'new@example.test', role: 'user', groupIds: [] }))).message).toContain('Supabase Auth');
   });
 });

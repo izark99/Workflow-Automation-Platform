@@ -90,7 +90,10 @@ export class LocalStore implements DataStore {
   }
 
   private who(s: Snapshot): User {
-    return s.users.find((u) => u.id === s.currentUserId) ?? fail('forbidden', 'errors.noUser');
+    const user = s.users.find((u) => u.id === s.currentUserId) ?? fail('forbidden', 'errors.noUser');
+    // The database refuses a locked account at once (D75); the local store does the same.
+    if (user.locked) fail('forbidden', 'errors.accountLocked');
+    return user;
   }
 
   private mustBeAdmin(s: Snapshot, what: string): User {
@@ -194,6 +197,14 @@ export class LocalStore implements DataStore {
     s.groups = s.groups.filter((g) => g.id !== id);
     for (const u of s.users) u.groupIds = u.groupIds.filter((g) => g !== id);
     for (const f of s.flows) f.groupIds = f.groupIds.filter((g) => g !== id);
+    await this.commit(s);
+  }
+
+  /** For `LocalAccountAdmin`: runs a change of the accounts as the signed-in admin and saves the snapshot when it succeeds. */
+  async changeAccounts(change: (s: Snapshot, actor: User, newId: () => string) => void): Promise<void> {
+    const s = await this.open();
+    const actor = this.mustBeAdmin(s, 'manage accounts');
+    change(s, actor, () => this.nextId(s, 'user'));
     await this.commit(s);
   }
 
