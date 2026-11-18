@@ -2,9 +2,9 @@ import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
 
 // Each rule returns a list of violations (empty = the rule holds). Numbers come from docs/DESIGN.md and were checked
-// against design/screens/*.html with getBoundingClientRect: title y 63, first block y 148, table row 57, buttons 40/36.
+// against design/screens/*.html with getBoundingClientRect: title y 63, first block y 123 (148 before Phase 4), table row 57, buttons 40/36.
 export const TITLE_Y = 63;
-export const FIRST_BLOCK_Y = 148;
+export const FIRST_BLOCK_Y = 123;
 export const ROW_HEIGHT = 57;
 export const BUTTON_HEIGHTS = [36, 40];
 
@@ -70,7 +70,7 @@ export const tableRows: Rule = async (page) =>
     return bad;
   }, ROW_HEIGHT);
 
-/** Sidebar screens: the h1 sits at y 63 and the block with data-first-block at y 148. */
+/** Sidebar screens: the h1 sits at y 63 and the block with data-first-block at y 123. */
 export const headerPosition: Rule = async (page) =>
   page.evaluate(
     ([titleY, blockY]) => {

@@ -102,7 +102,7 @@ Themes (SPEC 11.4)
 
 Info button (SPEC 11.2)
 - [x] T4.5 `InfoTip` component as in DESIGN "Info button": toggletip, hover delay, Escape, outside click, live region, placement; on `/dev/components`; unit and e2e keyboard tests; the UI rule accepts it only at exactly 24 x 24 px.
-- [ ] T4.6a Page header: subtitle moves into an InfoTip after the title on every screen; measure the new y of the first block, write it in DESIGN, update the UI rule in the same commit. `Field` and `TextAreaField`: `hint` renders an InfoTip after the label, not a paragraph.
+- [x] T4.6a Page header: subtitle moves into an InfoTip after the title on every screen; measure the new y of the first block, write it in DESIGN, update the UI rule in the same commit. `Field` and `TextAreaField`: `hint` renders an InfoTip after the label, not a paragraph.
 - [ ] T4.6b Builder: every explanation in the step list, settings panel, forms and Test tab moves into InfoTips. A UI rule fails when a hint paragraph is visible.
 - [ ] T4.6c Run, Versions, Reference tables, Admin, dialogs and the sign-in screen: the same.
 
@@ -167,6 +167,13 @@ None. The Pages file size blocker of T3.9 is solved by D71.
 ## Log
 
 Newest first.
+
+### 2026-11-18 T4.6a Page header and field hints in info buttons (turn 6)
+Changed: components/page-header.tsx and .module.css (the subtitle is the content of an InfoTip after the title; header 67 px), field.tsx and field.module.css (`hint` of `Field` and `TextAreaField` is an InfoTip after the label, no paragraph; the label is a sibling of the info button, not around it), info-tip.module.css (negative margins keep the line height), base.test.tsx, ui-rules/rules.ts (first block y 123, was 148), rules.selfcheck.spec.ts, ui-rules/routes.ts, docs/DESIGN.md (new y written), e2e/journeys.spec.ts and run.spec.ts.
+Measured: with the subtitle gone the title moved to y 60 and the first block to y 120; a 3 px top padding on the title row keeps the title at y 63 as on the screens, so the first block is at y 123.
+Test changes (not loosened): the info button "About Run flow" matched the name "Run flow", so the Run flow button locators are now `exact: true` (journeys, ui-rules route); the privacy line of the Run screen is now read after opening the info button.
+Gates run: check PASS (729 tests, exit 0); `npm run test:e2e` first run 5 failed / 172 passed, after the two fixes the failing files pass (journeys + run: 13 passed; the other files were not rerun); `npm run test:ui-rules` full run: 993 passed, 27 failed, all on the route "a finished run" for the same locator; after the fix that route passed in all three projects (33 passed). No second full ui-rules run.
+Next: T4.6b.
 
 ### 2026-11-18 T4.5 InfoTip component (turn 5)
 Changed: src/ui/components/{info-tip.tsx,info-tip.module.css,info-tip-logic.ts,info-tip-logic.test.ts,icons.tsx,index.ts}, strings.ts (`infoTip.about`), screens/dev-components.tsx (Info button card), ui-rules/rules.ts (a button with `data-infotip` must be exactly 24 x 24 px, other buttons stay 36 or 40), ui-rules/rules.selfcheck.spec.ts, e2e/info-tip.spec.ts (5 tests).

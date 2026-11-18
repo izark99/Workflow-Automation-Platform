@@ -97,7 +97,7 @@ test('journey 1: a user builds a flow on an empty canvas, previews a step, publi
   await expect(page).toHaveURL(/\/run$/);
   await expect(page.getByRole('group', { name: 'Versions used for this date' })).toContainText('Journey flow v1');
   await page.locator('input[aria-label="Choose file: people"]').setInputFiles(csv('name,age\nAnn,31\nBob,42\nCy,36\n'));
-  await page.getByRole('button', { name: 'Run flow' }).click();
+  await page.getByRole('button', { name: 'Run flow', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Result: run finished' })).toBeVisible({ timeout: 60_000 });
   await expect(page.getByRole('tab', { name: 'Result, 2 rows' })).toBeVisible();
 
@@ -120,7 +120,7 @@ for (const ds of DATASETS) {
     await expect(versions).toContainText('Timesheet journey v1');
     for (const t of ds.referenceSheets ?? []) await expect(versions).toContainText(`${t} v1`);
     for (const [key, file] of Object.entries(ds.inputs)) await page.locator(`input[aria-label="Choose file: ${key}"]`).setInputFiles(path.join(ds.dir, file));
-    await page.getByRole('button', { name: 'Run flow' }).click();
+    await page.getByRole('button', { name: 'Run flow', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Result: run finished' })).toBeVisible({ timeout: 180_000 });
     for (const sheet of ['Summary', 'Exceptions', 'OT_breaches']) await expect(page.getByRole('tab', { name: new RegExp(`^${sheet}, \\d+ rows?$`) })).toBeVisible();
 
@@ -161,7 +161,7 @@ test('journey 3: a new reference table version, published with a start date, is 
   await expect(versions).toContainText('OT limits v1');
   await expect(versions).toContainText('01 Jan 2026 to 30 Jun 2026');
   await page.locator('input[aria-label="Choose file: people"]').setInputFiles(csv(data));
-  await page.getByRole('button', { name: 'Run flow' }).click();
+  await page.getByRole('button', { name: 'Run flow', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Result: run finished' })).toBeVisible({ timeout: 60_000 });
   const first = page.getByRole('table', { name: 'Preview of People' }).locator('tbody tr').first();
   await expect(first.locator('td').nth(2)).toHaveText('16');
@@ -170,7 +170,7 @@ test('journey 3: a new reference table version, published with a start date, is 
   await pickDate(page, /^Effective date:/, '2026-06-15', '2026-09-30');
   await expect(versions).toContainText('OT limits v2');
   await expect(versions).toContainText('From 01 Jul 2026');
-  await page.getByRole('button', { name: 'Run flow' }).click();
+  await page.getByRole('button', { name: 'Run flow', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Result: run finished' })).toBeVisible({ timeout: 60_000 });
   await expect(page.getByRole('table', { name: 'Preview of People' }).locator('tbody tr').first().locator('td').nth(2)).toHaveText('20');
 });

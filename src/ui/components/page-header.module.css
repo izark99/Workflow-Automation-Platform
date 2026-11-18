@@ -3,7 +3,7 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: 16px;
-  min-height: 92px;
+  min-height: 67px;
 }
 
 .text {
@@ -24,7 +24,9 @@
   color: var(--color-muted);
 }
 
-.subtitle {
-  margin: 0;
-  color: var(--color-muted);
+.titleRow {
+  display: flex;
+  align-items: center;
+  /* Keeps the title at y 63 as on the screens (design/screens), now that no subtitle line follows. */
+  padding-top: 3px;
 }

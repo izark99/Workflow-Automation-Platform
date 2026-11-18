@@ -280,7 +280,7 @@ export const ROUTES: RuleRoute[] = [
     // The three cards with a file chosen, the progress gone, the result tab and its table.
     prepare: async (page) => {
       await page.locator('input[type=file]').setInputFiles({ name: 'people.csv', mimeType: 'text/csv', buffer: Buffer.from('name,kind\nAnn,WEEK\nBob,MONTH\n') });
-      await page.getByRole('button', { name: 'Run flow' }).click();
+      await page.getByRole('button', { name: 'Run flow', exact: true }).click();
       await page.getByRole('heading', { name: 'Result: run finished' }).waitFor({ timeout: 60_000 });
     },
   },

@@ -2,7 +2,8 @@
   position: relative;
   display: inline-flex;
   vertical-align: middle;
-  margin-left: 4px;
+  /* 24 px tall button in a 21 px text line: the negative margins keep the line height of the label or title. */
+  margin: -2px 0 -2px 4px;
 }
 
 .button {

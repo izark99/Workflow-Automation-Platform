@@ -114,7 +114,7 @@ Rules:
 - Minimum window width 1280 px. No horizontal page scroll at 1280 or 1440.
 - Sidebar 232 px, white, the same on every screen except the builder.
 - Main column: padding 32 px 40 px, 24 px between blocks.
-- Page header has a fixed structure and height on every screen: breadcrumb line 24 px, title 36 px, one action on the right. The title sits at the same y on every screen (63 px), and the first block starts at the same y on every screen. Up to Phase 3 a 21 px subtitle sat under the title and the first block started at 148 px. From Phase 4 the subtitle moves into an info button after the title (section "Info button"); task T4.6a measures the new y of the first block, writes it here, and updates the UI rule in the same commit.
+- Page header has a fixed structure and height on every screen: breadcrumb line 24 px, title 36 px with an info button after it (the old subtitle text, SPEC 11.2), one action on the right. The title sits at the same y on every screen (63 px), and the first block starts at the same y on every screen: **123 px** from Phase 4 (it was 148 px when a 21 px subtitle sat under the title). The header is 67 px high (24 + 4 + 3 + 36). The UI rule `headerPosition` checks both values.
 - Cards: white, 1 px line border, radius 12 px, padding 20 px, or no padding when they hold a table.
 - Tables: header cell padding 10 px 16 px, 12 px bold muted text; body rows 56 px high plus a 1 px divider; numbers right-aligned; cells do not wrap.
 - Builder: header bar 64 px, step list 184 px, settings panel 380 px, canvas in between. Step cards 240 x 56 px, 40 px apart, selected card with a 2 px accent border.

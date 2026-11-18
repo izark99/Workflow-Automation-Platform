@@ -25,6 +25,9 @@ const runButton = (page: Page) => page.getByRole('button', { name: /^Run flow$|^
 
 test('the screen has the three steps, the privacy line, and lists the versions that today uses', async ({ page }) => {
   await open(page);
+  // The privacy line is the text of the info button after the title (SPEC 11.2): not visible until it is opened.
+  await expect(page.getByText('Your files are read on this device.')).toHaveCount(0);
+  await page.getByRole('button', { name: 'About Run flow' }).click();
   await expect(page.getByText('Your files are read on this device. Nothing is uploaded to the server.')).toBeVisible();
   for (const h of ['1. Choose the effective date', '2. Add the input files']) await expect(page.getByRole('heading', { name: h })).toBeVisible();
   const versions = page.getByRole('group', { name: 'Versions used for this date' });

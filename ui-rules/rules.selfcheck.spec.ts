@@ -48,10 +48,10 @@ test('table rows: 56 px fails, 57 px passes', async ({ page }) => {
   expect(await tableRows(page)).toEqual([]);
 });
 
-test('header position: a title at y 0 fails, y 63 and block at y 148 pass', async ({ page }) => {
+test('header position: a title at y 0 fails, y 63 and block at y 123 pass', async ({ page }) => {
   await page.setContent(bad('<h1>t</h1><div data-first-block>b</div>'));
   expect((await headerPosition(page)).length).toBe(2);
-  await page.setContent(bad('<div style="height:63px"></div><h1 style="margin:0;height:36px">t</h1><div style="height:49px"></div><div data-first-block>b</div>'));
+  await page.setContent(bad('<div style="height:63px"></div><h1 style="margin:0;height:36px">t</h1><div style="height:24px"></div><div data-first-block>b</div>'));
   expect(await headerPosition(page)).toEqual([]);
 });
 

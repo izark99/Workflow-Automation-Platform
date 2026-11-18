@@ -1,6 +1,7 @@
 import { useId } from 'react';
 import type { InputHTMLAttributes, Ref, TextareaHTMLAttributes } from 'react';
 import { Icon } from './icons';
+import { InfoTip } from './info-tip';
 import styles from './field.module.css';
 
 type TextProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | 'className' | 'style' | 'id'>;
@@ -14,23 +15,21 @@ export interface FieldProps extends TextProps {
   secret?: boolean;
 }
 
-/** A labelled text field. The label, hint and error are tied to the input for screen readers. */
+/** A labelled text field. The label and error are tied to the input for screen readers; the hint is an info button after the label. */
 export function Field({ label, hint, error, secret = false, ...rest }: FieldProps) {
   const id = useId();
-  const hintId = `${id}-hint`;
   const errorId = `${id}-error`;
-  const describedBy = [hint ? hintId : '', error ? errorId : ''].filter(Boolean).join(' ') || undefined;
   return (
     <div>
-      <label className={styles.label} htmlFor={id}>
-        {label}
-        <input {...rest} id={id} type={secret ? 'password' : 'text'} className={styles.input} aria-invalid={error ? 'true' : undefined} aria-describedby={describedBy} />
-      </label>
-      {hint ? (
-        <span id={hintId} className={styles.hint}>
-          {hint}
-        </span>
-      ) : null}
+      <div className={styles.field}>
+        <div className={styles.labelRow}>
+          <label className={styles.label} htmlFor={id}>
+            {label}
+          </label>
+          {hint ? <InfoTip label={label}>{hint}</InfoTip> : null}
+        </div>
+        <input {...rest} id={id} type={secret ? 'password' : 'text'} className={styles.input} aria-invalid={error ? 'true' : undefined} aria-describedby={error ? errorId : undefined} />
+      </div>
       {error ? (
         <span id={errorId} className={styles.error} role="alert">
           {error}
@@ -62,19 +61,23 @@ export interface TextAreaFieldProps extends Omit<TextareaHTMLAttributes<HTMLText
   textareaRef?: Ref<HTMLTextAreaElement>;
 }
 
-/** A labelled multi-line text field. It cannot be resized by the user. */
+/** A labelled multi-line text field. It cannot be resized by the user. The hint is an info button after the label. */
 export function TextAreaField({ label, hint, error, status, mono = false, rows = 4, textareaRef, ...rest }: TextAreaFieldProps) {
   const id = useId();
   const noteId = `${id}-note`;
-  const describedBy = hint || error || status ? noteId : undefined;
+  const describedBy = error || status ? noteId : undefined;
   return (
     <div>
-      <label className={styles.label} htmlFor={id}>
-        {label}
+      <div className={styles.field}>
+        <div className={styles.labelRow}>
+          <label className={styles.label} htmlFor={id}>
+            {label}
+          </label>
+          {hint ? <InfoTip label={label}>{hint}</InfoTip> : null}
+        </div>
         <textarea {...rest} ref={textareaRef} id={id} rows={rows} className={`${styles.textarea} ${mono ? styles.mono : ''}`} aria-invalid={error ? 'true' : undefined} aria-describedby={describedBy} />
-      </label>
+      </div>
       <span id={noteId}>
-        {hint ? <span className={styles.hint}>{hint}</span> : null}
         {error ? (
           <span className={styles.error} role="alert" style={{ display: 'block' }}>
             {error}
