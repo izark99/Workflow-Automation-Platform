@@ -803,3 +803,24 @@ blank or mixed column in one month cannot change the types of another month.
 - The document is checked by `scripts/deploy-doc.test.ts` (7 tests): the sections and their order, that every `npm run` script and every repository path it names exists, that it names the variables the app and the keep-alive read, the warnings about the service key and sign-ups, and the first-admin statement is identical to the one that `supabase/tests/database/100-first-admin.test.sql` runs (the new admin can then see and manage profiles).
 - Found while checking the Pages step: `npm run build` (the Pages build command) puts `duckdb-mvp-*.wasm` (about 40 MB) and `duckdb-eh-*.wasm` (about 35 MB) in `dist/assets`. Cloudflare Pages accepts 25 MiB per file (confirmed in Cloudflare's documentation, which also gives the same limit for Workers static assets and recommends an R2 public bucket for larger files), so the upload fails. This does not touch any gate. The fix changes decision D7 (engine code as a static asset of the app), so it is the owner's choice: listed under "Needs Harold" and "Blockers" in `PROGRESS.md`, with three options in `docs/DEPLOY.md` (A: R2 bucket, recommended; B: another host; C: ask Cloudflare). The build does not choose for the owner.
 - The keep-alive workflow now ends with a notice and exit 0 when the two required secrets are not set yet, so a repository without them does not send a failure notice every day.
+
+## D71 The Pages build loads DuckDB-WASM from jsDelivr (owner's choice, after T3.9)
+
+- The blocker of D70 is solved with the option chosen by Harold: the build for Cloudflare Pages loads the DuckDB-WASM
+  bundles from jsDelivr instead of serving them. This changes D7 for that build only.
+- `npm run build:pages` runs `vite build --mode pages`; `vite.config.ts` then sets `VITE_DUCKDB_SOURCE` to `cdn`.
+  `browser-runner.ts` reads it at build time: the CDN build has no wasm file in `dist` (the self-hosted imports sit in
+  `duckdb-self-hosted.ts` and are only imported by the other branch), and every other build (gates, e2e, UI rules,
+  spike) still serves the files itself, as D7 says. `scripts/check-dist-size.mjs` stops the Pages build when a file is
+  above 25 MiB.
+- The address is built from `PACKAGE_VERSION` of the installed package (pinned in `package.json`), so the code that runs
+  is the version the tests ran against. A worker on another origin is started through a same-origin blob that calls
+  `importScripts`. jsDelivr sends `access-control-allow-origin: *` (checked with curl on the pinned version).
+- The no-network rule is kept in the form that matters: `auditRequests` takes an exact list of allowed code addresses
+  (the four jsDelivr files) and still refuses any other origin, any method other than GET, any body and any file
+  content. `npm run test:acceptance:pages` runs the acceptance suite on a CDN build with that list; `acceptance/cdn.spec.ts`
+  checks that a blocked CDN stops the run with a message that names the host instead of waiting forever.
+- Costs accepted with this choice: a third-party CDN must be up and reachable from the company network, and engine code
+  is not under the app's control at run time. The R2 option of D70 remains the way out if either becomes a problem.
+- Subresource integrity is not used: a classic worker's `importScripts` and DuckDB's own wasm fetch do not take an
+  integrity value.

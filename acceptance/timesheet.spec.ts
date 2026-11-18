@@ -5,7 +5,7 @@ import * as XLSX from 'xlsx';
 import { auditRequests } from '../scripts/lib/request-audit';
 import { compareWorkbooks, formatComparison, readWorkbook } from '../scripts/lib/compare-workbooks';
 import { COMPARED_SHEETS, DATASETS, TIMESHEET_FLOW } from './datasets';
-import { runDataset, watchRequests } from './helpers';
+import { allowedCodeUrls, runDataset, watchRequests } from './helpers';
 
 // Gate G1: one flow file, run through the real engine in Chromium, must give the expected workbook cell by cell
 // for both datasets.
@@ -33,6 +33,6 @@ for (const ds of DATASETS) {
       .map((r) => String(r['Full name'] ?? ''))
       .filter((n) => n.length >= 5);
     expect(names.length).toBeGreaterThan(5);
-    expect(auditRequests(requests, 'http://localhost:4176', names)).toEqual([]);
+    expect(auditRequests(requests, 'http://localhost:4176', names, allowedCodeUrls())).toEqual([]);
   });
 }

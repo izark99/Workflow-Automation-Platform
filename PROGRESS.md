@@ -102,15 +102,21 @@ Decisions with a default. Build with the default unless this list says otherwise
 | Approval before a version takes effect | None |
 | Reference tables by non-admin users | Not allowed |
 | UI language | English |
-| Where the two DuckDB-WASM files are served. Each is above the 25 MiB limit of a Cloudflare Pages file (about 40 MB and 35 MB), so the Pages upload fails as built | Bundled in `dist` (decision D7). Options in `docs/DEPLOY.md`: A serve them from a public R2 bucket (recommended, needs one build task), B another host without the limit, C ask Cloudflare for a higher limit |
+| Where the two DuckDB-WASM files are served (above the 25 MiB per-file limit of Cloudflare Pages) | Decided by Harold on 2026-11-18: from jsDelivr in the Pages build (`npm run build:pages`, D71). Other builds still serve them (D7) |
 
 ## Blockers
 
-- Deployment on Cloudflare Pages: the build output has two files above the 25 MiB limit per file (`dist/assets/duckdb-mvp-*.wasm` about 40 MB, `duckdb-eh-*.wasm` about 35 MB). Found in T3.9 by running the Pages build command and checking file sizes; the limit is confirmed by Cloudflare's documentation. It does not affect any gate. It needs the decision under "Needs Harold" above.
+None. The Pages file size blocker of T3.9 is solved by D71.
 
 ## Log
 
 Newest first.
+
+### 2026-11-18 Pages build loads DuckDB-WASM from jsDelivr (owner's choice A', D71)
+Changed: src/engine/runner/{browser-runner.ts,duckdb-bundles.ts,duckdb-bundles.test.ts,duckdb-self-hosted.ts}, src/ui/builder/preview-runner.ts (passes the runner's message through), vite.config.ts (`--mode pages`), scripts/check-dist-size.mjs, scripts/lib/request-audit.{ts,test.ts} (exact list of allowed code addresses), acceptance/{helpers.ts,privacy.spec.ts,timesheet.spec.ts,cdn.spec.ts}, package.json (`build:pages`, `test:acceptance:pages`), docs/DEPLOY.md, scripts/deploy-doc.test.ts, docs/DECISIONS.md (D71).
+Checked: `npm run build` still puts the two wasm files in dist and `check-dist-size` fails on them (34.3 and 39.4 MiB); `npm run build:pages` has no wasm file and passes. `npm run test:acceptance:pages` 8 passed (both datasets match cell by cell, the audit allows only the four jsDelivr files, a blocked CDN gives the message that names the host). Before the audit list was added, the same CDN run failed the audit only on the two jsDelivr GETs, so the audit does see them.
+Gates run on the final code: check PASS (66 files, 687 tests), test:acceptance PASS on the default build (7 passed, 1 skipped), test:acceptance:pages PASS (8 passed), test:e2e PASS (167 passed). test:ui-rules, spike and test:db not rerun: no UI, spike or database change.
+Not done: nothing was deployed. The real Pages deployment and the network of the company are not tested.
 
 ### 2026-11-18 Final run: npm ci, then npm run gates (Phase 3 done, build complete)
 Run: a clean tree, no leftover servers or containers, `npm ci` (exit 0, 278 packages), then `npm run gates` started after it, as one background command that wrote logs only. This entry was written after reading the logs, in a separate step.

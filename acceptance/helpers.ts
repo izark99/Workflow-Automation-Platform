@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import type { Page } from '@playwright/test';
 import type { LoggedRequest } from '../scripts/lib/request-audit';
+import { cdnBundles } from '../src/engine/runner/duckdb-bundles';
 import type { RunArgs, RunReply } from './page';
 
 export interface DatasetConfig {
@@ -52,4 +53,15 @@ export function watchRequests(page: Page): LoggedRequest[] {
   page.on('request', (r) => log.push({ url: r.url(), method: r.method(), postData: r.postData(), headers: r.headers() }));
   page.on('websocket', (ws) => log.push({ url: ws.url(), method: 'WEBSOCKET', postData: null, headers: {} }));
   return log;
+}
+
+/**
+ * Code addresses on another origin that this build may load: the four DuckDB-WASM files on jsDelivr when the page was
+ * built with `VITE_DUCKDB_SOURCE=cdn` (`npm run test:acceptance:pages`, decision D71), none otherwise.
+ */
+export function allowedCodeUrls(): string[] {
+  if (process.env.VITE_DUCKDB_SOURCE !== 'cdn') return [];
+  const pkg = JSON.parse(readFileSync(path.resolve('node_modules/@duckdb/duckdb-wasm/package.json'), 'utf8')) as { version: string };
+  const b = cdnBundles(pkg.version);
+  return [b.mvp.mainModule, b.mvp.mainWorker, b.eh!.mainModule, b.eh!.mainWorker];
 }

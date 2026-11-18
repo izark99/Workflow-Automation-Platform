@@ -26,6 +26,25 @@ describe('auditRequests: what is allowed', () => {
   });
 });
 
+describe('auditRequests: code from another origin', () => {
+  const CODE = 'https://cdn.example/pkg@1.0.0/dist/engine.wasm';
+
+  it('accepts a GET of a listed code address', () => {
+    expect(auditRequests([req({ url: CODE })], ORIGIN, [], [CODE])).toEqual([]);
+  });
+
+  it('refuses the same address when it is not listed, and any other address on that origin', () => {
+    expect(auditRequests([req({ url: CODE })], ORIGIN, [])[0]).toMatch(/another address/);
+    expect(auditRequests([req({ url: 'https://cdn.example/collect' })], ORIGIN, [], [CODE])[0]).toMatch(/another address/);
+  });
+
+  it('refuses a listed address with another method, a body or file content', () => {
+    expect(auditRequests([req({ url: CODE, method: 'POST' })], ORIGIN, [], [CODE])[0]).toMatch(/POST/);
+    expect(auditRequests([req({ url: CODE, postData: 'x' })], ORIGIN, [], [CODE])[0]).toMatch(/body/);
+    expect(auditRequests([req({ url: CODE, headers: { 'x-a': 'Nguyen Van An' } })], ORIGIN, ['Nguyen Van An'], [CODE])[0]).toMatch(/file content/);
+  });
+});
+
 describe('auditRequests: what is refused', () => {
   const only = (log: LoggedRequest[], sentinels: string[] = []) => auditRequests(log, ORIGIN, sentinels);
 

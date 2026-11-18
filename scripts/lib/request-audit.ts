@@ -19,15 +19,19 @@ const STATIC_PATH = /^\/(acceptance\/index\.html|assets\/[^/]+|favicon\.ico)$/;
 
 /**
  * Returns one message per violation, an empty list when the log is clean. `sentinels` are pieces of file content that
- * must not appear anywhere in any request (address, headers, body).
+ * must not appear anywhere in any request (address, headers, body). `codeUrls` are exact addresses of code on another
+ * origin that the build loads on purpose (the DuckDB-WASM files of the Pages build, decision D71): a plain GET of one of
+ * them is allowed, and it is still checked for sentinels.
  */
-export function auditRequests(log: LoggedRequest[], origin: string, sentinels: string[]): string[] {
+export function auditRequests(log: LoggedRequest[], origin: string, sentinels: string[], codeUrls: string[] = []): string[] {
   const violations: string[] = [];
   const forms = sentinels.flatMap((s) => sentinelForms(s).map((form) => ({ sentinel: s, form })));
   for (const r of log) {
     const label = `${r.method} ${r.url.length > 120 ? `${r.url.slice(0, 120)}...` : r.url}`;
     if (r.url.startsWith('blob:') || r.url.startsWith('data:')) {
       // Local addresses. They still must not carry a sentinel (checked below).
+    } else if (codeUrls.includes(r.url)) {
+      if (r.method !== 'GET') violations.push(`${label}: ${r.method} is not a request for code (only GET is).`);
     } else if (r.method === 'WEBSOCKET') {
       violations.push(`${label}: a web socket connection is not a static asset.`);
     } else {

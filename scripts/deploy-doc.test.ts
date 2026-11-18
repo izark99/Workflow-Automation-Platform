@@ -37,12 +37,12 @@ describe('docs/DEPLOY.md', () => {
     expect(line(readFileSync('supabase/tests/database/100-first-admin.test.sql', 'utf8'))).toBe(documented);
   });
 
-  it('states the known blocker of the Pages upload: two DuckDB-WASM files above 25 MiB', () => {
-    expect(doc).toMatch(/Known blocker/);
+  it('uses the Pages build, which keeps every file under 25 MiB, and names the CDN host', () => {
+    expect(doc).toMatch(/Build command: `npm run build:pages`/);
+    expect(pkg.scripts['build:pages']).toContain('check-dist-size');
     expect(doc).toMatch(/25 MiB/);
-    expect(doc).toContain('duckdb-mvp');
-    expect(doc).toContain('duckdb-eh');
-    expect(doc).toMatch(/R2/);
+    expect(doc).toContain('cdn.jsdelivr.net');
+    expect(doc).toMatch(/ask IT to allow/i);
   });
 
   it('states what the build does not do', () => {
