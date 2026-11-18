@@ -914,6 +914,7 @@ export const en = {
 
   // Store and sign-in messages (T4.7d). src/store/messages.ts keeps the same English template as its fallback.
   'errors.noUser': 'No user is signed in. Sign in and try again.',
+  'errors.textEmpty': 'A text cannot be empty. Type the text, or use Reset to go back to the default.',
   'errors.noProfile': 'Your account has no profile yet. Ask the admin to add you, then sign in again.',
   'errors.adminOnly': 'Only the admin can {what}. Ask the admin.',
   'errors.notAllowed': 'You are not allowed to {action}. Ask the admin if you need this right.',

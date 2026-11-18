@@ -871,6 +871,7 @@ export const vi: Record<MessageKey, string> = {
   'engine.onlyDraftCovers': 'Chỉ có một bản nháp (phiên bản {n}) của {what} bao phủ {date}, mà bản nháp chưa có hiệu lực. Hãy phát hành nó, hoặc chọn ngày hiệu lực khác.',
   'engine.noVersionValid': 'Không có phiên bản nào của {what} có hiệu lực vào {date}. Các phiên bản đã phát hành bao phủ: {periods}. Hãy chọn ngày hiệu lực nằm trong một trong các khoảng này, hoặc thêm một phiên bản bao phủ nó.',
   'errors.noUser': 'Chưa có người dùng nào đăng nhập. Hãy đăng nhập rồi thử lại.',
+  'errors.textEmpty': 'Văn bản không được để trống. Hãy nhập văn bản, hoặc dùng Đặt lại để về mặc định.',
   'errors.noProfile': 'Tài khoản của bạn chưa có hồ sơ. Hãy nhờ quản trị viên thêm bạn, rồi đăng nhập lại.',
   'errors.adminOnly': 'Chỉ quản trị viên mới có thể {what}. Hãy hỏi quản trị viên.',
   'errors.notAllowed': 'Bạn không được phép {action}. Hãy hỏi quản trị viên nếu bạn cần quyền này.',

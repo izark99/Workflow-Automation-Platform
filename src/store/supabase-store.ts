@@ -33,6 +33,8 @@ import {
   type RunLogEntry,
   type Scope,
   type StoreErrorCode,
+  type UiText,
+  type UiTextLocale,
   type User,
   type VersionPatch,
 } from './types';
@@ -124,6 +126,27 @@ export class SupabaseStore implements DataStore {
     await this.mustBeAdmin('see the groups');
     const result = await this.client.from('groups').select('id, name').order('name');
     return this.ok<GroupRow[]>(result, 'read the groups').map(groupFromRow);
+  }
+
+  async listUiTexts(): Promise<UiText[]> {
+    // Readable by everyone, also before sign-in, so it needs no profile.
+    const result = await this.client.from('ui_texts').select('locale, key, value, updated_at');
+    return this.ok<{ locale: UiTextLocale; key: string; value: string; updated_at: string }[]>(result, 'read the texts').map((r) => ({ locale: r.locale, key: r.key, value: r.value, updatedAt: r.updated_at }));
+  }
+
+  async saveUiText(input: { locale: UiTextLocale; key: string; value: string }): Promise<UiText> {
+    await this.mustBeAdmin('edit texts');
+    if (input.value.trim() === '') throw storeError('invalid', 'errors.textEmpty');
+    const result = await this.client.from('ui_texts').upsert({ locale: input.locale, key: input.key, value: input.value }, { onConflict: 'locale,key' }).select('locale, key, value, updated_at');
+    const row = this.ok<{ locale: UiTextLocale; key: string; value: string; updated_at: string }[]>(result, 'save the text')[0];
+    if (!row) throw storeError('forbidden', 'errors.cannotChange', { what: 'the text' });
+    return { locale: row.locale, key: row.key, value: row.value, updatedAt: row.updated_at };
+  }
+
+  async resetUiText(locale: UiTextLocale, key: string): Promise<void> {
+    await this.mustBeAdmin('edit texts');
+    const result = await this.client.from('ui_texts').delete().eq('locale', locale).eq('key', key).select('key');
+    this.ok<unknown[]>(result, 'reset the text');
   }
 
   async listFlows(): Promise<FlowRecord[]> {

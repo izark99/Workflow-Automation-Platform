@@ -13,6 +13,8 @@ import type {
   RefVersionPatch,
   RunLogEntry,
   Scope,
+  UiText,
+  UiTextLocale,
   User,
   VersionPatch,
 } from './types';
@@ -25,6 +27,8 @@ export interface Snapshot {
   flows: FlowRecord[];
   refTables: RefTableRecord[];
   runLog: RunLogEntry[];
+  /** Edited UI texts. Missing in a snapshot saved before Phase 4. */
+  uiTexts?: UiText[];
 }
 
 /** Where the snapshot lives between page loads. The browser uses IndexedDB (decision D37); the tests use memory. */
@@ -190,6 +194,32 @@ export class LocalStore implements DataStore {
     s.groups = s.groups.filter((g) => g.id !== id);
     for (const u of s.users) u.groupIds = u.groupIds.filter((g) => g !== id);
     for (const f of s.flows) f.groupIds = f.groupIds.filter((g) => g !== id);
+    await this.commit(s);
+  }
+
+  async listUiTexts(): Promise<UiText[]> {
+    const s = await this.open();
+    return structuredClone(s.uiTexts ?? []);
+  }
+
+  async saveUiText(input: { locale: UiTextLocale; key: string; value: string }): Promise<UiText> {
+    const s = await this.open();
+    this.mustBeAdmin(s, 'edit texts');
+    const value = input.value;
+    if (value.trim() === '') fail('invalid', 'errors.textEmpty');
+    const list = (s.uiTexts ??= []);
+    const saved: UiText = { locale: input.locale, key: input.key, value, updatedAt: this.now().toISOString() };
+    const at = list.findIndex((t) => t.locale === input.locale && t.key === input.key);
+    if (at >= 0) list[at] = saved;
+    else list.push(saved);
+    await this.commit(s);
+    return structuredClone(saved);
+  }
+
+  async resetUiText(locale: UiTextLocale, key: string): Promise<void> {
+    const s = await this.open();
+    this.mustBeAdmin(s, 'edit texts');
+    s.uiTexts = (s.uiTexts ?? []).filter((t) => !(t.locale === locale && t.key === key));
     await this.commit(s);
   }
 

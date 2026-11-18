@@ -4,3 +4,4 @@ export { formatMessage, placeholdersOf, validateMessage } from './format';
 export { useT } from './react';
 export { errorText } from './error-text';
 export { formatDate } from './dates';
+export { applyUiTexts } from './overrides';

@@ -92,6 +92,16 @@ export const KEEP_DELETED_DAYS = 30;
 export type StoreErrorCode = 'not_found' | 'forbidden' | 'invalid' | 'conflict';
 
 /** Every message says what failed and what to do next. */
+export type UiTextLocale = 'en' | 'vi';
+
+/** An edited text: the value replaces the default of the catalog for that locale. */
+export interface UiText {
+  locale: UiTextLocale;
+  key: string;
+  value: string;
+  updatedAt: string;
+}
+
 export class StoreError extends Error {
   readonly code: StoreErrorCode;
   /** Id of the message in the catalog and its parameters. Without an id the English `message` is shown. */
@@ -137,6 +147,10 @@ export interface DataStore {
   purgeFlow(id: string): Promise<void>;
   /** Admin only. Removes the deleted flows that were kept longer than 30 days. Returns how many. */
   purgeExpired(): Promise<number>;
+  /** The edited UI texts (SPEC 11.3). Everyone reads them, also before signing in; only an admin changes them. */
+  listUiTexts(): Promise<UiText[]>;
+  saveUiText(input: { locale: UiTextLocale; key: string; value: string }): Promise<UiText>;
+  resetUiText(locale: UiTextLocale, key: string): Promise<void>;
 
   saveFlowVersion(flowId: string, versionNo: number, patch: VersionPatch): Promise<FlowRecord>;
   /** A new draft, copied from `copyFrom` when given. */

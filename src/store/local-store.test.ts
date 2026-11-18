@@ -243,3 +243,21 @@ describe('users, groups and run log', () => {
     expect(await store.listRunLog('flow-headcount')).toEqual([]);
   });
 });
+
+describe('edited UI texts', () => {
+  it('everyone reads them, an admin saves and resets them, a user cannot', async () => {
+    expect(await store.listUiTexts()).toEqual([]);
+    const saved = await store.saveUiText({ locale: 'vi', key: 'nav.flows', value: 'Quy trình' });
+    expect(saved).toMatchObject({ locale: 'vi', key: 'nav.flows', value: 'Quy trình' });
+    await store.saveUiText({ locale: 'vi', key: 'nav.flows', value: 'Luồng việc' });
+    expect((await store.listUiTexts()).map((t) => t.value)).toEqual(['Luồng việc']);
+    await expect(store.saveUiText({ locale: 'en', key: 'nav.flows', value: '   ' })).rejects.toMatchObject({ messageId: 'errors.textEmpty' });
+    await as('user-lan');
+    expect((await store.listUiTexts()).map((t) => t.value)).toEqual(['Luồng việc']);
+    expect(await code(store.saveUiText({ locale: 'en', key: 'nav.flows', value: 'X' }))).toBe('forbidden');
+    expect(await code(store.resetUiText('vi', 'nav.flows'))).toBe('forbidden');
+    await as('user-harold');
+    await store.resetUiText('vi', 'nav.flows');
+    expect(await store.listUiTexts()).toEqual([]);
+  });
+});
