@@ -1,15 +1,16 @@
 import { formatDate } from '../../engine/versions';
 import { KEEP_DELETED_DAYS } from '../../store/types';
 import type { FlowRecord, Group, User } from '../../store/types';
+import { translate } from '../i18n';
 
 const two = (iso: string): string => formatDate(iso).replace(/^(\d) /, '0$1 ');
 const DAY = 86_400_000;
 
 /** The groups of a user as the table shows them: the admin has every group, a user their own, or "No group". */
 export function groupsText(user: User, groups: Group[]): string {
-  if (user.role === 'admin') return 'All groups';
+  if (user.role === 'admin') return translate('admin.allGroups');
   const names = user.groupIds.map((id) => groups.find((g) => g.id === id)?.name).filter((n): n is string => !!n);
-  return names.length > 0 ? names.join(', ') : 'No group';
+  return names.length > 0 ? names.join(', ') : translate('admin.noGroup');
 }
 
 export const memberCount = (group: Group, users: User[]): number => users.filter((u) => u.groupIds.includes(group.id)).length;
@@ -37,7 +38,7 @@ export interface UserForm {
 
 /** What is wrong with a user form, in words that say what to do; undefined when it can be saved. */
 export function userFormProblem(f: UserForm): string | undefined {
-  if (f.name.trim() === '') return 'The name is empty. Type the name of the user.';
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim())) return `"${f.email.trim()}" is not an email address. Type an address like name@example.com.`;
+  if (f.name.trim() === '') return translate('admin.error.nameEmpty');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim())) return translate('admin.error.emailInvalid', { email: f.email.trim() });
   return undefined;
 }

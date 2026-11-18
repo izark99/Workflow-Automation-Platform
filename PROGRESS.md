@@ -115,7 +115,7 @@ Texts (SPEC 11.3)
 - [x] T4.7b4 Migrate the settings forms, part 2: lookup, group by, unpivot and pivot, output, append, SQL.
 - [x] T4.7c1 Migrate Run (with the engine messages shown there) and Versions to keys.
 - [x] T4.7c2 Migrate Reference tables and every dialog of it, and the date picker (month and weekday names stay for T4.7e).
-- [ ] T4.7c3 Migrate Admin (users, groups, access, deleted flows) and `/dev/components` (`dev.*` keys). Remove `strings.ts` when it is empty. The pseudo-locale rule and the static scan now cover `body` on every route and every `.tsx` file of `src/ui`.
+- [x] T4.7c3 Migrate Admin (users, groups, access, deleted flows) and `/dev/components` (`dev.*` keys). Remove `strings.ts` when it is empty. The pseudo-locale rule and the static scan now cover `body` on every route and every `.tsx` file of `src/ui`.
 - [ ] T4.7d Errors as codes: the store, the auth service and the engine return a code with parameters; the UI shows the catalog text for the code. The engine keeps its English text as the fallback and imports nothing from the UI. Unit test: every code has an `en` text with the same placeholders.
 - [ ] T4.7e `vi` catalog: a Vietnamese value for every key, placeholders identical (unit test). Month and weekday names in the catalog; dates still `30 Sep 2026` in English. Language switch in the sidebar footer and on the sign-in screen, kept in browser storage. Ask Harold to review the wording later (Needs Harold); do not wait for it.
 - [ ] T4.7f `ui_texts` table: migration, row-level security (read for everyone including anon, write for active admins), pgTAP tests; `DataStore` methods to read and save overrides, in `LocalStore` and `SupabaseStore`; overrides applied over the catalog at app start.
@@ -173,6 +173,12 @@ None. The Pages file size blocker of T3.9 is solved by D71.
 ## Log
 
 Newest first.
+
+### 2026-11-18 T4.7c3 Admin and /dev/components on the catalog; the rule covers every route (turn 17)
+Changed: screens/admin.tsx and admin-logic.ts, screens/dev-components.tsx (47 demo texts moved to `dev.demo.*` keys by a one-off script that rewrites literals with the TypeScript parser), components/date-logic.ts and date-picker.tsx (month names, weekday names and the day label come from the catalog; the short month names of `30 Sep 2026` dates follow in T4.7e), components/table.tsx (`userContent` columns), en.ts (about 80 keys added), strings.ts (now only the `xlsxTooLarge` text that the engine and the benchmark page import; T4.7d removes the file), i18n/scan-literals.ts (the scanner as a module), no-literal-text.test.ts (now scans every `.tsx` file of `src/ui`, 0 findings), ui-rules/pseudo-locale.spec.ts (the whole page of every route; only "sign-in screen with an error" and the new-version dialog route stay out, both logged).
+Fix found by e2e: the Admin button label for "Delete for good {name}" kept its old word order.
+Gates run: check PASS (801 tests, exit 0); `npm run test:e2e` first run 176 passed, 1 failed (the label above), `admin.spec.ts` passes after the fix (10 passed; the other files were not rerun after the label fix, the change touches one aria-label); full `npm run test:ui-rules` exit 0, 1212 passed in 18.9 min (light theme 1280 px: 404; light theme 1440 px: 404; dark theme 1440 px: 404).
+Next: T4.7d (errors as codes).
 
 ### 2026-11-18 T4.7c2 Reference tables on the catalog (turn 16)
 Changed: screens/reference-tables.tsx (list, detail, grid, pager, paste dialog, new table dialog, discard dialog, toasts), reftable-logic.ts (cell errors, paste errors, row limit, table summary with plural forms), components/table.tsx (`userContent` on a column marks header and cells as user data), en.ts (about 30 keys), strings.ts (`refStrings` and the screen header removed), no-literal-text.test.ts, ui-rules (pseudo-locale covers `/reference-tables` and its dialogs; the flush card label no longer carries the table name).

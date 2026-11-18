@@ -1,86 +1,10 @@
-// All user-visible text lives here.
+// The UI texts live in the message catalog (src/ui/i18n). What is left here is an English text that the engine and the
+// benchmark page still import; task T4.7d turns engine errors into codes and removes this file.
 
 const mb = (bytes: number): string => `${(bytes / 1e6).toFixed(1)} MB`;
 
 export const strings = {
-  screens: {
-    admin: { crumb: 'Workspace', title: 'Admin', subtitle: 'Users, groups, access to shared flows, and deleted flows.' },
-    notBuilt: 'This screen is not built yet.',
-  },
-  loadFailed: 'The data could not be loaded.',
-  loadFailedNext: 'Reload the page. If it happens again, allow site data for this page in the browser settings.',
   xlsxTooLarge: (fileName: string, sizeBytes: number, limitBytes: number): string =>
     `${fileName} is ${mb(sizeBytes)}, which is above the ${mb(limitBytes)} this app can read safely from an .xlsx file. ` +
     'Open the file in Excel, save the sheet as .csv, and load the .csv file instead.',
-};
-
-// Components and states page (development only).
-export const devStrings = {
-  crumb: 'Design reference',
-  title: 'Components and states',
-  subtitle: 'Every control is built for this app. No browser-default dropdown, date picker, or checkbox is used.',
-  buttons: 'Buttons: two sizes, one radius',
-  buttonsNote: 'Orange is used once per screen, for the main action. Compact buttons are used inside tables and toolbars.',
-  fields: 'Text fields and checkboxes',
-  dropdown: 'Dropdown, closed and open',
-  datePicker: 'Date picker, closed and open',
-  loading: 'Loading: the skeleton keeps the layout of the table',
-  loadingNote: 'Shown only when loading takes longer than about 0.3 seconds, so fast screens do not flash.',
-  empty: 'Empty state',
-  progress: 'Run in progress',
-  error: 'Error state',
-  confirm: 'Confirm before delete',
-};
-
-export const adminStrings = {
-  forbidden: 'Only the admin can open this screen.',
-  forbiddenNext: 'Go back to the Flows list. Ask the admin if you need a change.',
-  loadFailed: 'The admin data could not be loaded.',
-  usersTitle: 'Users',
-  invite: 'Invite user',
-  userCols: { name: 'Name', email: 'Email', role: 'Role', groups: 'Groups', actions: 'Actions' },
-  edit: 'Edit',
-  usersCount: (n: number): string => `${n} ${n === 1 ? 'user' : 'users'}.`,
-  userDialogNew: 'Invite user',
-  userDialogEdit: (name: string): string => `Edit ${name}`,
-  userName: 'Name',
-  userEmail: 'Email',
-  userRole: 'Role',
-  roles: { admin: 'Admin', user: 'User' },
-  userGroups: 'Groups',
-  userGroupsHint: 'The admin can open every group. A user opens the shared flows of the groups ticked here.',
-  inviteHint: 'The user is added to the list and signs in with this email address.',
-  save: 'Save',
-  inviteConfirm: 'Add user',
-  cancel: 'Cancel',
-  userSaveFailed: 'The user could not be saved.',
-  groupsTitle: 'Groups',
-  newGroup: 'New group',
-  groupCols: { name: 'Group', members: 'Members', actions: 'Actions' },
-  rename: 'Rename',
-  delete: 'Delete',
-  groupDialogNew: 'New group',
-  groupDialogRename: (name: string): string => `Rename ${name}`,
-  groupName: 'Group name',
-  groupSaveFailed: 'The group could not be saved.',
-  groupDeleteTitle: (name: string): string => `Delete ${name}?`,
-  groupDeleteText: (members: number, flows: number): string => `${members} ${members === 1 ? 'member loses' : 'members lose'} this group, and ${flows} ${flows === 1 ? 'shared flow stops' : 'shared flows stop'} being open to it. Users and flows are not deleted.`,
-  accessTitle: 'Access to shared flows',
-  accessText: 'Members of a ticked group can view and run the flow. Only the admin can edit or delete it.',
-  accessCols: { flow: 'Shared flow' },
-  access: (group: string, flow: string): string => `${group} can view and run ${flow}`,
-  accessSaved: 'Access updated.',
-  noShared: 'No shared flow yet. The admin creates shared flows in the Flows list.',
-  accessFailed: 'The access could not be changed.',
-  deletedTitle: 'Deleted flows',
-  deletedText: 'A deleted flow is kept for 30 days. After that it is removed for good.',
-  deletedCols: { flow: 'Flow', owner: 'Owner', deletedOn: 'Deleted on', keptUntil: 'Kept until', actions: 'Actions' },
-  restore: 'Restore',
-  deleteForGood: 'Delete for good',
-  restored: (name: string): string => `${name} restored.`,
-  purgeTitle: (name: string): string => `Delete ${name} for good?`,
-  purgeText: 'The flow and all its versions are removed now. This cannot be undone.',
-  purged: (name: string): string => `${name} deleted for good.`,
-  noDeleted: 'No deleted flow. A flow that is deleted from the Flows list appears here for 30 days.',
-  deletedFailed: 'The flow could not be changed.',
 };

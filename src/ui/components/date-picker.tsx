@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { formatDate } from '../../engine/versions';
 import { useT } from '../i18n';
-import { addMonths, dayLabel, monthCells, monthOf, monthTitle, moveDate, WEEKDAYS } from './date-logic';
+import { addMonths, dayLabel, monthCells, monthOf, monthTitle, moveDate, weekdays } from './date-logic';
 import type { DateKey } from './date-logic';
 import { Icon } from './icons';
 import { opensUp, useOutsideClose } from './popover';
@@ -109,7 +109,7 @@ export function DatePicker({ label, value, onChange, width = 180, disabled = fal
             </button>
           </div>
           <div className={styles.grid} ref={gridRef}>
-            {WEEKDAYS.map((d) => (
+            {weekdays().map((d) => (
               <span key={d} className={styles.weekday} aria-hidden="true">
                 {d}
               </span>

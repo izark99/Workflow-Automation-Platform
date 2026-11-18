@@ -1,8 +1,12 @@
 // Pure date helpers for the Date picker. Dates are ISO strings (`2026-09-30`); all arithmetic is in UTC so the
 // browser time zone cannot move a day.
-const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+import { translate } from '../i18n';
+import type { MessageKey } from '../i18n';
 
-export const WEEKDAYS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
+const monthName = (month: number): string => translate(`common.month.${month}` as MessageKey);
+
+/** The two-letter weekday names, Monday first, from the catalog. */
+export const weekdays = (): string[] => [1, 2, 3, 4, 5, 6, 7].map((i) => translate(`common.weekday.${i}` as MessageKey));
 
 export interface YearMonth {
   year: number;
@@ -24,7 +28,7 @@ export const monthOf = (iso: string): YearMonth => {
   return { year: d.getUTCFullYear(), month: d.getUTCMonth() + 1 };
 };
 
-export const monthTitle = ({ year, month }: YearMonth): string => `${MONTH_NAMES[month - 1]} ${year}`;
+export const monthTitle = ({ year, month }: YearMonth): string => translate('common.datePicker.monthTitle', { month: monthName(month), year });
 
 export function addMonths({ year, month }: YearMonth, delta: number): YearMonth {
   const index = year * 12 + (month - 1) + delta;
@@ -34,7 +38,7 @@ export function addMonths({ year, month }: YearMonth, delta: number): YearMonth 
 /** The label a day button carries: `1 September 2026`. */
 export function dayLabel(iso: string): string {
   const d = fromIso(iso);
-  return `${d.getUTCDate()} ${MONTH_NAMES[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+  return translate('common.datePicker.dayLabel', { day: d.getUTCDate(), month: monthName(d.getUTCMonth() + 1), year: d.getUTCFullYear() });
 }
 
 /** Cells of the month grid, Monday first: leading blanks (null), then every day of the month as an ISO string. */
