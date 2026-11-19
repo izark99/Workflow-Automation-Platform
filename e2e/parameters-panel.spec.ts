@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
+import { seedParameterFlow } from './parameter-flow';
 import { seedRunnableFlow } from './runnable-flow';
 
 const panel = (page: Page) => page.getByRole('complementary', { name: 'Step settings' });
@@ -115,4 +116,15 @@ test('the Test tab asks for the parameters that the steps read, and only for tho
   await panel(page).getByRole('button', { name: 'Preview first rows' }).click();
   await expect(rows(page)).toHaveCount(1, { timeout: 30_000 });
   await expect(rows(page).first()).toContainText('Bob');
+});
+
+test('the dropdowns of a parameter stay inside its card', async ({ page }) => {
+  await seedParameterFlow(page);
+  await page.goto('/flows/flow-param/versions/2');
+  const card = panel(page).getByRole('group', { name: 'Parameter 4' });
+  const box = (await card.boundingBox())!;
+  for (const name of [/^Type 4/, /^Default value 4/]) {
+    const dd = (await card.getByRole('button', { name }).boundingBox())!;
+    expect(dd.x + dd.width).toBeLessThanOrEqual(box.x + box.width);
+  }
 });

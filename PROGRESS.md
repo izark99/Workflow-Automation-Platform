@@ -139,7 +139,7 @@ Quality pass (SPEC 11.6)
 - [x] T4.10a UI review: screenshots of every route in both themes at 1440 px, checked against the DESIGN "UI quality checklist"; `docs/UI_AUDIT.md` with numbered findings, each with screen, item of the checklist, severity and fix; add one task per finding below (T4.10b, T4.10c, ...), at most 12, the rest listed as later in the audit.
 
 Close
-- [ ] T4.10b (U1) Parameters panel: the Type and the default dropdowns fit inside the card.
+- [x] T4.10b (U1) Parameters panel: the Type and the default dropdowns fit inside the card.
 - [ ] T4.10c (U2) Formula editor: an empty formula is a neutral note until the field was touched, not a red error on arrival.
 - [ ] T4.10d (U3) Run Parameters card and Test tab: a required value shows its error after the field was touched or Run was pressed; Run stays disabled with a note.
 - [ ] T4.10e (U4) The three parameter value messages name the label of the parameter, not its key.
@@ -183,6 +183,12 @@ None. The Pages file size blocker of T3.9 is solved by D71.
 ## Log
 
 Newest first.
+
+### 2026-11-19 T4.10b Parameters panel: dropdowns fit the card (turn 33)
+Advisor not consulted: a small layout fix.
+Changed: `Dropdown` takes `width="100%"` (the list is 20 px wider than the button, as before); the Type and the list default dropdowns of the Parameters panel use it, because a fixed 314 px was still 1 px too wide when the panel shows a scroll bar. e2e: both dropdowns of a parameter end inside its card.
+Gates run: `npm run check` exit 0 (985 tests); e2e parameters-panel spec 5 passed; `test:ui-rules` on the routes of the parameter UI and the components page, all three projects: 141 passed (a targeted run, not the full one; the full run follows the last UI task, T4.10k, and the final gates). Flow file diff and `testcase` status empty.
+Next: T4.10c.
 
 ### 2026-11-19 T4.10a UI review (turn 32)
 Advisor not consulted: a review with no code change to the app.

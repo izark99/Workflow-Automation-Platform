@@ -16,7 +16,8 @@ export interface DropdownProps {
   options: DropdownOption[];
   value: string;
   onChange: (value: string) => void;
-  width?: number;
+  /** Pixels, or `'100%'` to fill the space that the parent gives (a card whose width changes with a scroll bar). */
+  width?: number | '100%';
   disabled?: boolean;
   /** Starts open, for the components page. */
   defaultOpen?: boolean;
@@ -96,7 +97,7 @@ export function Dropdown({ label, options, value, onChange, width = 260, disable
 
   const current = options[selected]?.label ?? '';
   return (
-    <div className={styles.anchor} ref={rootRef}>
+    <div className={styles.anchor} ref={rootRef} style={width === '100%' ? { display: 'block' } : undefined}>
       <button
         ref={triggerRef}
         type="button"
@@ -115,7 +116,7 @@ export function Dropdown({ label, options, value, onChange, width = 260, disable
         <Icon name="chevronDown" />
       </button>
       {open ? (
-        <div id={listId} role="listbox" aria-label={label} className={`${styles.popover} ${up ? styles.up : ''}`} style={{ width: width + 20 }} onKeyDown={onListKey}>
+        <div id={listId} role="listbox" aria-label={label} className={`${styles.popover} ${up ? styles.up : ''}`} style={{ width: width === '100%' ? 'calc(100% + 20px)' : width + 20 }} onKeyDown={onListKey}>
           {options.map((o, i) => (
             <button
               key={o.value}

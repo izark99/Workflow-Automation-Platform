@@ -94,7 +94,7 @@ function ParameterForm({
           options={PARAMETER_TYPES.map((x) => ({ value: x, label: t(`builder.params.types.${x}` as MessageKey) }))}
           value={p.type}
           disabled={readOnly}
-          width={338}
+          width="100%"
           onChange={(v) => onType(v as ParameterType)}
         />
       </div>
@@ -192,7 +192,7 @@ function DefaultValue({ n, p, readOnly, onPatch }: { n: number; p: FlowParameter
             options={[{ value: '', label: t('builder.params.noDefault') }, ...(p.options ?? []).map((o) => ({ value: o, label: o }))]}
             value={typeof p.default === 'string' ? p.default : ''}
             disabled={readOnly}
-            width={338}
+            width="100%"
             userContent
             onChange={(v) => onPatch({ default: v === '' ? undefined : v })}
           />
