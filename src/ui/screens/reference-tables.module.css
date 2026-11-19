@@ -5,8 +5,42 @@
   align-items: flex-start;
 }
 
+.listPanel {
+  position: relative;
+  flex: none;
+  width: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+  transition: width 200ms ease-out;
+}
+
+/* The rail: 48 px, the toggle only (DESIGN, Collapsible panels). */
+.listRail {
+  width: 48px;
+  align-items: center;
+  padding: 0;
+}
+
+.listToggle {
+  flex: none;
+  height: 36px;
+}
+
+.list[hidden] {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .listPanel {
+    transition: none;
+  }
+}
+
 .list {
-  flex: 0 0 260px;
+  width: 260px; /* fixed, so the items are clipped and never wrapped while the panel changes width */
+  flex: none;
   display: flex;
   flex-direction: column;
   gap: 8px;

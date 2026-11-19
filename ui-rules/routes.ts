@@ -157,6 +157,7 @@ export const ROUTES: RuleRoute[] = [
     },
   },
   { path: '/dev/components', sidebar: true, nav: false },
+  { path: '/reference-tables', name: '/reference-tables (list collapsed)', sidebar: true, table: true, before: collapsePanels('refList') },
   // The builder with each panel collapsed (SPEC 12.4, T5.4); T5.6 adds the width rule for them.
   ...([['steps'], ['settings'], ['steps', 'settings']] as const).map(
     (ids): RuleRoute => ({ path: '/flows/flow-timesheet/versions/4', name: `/flows/flow-timesheet/versions/4 (${ids.join(' and ')} collapsed)`, sidebar: false, before: collapsePanels(...ids) }),

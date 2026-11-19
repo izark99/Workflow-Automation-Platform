@@ -236,3 +236,41 @@ test('with no tables the empty state offers New table to the admin', async ({ pa
   await expect(page.getByText('No reference tables yet')).toBeVisible();
   await expect(page.getByRole('button', { name: 'New table' })).toHaveCount(2); // the header action and the empty state
 });
+
+test.describe('table list rail', () => {
+  const panel = (page: Page) => page.locator('#ref-list-panel');
+  const panelWidth = async (page: Page) => Math.round((await panel(page).boundingBox())!.width);
+
+  test('the list collapses to 48 px, the grid takes the space, and the choice is kept after a reload', async ({ page }) => {
+    await page.goto(URL);
+    expect(await panelWidth(page)).toBe(260);
+    const detail = page.getByRole('region', { name: 'Table details' });
+    const before = (await detail.boundingBox())!.width;
+    await page.getByRole('button', { name: 'Collapse table list' }).click();
+    await expect.poll(() => panelWidth(page)).toBe(48);
+    await expect(page.getByRole('button', { name: 'Expand table list' })).toBeFocused();
+    await expect(list(page)).toBeHidden();
+    expect((await detail.boundingBox())!.width).toBeGreaterThan(before + 150);
+    await page.reload();
+    await expect.poll(() => panelWidth(page)).toBe(48);
+    await page.getByRole('button', { name: 'Expand table list' }).click();
+    await expect.poll(() => panelWidth(page)).toBe(260);
+    await expect(list(page).getByRole('link')).toHaveCount(3);
+  });
+
+  test('collapsing the list does not lose unsaved edits', async ({ page }) => {
+    await seed(page, withBigDraft);
+    await page.goto(`${URL}?table=ref-big&v=1`);
+    await page.getByRole('textbox', { name: 'Row 1, id' }).fill('edited');
+    await expect(page.getByRole('status').filter({ hasText: 'Unsaved changes' })).toBeVisible();
+    await page.getByRole('button', { name: 'Collapse table list' }).click();
+    await expect.poll(() => panelWidth(page)).toBe(48);
+    await expect(page.getByRole('textbox', { name: 'Row 1, id' })).toHaveValue('edited');
+    await expect(page.getByRole('status').filter({ hasText: 'Unsaved changes' })).toBeVisible();
+    await page.getByRole('button', { name: 'Expand table list' }).click();
+    await expect(page.getByRole('textbox', { name: 'Row 1, id' })).toHaveValue('edited');
+    // The guard still asks when a table is chosen from the list.
+    await list(page).getByRole('link', { name: /Attendance codes/ }).click();
+    await expect(page.getByRole('dialog', { name: 'Discard unsaved changes?' })).toBeVisible();
+  });
+});

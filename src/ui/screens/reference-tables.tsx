@@ -13,6 +13,8 @@ import { todayIso } from './flows-logic';
 import { looksLikeGrid, newTableFromPaste, pageRange, pasteAt, pasteIntoGrid, pastedCells, rowsToText, textToRows, tooManyRows, usedBy, versionToShow, tableSummary } from './reftable-logic';
 import type { RowErrors } from './reftable-logic';
 import { newVersionProblem, suggestStart } from './versions-logic';
+import { usePanel } from '../panels/use-panel';
+import { PanelToggle } from '../panels/panel-toggle';
 import styles from './reference-tables.module.css';
 
 type Dialogs = 'paste' | 'newVersion' | 'publish' | 'newTable' | null;
@@ -62,6 +64,7 @@ export function ReferenceTablesScreen() {
   }, [table, version]);
 
   const dirty = editable && touched;
+  const { collapsed: listCollapsed, toggle: toggleList } = usePanel('refList');
 
   const [dialog, setDialog] = useState<Dialogs>(null);
   const [dialogError, setDialogError] = useState<string | null>(null);
@@ -223,7 +226,11 @@ export function ReferenceTablesScreen() {
     const sorted = [...table.versions].sort((a, b) => b.versionNo - a.versionNo);
     body = (
       <div className={styles.layout}>
-        <ul className={styles.list} aria-label={t('refTables.list')}>
+        <div id="ref-list-panel" className={`${styles.listPanel} ${listCollapsed ? styles.listRail : ''}`}>
+        <div className={styles.listToggle}>
+          <PanelToggle panel="refList" collapsed={listCollapsed} onToggle={toggleList} controls="ref-list-panel" />
+        </div>
+        <ul className={styles.list} aria-label={t('refTables.list')} hidden={listCollapsed}>
           {tables.map((x: RefTableRecord) => (
             <li key={x.id}>
               <Link to={url(x.id)} className={styles.item} aria-current={x.id === table.id ? 'true' : undefined} onClick={guard(url(x.id))}>
@@ -233,6 +240,7 @@ export function ReferenceTablesScreen() {
             </li>
           ))}
         </ul>
+        </div>
         <section className={styles.detail} aria-label={t('refTables.detail')}>
           <Card flush title={t('refTables.grid', { name: table.name })}>
             <div className={styles.head}>
