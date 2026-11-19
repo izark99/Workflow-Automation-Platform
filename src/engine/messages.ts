@@ -41,6 +41,16 @@ export const ENGINE_MESSAGES = {
   'engine.paramMissing': '"{label}" needs a value. Enter a value for it.',
   'engine.paramWrongType': 'The value of "{label}" is not a valid {type}. Enter a value of that type.',
   'engine.paramNotOption': 'The value of "{label}" is not one of its options ({options}). Choose one of the options.',
+  'refimport.notTableFile': 'The file {name} is not an .xlsx or .csv file. Choose a file of one of these types.',
+  'refimport.noHeader': 'The header row {row} is empty or past the end of the sheet. Type the number of the row that holds the column names.',
+  'refimport.noColumns': 'The header row {row} has no column names. Type the number of the row that holds the column names.',
+  'refimport.tooManyRows': 'The file has {n} rows of data, and a table holds at most {max}. Split the file into smaller files, or remove the rows that are not needed.',
+  'refimport.tooManyColumns': 'The file has {n} columns, and a table holds at most {max}. Remove the columns that are not needed, then import again.',
+  'refimport.nameEmpty': 'Column {n} has no name in the header row. Type a name in that cell, or remove the column.',
+  'refimport.nameRepeated': 'The name "{name}" is used by columns {first} and {second} (names are compared without regard to case). Give each column its own name.',
+  'refimport.notNumber': 'Row {row}, column {column}: "{value}" is not a number. Fix the cell, or set the type of the column to text.',
+  'refimport.notBoolean': 'Row {row}, column {column}: "{value}" is not true or false. Fix the cell, or set the type of the column to text.',
+  'refimport.notDate': 'Row {row}, column {column}: "{value}" is not a date such as 2026-09-30. Fix the file, or choose the type text for the column.',
 } as const;
 
 export type EngineMessageId = keyof typeof ENGINE_MESSAGES;
