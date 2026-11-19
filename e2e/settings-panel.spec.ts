@@ -116,5 +116,5 @@ test('without a selected step the panel starts with the Parameters heading; the 
   });
   expect(order.heading).toBe('Parameters');
   expect(order.headingFirst).toBe(true);
-  expect(order.top).toBeLessThan(40); // the heading is at the top of the panel, below its 20 px padding
+  expect(order.top).toBeLessThan(72); // the heading is at the top of the panel, below the row of the panel toggle (T5.4)
 });

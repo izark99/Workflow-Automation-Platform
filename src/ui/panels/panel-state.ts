@@ -57,6 +57,7 @@ export function applyPanels(root: PanelRoot, state: PanelState): void {
 export interface PanelStore {
   get(id: PanelId): boolean;
   toggle(id: PanelId): void;
+  set(id: PanelId, collapsed: boolean): void;
   subscribe(listener: () => void): () => void;
 }
 
@@ -67,14 +68,17 @@ export function createPanelStore(
   let state = readPanels(storage);
   const listeners = new Set<() => void>();
   if (root) applyPanels(root, state);
+  const set = (id: PanelId, collapsed: boolean): void => {
+    if (state[id] === collapsed) return;
+    state = { ...state, [id]: collapsed };
+    if (root) applyPanels(root, state);
+    savePanels(storage, state);
+    listeners.forEach((l) => l());
+  };
   return {
     get: (id) => state[id],
-    toggle(id) {
-      state = { ...state, [id]: !state[id] };
-      if (root) applyPanels(root, state);
-      savePanels(storage, state);
-      listeners.forEach((l) => l());
-    },
+    toggle: (id) => set(id, !state[id]),
+    set,
     subscribe(listener) {
       listeners.add(listener);
       return () => listeners.delete(listener);

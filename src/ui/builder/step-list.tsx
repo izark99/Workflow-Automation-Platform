@@ -2,6 +2,8 @@ import { Button, InfoTip } from '../components';
 import type { NodeType } from '../../engine/flow/types';
 import { STEP_CATALOG, STEP_GROUPS } from './graph';
 import { useT } from '../i18n';
+import { usePanel } from '../panels/use-panel';
+import { PanelToggle } from '../panels/panel-toggle';
 import styles from './builder.module.css';
 
 /** The drag payload type. Dragging is the mouse path; the buttons are the keyboard path (Enter or Space adds the step). */
@@ -9,8 +11,13 @@ export const DRAG_TYPE = 'application/x-dfw-step';
 
 export function StepList({ onAdd, disabled }: { onAdd: (type: NodeType) => void; disabled: boolean }) {
   const t = useT();
+  const { collapsed, toggle } = usePanel('steps');
   return (
-    <aside aria-label={t('builder.stepTypes')} className={styles.stepList}>
+    <aside id="builder-steps" aria-label={t('builder.stepTypes')} className={`${styles.stepList} ${collapsed ? styles.stepListRail : ''}`}>
+      <div className={styles.stepToggle}>
+        <PanelToggle panel="steps" collapsed={collapsed} onToggle={toggle} controls="builder-steps" />
+      </div>
+      <div className={styles.stepListBody} hidden={collapsed}>
       <div className={styles.titleRow}>
         <h2>{t('builder.addStep')}</h2>
         <InfoTip label={t('builder.addStep')}>{t('builder.addStepHint')}</InfoTip>
@@ -39,6 +46,7 @@ export function StepList({ onAdd, disabled }: { onAdd: (type: NodeType) => void;
           ))}
         </div>
       ))}
+      </div>
     </aside>
   );
 }
