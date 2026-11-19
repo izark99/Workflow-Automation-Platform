@@ -11,6 +11,7 @@ import { addStep, STEP_CATALOG, CARD_HEIGHT, CARD_WIDTH, connectSteps, deleteEdg
 import { StepCard } from './step-card';
 import type { StepCardNode } from './step-card';
 import { DRAG_TYPE } from './step-list';
+import { FIT_VIEW_OPTIONS } from './fit-view';
 import { ZoomControls } from './zoom-controls';
 import styles from './builder.module.css';
 
@@ -149,7 +150,7 @@ function Inner({ definition, onChange, selection, onSelect, message, onMessage, 
         minZoom={0.2}
         maxZoom={2}
         fitView={definition.nodes.length > 0}
-        fitViewOptions={{ padding: 0.2, maxZoom: 1 }}
+        fitViewOptions={FIT_VIEW_OPTIONS}
         proOptions={{ hideAttribution: false }}
         aria-label={t('builder.canvas')}
       >

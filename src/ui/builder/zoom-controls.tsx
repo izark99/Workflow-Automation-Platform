@@ -1,5 +1,6 @@
 import { Panel, useReactFlow, useViewport } from '@xyflow/react';
 import { Button } from '../components';
+import { FIT_VIEW_OPTIONS } from './fit-view';
 import { useT } from '../i18n';
 import styles from './builder.module.css';
 
@@ -19,7 +20,7 @@ export function ZoomControls({ summary }: { summary: string }) {
         <Button compact aria-label={t('builder.zoomIn')} onClick={() => void zoomIn({ duration: 150 })}>
           +
         </Button>
-        <Button compact onClick={() => void fitView({ duration: 150, padding: 0.2 })}>
+        <Button compact onClick={() => void fitView({ duration: 150, ...FIT_VIEW_OPTIONS })}>
           {t('builder.fit')}
         </Button>
       </div>

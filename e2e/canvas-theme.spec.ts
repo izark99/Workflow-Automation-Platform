@@ -59,3 +59,23 @@ test('operating system light, app Dark: the canvas is dark', async ({ page }) =>
   expect(c.dots).toBe('rgb(42, 74, 70)');
   expect(c.edge).toBe('rgb(110, 147, 142)');
 });
+
+test('after fit to screen no step card sits under the control bar, on load and after the Fit button', async ({ page }) => {
+  await page.goto('/flows/flow-timesheet/versions/4');
+  await expect(page.locator('.react-flow__node').first()).toBeVisible();
+  const overlaps = async (): Promise<string[]> =>
+    page.evaluate(() => {
+      const bar = document.querySelector('[role="toolbar"]')!.getBoundingClientRect();
+      const hits: string[] = [];
+      for (const n of Array.from(document.querySelectorAll('.react-flow__node'))) {
+        const r = n.getBoundingClientRect();
+        if (r.left < bar.right && r.right > bar.left && r.top < bar.bottom && r.bottom > bar.top) hits.push((n.textContent ?? '').slice(0, 30));
+      }
+      return hits;
+    });
+  await page.waitForTimeout(400);
+  expect(await overlaps()).toEqual([]);
+  await page.getByRole('button', { name: 'Fit to screen' }).click();
+  await page.waitForTimeout(500);
+  expect(await overlaps()).toEqual([]);
+});

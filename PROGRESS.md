@@ -145,7 +145,7 @@ Close
 - [x] T4.10e (U4) The three parameter value messages name the label of the parameter, not its key.
 - [x] T4.10f (U5) A boolean parameter has no "(optional)" suffix.
 - [x] T4.10g (U6) Admin: the sentences under "Access to shared flows" and "Deleted flows" move into an info button.
-- [ ] T4.10h (U7) Builder canvas: no step card sits under the control bar after fit-to-screen.
+- [x] T4.10h (U7) Builder canvas: no step card sits under the control bar after fit-to-screen.
 - [ ] T4.10i (U8) Filter output labels "match" and "no match" are 12 px and not crossed by the line.
 - [ ] T4.10j (U9) Builder settings panel with no step: the Parameters heading comes first, the "Select a step" sentence below it.
 - [ ] T4.10k (U10) Spacing: 6, 9, 10, 13 and 14 px in shared components move to the 4 px grid without changing a height or y that a rule checks.
@@ -183,6 +183,12 @@ None. The Pages file size blocker of T3.9 is solved by D71.
 ## Log
 
 Newest first.
+
+### 2026-11-19 T4.10h Builder canvas: no step under the control bar after fit-to-screen (turn 39)
+Advisor not consulted: a layout fix.
+Changed: `FIT_VIEW_OPTIONS` (new `src/ui/builder/fit-view.ts`) frames the steps with 24 px on three sides and 96 px at the bottom, instead of 20 % on every side; the canvas (on load) and the Fit to screen button both use it. e2e: on the 13-step timesheet draft no step card overlaps the control bar after load and after the Fit button; the test fails with the old padding (the Output card was under the bar) and passes with the new one.
+Gates run: `npm run check` exit 0 (986 tests); e2e builder, canvas-theme and settings-panel 19 passed; `test:ui-rules` on every builder route (versions/3, versions/4 states, the parameter routes), all three projects: 633 passed (targeted). Flow file diff and `testcase` status empty.
+Next: T4.10i.
 
 ### 2026-11-19 T4.10g Admin: the explanations move into info buttons (turn 38)
 Advisor not consulted: a small change that follows checklist item 9.
