@@ -131,6 +131,7 @@ function OptionsField({ label, options, readOnly, onChange }: { label: string; o
       label={label}
       hint={t('builder.params.optionsHint')}
       rows={3}
+      userContent
       disabled={readOnly}
       value={same ? text : optionsToText(options)}
       onChange={(e) => {
@@ -192,6 +193,7 @@ function DefaultValue({ n, p, readOnly, onPatch }: { n: number; p: FlowParameter
             value={typeof p.default === 'string' ? p.default : ''}
             disabled={readOnly}
             width={338}
+            userContent
             onChange={(v) => onPatch({ default: v === '' ? undefined : v })}
           />
         </div>

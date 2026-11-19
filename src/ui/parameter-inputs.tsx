@@ -39,7 +39,7 @@ function ParameterInput({ p, value, error, disabled, width, onChange }: { p: Flo
   );
   switch (p.type) {
     case 'text':
-      return <Field label={label} hint={p.help} value={typeof value === 'string' ? value : ''} disabled={disabled} error={error} onChange={(e) => onChange(e.target.value === '' ? undefined : e.target.value)} />;
+      return <Field label={label} userLabel hint={p.help} value={typeof value === 'string' ? value : ''} disabled={disabled} error={error} onChange={(e) => onChange(e.target.value === '' ? undefined : e.target.value)} />;
     case 'number':
       return <NumberInput label={label} hint={p.help} value={value} disabled={disabled} error={error} onChange={onChange} />;
     case 'date':
@@ -75,6 +75,7 @@ function ParameterInput({ p, value, error, disabled, width, onChange }: { p: Flo
             value={typeof value === 'string' ? value : ''}
             disabled={disabled}
             width={width}
+            userContent
             onChange={(v) => onChange(v === '' ? undefined : v)}
           />
           {errorLine}
@@ -102,6 +103,7 @@ function NumberInput({ label, hint, value, disabled, error, onChange }: { label:
   return (
     <Field
       label={label}
+      userLabel
       hint={hint}
       inputMode="decimal"
       value={same ? text : typeof value === 'number' ? String(value) : ''}

@@ -24,10 +24,12 @@ export interface DropdownProps {
   buttonLabel?: string;
   /** A 36 px button, for a table row. */
   compact?: boolean;
+  /** The options are the user's own texts (names they typed), which are never translated. */
+  userContent?: boolean;
 }
 
 /** Button with a chevron and a popover list. Arrow keys, Home, End, Enter, Space, Escape and type-ahead. */
-export function Dropdown({ label, options, value, onChange, width = 260, disabled = false, defaultOpen = false, buttonLabel, compact = false }: DropdownProps) {
+export function Dropdown({ label, options, value, onChange, width = 260, disabled = false, defaultOpen = false, buttonLabel, compact = false, userContent = false }: DropdownProps) {
   const [open, setOpen] = useState(defaultOpen);
   const [active, setActive] = useState(() => (defaultOpen ? Math.max(0, options.findIndex((o) => o.value === value)) : -1));
   const skipFocus = useRef(defaultOpen);
@@ -100,6 +102,7 @@ export function Dropdown({ label, options, value, onChange, width = 260, disable
         type="button"
         className={`${styles.trigger} ${styles.between} ${compact ? styles.compactTrigger : ''}`}
         style={{ width }}
+        data-user-content={userContent ? '' : undefined}
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-controls={open ? listId : undefined}
@@ -124,6 +127,7 @@ export function Dropdown({ label, options, value, onChange, width = 260, disable
               aria-selected={i === selected}
               tabIndex={i === active ? 0 : -1}
               className={styles.option}
+              data-user-content={userContent ? '' : undefined}
               onClick={() => choose(i)}
             >
               {i === selected ? <Icon name="check" /> : <span className={styles.check} />}

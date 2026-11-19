@@ -897,3 +897,11 @@ blank or mixed column in one month cannot change the types of another month.
 - The same values feed "Load columns" in the formula editor and the Column mapping form, so a step that reads a parameter upstream can load its columns.
 - `engine.paramMissing` no longer says "on the Run screen", because the builder shows it too.
 
+## D81 Parameters on the Run screen (T4.9e)
+
+- The Parameters card sits between the date card and the files card, and exists only when the version that the date selects has parameters. Then the cards are numbered 1 to 4 (date, parameters, files, result); without parameters they stay 1 to 3, so a flow without parameters looks as before.
+- The form starts from the defaults of the definition and keeps what the user typed only while the screen is open (SPEC 11.5 item 6). The values go to `executeRun` and nowhere else: they are not sent to the server and not written to `run_log` (`addRunLog` takes counts and ids only). Run is disabled while any value is invalid, and the error is under the field (`parameterValueErrors`, the same engine rules as at run time).
+- The acceptance harness takes `parameterValues`, and the privacy test runs a flow with a text and a number parameter whose value is a marker: the marker must be in the output file and in no request. The Run screen journey checks the same for the page.
+- Three new ui-rules routes show the parameter UI (Run card, builder panel, Test tab). They found three existing literal texts, now in the catalog: the chips "Match" and "No match" of the Test tab, the React Flow edge labels ("Connection from X to Y"), and in the new code a few user texts that must be marked `data-user-content` (parameter labels, options). `Field`, `TextAreaField` and `Dropdown` got a prop for that (`userLabel`, `userContent`).
+- Buttons whose visible text is shorter than their accessible name must start with the visible text (axe `label-content-name-mismatch`): "Move up, parameter 2".
+

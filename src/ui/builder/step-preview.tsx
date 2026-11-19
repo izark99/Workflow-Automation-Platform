@@ -113,7 +113,7 @@ export function StepPreview({ definition, step, files, onFile, refTables, parame
           <ChipGroup label={t('builder.preview.output')}>
             {target.handles.map((h) => (
               <Chip key={h} pressed={h === target.handle} onClick={() => setHandle(h)}>
-                {h === 'nomatch' ? 'No match' : h === 'match' ? 'Match' : h}
+                {h === 'nomatch' ? t('builder.preview.noMatch') : h === 'match' ? t('builder.preview.match') : h}
               </Chip>
             ))}
           </ChipGroup>

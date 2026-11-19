@@ -13,17 +13,19 @@ export interface FieldProps extends TextProps {
   error?: string;
   /** Hides what is typed (a password). */
   secret?: boolean;
+  /** The label is the user's own text (a name they typed), which is never translated. */
+  userLabel?: boolean;
 }
 
 /** A labelled text field. The label and error are tied to the input for screen readers; the hint is an info button after the label. */
-export function Field({ label, hint, error, secret = false, ...rest }: FieldProps) {
+export function Field({ label, hint, error, secret = false, userLabel = false, ...rest }: FieldProps) {
   const id = useId();
   const errorId = `${id}-error`;
   return (
     <div>
       <div className={styles.field}>
         <div className={styles.labelRow}>
-          <label className={styles.label} htmlFor={id}>
+          <label className={styles.label} htmlFor={id} data-user-content={userLabel ? '' : undefined}>
             {label}
           </label>
           {hint ? <InfoTip label={label}>{hint}</InfoTip> : null}
@@ -57,12 +59,14 @@ export interface TextAreaFieldProps extends Omit<TextareaHTMLAttributes<HTMLText
   /** A positive message, announced politely (for example "Formula is valid"). */
   status?: string;
   mono?: boolean;
+  /** What is typed is the user's own text (a list of names), which is never translated. */
+  userContent?: boolean;
   /** For code that moves the caret, such as inserting a function at the cursor. */
   textareaRef?: Ref<HTMLTextAreaElement>;
 }
 
 /** A labelled multi-line text field. It cannot be resized by the user. The hint is an info button after the label. */
-export function TextAreaField({ label, hint, error, status, mono = false, rows = 4, textareaRef, ...rest }: TextAreaFieldProps) {
+export function TextAreaField({ label, hint, error, status, mono = false, userContent = false, rows = 4, textareaRef, ...rest }: TextAreaFieldProps) {
   const id = useId();
   const noteId = `${id}-note`;
   const describedBy = error || status ? noteId : undefined;
@@ -75,7 +79,7 @@ export function TextAreaField({ label, hint, error, status, mono = false, rows =
           </label>
           {hint ? <InfoTip label={label}>{hint}</InfoTip> : null}
         </div>
-        <textarea {...rest} ref={textareaRef} id={id} rows={rows} className={`${styles.textarea} ${mono ? styles.mono : ''}`} aria-invalid={error ? 'true' : undefined} aria-describedby={describedBy} />
+        <textarea data-user-content={userContent ? '' : undefined} {...rest} ref={textareaRef} id={id} rows={rows} className={`${styles.textarea} ${mono ? styles.mono : ''}`} aria-invalid={error ? 'true' : undefined} aria-describedby={describedBy} />
       </div>
       <span id={noteId}>
         {error ? (

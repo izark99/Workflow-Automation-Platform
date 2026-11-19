@@ -59,6 +59,41 @@ test('a run of a csv file, which DuckDB reads from the file handle, sends no fil
   expect(auditRequests(requests, ORIGIN, MARKERS, allowedCodeUrls())).toEqual([]);
 });
 
+// SPEC 11.5: parameter values stay in the browser like file content. The value is a marker that no request may contain.
+const PARAM_MARKER = 'PARAM-MARKER-Tran Van Binh 71c2';
+
+test('parameter values are used by the run and appear in no request', async ({ page }, info) => {
+  const dir = info.outputPath('params');
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(path.join(dir, 'data.csv'), 'Id,Name\n1,Ann\n2,Bob\n');
+  const flow = {
+    schemaVersion: 2,
+    parameters: [
+      { key: 'who', label: 'Who', type: 'text', required: true },
+      { key: 'min_id', label: 'Minimum id', type: 'number', required: true },
+    ],
+    nodes: [
+      { id: 'in', type: 'input_file', settings: { key: 'Data' } },
+      { id: 'keep', type: 'filter', settings: { condition: '[Id] >= PARAM("min_id")' } },
+      { id: 'tag', type: 'formula_column', settings: { name: 'Tag', expression: '[Name] & " " & PARAM("who")' } },
+      { id: 'out', type: 'output', settings: { file: 'Result', sheet: 'Data' } },
+    ],
+    edges: [
+      { source: 'in', target: 'keep' },
+      { source: 'keep', target: 'tag' },
+      { source: 'tag', target: 'out' },
+    ],
+  };
+  const requests = watchRequests(page);
+  const ran = await runDataset(page, flow, { ...dataset(dir, 'data.csv'), parameterValues: { who: PARAM_MARKER, min_id: 2 } });
+  const text = await outputText(ran.files[0]!.bytes);
+  // The values did go through the engine: the filter used the number and the formula wrote the text.
+  expect(text).toContain(`Bob ${PARAM_MARKER}`);
+  expect(text).not.toContain('Ann');
+  expect(requests.some((r) => /\/duckdb-[^/]*\.wasm$/.test(r.url))).toBe(true);
+  expect(auditRequests(requests, ORIGIN, [...MARKERS, PARAM_MARKER], allowedCodeUrls())).toEqual([]);
+});
+
 test('the audit fails when a page leaks: a query, a beacon and another address are all found', async ({ page }) => {
   const requests = watchRequests(page);
   await page.goto('/acceptance/index.html');

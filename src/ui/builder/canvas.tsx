@@ -52,8 +52,11 @@ function Inner({ definition, onChange, selection, onSelect, message, onMessage, 
   }, [definition, selection.nodes, t]);
 
   const edges: Edge[] = useMemo(
-    () => resolvedEdges(definition).map((e) => ({ id: e.id, source: e.source, sourceHandle: e.sourceHandle, target: e.target, targetHandle: e.targetHandle, type: 'smoothstep', selected: selection.edges.includes(e.id) })),
-    [definition, selection.edges],
+    () => {
+      const names = new Map(definition.nodes.map((n) => [n.id, n.label ?? n.id]));
+      return resolvedEdges(definition).map((e) => ({ id: e.id, source: e.source, sourceHandle: e.sourceHandle, target: e.target, targetHandle: e.targetHandle, type: 'smoothstep', selected: selection.edges.includes(e.id), ariaLabel: t('builder.edgeAria', { source: names.get(e.source) ?? e.source, target: names.get(e.target) ?? e.target }) }));
+    },
+    [definition, selection.edges, t],
   );
 
   const onNodesChange = (changes: NodeChangeset<StepCardNode>): void => {

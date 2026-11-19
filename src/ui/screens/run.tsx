@@ -1,3 +1,7 @@
+import type { ParameterValue } from '../../engine/flow/parameters';
+import { parametersOf } from '../../engine/flow/parameters';
+import { ParameterInputs } from '../parameter-inputs';
+import { initialValues, parameterValueErrors } from '../parameter-logic';
 import { useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { EngineError } from '../../engine/types';
@@ -40,6 +44,8 @@ export function RunScreen() {
   const showSkeleton = useDelayedLoading(flow.loading);
   const [date, setDate] = useState(todayIso());
   const [files, setFiles] = useState<Record<string, File>>({});
+  // What the user typed in the Parameters card. Not remembered between runs: the form starts from the defaults.
+  const [typed, setTyped] = useState<Record<string, ParameterValue | undefined>>({});
   const [fileErrors, setFileErrors] = useState<Record<string, string>>({});
   const [state, setState] = useState<RunState>({ status: 'idle' });
   const [sheetTab, setSheetTab] = useState('0');
@@ -58,6 +64,10 @@ export function RunScreen() {
 
   const definition = prepared?.ok ? (prepared.run.definition as FlowDefinition) : undefined;
   const inputs = definition ? inputsOf(definition) : [];
+  const parameters = definition ? parametersOf(definition) : [];
+  const values = initialValues(parameters, typed);
+  const valueErrors = parameterValueErrors(parameters, values);
+  const hasParameters = parameters.length > 0;
   const missing = inputs.filter((i) => !files[i.key]);
   const running = state.status === 'running';
 
@@ -86,6 +96,7 @@ export function RunScreen() {
       outcome = await executeRun({
         definition,
         effectiveDate: date,
+        parameterValues: values,
         files,
         refTables: prepared.run.refTables,
         signal: controller.signal,
@@ -146,7 +157,22 @@ export function RunScreen() {
           ) : null}
         </Card>
 
-        <Card title={t('run.step2')}>
+        {hasParameters ? (
+          <Card title={t('run.stepParams')}>
+            <ParameterInputs
+              parameters={parameters}
+              values={values}
+              errors={valueErrors}
+              disabled={running}
+              onChange={(key, value) => {
+                setTyped((v) => ({ ...v, [key]: value }));
+                setState({ status: 'idle' });
+              }}
+            />
+          </Card>
+        ) : null}
+
+        <Card title={hasParameters ? t('run.step2WithParams') : t('run.step2')}>
           {prepared?.ok && inputs.length === 0 ? <p className={styles.note}>{t('run.noInputs')}</p> : null}
           <div role="group" aria-label={t('run.files')} className={styles.list}>
             {inputs.map((i) => (
@@ -154,7 +180,7 @@ export function RunScreen() {
             ))}
           </div>
           <div className={styles.actions}>
-            <Button variant="primary" busy={running} disabled={!prepared?.ok || missing.length > 0} onClick={() => void run()}>
+            <Button variant="primary" busy={running} disabled={!prepared?.ok || missing.length > 0 || Object.keys(valueErrors).length > 0} onClick={() => void run()}>
               {running ? t('run.running') : state.status === 'idle' ? t('run.run') : t('run.runAgain')}
             </Button>
             {running ? (
@@ -171,7 +197,7 @@ export function RunScreen() {
         </Card>
 
         {state.status === 'done' || state.status === 'error' ? (
-          <Card title={state.status === 'done' ? t('run.finished') : t('run.step3')}>
+          <Card title={state.status === 'done' ? t('run.finished') : hasParameters ? t('run.step3WithParams') : t('run.step3')}>
             {state.status === 'error' ? <ErrorState what={t('run.failed')} next={state.message || t('run.failedNext')} /> : <Result outcome={state.outcome} tab={sheetTab} onTab={setSheetTab} />}
           </Card>
         ) : null}

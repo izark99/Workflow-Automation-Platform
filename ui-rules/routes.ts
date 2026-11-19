@@ -1,5 +1,6 @@
 // Every route that the UI rules run on. A route added to the app is added here in the same task, so it is checked at once.
 import type { Page } from '@playwright/test';
+import { seedParameterFlow } from '../e2e/parameter-flow';
 import { seedRunnableFlow } from '../e2e/runnable-flow';
 import { seedSnapshot } from '../src/store/seed';
 
@@ -344,6 +345,39 @@ export const ROUTES: RuleRoute[] = [
       await page.locator('input[type=file]').setInputFiles({ name: 'people.csv', mimeType: 'text/csv', buffer: Buffer.from('name,kind\nAnn,WEEK\nBob,MONTH\n') });
       await page.getByRole('button', { name: /^\W*Run flow\W*$/ }).click();
       await page.getByRole('heading', { name: 'Result: run finished' }).waitFor({ timeout: 60_000 });
+    },
+  },
+  {
+    path: '/flows/flow-param/run',
+    name: '/flows/flow-param/run (Parameters card)',
+    sidebar: true,
+    before: seedParameterFlow,
+    // The Parameters card with one input of each type: a required date that is blank (so its error shows), a text, a number, a list and a switch.
+    prepare: async (page) => {
+      await page.getByRole('alert').first().waitFor();
+    },
+  },
+  {
+    path: '/flows/flow-param/versions/2',
+    name: '/flows/flow-param/versions/2 (Parameters panel)',
+    sidebar: false,
+    before: seedParameterFlow,
+    // A draft with five parameters and no step selected: the Parameters panel with a control for each type of default.
+    prepare: async (page) => {
+      await page.getByRole('group', { name: /Parameter 5/ }).waitFor();
+    },
+  },
+  {
+    path: '/flows/flow-param/versions/2',
+    name: '/flows/flow-param/versions/2 (Test values of the parameters)',
+    sidebar: false,
+    before: seedParameterFlow,
+    // The Test tab of the Filter step, which reads the date parameter: its input and its error.
+    prepare: async (page) => {
+      await page.locator('.react-flow__node').filter({ hasText: 'Keep' }).first().click();
+      const panel = page.getByRole('complementary', { name: 'Step settings' });
+      await panel.getByRole('tab', { name: /Test/ }).click();
+      await panel.getByRole('alert').first().waitFor();
     },
   },
   {

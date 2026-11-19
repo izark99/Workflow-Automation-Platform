@@ -39,10 +39,10 @@ test('the Parameters panel adds, edits, moves and deletes parameters, and a new 
   await panel(page).getByRole('textbox', { name: 'Key 2' }).fill('team');
   await expect(panel(page).getByRole('alert')).toHaveCount(0);
 
-  await panel(page).getByRole('button', { name: 'Move parameter 2 up' }).click();
+  await panel(page).getByRole('button', { name: 'Move up, parameter 2' }).click();
   await expect(panel(page).getByRole('textbox', { name: 'Key 1' })).toHaveValue('team');
   await expect(panel(page).getByRole('textbox', { name: 'Options 1' })).toHaveValue('A\nB');
-  await expect(panel(page).getByRole('button', { name: 'Move parameter 1 up' })).toBeDisabled();
+  await expect(panel(page).getByRole('button', { name: 'Move up, parameter 1' })).toBeDisabled();
 
   await panel(page).getByRole('button', { name: 'Delete parameter 1' }).click();
   await expect(panel(page).getByRole('textbox', { name: 'Key 1' })).toHaveValue('cutoff');

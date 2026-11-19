@@ -2,6 +2,7 @@ import { parseOutputSettings } from '../../engine/nodes/output';
 import { buildOutputFiles } from '../../engine/output/export';
 import type { OutputFile } from '../../engine/output/export';
 import { runFlow } from '../../engine/run';
+import type { ParameterValues } from '../../engine/flow/parameter-values';
 import type { FlowDefinition } from '../../engine/flow/types';
 import type { TableData } from '../../engine/types';
 import { previewRunner } from '../builder/preview-runner';
@@ -25,6 +26,8 @@ export interface RunOutcome {
 export interface RunRequest {
   definition: FlowDefinition;
   effectiveDate: string;
+  /** The values of the flow parameters, by key. They stay in the browser. */
+  parameterValues?: ParameterValues;
   files: Record<string, File>;
   refTables: Record<string, TableData>;
   signal: AbortSignal;
@@ -44,6 +47,7 @@ export async function executeRun(req: RunRequest): Promise<RunOutcome> {
   const result = await runFlow(runner, {
     flow: req.definition,
     effectiveDate: req.effectiveDate,
+    parameterValues: req.parameterValues,
     files: Object.fromEntries(Object.entries(req.files).map(([k, f]) => [k, { name: f.name, size: f.size, blob: f }])),
     refTables: req.refTables,
     signal: req.signal,

@@ -133,7 +133,7 @@ Parameters (SPEC 11.5)
 - [x] T4.9b Engine: a run takes parameter values; checks required, type and list option before any step runs, with clear errors; `PARAM("key")` in the formula compiler with the parameter type; `params` view for the SQL step. Unit tests for every type.
 - [x] T4.9c Builder: Parameters panel (add, edit, delete, Move up, Move down, read-only when published); the formula editor lists `PARAM` with the keys of the version.
 - [x] T4.9d Test tab asks for test values of the parameters used upstream of the selected step.
-- [ ] T4.9e Run screen: Parameters card above Files; errors under each field; Run disabled until the values are valid. e2e journey: a flow with a date parameter used in a Filter runs and gives the expected rows. Extend the privacy acceptance test: parameter values appear in no request.
+- [x] T4.9e Run screen: Parameters card above Files; errors under each field; Run disabled until the values are valid. e2e journey: a flow with a date parameter used in a Filter runs and gives the expected rows. Extend the privacy acceptance test: parameter values appear in no request.
 
 Quality pass (SPEC 11.6)
 - [ ] T4.10a UI review: screenshots of every route in both themes at 1440 px, checked against the DESIGN "UI quality checklist"; `docs/UI_AUDIT.md` with numbered findings, each with screen, item of the checklist, severity and fix; add one task per finding below (T4.10b, T4.10c, ...), at most 12, the rest listed as later in the audit.
@@ -173,6 +173,12 @@ None. The Pages file size blocker of T3.9 is solved by D71.
 ## Log
 
 Newest first.
+
+### 2026-11-19 T4.9e Parameters: the Run screen (turn 31)
+Advisor not consulted: the design follows SPEC 11.5 and D77 to D80; the new choices are D81.
+Changed: src/ui/screens/run.tsx (Parameters card between the date and the files; cards numbered 1 to 4 only when the version has parameters; Run disabled while a value is invalid), run-engine.ts (`parameterValues`), acceptance/page.ts and helpers.ts (`parameterValues`), acceptance/privacy.spec.ts (a flow with a text and a number parameter: the marker is in the output and in no request), e2e/parameter-flow.ts (shared seed, five parameter types), e2e/run-parameters.spec.ts (date parameter used in a Filter gives the expected rows; no request carries the value; a flow without parameters is unchanged), ui-rules/routes.ts (3 routes: Run card, builder Parameters panel, Test tab), components Field, TextAreaField, Dropdown (`userLabel`, `userContent`), catalog en and vi (run steps, edge label, Match and No match chips). The new routes found three literal texts that were fixed (the chips Match and No match, the React Flow edge labels) and one axe finding (accessible names of Move up and Move down).
+Gates run: `npm run check` exit 0 (985 tests); `npm run test:acceptance` exit 0 (8 passed, 1 skipped); `npm run test:acceptance:pages` exit 0 (9 passed); `npm run test:e2e` exit 0 (200 passed); `npm run test:ui-rules` exit 0 (light theme 1280 px: 540 passed; light theme 1440 px: 540 passed; dark theme 1440 px: 540 passed; 1620 total); `git diff main -- flows/monthly-timesheet.flow.json` empty; `git status --porcelain testcase` empty. A first full ui-rules run failed one test (my `data-user-content` prop overwrote the one that the admin text dialog passes); fixed, then the full run above passed.
+Next: T4.10a (UI review: screenshots of every route in both themes, `docs/UI_AUDIT.md`, tasks T4.10b onward).
 
 ### 2026-11-19 T4.9d Parameters: test values in the builder (turn 30)
 Advisor not consulted: the design follows D77 to D79; the new choices are D80.
