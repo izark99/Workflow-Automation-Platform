@@ -106,6 +106,8 @@ export const vi: Record<MessageKey, string> = {
   'builder.loading': 'Đang tải luồng',
   'builder.settings.panel': 'Cài đặt bước',
   'builder.settings.none': 'Chọn một bước trên khung vẽ để xem cài đặt của nó.',
+  'run.params.pendingRun': 'Hãy nhập giá trị cho {names} để chạy luồng.',
+  'run.params.pendingPreview': 'Hãy nhập giá trị cho {names} để xem thử bước này.',
   'run.params.optional': '{label} (không bắt buộc)',
   'run.params.chooseDate': 'Chọn ngày',
   'run.params.chooseDateLabel': 'Chọn ngày cho {label}',

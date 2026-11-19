@@ -10,7 +10,7 @@ import type { RefTable } from '../../engine/versions';
 import { Button, Chip, ChipGroup, DatePicker, EmptyState, ErrorState, InfoTip, SkeletonTable, Table } from '../components';
 import type { Column } from '../components';
 import { useT, errorText } from '../i18n';
-import { ParameterInputs } from '../parameter-inputs';
+import { ParameterInputs, PendingParametersNote } from '../parameter-inputs';
 import { initialValues, parameterValueErrors } from '../parameter-logic';
 import { todayIso } from '../screens/flows-logic';
 import { formatCell, neededFiles, previewKey, previewTarget } from './preview-logic';
@@ -94,6 +94,7 @@ export function StepPreview({ definition, step, files, onFile, refTables, parame
             <InfoTip label={t('builder.preview.paramsTitle')}>{t('builder.preview.paramsHint')}</InfoTip>
           </span>
           <ParameterInputs parameters={used} values={values} errors={valueErrors} onChange={onParameterValue} />
+          <PendingParametersNote parameters={used} errors={valueErrors} action="preview" />
         </div>
       ) : null}
       {needed.length > 0 ? (

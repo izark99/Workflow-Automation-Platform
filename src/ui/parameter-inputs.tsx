@@ -18,12 +18,40 @@ export interface ParameterInputsProps {
 
 /** One input for each parameter, in the control of its type. Used by the Test tab of the builder and by the Run screen. */
 export function ParameterInputs({ parameters, values, onChange, errors, disabled = false, width = 338 }: ParameterInputsProps) {
+  // An error shows after the user changed the field or left it, not on arrival (checklist item 6). The parent says
+  // what is missing in a note, so a blank required field is not a surprise.
+  const [touched, setTouched] = useState<ReadonlySet<string>>(new Set());
+  const touch = (key: string): void => setTouched((s) => (s.has(key) ? s : new Set(s).add(key)));
   return (
     <div className={styles.stack}>
       {parameters.map((p) => (
-        <ParameterInput key={p.key} p={p} value={values[p.key]} error={errors[p.key]} disabled={disabled} width={width} onChange={(v) => onChange(p.key, v)} />
+        <div key={p.key} onBlur={() => touch(p.key)}>
+          <ParameterInput
+            p={p}
+            value={values[p.key]}
+            error={touched.has(p.key) ? errors[p.key] : undefined}
+            disabled={disabled}
+            width={width}
+            onChange={(v) => {
+              touch(p.key);
+              onChange(p.key, v);
+            }}
+          />
+        </div>
       ))}
     </div>
+  );
+}
+
+/** A quiet note that says which values are still missing, so that a disabled Run button explains itself. Empty when all are valid. */
+export function PendingParametersNote({ parameters, errors, action }: { parameters: readonly FlowParameter[]; errors: Record<string, string>; action: 'run' | 'preview' }) {
+  const t = useT();
+  const labels = parameters.filter((p) => errors[p.key]).map((p) => p.label);
+  if (labels.length === 0) return null;
+  return (
+    <p className={styles.note} role="status">
+      {t(action === 'run' ? 'run.params.pendingRun' : 'run.params.pendingPreview', { names: labels.join(', ') })}
+    </p>
   );
 }
 

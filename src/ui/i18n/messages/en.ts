@@ -113,6 +113,8 @@ export const en = {
   'builder.loading': 'Loading the flow',
   'builder.settings.panel': 'Step settings',
   'builder.settings.none': 'Select a step on the canvas to see its settings.',
+  'run.params.pendingRun': 'Enter a value for {names} to run the flow.',
+  'run.params.pendingPreview': 'Enter a value for {names} to preview this step.',
   'run.params.optional': '{label} (optional)',
   'run.params.chooseDate': 'Choose a date',
   'run.params.chooseDateLabel': 'Choose a date for {label}',

@@ -31,3 +31,10 @@
   line-height: 20px;
   color: var(--color-danger);
 }
+
+.note {
+  margin: 0;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--color-muted);
+}

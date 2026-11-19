@@ -352,8 +352,11 @@ export const ROUTES: RuleRoute[] = [
     name: '/flows/flow-param/run (Parameters card)',
     sidebar: true,
     before: seedParameterFlow,
-    // The Parameters card with one input of each type: a required date that is blank (so its error shows), a text, a number, a list and a switch.
+    // The Parameters card with one input of each type. The required date is blank: the note says so, and its error shows after the field was touched.
     prepare: async (page) => {
+      await page.getByRole('status').filter({ hasText: /Cut-off date/ }).waitFor();
+      await page.getByRole('button', { name: /Choose a date/ }).focus();
+      await page.getByRole('button', { name: /Choose a date/ }).blur();
       await page.getByRole('alert').first().waitFor();
     },
   },
@@ -372,11 +375,14 @@ export const ROUTES: RuleRoute[] = [
     name: '/flows/flow-param/versions/2 (Test values of the parameters)',
     sidebar: false,
     before: seedParameterFlow,
-    // The Test tab of the Filter step, which reads the date parameter: its input and its error.
+    // The Test tab of the Filter step, which reads the date parameter: its input, the note, and the error after the field was left.
     prepare: async (page) => {
       await page.locator('.react-flow__node').filter({ hasText: 'Keep' }).first().click();
       const panel = page.getByRole('complementary', { name: 'Step settings' });
       await panel.getByRole('tab', { name: /Test/ }).click();
+      await panel.getByRole('status').filter({ hasText: /Cut-off date/ }).waitFor();
+      await panel.getByRole('button', { name: /Choose a date/ }).focus();
+      await panel.getByRole('button', { name: /Choose a date/ }).blur();
       await panel.getByRole('alert').first().waitFor();
     },
   },

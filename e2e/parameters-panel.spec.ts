@@ -108,6 +108,10 @@ test('the Test tab asks for the parameters that the steps read, and only for tho
   await expect(panel(page).getByText('Test values of the parameters')).toBeVisible();
   await expect(panel(page).getByRole('textbox', { name: 'Minimum age' })).toBeVisible();
   await expect(panel(page).getByText('Not used')).toHaveCount(0);
+  await expect(panel(page).getByRole('alert')).toHaveCount(0);
+  await expect(panel(page).getByRole('status').filter({ hasText: 'Enter a value for Minimum age to preview this step.' })).toBeVisible();
+  await panel(page).getByRole('textbox', { name: 'Minimum age' }).focus();
+  await panel(page).getByRole('textbox', { name: 'Minimum age' }).blur();
   await expect(panel(page).getByRole('alert')).toContainText('min_age');
   await panel(page).locator('input[type=file]').setInputFiles(csv('name,age\nAnn,31\nBob,42\n'));
   await expect(panel(page).getByRole('button', { name: 'Preview first rows' })).toBeDisabled();

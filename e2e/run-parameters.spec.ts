@@ -28,7 +28,12 @@ test('the Parameters card sits above the files; Run stays off until the values a
   await page.locator('input[type=file]').setInputFiles(csv(DATA));
   await expect(page.getByText('people.csv, ')).toBeVisible();
   // A required date with no default is blank: the error is under the field and Run is off.
-  await expect(page.getByRole('alert').filter({ hasText: 'cutoff' })).toBeVisible();
+  // No error on arrival: a quiet note says what is missing. The error comes when the field is changed or left.
+  await expect(page.getByRole('alert')).toHaveCount(0);
+  await expect(page.getByRole('status').filter({ hasText: 'Enter a value for Cut-off date to run the flow.' })).toBeVisible();
+  await page.getByRole('button', { name: 'Choose a date for Cut-off date' }).focus();
+  await page.getByRole('button', { name: 'Choose a date for Cut-off date' }).blur();
+  await expect(page.getByRole('alert')).toContainText('cutoff');
   await expect(runButton(page)).toBeDisabled();
   await page.getByRole('button', { name: 'Choose a date for Cut-off date' }).click();
   await expect(page.getByRole('alert')).toHaveCount(0);

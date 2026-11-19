@@ -141,7 +141,7 @@ Quality pass (SPEC 11.6)
 Close
 - [x] T4.10b (U1) Parameters panel: the Type and the default dropdowns fit inside the card.
 - [x] T4.10c (U2) Formula editor: an empty formula is a neutral note until the field was touched, not a red error on arrival.
-- [ ] T4.10d (U3) Run Parameters card and Test tab: a required value shows its error after the field was touched or Run was pressed; Run stays disabled with a note.
+- [x] T4.10d (U3) Run Parameters card and Test tab: a required value shows its error after the field was touched or Run was pressed; Run stays disabled with a note.
 - [ ] T4.10e (U4) The three parameter value messages name the label of the parameter, not its key.
 - [ ] T4.10f (U5) A boolean parameter has no "(optional)" suffix.
 - [ ] T4.10g (U6) Admin: the sentences under "Access to shared flows" and "Deleted flows" move into an info button.
@@ -183,6 +183,12 @@ None. The Pages file size blocker of T3.9 is solved by D71.
 ## Log
 
 Newest first.
+
+### 2026-11-19 T4.10d Parameter values: errors after the field was touched, a note says what is missing (turn 35)
+Advisor not consulted: a small behaviour change that follows checklist item 6.
+Changed: `ParameterInputs` shows a field's error only after the user changed it or left it; `PendingParametersNote` (a quiet status line: "Enter a value for Cut-off date to run the flow." or "... to preview this step.") sits above Run and above Preview while any value is invalid, so the disabled button explains itself. One deviation from the task text: "or Run was pressed" cannot apply, because Run is disabled while a value is invalid (SPEC 11.5 item 5); the note replaces it. Catalog en and vi; e2e on the Run screen and the Test tab updated; the two ui-rules routes now touch the field before they wait for the error.
+Gates run: `npm run check` exit 0 (985 tests); e2e run-parameters, parameters-panel, run and preview specs 23 passed; `test:ui-rules` on the parameter routes, all three projects: 105 passed (targeted). Flow file diff and `testcase` status empty.
+Next: T4.10e.
 
 ### 2026-11-19 T4.10c Formula and SQL editors: an empty field is a quiet guide, not an error (turn 34)
 Advisor not consulted: a small behaviour change that follows checklist item 6.

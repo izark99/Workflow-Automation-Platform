@@ -1,6 +1,6 @@
 import type { ParameterValue } from '../../engine/flow/parameters';
 import { parametersOf } from '../../engine/flow/parameters';
-import { ParameterInputs } from '../parameter-inputs';
+import { ParameterInputs, PendingParametersNote } from '../parameter-inputs';
 import { initialValues, parameterValueErrors } from '../parameter-logic';
 import { useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
@@ -179,6 +179,7 @@ export function RunScreen() {
               <FileRow key={i.key} label={i.label} name={i.key} file={files[i.key]} error={fileErrors[i.key]} disabled={running} onFile={(f) => choose(i.key, f)} />
             ))}
           </div>
+          <PendingParametersNote parameters={parameters} errors={valueErrors} action="run" />
           <div className={styles.actions}>
             <Button variant="primary" busy={running} disabled={!prepared?.ok || missing.length > 0 || Object.keys(valueErrors).length > 0} onClick={() => void run()}>
               {running ? t('run.running') : state.status === 'idle' ? t('run.run') : t('run.runAgain')}
