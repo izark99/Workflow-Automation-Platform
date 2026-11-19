@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { ReactNode } from 'react';
 import type { FlowDefinition, FlowNode } from '../../engine/flow/types';
 import { NODE_PORTS } from '../../engine/flow/types';
 import type { ParameterValue } from '../../engine/flow/parameters';
@@ -10,7 +11,30 @@ import { FORMS } from './forms';
 import type { FormContext } from './forms/types';
 import { ParametersPanel } from './parameters-panel';
 import { StepPreview } from './step-preview';
+import { usePanel } from '../panels/use-panel';
+import { PanelToggle } from '../panels/panel-toggle';
 import styles from './settings-panel.module.css';
+
+/** The settings panel frame: 380 px open, a 48 px rail when collapsed (toggle and, for a selected step, its name upright). */
+function PanelFrame({ stepName, children }: { stepName?: string; children: ReactNode }) {
+  const t = useT();
+  const { collapsed, toggle } = usePanel('settings');
+  return (
+    <aside id="builder-settings" aria-label={t('builder.settings.panel')} className={`${styles.panel} ${collapsed ? styles.rail : ''}`}>
+      <div className={styles.toggle}>
+        <PanelToggle panel="settings" collapsed={collapsed} onToggle={toggle} controls="builder-settings" />
+      </div>
+      {collapsed && stepName ? (
+        <span className={styles.railName} title={stepName} data-user-content>
+          {stepName}
+        </span>
+      ) : null}
+      <div className={styles.content} hidden={collapsed}>
+        {children}
+      </div>
+    </aside>
+  );
+}
 
 export type SettingsTab = 'setup' | 'configure' | 'test';
 
@@ -38,17 +62,17 @@ export function SettingsPanel({ definition, step, onChange, onDeleted, readOnly,
 
   if (!step) {
     return (
-      <aside aria-label={t('builder.settings.panel')} className={styles.panel}>
+      <PanelFrame>
         <ParametersPanel definition={definition} onChange={onChange} readOnly={readOnly} />
         <p className={styles.note}>{t('builder.settings.none')}</p>
-      </aside>
+      </PanelFrame>
     );
   }
   const number = stepNumbers(definition).get(step.id) ?? 0;
   const label = step.label ?? step.id;
 
   return (
-    <aside aria-label={t('builder.settings.panel')} className={styles.panel}>
+    <PanelFrame stepName={`${number}. ${label}`}>
       <div className={styles.head}>
         <div className={styles.titleRow}>
           <h2 data-user-content>{`${number}. ${label}`}</h2>
@@ -87,7 +111,7 @@ export function SettingsPanel({ definition, step, onChange, onDeleted, readOnly,
           {t('builder.settings.deleteStep')}
         </Button>
       </div>
-    </aside>
+    </PanelFrame>
   );
 }
 

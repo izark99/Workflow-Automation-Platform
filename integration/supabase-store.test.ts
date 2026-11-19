@@ -230,7 +230,9 @@ describe('reference tables', () => {
     expect((await refused(stores.admin.saveRefTableVersion(tableId, 2, { rows: tooMany }))).message).toContain('at most 50,000 rows');
     table = await stores.admin.publishRefTableVersion(tableId, 2);
     expect(table.versions[0]).toMatchObject({ versionNo: 1, validTo: '2026-06-30' });
-    expect((await stores.other.listRefTables())[0]?.versions.map((v) => v.status)).toEqual(['published', 'published']);
+    // Since migration 17 a user reads the rows of a table only through a flow that reads it (T5.19 adds the tests of each role).
+    expect((await stores.other.listRefTables()).find((t) => t.id === tableId)?.versions).toEqual([]);
+    expect((await stores.admin.listRefTables()).find((t) => t.id === tableId)?.versions.map((v) => v.status)).toEqual(['published', 'published']);
   });
 });
 
@@ -242,5 +244,147 @@ describe('what a signed-out visitor sees', () => {
     const tables = await visitor.from('ref_tables').select('id');
     expect(tables.error?.code ?? 'none').toBe('42501');
     expect((await refused(new SupabaseStore(visitor).listFlows())).code).toBe('forbidden');
+  });
+});
+
+describe('saveUiTexts (both languages in one transaction)', () => {
+  const read = async () => (await stores.other.listUiTexts()).filter((t) => t.key.startsWith('nav.')).map((t) => `${t.locale}:${t.key}=${t.value}`).sort();
+  it('the admin saves two languages and resets one in one call; every user reads them', async () => {
+    await stores.admin.saveUiTexts({ entries: [{ locale: 'vi', key: 'nav.admin', value: 'Điều khiển' }], resets: [] });
+    await stores.admin.saveUiTexts({
+      entries: [
+        { locale: 'en', key: 'nav.flows', value: 'Pipelines' },
+        { locale: 'vi', key: 'nav.flows', value: 'Quy trình' },
+      ],
+      resets: [{ locale: 'vi', key: 'nav.admin' }],
+    });
+    expect(await read()).toEqual(['en:nav.flows=Pipelines', 'vi:nav.flows=Quy trình']);
+  });
+  it('a user is refused, and a bad entry stores nothing of the call', async () => {
+    expect((await refused(stores.owner.saveUiTexts({ entries: [{ locale: 'en', key: 'nav.admin', value: 'X' }], resets: [] }))).code).toBe('forbidden');
+    await refused(
+      stores.admin.saveUiTexts({
+        entries: [
+          { locale: 'en', key: 'nav.admin', value: 'Control' },
+          { locale: 'fr' as 'en', key: 'nav.admin', value: 'Oops' },
+        ],
+        resets: [{ locale: 'en', key: 'nav.flows' }],
+      }),
+    );
+    expect(await read()).toEqual(['en:nav.flows=Pipelines', 'vi:nav.flows=Quy trình']);
+    await stores.admin.saveUiTexts({ entries: [], resets: [{ locale: 'en', key: 'nav.flows' }, { locale: 'vi', key: 'nav.flows' }] });
+    expect(await read()).toEqual([]);
+  });
+});
+
+describe('app settings', () => {
+  it('every user reads the limit; the admin changes it; the database refuses a bad value and a user', async () => {
+    expect(await stores.other.getAppSettings()).toEqual({ idleTimeoutHours: 8 });
+    expect(await stores.admin.saveAppSetting('idle_timeout_hours', 12)).toEqual({ idleTimeoutHours: 12 });
+    expect(await stores.member.getAppSettings()).toEqual({ idleTimeoutHours: 12 });
+    expect((await refused(stores.owner.saveAppSetting('idle_timeout_hours', 5))).code).toBe('forbidden');
+    // The database checks the value too: call it directly with values that the store would refuse first.
+    const direct = await service.from('app_settings').update({ value: 73 }).eq('key', 'idle_timeout_hours');
+    expect(direct.error?.code).toBe('23514');
+    const text = await service.from('app_settings').update({ value: '8' }).eq('key', 'idle_timeout_hours');
+    expect(text.error?.code).toBe('23514');
+    await stores.admin.saveAppSetting('idle_timeout_hours', 8);
+    expect(await stores.other.getAppSettings()).toEqual({ idleTimeoutHours: 8 });
+  });
+  it('a signed-out visitor reads nothing', async () => {
+    const visitor = createClient(URL, ANON, options);
+    expect((await visitor.from('app_settings').select('key')).error?.code).toBe('42501');
+  });
+});
+
+describe('importRefTable', () => {
+  const columns = [{ name: 'code', type: 'text' as const }, { name: 'limit', type: 'number' as const }];
+  it('the admin makes a draft in a new table and a new version; a user is refused', async () => {
+    const rows = [['A', 1], ['B', 2]];
+    const made = await stores.admin.importRefTable({ target: { kind: 'newTable', name: 'Imported from a file', description: 'test' }, columns, rows });
+    expect(made.versionNo).toBe(1);
+    expect(made.table.versions[0]).toMatchObject({ status: 'draft', columns, rows });
+    const again = await stores.admin.importRefTable({ target: { kind: 'replaceDraft', tableId: made.table.id, versionNo: 1 }, columns, rows: [['C', 3]] });
+    expect(again.table.versions[0]?.rows).toEqual([['C', 3]]);
+    await stores.admin.publishRefTableVersion(made.table.id, 1);
+    expect((await refused(stores.admin.importRefTable({ target: { kind: 'replaceDraft', tableId: made.table.id, versionNo: 1 }, columns, rows }))).code).toBe('conflict');
+    const next = await stores.admin.importRefTable({ target: { kind: 'newVersion', tableId: made.table.id, validFrom: '2099-01-01' }, columns, rows });
+    expect(next.versionNo).toBe(2);
+    expect(next.table.versions[1]).toMatchObject({ status: 'draft', validFrom: '2099-01-01', rows });
+    expect((await refused(stores.owner.importRefTable({ target: { kind: 'newTable', name: 'Not allowed', description: '' }, columns, rows }))).code).toBe('forbidden');
+  });
+});
+
+describe('updateRefTable', () => {
+  it('the admin changes the description and the name stays; a user is refused', async () => {
+    const made = await stores.admin.createRefTable({ name: 'Described table', description: 'before', columns: [{ name: 'k', type: 'text' }] });
+    const after = await stores.admin.updateRefTable(made.id, { description: 'after' });
+    expect(after).toMatchObject({ name: 'Described table', description: 'after' });
+    expect((await refused(stores.owner.updateRefTable(made.id, { description: 'Hacked' }))).code).toBe('forbidden');
+    expect((await stores.other.listRefTables()).find((t) => t.id === made.id)?.description).toBe('after');
+  });
+});
+
+describe('who reads the rows of a reference table (migration 17, SPEC 12.1)', () => {
+  const reads = (table: string) => ({ schemaVersion: 1, nodes: [{ id: 'l1', type: 'lookup_join', settings: { source: { kind: 'reference', table } } }], edges: [] });
+  const columns = [{ name: 'k', type: 'text' as const }];
+  const view = async (who: Who, name: string) => (await stores[who].listRefTables()).find((t) => t.name === name)!;
+  let personalId = '';
+  let sharedId = '';
+
+  it('every user sees the name and description of every table, but no rows until a flow reads the table', async () => {
+    await stores.admin.createRefTable({ name: 'Role table', description: 'for the role test', columns });
+    const made = (await stores.admin.listRefTables()).find((t) => t.name === 'Role table')!;
+    await stores.admin.saveRefTableVersion(made.id, 1, { rows: [['x']] });
+    await stores.admin.createRefTable({ name: 'Role table shared', description: 'second', columns });
+    const second = (await stores.admin.listRefTables()).find((t) => t.name === 'Role table shared')!;
+    await stores.admin.saveRefTableVersion(second.id, 1, { rows: [['y']] });
+    for (const who of ['owner', 'member', 'other'] as const) {
+      const t = await view(who, 'Role table');
+      expect(t.description, who).toBe('for the role test');
+      expect(t.versions, who).toEqual([]);
+      expect(t.usedBy, who).toEqual([]);
+    }
+    expect((await view('admin', 'Role table')).versions[0]?.rows).toEqual([['x']]);
+  });
+
+  it('the owner of a personal flow reads the table it reads, with the draft version, and nobody else does', async () => {
+    const flow = await stores.owner.createFlow({ name: 'Role personal', scope: 'personal' });
+    personalId = flow.id;
+    await stores.owner.saveFlowVersion(flow.id, 1, { definition: reads('Role table') });
+    const t = await view('owner', 'Role table');
+    expect(t.usedBy).toEqual(['Role personal']);
+    expect(t.versions[0]).toMatchObject({ status: 'draft', rows: [['x']] });
+    expect((await view('other', 'Role table')).versions).toEqual([]);
+    expect((await view('member', 'Role table')).usedBy).toEqual([]);
+    expect((await view('owner', 'Role table shared')).versions).toEqual([]);
+    // The admin sees the flow in usedBy too.
+    expect((await view('admin', 'Role table')).usedBy).toContain('Role personal');
+  });
+
+  it('a shared flow gives the table to the members of its group, and the run can resolve it for them', async () => {
+    const flow = await stores.admin.createFlow({ name: 'Role shared', scope: 'shared' });
+    sharedId = flow.id;
+    await stores.admin.saveFlowVersion(flow.id, 1, { definition: reads('Role table shared') });
+    await stores.admin.setFlowGroups(flow.id, [hrGroup]);
+    const t = await view('member', 'Role table shared');
+    expect(t.usedBy).toEqual(['Role shared']);
+    expect(t.versions[0]?.rows).toEqual([['y']]);
+    expect((await view('other', 'Role table shared')).versions).toEqual([]);
+    expect((await view('owner', 'Role table shared')).versions).toEqual([]);
+  });
+
+  it('a deleted flow gives no access, and restoring it gives the access back', async () => {
+    await stores.owner.deleteFlow(personalId);
+    expect((await view('owner', 'Role table')).versions).toEqual([]);
+    expect((await view('admin', 'Role table')).usedBy).not.toContain('Role personal');
+    await stores.admin.restoreFlow(personalId);
+    expect((await view('owner', 'Role table')).versions.length).toBe(1);
+  });
+
+  it('editing the flow so that it no longer reads the table takes the access away', async () => {
+    await stores.admin.saveFlowVersion(sharedId, 1, { definition: { schemaVersion: 1, nodes: [], edges: [] } });
+    expect((await view('member', 'Role table shared')).versions).toEqual([]);
+    expect((await view('member', 'Role table shared')).usedBy).toEqual([]);
   });
 });

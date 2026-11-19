@@ -8,6 +8,7 @@ const paths: Record<string, ReactElement> = {
       <path d="M20 20l-4.5-4.5" />
     </>
   ),
+  plus: <path d="M12 5v14M5 12h14" />,
   check: <path d="M5 12l5 5 9-10" />,
   chevronDown: <path d="M6 9l6 6 6-6" />,
   chevronLeft: <path d="M15 6l-6 6 6 6" />,

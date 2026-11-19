@@ -226,3 +226,27 @@ describe('planPublish', () => {
     expect(dayAfter('2028-02-28')).toBe('2028-02-29');
   });
 });
+
+// The database function `ref_table_names()` (migration 16) follows this rule, and supabase/tests/database/150 checks the same
+// cases. If the rule changes here, change both.
+describe('referencedTables, the cases of the database function', () => {
+  const lookup = (source: unknown) => ({ nodes: [{ type: 'lookup_join', settings: { source } }] });
+  const pivot = (columns: unknown) => ({ nodes: [{ type: 'pivot', settings: { columns } }] });
+  it('a Lookup with a reference source and a Pivot with a reference column list read their table', () => {
+    expect(referencedTables(lookup({ kind: 'reference', table: 'Limits' }))).toEqual(['Limits']);
+    expect(referencedTables(pivot({ from: 'reference', table: 'Codes' }))).toEqual(['Codes']);
+  });
+  it('another source, another step type and odd shapes read none', () => {
+    expect(referencedTables(lookup({ kind: 'node' }))).toEqual([]);
+    expect(referencedTables(pivot({ from: 'data' }))).toEqual([]);
+    expect(referencedTables({ nodes: [{ type: 'filter', settings: { source: { kind: 'reference', table: 'Limits' } } }] })).toEqual([]);
+    expect(referencedTables({})).toEqual([]);
+    expect(referencedTables({ nodes: 'x' })).toEqual([]);
+    expect(referencedTables([1, 2])).toEqual([]);
+    expect(referencedTables({ nodes: [1, 'a', null, { type: 'lookup_join' }, ...lookup({ kind: 'reference', table: 5 }).nodes] })).toEqual([]);
+  });
+  it('each table once', () => {
+    const def = { nodes: [...lookup({ kind: 'reference', table: 'B' }).nodes, ...pivot({ from: 'reference', table: 'A' }).nodes, ...lookup({ kind: 'reference', table: 'B' }).nodes] };
+    expect([...referencedTables(def)].sort()).toEqual(['A', 'B']);
+  });
+});

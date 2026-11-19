@@ -4,7 +4,9 @@
 }
 
 .nav {
-  flex: 0 0 var(--size-sidebar);
+  position: relative;
+  width: var(--size-sidebar);
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -104,4 +106,56 @@
   flex-direction: column;
   gap: 12px;
   color: var(--color-ink);
+}
+
+/* The rail (DESIGN, Collapsible panels): 64 px, 8 px padding, no scrolling. */
+.navRail {
+  width: 64px;
+  padding: 8px;
+  align-items: center;
+}
+
+.toggle {
+  position: absolute;
+  top: 12px;
+  right: 8px;
+  z-index: 1;
+}
+
+.railTop {
+  height: 40px; /* room for the toggle */
+}
+
+.railLink {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--size-button);
+  height: var(--size-button);
+  border-radius: var(--radius-control);
+  color: var(--color-ink);
+}
+
+.railLink[aria-current='page'] {
+  background: var(--color-primary-soft);
+}
+
+.railUser {
+  margin-top: auto;
+}
+
+.userPopover {
+  position: fixed;
+  left: 72px;
+  bottom: 12px;
+  z-index: 30;
+  width: 232px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  background: var(--color-card);
+  border: 1px solid var(--color-control);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-popover);
 }

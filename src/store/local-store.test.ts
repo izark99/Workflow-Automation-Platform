@@ -247,17 +247,185 @@ describe('users, groups and run log', () => {
 describe('edited UI texts', () => {
   it('everyone reads them, an admin saves and resets them, a user cannot', async () => {
     expect(await store.listUiTexts()).toEqual([]);
-    const saved = await store.saveUiText({ locale: 'vi', key: 'nav.flows', value: 'Quy trình' });
-    expect(saved).toMatchObject({ locale: 'vi', key: 'nav.flows', value: 'Quy trình' });
-    await store.saveUiText({ locale: 'vi', key: 'nav.flows', value: 'Luồng việc' });
+    await store.saveUiTexts({ entries: [{ locale: 'vi', key: 'nav.flows', value: 'Quy trình' }], resets: [] });
+    expect(await store.listUiTexts()).toMatchObject([{ locale: 'vi', key: 'nav.flows', value: 'Quy trình' }]);
+    await store.saveUiTexts({ entries: [{ locale: 'vi', key: 'nav.flows', value: 'Luồng việc' }], resets: [] });
     expect((await store.listUiTexts()).map((t) => t.value)).toEqual(['Luồng việc']);
-    await expect(store.saveUiText({ locale: 'en', key: 'nav.flows', value: '   ' })).rejects.toMatchObject({ messageId: 'errors.textEmpty' });
+    await expect(store.saveUiTexts({ entries: [{ locale: 'en', key: 'nav.flows', value: '   ' }], resets: [] })).rejects.toMatchObject({ messageId: 'errors.textEmpty' });
     await as('user-lan');
     expect((await store.listUiTexts()).map((t) => t.value)).toEqual(['Luồng việc']);
-    expect(await code(store.saveUiText({ locale: 'en', key: 'nav.flows', value: 'X' }))).toBe('forbidden');
-    expect(await code(store.resetUiText('vi', 'nav.flows'))).toBe('forbidden');
+    expect(await code(store.saveUiTexts({ entries: [{ locale: 'en', key: 'nav.flows', value: 'X' }], resets: [] }))).toBe('forbidden');
+    expect(await code(store.saveUiTexts({ entries: [], resets: [{ locale: 'vi', key: 'nav.flows' }] }))).toBe('forbidden');
     await as('user-harold');
-    await store.resetUiText('vi', 'nav.flows');
+    await store.saveUiTexts({ entries: [], resets: [{ locale: 'vi', key: 'nav.flows' }] });
     expect(await store.listUiTexts()).toEqual([]);
+  });
+});
+
+describe('saveUiTexts (both languages in one action)', () => {
+  it('stores two languages and resets one in one call', async () => {
+    await store.saveUiTexts({ entries: [{ locale: 'vi', key: 'nav.admin', value: 'Điều khiển' }], resets: [] });
+    await store.saveUiTexts({
+      entries: [
+        { locale: 'en', key: 'nav.flows', value: 'Pipelines' },
+        { locale: 'vi', key: 'nav.flows', value: 'Quy trình' },
+      ],
+      resets: [{ locale: 'vi', key: 'nav.admin' }],
+    });
+    const rows = await store.listUiTexts();
+    expect(rows.map((t) => `${t.locale}:${t.key}=${t.value}`).sort()).toEqual(['en:nav.flows=Pipelines', 'vi:nav.flows=Quy trình']);
+  });
+  it('a bad entry changes nothing', async () => {
+    await store.saveUiTexts({ entries: [{ locale: 'en', key: 'nav.flows', value: 'Pipelines' }], resets: [] });
+    const bad = (entries: { locale: 'en' | 'vi'; key: string; value: string }[]) => store.saveUiTexts({ entries: [{ locale: 'en', key: 'nav.admin', value: 'Control' }, ...entries], resets: [{ locale: 'en', key: 'nav.flows' }] });
+    await expect(bad([{ locale: 'vi', key: 'nav.flows', value: '  ' }])).rejects.toMatchObject({ messageId: 'errors.textEmpty' });
+    await expect(bad([{ locale: 'fr' as 'en', key: 'nav.flows', value: 'X' }])).rejects.toMatchObject({ messageId: 'errors.textInvalid' });
+    await expect(bad([{ locale: 'en', key: 'no key shape', value: 'X' }])).rejects.toMatchObject({ messageId: 'errors.textInvalid' });
+    expect((await store.listUiTexts()).map((t) => `${t.key}=${t.value}`)).toEqual(['nav.flows=Pipelines']);
+  });
+  it('a user is refused', async () => {
+    await as('user-lan');
+    expect(await code(store.saveUiTexts({ entries: [{ locale: 'en', key: 'nav.flows', value: 'X' }], resets: [] }))).toBe('forbidden');
+    expect(await code(store.saveUiTexts({ entries: [], resets: [{ locale: 'en', key: 'nav.flows' }] }))).toBe('forbidden');
+  });
+});
+
+describe('app settings', () => {
+  it('has the default of 8 hours, and an admin changes it for everyone', async () => {
+    expect(await store.getAppSettings()).toEqual({ idleTimeoutHours: 8 });
+    expect(await store.saveAppSetting('idle_timeout_hours', 12)).toEqual({ idleTimeoutHours: 12 });
+    await as('user-lan');
+    expect(await store.getAppSettings()).toEqual({ idleTimeoutHours: 12 });
+  });
+  it('refuses a user, and a value that is not a whole number from 1 to 72', async () => {
+    await as('user-lan');
+    expect(await code(store.saveAppSetting('idle_timeout_hours', 5))).toBe('forbidden');
+    await as('user-harold');
+    for (const bad of [0, 73, 1.5, Number.NaN, -3]) await expect(store.saveAppSetting('idle_timeout_hours', bad)).rejects.toMatchObject({ messageId: 'errors.idleHoursInvalid' });
+    for (const ok of [1, 72]) expect(await store.saveAppSetting('idle_timeout_hours', ok)).toEqual({ idleTimeoutHours: ok });
+  });
+});
+
+describe('importRefTable', () => {
+  const columns = [{ name: 'code', type: 'text' as const }, { name: 'limit', type: 'number' as const }];
+  const rows = [['A', 1], ['B', 2]];
+  it('a new table gets a draft with the columns and rows, and is not published', async () => {
+    const { table, versionNo } = await store.importRefTable({ target: { kind: 'newTable', name: 'Imported', description: 'From a file' }, columns, rows });
+    expect(versionNo).toBe(1);
+    expect(table).toMatchObject({ name: 'Imported', description: 'From a file' });
+    expect(table.versions[0]).toMatchObject({ status: 'draft', columns, rows });
+    expect((await store.listRefTables()).find((t) => t.id === table.id)?.versions[0]?.status).toBe('draft');
+  });
+  it('a new version of a table is a draft that starts on the date given, and the old versions stay as they were', async () => {
+    const before = (await store.listRefTables()).find((t) => t.id === 'ref-ot-limits')!;
+    const { table, versionNo } = await store.importRefTable({ target: { kind: 'newVersion', tableId: 'ref-ot-limits', validFrom: '2027-01-01' }, columns, rows });
+    expect(versionNo).toBe(before.versions.length + 1);
+    expect(table.versions.find((v) => v.versionNo === versionNo)).toMatchObject({ status: 'draft', validFrom: '2027-01-01', columns, rows });
+    expect(table.versions.filter((v) => v.versionNo !== versionNo)).toEqual(before.versions);
+  });
+  it('replaces the columns and rows of an existing draft, and keeps its dates', async () => {
+    await store.createRefTableVersion('ref-ot-limits', { validFrom: '2027-01-01', copyFrom: 1 });
+    const { table, versionNo } = await store.importRefTable({ target: { kind: 'replaceDraft', tableId: 'ref-ot-limits', versionNo: 2 }, columns, rows });
+    expect(versionNo).toBe(2);
+    expect(table.versions[1]).toMatchObject({ validFrom: '2027-01-01', status: 'draft', columns, rows });
+  });
+  it('refuses a published version, a missing table, a name that is taken, and a date that overlaps, and creates nothing', async () => {
+    const count = async () => (await store.listRefTables()).reduce((n, t) => n + 1 + t.versions.length, 0);
+    const n = await count();
+    expect(await code(store.importRefTable({ target: { kind: 'replaceDraft', tableId: 'ref-ot-limits', versionNo: 1 }, columns, rows }))).toBe('conflict');
+    expect(await code(store.importRefTable({ target: { kind: 'replaceDraft', tableId: 'nope', versionNo: 1 }, columns, rows }))).toBe('not_found');
+    expect(await code(store.importRefTable({ target: { kind: 'newTable', name: 'ot limits', description: '' }, columns, rows }))).toBe('conflict');
+    expect(await code(store.importRefTable({ target: { kind: 'newTable', name: '  ', description: '' }, columns, rows }))).toBe('invalid');
+    expect(await code(store.importRefTable({ target: { kind: 'newVersion', tableId: 'ref-ot-limits', validFrom: 'not a date' }, columns, rows }))).toBe('invalid');
+    expect(await count()).toBe(n);
+  });
+  it('refuses more than 50,000 rows and a shape that does not fit, before any write', async () => {
+    const n = (await store.listRefTables()).length;
+    const big = Array.from({ length: 50_001 }, (_, i) => ['k', i]);
+    await expect(store.importRefTable({ target: { kind: 'newTable', name: 'Big', description: '' }, columns, rows: big })).rejects.toThrow(/at most 50,000 rows/);
+    expect(await code(store.importRefTable({ target: { kind: 'newTable', name: 'Shape', description: '' }, columns, rows: [['only one']] }))).toBe('invalid');
+    expect(await code(store.importRefTable({ target: { kind: 'newTable', name: 'Cols', description: '' }, columns: [{ name: ' ', type: 'text' }], rows: [['x']] }))).toBe('invalid');
+    expect((await store.listRefTables()).length).toBe(n);
+  });
+  it('only the admin imports', async () => {
+    await as('user-lan');
+    expect(await code(store.importRefTable({ target: { kind: 'newTable', name: 'Nope', description: '' }, columns, rows }))).toBe('forbidden');
+    expect(await code(store.importRefTable({ target: { kind: 'replaceDraft', tableId: 'ref-ot-limits', versionNo: 1 }, columns, rows }))).toBe('forbidden');
+  });
+});
+
+describe('updateRefTable', () => {
+  it('the admin changes the description, the name stays, and a user is refused', async () => {
+    const t = await store.updateRefTable('ref-ot-limits', { description: 'Hours per period' });
+    expect(t).toMatchObject({ id: 'ref-ot-limits', name: 'OT limits', description: 'Hours per period' });
+    expect((await store.listRefTables()).find((x) => x.id === 'ref-ot-limits')?.description).toBe('Hours per period');
+    expect(await code(store.updateRefTable('nope', { description: 'x' }))).toBe('not_found');
+    await as('user-lan');
+    expect(await code(store.updateRefTable('ref-ot-limits', { description: 'Hacked' }))).toBe('forbidden');
+  });
+});
+
+describe('listRefTables: rows only where a flow reads the table (SPEC 12.1)', () => {
+  const reads = (table: string) => ({ schemaVersion: 1, nodes: [{ id: 'l1', type: 'lookup_join', settings: { source: { kind: 'reference', table } } }], edges: [] });
+  const rowsOf = async (name: string) => (await store.listRefTables()).find((t) => t.name === name)!;
+
+  it('the admin reads every version of every table', async () => {
+    for (const t of await store.listRefTables()) expect(t.versions.length, t.name).toBeGreaterThan(0);
+  });
+  it('a user with no flow that reads a table sees its name and description, but no version', async () => {
+    await as('user-lan');
+    const all = await store.listRefTables();
+    expect(all.map((t) => t.name)).toEqual(['Attendance codes', 'OT types', 'OT limits']);
+    for (const t of all) {
+      expect(t.versions, t.name).toEqual([]);
+      expect(t.usedBy.length, t.name).toBe(0);
+    }
+  });
+  it('a personal flow gives its owner the rows of the table it reads, a draft version counts, and the usedBy names it', async () => {
+    await as('user-lan');
+    const flow = await store.createFlow({ name: 'Lan flow', scope: 'personal' });
+    await store.saveFlowVersion(flow.id, 1, { definition: reads('OT types') });
+    const t = await rowsOf('OT types');
+    expect(t.usedBy).toEqual(['Lan flow']);
+    expect(t.versions.length).toBeGreaterThan(0);
+    expect((await rowsOf('OT limits')).versions).toEqual([]);
+    await as('user-minh');
+    expect((await rowsOf('OT types')).versions).toEqual([]); // another person's personal flow gives nothing
+    expect((await rowsOf('OT types')).usedBy).toEqual([]);
+  });
+  it('a shared flow gives the rows to the members of its groups only', async () => {
+    const flow = await store.createFlow({ name: 'Shared reader', scope: 'shared' });
+    await store.saveFlowVersion(flow.id, 1, { definition: reads('OT limits') });
+    await store.setFlowGroups(flow.id, ['group-payroll']);
+    await as('user-lan'); // in HR Payroll
+    expect((await rowsOf('OT limits')).usedBy).toEqual(['Shared reader']);
+    expect((await rowsOf('OT limits')).versions.length).toBeGreaterThan(0);
+    await as('user-minh'); // in HR Analytics only
+    expect((await rowsOf('OT limits')).versions).toEqual([]);
+  });
+  it('a deleted flow gives no access, and restoring it gives it back', async () => {
+    await as('user-lan');
+    const flow = await store.createFlow({ name: 'Short lived', scope: 'personal' });
+    await store.saveFlowVersion(flow.id, 1, { definition: reads('Attendance codes') });
+    expect((await rowsOf('Attendance codes')).versions.length).toBeGreaterThan(0);
+    await store.deleteFlow(flow.id);
+    expect((await rowsOf('Attendance codes')).versions).toEqual([]);
+    await as('user-harold');
+    expect((await rowsOf('Attendance codes')).usedBy).not.toContain('Short lived');
+    await store.restoreFlow(flow.id);
+    await as('user-lan');
+    expect((await rowsOf('Attendance codes')).versions.length).toBeGreaterThan(0);
+  });
+  it('editing the definition so that it no longer reads the table takes the access away', async () => {
+    await as('user-lan');
+    const flow = await store.createFlow({ name: 'Changing', scope: 'personal' });
+    await store.saveFlowVersion(flow.id, 1, { definition: reads('OT types') });
+    await store.saveFlowVersion(flow.id, 1, { definition: { schemaVersion: 1, nodes: [], edges: [] } });
+    expect((await rowsOf('OT types')).versions).toEqual([]);
+  });
+  it('lists each flow once per table even when several of its versions read the table', async () => {
+    const flow = await store.createFlow({ name: 'Two versions', scope: 'personal' });
+    await store.saveFlowVersion(flow.id, 1, { definition: reads('OT types') });
+    expect((await rowsOf('OT types')).usedBy.filter((n) => n === 'Two versions')).toHaveLength(1);
   });
 });

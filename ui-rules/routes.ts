@@ -32,11 +32,19 @@ export interface RuleRoute {
   busy?: boolean;
   /** False when the route's own steps need the English texts, so the pseudo-locale check skips it. */
   pseudo?: boolean;
+  /** The sidebar is collapsed to its 64 px rail in this state of the route. */
+  railSidebar?: boolean;
   /** Runs before the page loads, for example to put data into the store. */
   before?: (page: Page) => Promise<void>;
   /** Puts the page in the state to check after it has loaded, for example by selecting a step. */
   prepare?: (page: Page) => Promise<void>;
 }
+
+/** Puts the named panels in the collapsed state before the page loads (the key of src/ui/panels/panel-state.ts). */
+export const collapsePanels = (...ids: string[]) => async (page: Page): Promise<void> => {
+  const state = Object.fromEntries(ids.map((id) => [id, true]));
+  await page.addInitScript((json) => localStorage.setItem('dfw.panels', json), JSON.stringify(state));
+};
 
 const USERS_JSON = JSON.stringify([{ email: 'harold@example.com', password: 'correct horse battery' }]);
 /** The sign-in screen needs the stand-in sign-in (D67): the key makes the app ask for a sign-in before it shows a route. */
@@ -113,6 +121,44 @@ export const ROUTES: RuleRoute[] = [
     },
   },
   {
+    path: '/flows',
+    name: 'sign-in screen after the inactivity limit',
+    sidebar: false,
+    nav: false,
+    before: async (page) => {
+      await withSignIn(page);
+      await page.addInitScript(() => {
+        localStorage.setItem('dfw.authSession', JSON.stringify({ userId: 'memory-harold@example.com', email: 'harold@example.com' }));
+        localStorage.setItem('dfw.idleMs', '60000');
+        localStorage.setItem('dfw.lastActivity', String(Date.now() - 3 * 3_600_000));
+      });
+    },
+    // The quiet note (muted text with an info icon) above the form.
+    prepare: async (page) => {
+      await page.locator('p[role="status"][class*="quiet"]').waitFor();
+    },
+  },
+  {
+    path: '/flows',
+    name: '/flows (inactivity dialog)',
+    sidebar: true,
+    table: true,
+    before: async (page) => {
+      await withSignIn(page);
+      await page.addInitScript(() => {
+        localStorage.setItem('dfw.authSession', JSON.stringify({ userId: 'memory-harold@example.com', email: 'harold@example.com' }));
+        localStorage.setItem('dfw.idleMs', '60000');
+      });
+      await page.clock.install();
+    },
+    // 40 s without activity of a 60 s limit: the dialog with the countdown shows (the last 30 s).
+    prepare: async (page) => {
+      await page.locator('tbody tr').first().waitFor();
+      await page.clock.fastForward(40_000);
+      await page.getByRole('dialog').waitFor();
+    },
+  },
+  {
     path: '/admin',
     name: '/admin (Texts tab)',
     sidebar: true,
@@ -121,6 +167,28 @@ export const ROUTES: RuleRoute[] = [
     prepare: async (page) => {
       await page.getByRole('tab', { name: /Texts/ }).click();
       await page.getByRole('button', { name: /Edit nav\.flows/ }).waitFor();
+    },
+  },
+  {
+    path: '/admin',
+    name: '/admin (Settings tab)',
+    sidebar: true,
+    // The card with the number field, the info button and Save.
+    prepare: async (page) => {
+      await page.getByRole('tab', { name: /Settings/ }).click();
+      await page.locator('input[inputmode="numeric"]').waitFor();
+    },
+  },
+  {
+    path: '/admin',
+    name: '/admin (Settings tab, invalid value)',
+    sidebar: true,
+    // An error under the field, and Save off.
+    prepare: async (page) => {
+      await page.getByRole('tab', { name: /Settings/ }).click();
+      const field = page.locator('input[inputmode="numeric"]');
+      await field.fill('73');
+      await page.getByRole('alert').first().waitFor();
     },
   },
   {
@@ -148,7 +216,55 @@ export const ROUTES: RuleRoute[] = [
       await page.getByRole('complementary', { name: 'Step settings' }).getByRole('heading').waitFor();
     },
   },
+  {
+    path: '/reference-tables',
+    name: '/reference-tables (import dialog)',
+    sidebar: true,
+    table: true,
+    // The empty dialog: the file button, the target chips, the reason that Import is off.
+    prepare: async (page) => {
+      await page.getByRole('button', { name: /Import file|^\W*Nhập tệp/ }).click();
+      await page.getByRole('dialog').waitFor();
+    },
+  },
+  {
+    path: '/reference-tables',
+    name: '/reference-tables (import dialog with a file)',
+    sidebar: true,
+    table: true,
+    // A file with the preview, the columns with their types, and a new table target.
+    prepare: async (page) => {
+      await page.getByRole('button', { name: /Import file|^\W*Nhập tệp/ }).click();
+      const text = ['Code,Limit,Valid from,Active', ...Array.from({ length: 30 }, (_, i) => `A${i},${i + 0.5},2026-09-30,true`)].join('\n');
+      await page.locator('input[type=file]').setInputFiles({ name: 'limits.csv', mimeType: 'text/csv', buffer: Buffer.from(text) });
+      await page.getByRole('table').last().waitFor();
+    },
+  },
+  {
+    path: '/reference-tables',
+    name: '/reference-tables (import dialog with problems)',
+    sidebar: true,
+    table: true,
+    // Cell problems under the columns: five of them and "and n more".
+    pseudo: false,
+    prepare: async (page) => {
+      await page.getByRole('button', { name: 'Import file' }).click();
+      const text = ['n,d', '1,2026-09-30', '2,2026-09-30', '3,2026-09-30', ...Array.from({ length: 9 }, (_, i) => `bad${i},not a date`)].join('\n');
+      await page.locator('input[type=file]').setInputFiles({ name: 'bad.csv', mimeType: 'text/csv', buffer: Buffer.from(text) });
+      await page.getByRole('button', { name: /^Type of column 1/ }).click();
+      await page.getByRole('option', { name: 'Number' }).click();
+      await page.getByRole('alert').filter({ hasText: 'Row ' }).waitFor();
+    },
+  },
   { path: '/dev/components', sidebar: true, nav: false },
+  { path: '/reference-tables', name: '/reference-tables (list collapsed)', sidebar: true, table: true, before: collapsePanels('refList') },
+  // The builder with each panel collapsed (SPEC 12.4, T5.4); T5.6 adds the width rule for them.
+  ...([['steps'], ['settings'], ['steps', 'settings']] as const).map(
+    (ids): RuleRoute => ({ path: '/flows/flow-timesheet/versions/4', name: `/flows/flow-timesheet/versions/4 (${ids.join(' and ')} collapsed)`, sidebar: false, before: collapsePanels(...ids) }),
+  ),
+  ...(['/flows', '/admin', '/flows/flow-timesheet/run'] as const).map(
+    (path): RuleRoute => ({ path, name: `${path} (sidebar rail)`, sidebar: true, railSidebar: true, before: collapsePanels('sidebar') }),
+  ),
   {
     path: '/flows/flow-timesheet/versions/4',
     name: '/flows/flow-timesheet/versions/4 (Test tab)',
@@ -420,6 +536,62 @@ export const ROUTES: RuleRoute[] = [
     prepare: async (page) => {
       await page.getByRole('button', { name: 'Paste from Excel' }).click();
       await page.getByRole('dialog', { name: 'Paste from Excel' }).waitFor();
+    },
+  },
+  {
+    path: '/reference-tables?table=ref-big&v=1',
+    name: '/reference-tables (columns dialog with a problem)',
+    sidebar: true,
+    pseudo: false, // its steps need the English texts
+    before: seedBigDraft,
+    // One row per column: name, type, remove; Add column; the message that keeps Apply off.
+    prepare: async (page) => {
+      await page.getByRole('button', { name: 'Columns', exact: true }).click();
+      const dialog = page.getByRole('dialog', { name: 'Columns of the draft' });
+      await dialog.getByRole('textbox', { name: 'Name of column 2' }).fill('ID');
+      await dialog.getByRole('alert').waitFor();
+    },
+  },
+  {
+    path: '/reference-tables?table=ref-big&v=1',
+    name: '/reference-tables (description dialog)',
+    sidebar: true,
+    before: seedBigDraft,
+    prepare: async (page) => {
+      await page.getByRole('button', { name: 'Edit description' }).click();
+      await page.getByRole('dialog', { name: 'Description of the table' }).waitFor();
+    },
+  },
+  {
+    path: '/reference-tables',
+    name: '/reference-tables (as a user, tables of own flows)',
+    sidebar: true,
+    table: true,
+    // A user: no admin buttons, the list with a Used by line in each item, and the Used by line above the grid.
+    before: async (page) => {
+      const s = seedSnapshot();
+      s.currentUserId = 'user-lan';
+      const node = (id: string, type: string, settings: Record<string, unknown>, y: number) => ({ id, type, label: id, position: { x: 0, y }, settings });
+      const def = (table: string) => ({ schemaVersion: 1, nodes: [node('L', 'lookup_join', { source: { kind: 'reference', table }, keys: [], bring: [], onNoMatch: 'blank' }, 0)], edges: [] });
+      const version = (definition: unknown) => [{ versionNo: 1, validFrom: '2026-01-01', validTo: null, status: 'published' as const, changeNote: '', definition }];
+      s.flows.push(
+        { id: 'f-a', name: 'Flow A', ownerId: 'user-lan', scope: 'personal', deletedAt: null, groupIds: [], versions: version(def('OT limits')) },
+        { id: 'f-b', name: 'Flow B', ownerId: 'user-lan', scope: 'personal', deletedAt: null, groupIds: [], versions: version(def('OT limits')) },
+        { id: 'f-c', name: 'Flow C', ownerId: 'user-lan', scope: 'personal', deletedAt: null, groupIds: [], versions: version(def('OT limits')) },
+        { id: 'f-d', name: 'Flow D', ownerId: 'user-lan', scope: 'personal', deletedAt: null, groupIds: [], versions: version(def('OT limits')) },
+      );
+      await page.addInitScript((json) => localStorage.setItem('dfw.seed', json), JSON.stringify(s));
+    },
+  },
+  {
+    path: '/reference-tables',
+    name: '/reference-tables (as a user, no table is read)',
+    sidebar: true,
+    // The empty state of a user whose flows read no table.
+    before: async (page) => {
+      const s = seedSnapshot();
+      s.currentUserId = 'user-minh';
+      await page.addInitScript((json) => localStorage.setItem('dfw.seed', json), JSON.stringify(s));
     },
   },
   {

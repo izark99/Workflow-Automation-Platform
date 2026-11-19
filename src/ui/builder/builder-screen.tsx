@@ -1,3 +1,4 @@
+import { useReportUnsaved } from '../session/unsaved';
 import { useEffect, useRef, useState } from 'react';
 import type { MouseEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
@@ -70,6 +71,7 @@ function Builder() {
   const published = version?.status === 'published';
   const readOnly = !editable || published;
   const dirty = !!version && !readOnly && isDirty(definition, version.definition);
+  useReportUnsaved(dirty);
 
   // Closing the tab or reloading with unsaved changes asks first.
   useEffect(() => {
@@ -105,6 +107,8 @@ function Builder() {
     try {
       await store.saveFlowVersion(id, version.versionNo, { definition });
       flow.reload();
+      // A saved flow that reads a table lets its owner read the table (SPEC 12.1): load the tables again.
+      refs.reload();
       return true;
     } catch (e) {
       setError({ what: t('builder.saveFailed'), next: errorText(e) });

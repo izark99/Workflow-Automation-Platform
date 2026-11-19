@@ -4,12 +4,15 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { planPublish } from '../engine/versions';
 import { checkRange, checkRowCap } from './checks';
+import { importRefTable as importRefTableVia } from './ref-import';
 import {
+  appSettingsFromRows,
   flowFromRow,
   groupFromRow,
   namesFromRows,
   refPatchToRow,
   refTableFromRow,
+  usedByFromRows,
   runLogFromRow,
   runLogToRow,
   userFromRows,
@@ -25,15 +28,22 @@ import {
 import {
   StoreError,
   storeError,
+  isValidIdleHours,
+  type AppSettingKey,
+  type AppSettings,
   type DataStore,
   type FlowRecord,
   type Group,
+  type RefImportInput,
+  type RefImportResult,
   type RefTableRecord,
+  type RefTableView,
   type RefVersionPatch,
   type RunLogEntry,
   type Scope,
   type StoreErrorCode,
   type UiText,
+  type UiTextChanges,
   type UiTextLocale,
   type User,
   type VersionPatch,
@@ -148,25 +158,29 @@ export class SupabaseStore implements DataStore {
     await this.rpc<unknown>('clear_must_change_password', {}, 'save your password choice');
   }
 
+  async getAppSettings(): Promise<AppSettings> {
+    const result = await this.client.from('app_settings').select('key, value');
+    return appSettingsFromRows(this.ok<{ key: string; value: unknown }[]>(result, 'read the settings'));
+  }
+
+  async saveAppSetting(key: AppSettingKey, value: number): Promise<AppSettings> {
+    await this.mustBeAdmin('change the settings');
+    if (key !== 'idle_timeout_hours' || !isValidIdleHours(value)) throw storeError('invalid', 'errors.idleHoursInvalid');
+    const result = await this.client.from('app_settings').upsert({ key, value }, { onConflict: 'key' }).select('key, value');
+    const rows = this.ok<{ key: string; value: unknown }[]>(result, 'save the setting');
+    if (rows.length === 0) throw storeError('forbidden', 'errors.cannotChange', { what: 'the setting' });
+    return appSettingsFromRows(rows);
+  }
+
   async listUiTexts(): Promise<UiText[]> {
     // Readable by everyone, also before sign-in, so it needs no profile.
     const result = await this.client.from('ui_texts').select('locale, key, value, updated_at');
     return this.ok<{ locale: UiTextLocale; key: string; value: string; updated_at: string }[]>(result, 'read the texts').map((r) => ({ locale: r.locale, key: r.key, value: r.value, updatedAt: r.updated_at }));
   }
 
-  async saveUiText(input: { locale: UiTextLocale; key: string; value: string }): Promise<UiText> {
-    await this.mustBeAdmin('edit texts');
-    if (input.value.trim() === '') throw storeError('invalid', 'errors.textEmpty');
-    const result = await this.client.from('ui_texts').upsert({ locale: input.locale, key: input.key, value: input.value }, { onConflict: 'locale,key' }).select('locale, key, value, updated_at');
-    const row = this.ok<{ locale: UiTextLocale; key: string; value: string; updated_at: string }[]>(result, 'save the text')[0];
-    if (!row) throw storeError('forbidden', 'errors.cannotChange', { what: 'the text' });
-    return { locale: row.locale, key: row.key, value: row.value, updatedAt: row.updated_at };
-  }
-
-  async resetUiText(locale: UiTextLocale, key: string): Promise<void> {
-    await this.mustBeAdmin('edit texts');
-    const result = await this.client.from('ui_texts').delete().eq('locale', locale).eq('key', key).select('key');
-    this.ok<unknown[]>(result, 'reset the text');
+  async saveUiTexts(input: UiTextChanges): Promise<void> {
+    for (const e of input.entries) if (e.value.trim() === '') throw storeError('invalid', 'errors.textEmpty');
+    await this.rpc<unknown>('save_ui_texts', { p_entries: input.entries, p_resets: input.resets }, 'save the texts');
   }
 
   async listFlows(): Promise<FlowRecord[]> {
@@ -193,9 +207,18 @@ export class SupabaseStore implements DataStore {
     return this.ok<FlowRow[]>(flows, 'load the deleted flows').map((r) => flowFromRow(r, names));
   }
 
-  async listRefTables(): Promise<RefTableRecord[]> {
-    const result = await this.client.from('ref_tables').select('*, ref_table_versions(*)').order('name');
-    return this.ok<RefTableRow[]>(result, 'load the reference tables').map(refTableFromRow);
+  async listRefTables(): Promise<RefTableView[]> {
+    const [tables, refs, flows] = await Promise.all([
+      this.client.from('ref_tables').select('*, ref_table_versions(*)').order('name'),
+      this.client.from('flow_ref_tables').select('flow_id, ref_table_name'),
+      this.client.from('flows').select('id, name').is('deleted_at', null),
+    ]);
+    const used = usedByFromRows(
+      this.ok<{ flow_id: string; ref_table_name: string }[]>(refs, 'load the flows that use the reference tables'),
+      this.ok<{ id: string; name: string }[]>(flows, 'load the flows'),
+    );
+    // The database returns no versions for a table that the caller may not read, so `versions` is empty then.
+    return this.ok<RefTableRow[]>(tables, 'load the reference tables').map((row) => ({ ...refTableFromRow(row), usedBy: used.get(row.name) ?? [] }));
   }
 
   async listRunLog(flowId: string): Promise<RunLogEntry[]> {
@@ -381,6 +404,17 @@ export class SupabaseStore implements DataStore {
       'create the version',
     );
     return this.refTable(tableId);
+  }
+
+  async updateRefTable(tableId: string, patch: { description: string }): Promise<RefTableRecord> {
+    await this.mustBeAdmin('change reference tables');
+    await this.updateRow('ref_tables', { id: tableId }, { description: patch.description }, 'save the description', 'the table');
+    return this.refTable(tableId);
+  }
+
+  async importRefTable(input: RefImportInput): Promise<RefImportResult> {
+    await this.mustBeAdmin('import reference tables');
+    return importRefTableVia(this, input);
   }
 
   async publishRefTableVersion(tableId: string, versionNo: number): Promise<RefTableRecord> {

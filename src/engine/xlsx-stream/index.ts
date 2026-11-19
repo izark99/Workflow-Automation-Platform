@@ -32,3 +32,11 @@ export async function* readXlsx(blob: Blob, options: ReadXlsxOptions = {}): Asyn
   }
   yield* parseSheetRows(textChunks(await openEntry(blob, sheetEntry)), { sharedStrings, dateStyles });
 }
+
+/** The names of the sheets of a workbook, in order, without reading any sheet. */
+export async function listXlsxSheets(blob: Blob): Promise<string[]> {
+  const entries = await readZipDirectory(blob);
+  const workbook = await readEntryText(blob, entryOrThrow(entries, 'xl/workbook.xml'));
+  const rels = await readEntryText(blob, entryOrThrow(entries, 'xl/_rels/workbook.xml.rels'));
+  return parseSheetList(workbook, rels).map((s) => s.name);
+}

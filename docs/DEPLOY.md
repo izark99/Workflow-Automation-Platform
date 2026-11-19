@@ -216,6 +216,44 @@ deployment does not: "Apply the migrations" already applies all of them.
 6. **If something is wrong,** the app can be rolled back in Cloudflare Pages (Deployments, pick the previous one,
    Rollback). The database changes stay; the old app ignores them. Do not undo a migration by hand.
 
+## Upgrade from Phase 4
+
+Phase 5 added the import of csv and xlsx files into reference tables, a rule for who reads the rows of a table, sign-out
+after inactivity, both languages of a text in one Save, and panels that collapse. A deployment that is on Phase 4 (the
+thirteen migrations and the `admin-users` function) needs these steps, in this order. A fresh deployment does not:
+"Apply the migrations" already applies all of them.
+
+1. **Back up first.** In the Supabase dashboard, Database, Backups: take a backup if your plan has one, and write down
+   the time. Migration 17 changes who can read the rows of a reference table, and you cannot undo a policy change by
+   hand. The app has no export of flows or reference tables.
+2. **Apply the new migrations** from your computer (`npx supabase link --project-ref <ref>` once, if you have not):
+
+   ```bash
+   npx supabase db push
+   ```
+
+   It lists four files, `20261118000014_save_ui_texts.sql`, `20261118000015_app_settings.sql`,
+   `20261118000016_flow_ref_tables.sql` and `20261118000017_ref_table_visibility.sql`, and asks you to confirm.
+   Migration 15 sets the sign-out limit to 8 hours. Migration 16 fills the list of which flows read which tables, from
+   the flows that exist. Nobody has to do anything for a user to keep reading the tables of their own flows. If the push
+   fails, stop and read the first error; do not edit tables by hand.
+3. **There is no new function.** `admin-users` stays as it is; do not deploy it again.
+4. **Deploy the app.** Pushing to the branch that Cloudflare Pages builds starts the build (`npm run build:pages`).
+   Wait for it to finish. Do step 2 before this one, so the new app finds the new database.
+5. **Check it**, in this order:
+   - Import: sign in as the admin, open Reference tables, Import file, choose a small csv file and import it into a
+     new table. The new draft opens, with a note that it is a draft. Look at it, then publish it or leave it.
+   - Who sees what: sign in as a user who has a flow that reads one table. Reference tables lists that table, read-only,
+     with "Used by" and the name of the flow. A table that none of the user's flows reads is not listed.
+   - Sign-out: in Admin, Settings, set "Hours without activity" to 1, save, and leave a signed-in tab alone. Two
+     minutes before the hour a dialog counts down; at the hour the sign-in screen says that the person was signed out
+     after 1 hour. Set the value back to what you want.
+   - Texts: in Admin, Texts, edit one text in English and in Vietnamese with one Save, then reload and see both.
+   - Panels: collapse the sidebar and a panel of the builder, reload, and see that they stay collapsed.
+6. **If something is wrong,** the app can be rolled back in Cloudflare Pages (Deployments, pick the previous one,
+   Rollback). The database changes stay; the Phase 4 app ignores the new tables, but it can no longer read the rows
+   of a table that none of the user's flows reads (migration 17). Do not undo a migration by hand.
+
 ## Limits
 
 - There is no sign-up and no email invitation. The admin creates accounts in the app (Admin, Users, Add user) with a
@@ -229,4 +267,11 @@ deployment does not: "Apply the migrations" already applies all of them.
 - Backups and point-in-time recovery depend on your Supabase plan. Check what your plan offers before the data
   matters. The app has no export of flows or reference tables.
 - Parameter values and the texts that people type into a flow stay in the browser; the run history keeps counts only.
+- Sign-out after inactivity is checked in the browser. It removes the session from the browser, but the access token that
+  Supabase issued stays valid until it expires, up to one hour later. A person who copied the token could use it for that
+  time; lock the account (Admin, Users) to stop it at once.
+- A user reads the rows of a reference table only when a live flow that they may view reads it (their own personal flows,
+  and shared flows of their groups, in any version). A deleted flow does not count. Everyone signed in sees the name and the
+  description of every table, so a step can offer it; the rows appear after the flow that reads the table is saved. A
+  reference table is shared with every user who has such a flow, so it must not hold personal data.
 - Choices made during the build, and why, are in `docs/DECISIONS.md` (the server part starts at D55; accounts, texts and parameters start at D72).

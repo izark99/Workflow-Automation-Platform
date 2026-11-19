@@ -3,7 +3,7 @@ import { Dropdown, Field } from '../../components';
 import { useT } from '../../i18n';
 import type { MessageKey } from '../../i18n';
 import { ColumnList, ColumnSelect, LoadColumnsBar, SectionLabel } from './column-pickers';
-import { refTableColumns } from './lookup-logic';
+import { refTableColumns, refTableUnreadable } from './lookup-logic';
 import { NAME_CASES, PIVOT_FNS, parseFill, pivotFromSettings, pivotMissing, pivotToSettings } from './reshape-logic';
 import type { NameCase, PivotFn, PivotValues } from './reshape-logic';
 import type { FormProps } from './types';
@@ -56,6 +56,11 @@ export function PivotForm(props: FormProps) {
             <span className={styles.label}>{t('builder.reshape.refTable')}</span>
             <Dropdown label={t('builder.reshape.refTable')} options={[{ value: '', label: t('builder.reshape.chooseTable') }, ...tableOptions]} value={v.table} disabled={readOnly} width="100%" onChange={(table) => apply({ ...v, table, column: '' })} />
           </div>
+          {v.table && refTableUnreadable(context.refTables, v.table) ? (
+            <p className={styles.note} role="status">
+              {t('builder.reshape.refUnreadable')}
+            </p>
+          ) : null}
           <ColumnSelect label={t('builder.reshape.refColumn')} value={v.column} columns={refNames} disabled={readOnly} width="100%" onChange={(column) => apply({ ...v, column })} />
         </>
       ) : null}

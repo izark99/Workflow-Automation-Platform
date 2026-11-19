@@ -17,6 +17,18 @@
         document.documentElement.style.colorScheme = t;
       })();
     </script>
+    <script>
+      // Sets the collapsed panels before the first paint. Keep in step with src/ui/panels/panel-state.ts.
+      (function () {
+        try {
+          var v = JSON.parse(localStorage.getItem('dfw.panels') || 'null');
+          if (!v || typeof v !== 'object' || Array.isArray(v)) return;
+          ['sidebar', 'steps', 'settings', 'refList'].forEach(function (id) {
+            if (v[id] === true) document.documentElement.setAttribute('data-panel-' + id, 'collapsed');
+          });
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

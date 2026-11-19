@@ -9,7 +9,7 @@ describe('docs/DEPLOY.md', () => {
   it('exists and has the steps in order', () => {
     expect(doc.length).toBeGreaterThan(1000);
     const headings = [...doc.matchAll(/^## (.+)$/gm)].map((m) => m[1]!);
-    const order = ['Before you start', 'Create the Supabase project', 'Apply the migrations', 'Deploy the account function', 'Close sign-ups', 'Create the first admin', 'Deploy the app on Cloudflare Pages', 'Keep the project awake', 'Check it works', 'Upgrade an existing deployment', 'Limits'];
+    const order = ['Before you start', 'Create the Supabase project', 'Apply the migrations', 'Deploy the account function', 'Close sign-ups', 'Create the first admin', 'Deploy the app on Cloudflare Pages', 'Keep the project awake', 'Check it works', 'Upgrade an existing deployment', 'Upgrade from Phase 4', 'Limits'];
     expect(headings.filter((h) => order.includes(h))).toEqual(order);
   });
 
@@ -46,7 +46,7 @@ describe('docs/DEPLOY.md', () => {
   });
 
   it('has an upgrade section that applies the new migrations and deploys the function, in order', () => {
-    const section = doc.slice(doc.indexOf('## Upgrade an existing deployment'), doc.indexOf('## Limits'));
+    const section = doc.slice(doc.indexOf('## Upgrade an existing deployment'), doc.indexOf('## Upgrade from Phase 4'));
     expect(section.length).toBeGreaterThan(500);
     const at = (text: string) => section.indexOf(text);
     const order = ['Back up first', 'npx supabase db push', 'npx supabase functions deploy admin-users', 'Deploy the app', 'Check it'];
@@ -58,6 +58,28 @@ describe('docs/DEPLOY.md', () => {
       expect(existsSync(`supabase/migrations/${m}`), m).toBe(true);
     }
     for (const word of ['Accounts', 'Themes', 'Texts', 'Parameters']) expect(section).toContain(word);
+  });
+
+  it('has a Phase 5 upgrade section that backs up, applies migrations 14 to 17, deploys no function and checks the features', () => {
+    const section = doc.slice(doc.indexOf('## Upgrade from Phase 4'), doc.indexOf('## Limits'));
+    expect(section.length).toBeGreaterThan(500);
+    const at = (text: string) => section.indexOf(text);
+    const order = ['Back up first', 'npx supabase db push', 'There is no new function', 'Deploy the app', 'Check it'];
+    for (const o of order) expect(at(o), o).toBeGreaterThan(-1);
+    expect(order.map(at)).toEqual([...order.map(at)].sort((a, b) => a - b));
+    expect(section).not.toContain('functions deploy');
+    for (const m of ['20261118000014_save_ui_texts.sql', '20261118000015_app_settings.sql', '20261118000016_flow_ref_tables.sql', '20261118000017_ref_table_visibility.sql']) {
+      expect(section, m).toContain(m);
+      expect(existsSync(`supabase/migrations/${m}`), m).toBe(true);
+    }
+    for (const word of ['Import', 'Who sees what', 'Sign-out', 'Texts', 'Panels']) expect(section).toContain(word);
+  });
+
+  it('states the limits of Phase 5: the sign-out check is in the browser and the token lives up to one hour, and which tables a user reads', () => {
+    const limits = doc.slice(doc.indexOf('## Limits'));
+    expect(limits).toMatch(/Sign-out after inactivity is checked in the browser/);
+    expect(limits).toMatch(/up to one hour later/);
+    expect(limits).toMatch(/reads the rows of a reference table only when a live flow/);
   });
 
   it('deploys the function that exists, with the JWT check on, and does not hand out the service key', () => {

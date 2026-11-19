@@ -55,6 +55,12 @@ export interface RefTableVersionRecord extends VersionRange {
   rows: Cell[][];
 }
 
+/** A table as `listRefTables()` returns it: the versions only where the caller may read them, and the flows that use it. */
+export type RefTableView = RefTableRecord & {
+  /** The names of the live flows that the caller may view and that read this table, in any version. At most one name per flow. */
+  usedBy: string[];
+};
+
 export interface RefTableRecord {
   id: string;
   name: string;
@@ -89,6 +95,24 @@ export interface RefVersionPatch {
   rows?: Cell[][];
 }
 
+/** Where an imported file goes (SPEC 12.1 item 2). */
+export type RefImportTarget =
+  | { kind: 'newTable'; name: string; description: string }
+  | { kind: 'newVersion'; tableId: string; validFrom: string }
+  | { kind: 'replaceDraft'; tableId: string; versionNo: number };
+
+export interface RefImportInput {
+  target: RefImportTarget;
+  columns: Column[];
+  rows: Cell[][];
+}
+
+export interface RefImportResult {
+  table: RefTableRecord;
+  /** The draft that the import made or filled. */
+  versionNo: number;
+}
+
 export const MAX_REF_ROWS = 50_000;
 /** A deleted flow is kept this many days. */
 export const KEEP_DELETED_DAYS = 30;
@@ -98,7 +122,23 @@ export type StoreErrorCode = 'not_found' | 'forbidden' | 'invalid' | 'conflict';
 /** Every message says what failed and what to do next. */
 export type UiTextLocale = 'en' | 'vi';
 
+/** What one Save of the Texts tab sends: texts to store, and texts to take back to their default. */
+export interface UiTextChanges {
+  entries: { locale: UiTextLocale; key: string; value: string }[];
+  resets: { locale: UiTextLocale; key: string }[];
+}
+
 /** An edited text: the value replaces the default of the catalog for that locale. */
+/** Settings that the admin sets for everyone (SPEC 12.2). */
+export interface AppSettings {
+  /** Hours without activity before a user is signed out: a whole number from 1 to 72. */
+  idleTimeoutHours: number;
+}
+export type AppSettingKey = 'idle_timeout_hours';
+export const DEFAULT_IDLE_TIMEOUT_HOURS = 8;
+export const IDLE_TIMEOUT_RANGE = { min: 1, max: 72 } as const;
+export const isValidIdleHours = (v: unknown): v is number => typeof v === 'number' && Number.isInteger(v) && v >= IDLE_TIMEOUT_RANGE.min && v <= IDLE_TIMEOUT_RANGE.max;
+
 export interface UiText {
   locale: UiTextLocale;
   key: string;
@@ -156,9 +196,13 @@ export interface DataStore {
   /** After the user chose a new password. */
   clearMustChangePassword(): Promise<void>;
   /** The edited UI texts (SPEC 11.3). Everyone reads them, also before signing in; only an admin changes them. */
+  /** Readable by every signed-in user. A missing row gives the default. */
+  getAppSettings(): Promise<AppSettings>;
+  /** Admin only. The value is checked here and by the database. */
+  saveAppSetting(key: AppSettingKey, value: number): Promise<AppSettings>;
   listUiTexts(): Promise<UiText[]>;
-  saveUiText(input: { locale: UiTextLocale; key: string; value: string }): Promise<UiText>;
-  resetUiText(locale: UiTextLocale, key: string): Promise<void>;
+  /** Saves and resets texts of both languages in one action: every change is stored, or none (SPEC 12.3). */
+  saveUiTexts(input: UiTextChanges): Promise<void>;
 
   saveFlowVersion(flowId: string, versionNo: number, patch: VersionPatch): Promise<FlowRecord>;
   /** A new draft, copied from `copyFrom` when given. */
@@ -166,11 +210,19 @@ export interface DataStore {
   /** Publishing ends the previous open-ended version the day before (SPEC section 4, rule 6). */
   publishFlowVersion(flowId: string, versionNo: number): Promise<FlowRecord>;
 
-  listRefTables(): Promise<RefTableRecord[]>;
+  /**
+   * Every table with its name and description. The versions (columns and rows) come only for the admin and for a table that a
+   * flow of the caller reads (SPEC 12.1); `usedBy` names those flows. For a table nobody may read the versions are empty.
+   */
+  listRefTables(): Promise<RefTableView[]>;
   createRefTable(input: { name: string; description: string; columns: Column[] }): Promise<RefTableRecord>;
   saveRefTableVersion(tableId: string, versionNo: number, patch: RefVersionPatch): Promise<RefTableRecord>;
   createRefTableVersion(tableId: string, input: { validFrom: string; copyFrom?: number }): Promise<RefTableRecord>;
   publishRefTableVersion(tableId: string, versionNo: number): Promise<RefTableRecord>;
+  /** Admin only. Changes the description of a table. The name does not change: flows point to a table by its name. */
+  updateRefTable(tableId: string, patch: { description: string }): Promise<RefTableRecord>;
+  /** Admin only. Makes or fills a draft from a read file; never publishes. */
+  importRefTable(input: RefImportInput): Promise<RefImportResult>;
 
   addRunLog(entry: Omit<RunLogEntry, 'id' | 'userId' | 'runAt'>): Promise<RunLogEntry>;
   listRunLog(flowId: string): Promise<RunLogEntry[]>;

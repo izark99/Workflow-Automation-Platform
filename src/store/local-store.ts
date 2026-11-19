@@ -1,20 +1,26 @@
-import { planPublish } from '../engine/versions';
+import { planPublish, referencedTables } from '../engine/versions';
 import type { VersionRange } from '../engine/versions';
 import { checkRange, checkRowCap } from './checks';
-import { KEEP_DELETED_DAYS, StoreError, storeError, type StoreErrorCode } from './types';
+import { importRefTable as importRefTableVia } from './ref-import';
+import { DEFAULT_IDLE_TIMEOUT_HOURS, KEEP_DELETED_DAYS, StoreError, isValidIdleHours, storeError, type StoreErrorCode } from './types';
 import type { StoreMessageId } from './messages';
 import type {
   DataStore,
   FlowRecord,
   FlowVersionRecord,
   Group,
+  RefImportInput,
+  RefImportResult,
   RefTableRecord,
   RefTableVersionRecord,
+  RefTableView,
   RefVersionPatch,
   RunLogEntry,
   Scope,
+  AppSettingKey,
+  AppSettings,
   UiText,
-  UiTextLocale,
+  UiTextChanges,
   User,
   VersionPatch,
 } from './types';
@@ -29,6 +35,8 @@ export interface Snapshot {
   runLog: RunLogEntry[];
   /** Edited UI texts. Missing in a snapshot saved before Phase 4. */
   uiTexts?: UiText[];
+  /** App settings by key. Missing in a snapshot saved before Phase 5. */
+  appSettings?: Partial<Record<AppSettingKey, number>>;
 }
 
 /** Where the snapshot lives between page loads. The browser uses IndexedDB (decision D37); the tests use memory. */
@@ -63,6 +71,9 @@ const fail = (code: StoreErrorCode, id: StoreMessageId, params?: Record<string, 
 };
 
 /** The data store of the browser. It enforces the permission table of SPEC section 7 in code, as row-level security does on the server. */
+/** The key shape that the `ui_texts` table accepts (migration 10). */
+const UI_TEXT_KEY = /^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z0-9_]+)+$/;
+
 export class LocalStore implements DataStore {
   private state: Snapshot | null = null;
   private loading: Promise<Snapshot> | null = null;
@@ -220,29 +231,44 @@ export class LocalStore implements DataStore {
     await this.commit(s);
   }
 
+  async getAppSettings(): Promise<AppSettings> {
+    const s = await this.open();
+    return { idleTimeoutHours: s.appSettings?.idle_timeout_hours ?? DEFAULT_IDLE_TIMEOUT_HOURS };
+  }
+
+  async saveAppSetting(key: AppSettingKey, value: number): Promise<AppSettings> {
+    const s = await this.open();
+    this.mustBeAdmin(s, 'change the settings');
+    if (key !== 'idle_timeout_hours' || !isValidIdleHours(value)) fail('invalid', 'errors.idleHoursInvalid');
+    s.appSettings = { ...s.appSettings, idle_timeout_hours: value };
+    await this.commit(s);
+    return { idleTimeoutHours: value };
+  }
+
   async listUiTexts(): Promise<UiText[]> {
     const s = await this.open();
     return structuredClone(s.uiTexts ?? []);
   }
 
-  async saveUiText(input: { locale: UiTextLocale; key: string; value: string }): Promise<UiText> {
+  async saveUiTexts({ entries, resets }: UiTextChanges): Promise<void> {
     const s = await this.open();
     this.mustBeAdmin(s, 'edit texts');
-    const value = input.value;
-    if (value.trim() === '') fail('invalid', 'errors.textEmpty');
-    const list = (s.uiTexts ??= []);
-    const saved: UiText = { locale: input.locale, key: input.key, value, updatedAt: this.now().toISOString() };
-    const at = list.findIndex((t) => t.locale === input.locale && t.key === input.key);
-    if (at >= 0) list[at] = saved;
-    else list.push(saved);
-    await this.commit(s);
-    return structuredClone(saved);
-  }
-
-  async resetUiText(locale: UiTextLocale, key: string): Promise<void> {
-    const s = await this.open();
-    this.mustBeAdmin(s, 'edit texts');
-    s.uiTexts = (s.uiTexts ?? []).filter((t) => !(t.locale === locale && t.key === key));
+    // Check everything first, so a bad entry changes nothing (the server does the same in one transaction).
+    for (const e of [...entries, ...resets]) {
+      if ((e.locale as string) !== 'en' && (e.locale as string) !== 'vi') fail('invalid', 'errors.textInvalid');
+      if (!UI_TEXT_KEY.test(e.key) || e.key.length > 120) fail('invalid', 'errors.textInvalid');
+    }
+    for (const e of entries) if (e.value.trim() === '' || e.value.length > 2000) fail('invalid', 'errors.textEmpty');
+    const stamp = this.now().toISOString();
+    let list = s.uiTexts ?? [];
+    for (const e of entries) {
+      const saved: UiText = { locale: e.locale, key: e.key, value: e.value, updatedAt: stamp };
+      const at = list.findIndex((t) => t.locale === e.locale && t.key === e.key);
+      if (at >= 0) list[at] = saved;
+      else list.push(saved);
+    }
+    list = list.filter((t) => !resets.some((r) => r.locale === t.locale && r.key === t.key));
+    s.uiTexts = list;
     await this.commit(s);
   }
 
@@ -383,10 +409,17 @@ export class LocalStore implements DataStore {
     return structuredClone(f);
   }
 
-  async listRefTables(): Promise<RefTableRecord[]> {
+  async listRefTables(): Promise<RefTableView[]> {
     const s = await this.open();
-    this.who(s);
-    return structuredClone(s.refTables);
+    const u = this.who(s);
+    // The same rule as the database (migration 17): the rows are for the admin and for a table that a live flow of the person reads.
+    const flows = s.flows.filter((f) => !f.deletedAt && this.canSee(u, f));
+    return s.refTables.map((table) => {
+      const usedBy = flows.filter((f) => f.versions.some((v) => referencedTables(v.definition).includes(table.name))).map((f) => f.name);
+      const readable = u.role === 'admin' || usedBy.length > 0;
+      const names = [...new Set(usedBy)].sort((a, b) => a.localeCompare(b));
+      return structuredClone({ ...table, versions: readable ? table.versions : [], usedBy: names });
+    });
   }
 
   private tableFor(s: Snapshot, id: string): RefTableRecord {
@@ -430,6 +463,20 @@ export class LocalStore implements DataStore {
     t.versions.push({ versionNo: no, validFrom: input.validFrom, validTo: null, status: 'draft', columns: structuredClone(src?.columns ?? []), rows: structuredClone(src?.rows ?? []) });
     await this.commit(s);
     return structuredClone(t);
+  }
+
+  async updateRefTable(tableId: string, patch: { description: string }): Promise<RefTableRecord> {
+    const s = await this.open();
+    this.mustBeAdmin(s, 'change reference tables');
+    const t = this.tableFor(s, tableId);
+    t.description = patch.description;
+    await this.commit(s);
+    return structuredClone(t);
+  }
+
+  async importRefTable(input: RefImportInput): Promise<RefImportResult> {
+    this.mustBeAdmin(await this.open(), 'import reference tables');
+    return importRefTableVia(this, input);
   }
 
   async publishRefTableVersion(tableId: string, versionNo: number): Promise<RefTableRecord> {

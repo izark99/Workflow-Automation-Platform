@@ -48,3 +48,19 @@
   flex-direction: column;
   gap: 16px;
 }
+
+/* A quiet note: muted text with an info icon, not an error box (DESIGN, Admin: Settings tab and the inactivity dialog). */
+.quiet {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.quiet svg {
+  flex: none;
+  margin-top: 2px;
+}

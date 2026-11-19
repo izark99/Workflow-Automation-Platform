@@ -2,6 +2,7 @@ import { Background, BackgroundVariant, ReactFlow, ReactFlowProvider, useReactFl
 import type { Edge, EdgeChangeset, NodeChangeset } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useEffect, useMemo, useRef } from 'react';
+import { usePanel } from '../panels/use-panel';
 import type { FlowDefinition, NodeType } from '../../engine/flow/types';
 import { NODE_TYPES } from '../../engine/flow/types';
 import { ErrorState } from '../components';
@@ -35,6 +36,8 @@ export interface CanvasProps {
 }
 
 function Inner({ definition, onChange, selection, onSelect, message, onMessage, readOnly, addRequest }: CanvasProps) {
+  // A click on a step card opens a collapsed settings panel.
+  const { expand: expandSettings } = usePanel('settings');
   const { screenToFlowPosition } = useReactFlow();
   // @xyflow/react 13 has no colorMode prop: its stylesheet reads a `light` or `dark` class on an ancestor of .react-flow.
   const { theme } = useAppTheme();
@@ -141,6 +144,7 @@ function Inner({ definition, onChange, selection, onSelect, message, onMessage, 
           } else onMessage(r.reason);
         }}
         onPaneClick={() => onSelect({ nodes: [], edges: [] })}
+        onNodeClick={() => expandSettings()}
         nodesConnectable={!readOnly}
         nodesDraggable={!readOnly}
         edgesReconnectable={false}

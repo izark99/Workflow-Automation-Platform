@@ -4,7 +4,7 @@ import { Button, Dropdown, Field, Icon } from '../../components';
 import { useT } from '../../i18n';
 import type { MessageKey } from '../../i18n';
 import { ColumnSelect, LoadColumnsBar, SectionLabel } from './column-pickers';
-import { NO_MATCH, lookupFromSettings, lookupMissing, lookupToSettings, refTableColumns } from './lookup-logic';
+import { NO_MATCH, lookupFromSettings, lookupMissing, lookupToSettings, refTableColumns, refTableUnreadable } from './lookup-logic';
 import type { LookupValues, NoMatch } from './lookup-logic';
 import type { FormProps } from './types';
 import { useSourceColumns } from './use-source-columns';
@@ -42,6 +42,11 @@ export function LookupForm(props: FormProps) {
           width="100%"
           onChange={(value) => apply({ ...v, source: value === 'node' ? { kind: 'node' } : { kind: 'reference', table: value.slice(4) } })}
         />
+        {v.source.kind === 'reference' && refTableUnreadable(context.refTables, v.source.table) ? (
+          <p className={styles.note} role="status">
+            {t('builder.join.refUnreadable')}
+          </p>
+        ) : null}
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>

@@ -26,6 +26,11 @@ export function tableSummary(t: RefTableRecord, today: string): string {
   return translate(key, { rows, n: v.versionNo });
 }
 
+/** The names for a "Used by" line: three at most, and how many more there are (SPEC 12.1, DESIGN "Reference table import"). */
+export function usedByParts(names: string[]): { shown: string; more: number } {
+  return { shown: names.slice(0, 3).join(', '), more: Math.max(0, names.length - 3) };
+}
+
 /** The flows that read the table, by name (any of their versions). */
 export function usedBy(flows: FlowRecord[], tableName: string): string[] {
   return flows.filter((f) => f.versions.some((v) => referencedTables(v.definition).includes(tableName))).map((f) => f.name);
@@ -183,3 +188,39 @@ export function pageRange(total: number, page: number, size = PAGE_SIZE): { from
 }
 
 export { formatCell };
+
+// ---- Columns of a draft: add, rename, change the type of, remove
+
+/** One column in the editor: where it came from in the grid (null for a new column), its name and its type. */
+export interface ColumnPlan {
+  from: number | null;
+  name: string;
+  type: ColumnType;
+}
+
+export const planOf = (columns: Column[]): ColumnPlan[] => columns.map((c, i) => ({ from: i, name: c.name, type: c.type }));
+
+/** Why the columns cannot be used (messageId of the catalog), or undefined. Names are compared without regard to case. */
+export function columnsProblem(plan: ColumnPlan[]): { key: 'refTables.cols.problem.none' | 'refTables.cols.problem.empty' | 'refTables.cols.problem.repeated'; params: Record<string, string | number> } | undefined {
+  if (plan.length === 0) return { key: 'refTables.cols.problem.none', params: {} };
+  const seen = new Map<string, number>();
+  for (let i = 0; i < plan.length; i++) {
+    const name = plan[i]!.name.trim();
+    if (name === '') return { key: 'refTables.cols.problem.empty', params: { n: i + 1 } };
+    const at = seen.get(name.toLowerCase());
+    if (at !== undefined) return { key: 'refTables.cols.problem.repeated', params: { name, first: at, second: i + 1 } };
+    seen.set(name.toLowerCase(), i + 1);
+  }
+  return undefined;
+}
+
+/**
+ * The grid after the columns changed. A column that was kept brings its cells (also when it was renamed, moved or its type
+ * changed: the text stays, and the cells are checked against the new type when the draft is saved); a new column is empty.
+ */
+export function reshapeGrid(grid: string[][], plan: ColumnPlan[]): { columns: Column[]; grid: string[][] } {
+  return {
+    columns: plan.map((p) => ({ name: p.name.trim(), type: p.type })),
+    grid: grid.map((row) => plan.map((p) => (p.from === null ? '' : (row[p.from] ?? '')))),
+  };
+}

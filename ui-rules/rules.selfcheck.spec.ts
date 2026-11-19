@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { axeSeriousOrCritical, buttonHeights, dangerSpacing, noHintParagraphs, untranslatedText, duplicateButtonNames, forbiddenElements, headerPosition, keyboardFocusRing, noHorizontalScroll, oneCta, sidebarWidth, tableRows } from './rules';
+import { axeSeriousOrCritical, buttonHeights, dangerSpacing, noHintParagraphs, untranslatedText, duplicateButtonNames, forbiddenElements, headerPosition, keyboardFocusRing, noHorizontalScroll, oneCta, panelWidth, railShape, sidebarWidth, tableRows } from './rules';
 
 // Each rule must fail on a page that breaks it, and pass on a page that does not.
 const bad = (html: string) => `<!doctype html><html lang="en"><head><title>t</title></head><body style="margin:0">${html}</body></html>`;
@@ -109,4 +109,23 @@ test('pseudo-locale: a text outside the markers fails, marked text, user content
   expect(await untranslatedText(page, 'main')).toEqual([]);
   await page.setContent(bad('<main><input placeholder="Name"><button aria-label="Close">1</button></main>'));
   expect((await untranslatedText(page, 'main')).length).toBe(2);
+});
+
+test('panel width: a panel of the wrong width fails, the right width passes, a wide page fails', async ({ page }) => {
+  await page.setContent(bad('<aside id="p" style="width:100px">x</aside>'));
+  expect((await panelWidth(page, '#p', 48)).length).toBe(1);
+  await page.setContent(bad('<aside id="p" style="width:48px">x</aside>'));
+  expect(await panelWidth(page, '#p', 48)).toEqual([]);
+  expect((await panelWidth(page, '#missing', 48)).length).toBe(1);
+  await page.setContent(bad('<aside id="p" style="width:48px">x</aside><div style="width:4000px;height:1px"></div>'));
+  expect((await panelWidth(page, '#p', 48)).length).toBe(1);
+});
+
+test('rail shape: a wide button or an unnamed button fails, a named icon button passes', async ({ page }) => {
+  await page.setContent(bad('<aside id="p" style="width:48px;overflow:hidden"><button style="width:120px">Wide</button></aside>'));
+  expect((await railShape(page, '#p')).length).toBe(1);
+  await page.setContent(bad('<aside id="p" style="width:48px;overflow:hidden"><button style="width:36px"></button></aside>'));
+  expect((await railShape(page, '#p')).length).toBe(1);
+  await page.setContent(bad('<aside id="p" style="width:48px;overflow:hidden"><button aria-label="Expand" style="width:36px"></button></aside>'));
+  expect(await railShape(page, '#p')).toEqual([]);
 });

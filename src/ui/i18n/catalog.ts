@@ -8,7 +8,7 @@ export type { MessageKey } from './messages/en';
 export type { MessageParams } from './format';
 
 /** The screen a key belongs to. The Texts tab filters by it (T4.7g). */
-export const KEY_PREFIXES = ['app', 'common', 'nav', 'signIn', 'theme', 'language', 'flows', 'builder', 'run', 'versions', 'refTables', 'admin', 'errors', 'engine', 'dev'] as const;
+export const KEY_PREFIXES = ['app', 'common', 'nav', 'signIn', 'theme', 'language', 'flows', 'builder', 'run', 'versions', 'refTables', 'admin', 'errors', 'engine', 'refimport', 'panels', 'session', 'dev'] as const;
 
 export type Locale = 'en' | 'vi' | 'pseudo';
 export const PSEUDO_OPEN = '⟦';

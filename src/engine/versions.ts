@@ -111,8 +111,9 @@ export function referencedTables(definition: unknown): string[] {
   const names = new Set<string>();
   const nodes = (definition as { nodes?: unknown })?.nodes;
   if (!Array.isArray(nodes)) return [];
-  for (const node of nodes as { type?: unknown; settings?: Record<string, unknown> }[]) {
-    const s = node.settings ?? {};
+  for (const node of nodes as ({ type?: unknown; settings?: Record<string, unknown> } | null)[]) {
+    if (typeof node !== 'object' || node === null) continue; // an odd node reads no table (the database function does the same)
+    const s = typeof node.settings === 'object' && node.settings !== null ? node.settings : {};
     const source = (node.type === 'lookup_join' ? s.source : node.type === 'pivot' ? s.columns : undefined) as
       | { kind?: unknown; from?: unknown; table?: unknown }
       | undefined;

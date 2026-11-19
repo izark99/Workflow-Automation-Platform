@@ -55,6 +55,11 @@
   gap: 12px;
 }
 
+/* The search field and the dropdown are 40 px, so the chip next to them is 40 px too (checklist item 3: one height in a row). */
+.textsToolbar [aria-pressed] {
+  height: var(--size-button);
+}
+
 .textsSearch {
   flex: 1;
   max-width: 320px;
@@ -62,6 +67,49 @@
 
 .textsSearch > * {
   width: 100%;
+}
+
+.cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+}
+
+.clamp {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 16px;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.pairGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 16px;
+  row-gap: 8px;
+}
+
+.pairText {
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.defaultText {
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--color-muted);
+  overflow-wrap: anywhere;
 }
 
 .clip {
@@ -73,6 +121,10 @@
 }
 
 .keyText {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-family: var(--font-mono);
   font-size: 13px;
 }
@@ -99,4 +151,15 @@
 .passwordField {
   flex: 1;
   min-width: 0;
+}
+
+.settingsForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.settingsField {
+  width: 240px;
 }

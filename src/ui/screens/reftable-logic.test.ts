@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Column } from '../../engine/types';
 import { seedSnapshot } from '../../store/seed';
 import { MAX_REF_ROWS } from '../../store/types';
-import { newTableFromPaste, pageRange, pastedCells, pasteAt, parseCell, pasteIntoGrid, rowsToText, tableSummary, textToRows, tooManyRows, usedBy, versionInEffect, versionToShow } from './reftable-logic';
+import { usedByParts, columnsProblem, newTableFromPaste, planOf, reshapeGrid, pageRange, pastedCells, pasteAt, parseCell, pasteIntoGrid, rowsToText, tableSummary, textToRows, tooManyRows, usedBy, versionInEffect, versionToShow } from './reftable-logic';
 
 const snap = seedSnapshot();
 const attendance = snap.refTables.find((t) => t.name === 'Attendance codes')!;
@@ -105,5 +105,55 @@ describe('paste at a cell', () => {
     expect(pasteAt(grid, 2, 1, 0, pastedCells('X\t9\nY\t8\nZ\t7'))).toEqual([['a', '1'], ['X', '9'], ['Y', '8'], ['Z', '7']]);
     expect(pasteAt(grid, 2, 0, 1, pastedCells('p\tq'))).toEqual([['a', 'p'], ['b', '2']]);
     expect(grid).toEqual([['a', '1'], ['b', '2']]); // the old grid is not changed
+  });
+});
+
+describe('columns of a draft', () => {
+  const cols: Column[] = [{ name: 'code', type: 'text' }, { name: 'limit', type: 'number' }];
+  const grid = [['A', '1'], ['B', '2']];
+  it('a plan starts as the columns of the version', () => {
+    expect(planOf(cols)).toEqual([{ from: 0, name: 'code', type: 'text' }, { from: 1, name: 'limit', type: 'number' }]);
+  });
+  it('adds a column: empty cells for every row', () => {
+    expect(reshapeGrid(grid, [...planOf(cols), { from: null, name: 'note', type: 'text' }])).toEqual({
+      columns: [...cols, { name: 'note', type: 'text' }],
+      grid: [['A', '1', ''], ['B', '2', '']],
+    });
+  });
+  it('removes a column: its cells go, the others stay', () => {
+    expect(reshapeGrid(grid, planOf(cols).slice(1))).toEqual({ columns: [{ name: 'limit', type: 'number' }], grid: [['1'], ['2']] });
+  });
+  it('renames a column and keeps its cells, and trims the name', () => {
+    const plan = planOf(cols);
+    plan[0] = { ...plan[0]!, name: '  Code of day ' };
+    expect(reshapeGrid(grid, plan)).toEqual({ columns: [{ name: 'Code of day', type: 'text' }, cols[1]], grid });
+  });
+  it('changes the type and keeps the text, which is checked against the new type when the draft is saved', () => {
+    const plan = planOf(cols);
+    plan[0] = { ...plan[0]!, type: 'number' };
+    const shaped = reshapeGrid(grid, plan);
+    expect(shaped.columns[0]).toEqual({ name: 'code', type: 'number' });
+    expect(shaped.grid).toEqual(grid);
+    expect(textToRows(shaped.grid, shaped.columns).errors.length).toBeGreaterThan(0); // "A" is not a number
+  });
+  it('moves nothing but a column that is dropped from the middle', () => {
+    const three: Column[] = [{ name: 'a', type: 'text' }, { name: 'b', type: 'text' }, { name: 'c', type: 'text' }];
+    const plan = planOf(three).filter((p) => p.name !== 'b');
+    expect(reshapeGrid([['1', '2', '3']], plan).grid).toEqual([['1', '3']]);
+  });
+  it('refuses no columns, an empty name and a name that repeats another without regard to case', () => {
+    expect(columnsProblem([])).toMatchObject({ key: 'refTables.cols.problem.none' });
+    expect(columnsProblem([{ from: 0, name: ' ', type: 'text' }])).toEqual({ key: 'refTables.cols.problem.empty', params: { n: 1 } });
+    expect(columnsProblem([{ from: 0, name: 'Code', type: 'text' }, { from: null, name: ' code', type: 'text' }])).toEqual({ key: 'refTables.cols.problem.repeated', params: { name: 'code', first: 1, second: 2 } });
+    expect(columnsProblem(planOf(cols))).toBeUndefined();
+  });
+});
+
+describe('usedByParts', () => {
+  it('shows three names at most, then how many more', () => {
+    expect(usedByParts(['A', 'B'])).toEqual({ shown: 'A, B', more: 0 });
+    expect(usedByParts(['A', 'B', 'C'])).toEqual({ shown: 'A, B, C', more: 0 });
+    expect(usedByParts(['A', 'B', 'C', 'D', 'E'])).toEqual({ shown: 'A, B, C', more: 2 });
+    expect(usedByParts([])).toEqual({ shown: '', more: 0 });
   });
 });

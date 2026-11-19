@@ -77,14 +77,52 @@
 }
 
 .stepList {
-  flex: 0 0 var(--size-step-list);
+  position: relative;
+  flex: none;
+  width: var(--size-step-list);
+  box-sizing: border-box;
   padding: 16px 12px;
   background: var(--color-card);
   border-right: 1px solid var(--color-line);
+  overflow-x: hidden;
+  overflow-y: auto;
+  transition: width 200ms ease-out;
+}
+
+.stepListBody {
+  /* A fixed width, so the contents are clipped and never wrapped while the panel changes width. */
+  width: calc(var(--size-step-list) - 24px - 1px);
   display: flex;
   flex-direction: column;
   gap: 4px;
-  overflow-y: auto;
+}
+
+.stepListBody[hidden] {
+  display: none;
+}
+
+.stepListRail {
+  width: 48px;
+  padding: 8px;
+  overflow: hidden;
+}
+
+.stepToggle {
+  position: absolute;
+  top: 12px;
+  right: 8px;
+  z-index: 1;
+}
+
+.stepListRail .stepToggle {
+  right: auto;
+  left: 6px; /* centred in the 48 px rail: (47 - 36) / 2 */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stepList {
+    transition: none;
+  }
 }
 
 .note {

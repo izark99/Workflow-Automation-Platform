@@ -1,95 +1,131 @@
 import { useMemo, useState } from 'react';
-import { Badge, Button, Card, Dialog, Dropdown, EmptyState, ErrorState, SearchField, SkeletonTable, Table, TextAreaField, useDelayedLoading, useToast } from '../components';
+import type { KeyboardEvent } from 'react';
+import { Badge, Button, Card, Chip, Dialog, Dropdown, EmptyState, ErrorState, SearchField, SkeletonTable, Table, TextAreaField, useDelayedLoading, useToast } from '../components';
 import type { Column } from '../components';
 import { applyUiTexts, errorText, useT } from '../i18n';
 import { useLoad, useStore } from '../store-context';
 import type { UiTextLocale } from '../../store/types';
-import { SCREEN_FILTERS, checkEdit, filterTextRows, pageOf, textRows } from './admin-texts-logic';
-import type { TextRow } from './admin-texts-logic';
+import { SCREEN_FILTERS, TEXT_LOCALES, filterPairRows, pageOf, pairChanges, textPairRows, validateTextPair } from './admin-texts-logic';
+import type { TextCell, TextPairRow } from './admin-texts-logic';
 import styles from './admin.module.css';
 
-/** Admin, Texts tab (SPEC 11.3): search, filter by screen, language, default next to the current value, edit, reset. */
+type Values = Record<UiTextLocale, string>;
+type Problems = Partial<Record<UiTextLocale, string>>;
+
+/** One language of a row: the current text, clamped to two lines, with an "Edited" badge under it when it differs from the default. */
+function TextCellView({ cell }: { cell: TextCell }) {
+  const t = useT();
+  return (
+    <div className={styles.cell}>
+      <span className={styles.clamp} title={cell.current} data-user-content>
+        {cell.current}
+      </span>
+      {cell.edited ? <Badge tone="soft">{t('admin.texts.edited')}</Badge> : null}
+    </div>
+  );
+}
+
+/** Admin, Texts tab (SPEC 12.3): both languages in one table, one dialog and one atomic Save. */
 export function AdminTexts() {
   const t = useT();
   const store = useStore();
   const toast = useToast();
   const data = useLoad((s) => s.listUiTexts());
   const showSkeleton = useDelayedLoading(data.loading && !data.data);
-  const [locale, setLocale] = useState<UiTextLocale>('vi');
   const [query, setQuery] = useState('');
   const [screen, setScreen] = useState('');
+  const [editedOnly, setEditedOnly] = useState(false);
   const [page, setPage] = useState(0);
-  const [editing, setEditing] = useState<TextRow | null>(null);
-  const [value, setValue] = useState('');
-  const [problem, setProblem] = useState<string | null>(null);
+  const [editing, setEditing] = useState<TextPairRow | null>(null);
+  const [values, setValues] = useState<Values>({ en: '', vi: '' });
+  const [problems, setProblems] = useState<Problems>({});
+  const [failure, setFailure] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const rows = useMemo(() => textRows(locale, data.data ?? []), [locale, data.data]);
-  const found = filterTextRows(rows, query, screen);
+  const rows = useMemo(() => textPairRows(data.data ?? []), [data.data]);
+  const found = filterPairRows(rows, query, screen, editedOnly);
   const shown = pageOf(found, page);
 
   const refresh = async (): Promise<void> => {
     applyUiTexts(await store.listUiTexts());
     data.reload();
   };
-  const startEdit = (row: TextRow): void => {
+  const startEdit = (row: TextPairRow): void => {
     setEditing(row);
-    setValue(row.current);
-    setProblem(null);
+    setValues({ en: row.en.current, vi: row.vi.current });
+    setProblems({});
+    setFailure(null);
   };
-  const save = async (): Promise<void> => {
-    if (!editing) return;
-    const check = checkEdit(editing.defaultText, value);
-    if (!check.ok) {
-      setProblem(t(check.error.key, check.error.params));
-      return;
-    }
+  const close = (): void => {
+    setEditing(null);
+    setFailure(null);
+  };
+  /** Runs one store action, then refreshes the texts. Returns whether it worked. */
+  const apply = async (action: () => Promise<void>, done: string, failed: string): Promise<boolean> => {
     setBusy(true);
     try {
-      await store.saveUiText({ locale, key: editing.key, value });
+      await action();
       await refresh();
-      toast(t('admin.texts.saved'));
-      setEditing(null);
+      toast(done);
+      return true;
     } catch (e) {
-      setProblem(errorText(e, t('admin.texts.saveFailed')));
+      setFailure(errorText(e, failed));
+      return false;
     } finally {
       setBusy(false);
     }
   };
-  const reset = async (row: TextRow): Promise<void> => {
-    try {
-      await store.resetUiText(locale, row.key);
-      await refresh();
-      toast(t('admin.texts.resetDone'));
-    } catch (e) {
-      setProblem(errorText(e, t('admin.texts.resetFailed')));
+  const save = async (): Promise<void> => {
+    if (!editing || busy) return;
+    const check = validateTextPair(editing, values);
+    if (!check.ok) {
+      // Nothing is saved when either text fails; the error sits under the text that failed.
+      const next: Problems = {};
+      for (const locale of TEXT_LOCALES) {
+        const e = check.errors[locale];
+        if (e) next[locale] = t(e.key, e.params);
+      }
+      setProblems(next);
+      return;
+    }
+    setProblems({});
+    const changes = pairChanges(editing, values);
+    if (changes.entries.length === 0 && changes.resets.length === 0) {
+      close();
+      return;
+    }
+    if (await apply(() => store.saveUiTexts(changes), t('admin.texts.saved'), t('admin.texts.saveFailed'))) close();
+  };
+  const resetBoth = async (row: TextPairRow, thenClose: boolean): Promise<void> => {
+    const resets = TEXT_LOCALES.filter((l) => row[l].edited).map((locale) => ({ locale, key: row.key }));
+    if (resets.length === 0) {
+      if (thenClose) close();
+      return;
+    }
+    if (await apply(() => store.saveUiTexts({ entries: [], resets }), t('admin.texts.resetDone'), t('admin.texts.resetFailed')) && thenClose) close();
+  };
+  const onKey = (e: KeyboardEvent): void => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      void save();
     }
   };
 
-  const columns: Column<TextRow>[] = [
-    { key: 'key', header: t('admin.texts.cols.key'), userContent: true, render: (r) => <span className={styles.keyText} data-code>{r.key}</span> },
-    { key: 'default', header: t('admin.texts.cols.default'), userContent: true, render: (r) => <span className={styles.clip} title={r.defaultText}>{r.defaultText}</span> },
-    {
-      key: 'current',
-      header: t('admin.texts.cols.current'),
-      userContent: true,
-      render: (r) => (
-        <span className={styles.clip} title={r.current}>
-          {r.current}
-        </span>
-      ),
-    },
+  const columns: Column<TextPairRow>[] = [
+    { key: 'key', header: t('admin.texts.cols.key'), width: 220, userContent: true, render: (r) => <span className={styles.keyText} title={r.key} data-code>{r.key}</span> },
+    { key: 'en', header: t('admin.texts.cols.english'), render: (r) => <TextCellView cell={r.en} /> },
+    { key: 'vi', header: t('admin.texts.cols.vietnamese'), render: (r) => <TextCellView cell={r.vi} /> },
     {
       key: 'actions',
       header: t('admin.texts.cols.actions'),
+      width: 180,
       render: (r) => (
         <div className={styles.actions}>
-          {r.edited ? <Badge tone="soft">{t('admin.texts.edited')}</Badge> : null}
           <Button compact aria-label={t('admin.texts.editLabel', { key: r.key })} onClick={() => startEdit(r)}>
             {t('admin.texts.edit')}
           </Button>
-          {r.edited ? (
-            <Button compact aria-label={t('admin.texts.resetLabel', { key: r.key })} onClick={() => void reset(r)}>
+          {r.en.edited || r.vi.edited ? (
+            <Button compact aria-label={t('admin.texts.resetLabel', { key: r.key })} onClick={() => void resetBoth(r, false)}>
               {t('admin.texts.reset')}
             </Button>
           ) : null}
@@ -100,7 +136,7 @@ export function AdminTexts() {
 
   let body;
   if (data.error) body = <ErrorState what={t('admin.texts.loadFailed')} next={errorText(data.error)} actions={<Button compact onClick={data.reload}>{t('flows.retry')}</Button>} />;
-  else if (!data.data) body = showSkeleton ? <SkeletonTable weights={[26, 30, 30, 14]} rows={3} label={t('admin.texts.loading')} /> : null;
+  else if (!data.data) body = showSkeleton ? <SkeletonTable weights={[22, 30, 30, 18]} rows={3} label={t('admin.texts.loading')} /> : null;
   else if (found.length === 0) body = <EmptyState title={t('admin.texts.noMatch')} text="" action={null} />;
   else body = <Table label={t('admin.texts.table')} columns={columns} rows={shown.rows} rowKey={(r) => r.key} />;
 
@@ -117,15 +153,10 @@ export function AdminTexts() {
           onChange={(v) => { setScreen(v); setPage(0); }}
           width={180}
         />
-        <Dropdown
-          label={t('admin.texts.language')}
-          options={[{ value: 'vi', label: t('language.vi') }, { value: 'en', label: t('language.en') }]}
-          value={locale}
-          onChange={(v) => { setLocale(v === 'en' ? 'en' : 'vi'); setPage(0); }}
-          width={180}
-        />
+        <Chip pressed={editedOnly} onClick={() => { setEditedOnly(!editedOnly); setPage(0); }}>
+          {t('admin.texts.editedOnly')}
+        </Chip>
       </div>
-      {problem && !editing ? <ErrorState what={t('admin.texts.saveFailed')} next={problem} /> : null}
       <Card flush title={t('admin.texts.table')}>
         <div className={styles.tableSlot} aria-busy={data.loading ? 'true' : undefined}>
           {body}
@@ -149,24 +180,51 @@ export function AdminTexts() {
       {editing ? (
         <Dialog
           title={t('admin.texts.editTitle')}
-          onClose={() => setEditing(null)}
+          width={880}
+          onClose={close}
           actions={
             <>
-              <Button onClick={() => setEditing(null)}>{t('admin.texts.cancel')}</Button>
+              <Button onClick={close}>{t('admin.texts.cancel')}</Button>
+              <Button disabled={busy || !(editing.en.edited || editing.vi.edited)} onClick={() => void resetBoth(editing, true)}>
+                {t('admin.texts.resetBoth')}
+              </Button>
               <Button variant="primary" busy={busy} onClick={() => void save()}>
                 {t('admin.texts.save')}
               </Button>
             </>
           }
         >
-          <div className={styles.dialogBody}>
+          <div className={styles.dialogBody} onKeyDown={onKey}>
             <span>
               <b>{t('admin.texts.keyLabel')}</b>: <span data-code>{editing.key}</span>
             </span>
-            <span>
-              <b>{t('admin.texts.defaultLabel')}</b>: <span data-user-content>{editing.defaultText}</span>
-            </span>
-            <TextAreaField label={t('admin.texts.value')} hint={t('admin.texts.valueHint')} rows={5} value={value} onChange={(e) => setValue(e.target.value)} error={problem ?? undefined} data-user-content />
+            {failure ? <ErrorState what={t('admin.texts.saveFailed')} next={failure} /> : null}
+            {/* The DOM order is English, Vietnamese, then the two Reset buttons; the grid puts each Reset under its default. */}
+            <div className={styles.pairGrid}>
+              {TEXT_LOCALES.map((locale) => (
+                <div key={locale} className={styles.pairText} style={{ gridColumn: locale === 'en' ? 1 : 2 }}>
+                  <TextAreaField
+                    label={t(locale === 'en' ? 'admin.texts.textEnglish' : 'admin.texts.textVietnamese')}
+                    hint={t('admin.texts.valueHint')}
+                    rows={5}
+                    userContent
+                    value={values[locale]}
+                    onChange={(e) => setValues({ ...values, [locale]: e.target.value })}
+                    error={problems[locale]}
+                  />
+                  <span className={styles.defaultText}>
+                    {t('admin.texts.defaultLabel')}: <span data-user-content>{editing[locale].defaultText}</span>
+                  </span>
+                </div>
+              ))}
+              {TEXT_LOCALES.map((locale) => (
+                <div key={`reset-${locale}`} style={{ gridColumn: locale === 'en' ? 1 : 2, gridRow: 2 }}>
+                  <Button compact disabled={values[locale] === editing[locale].defaultText} onClick={() => setValues({ ...values, [locale]: editing[locale].defaultText })}>
+                    {t(locale === 'en' ? 'admin.texts.resetEnglish' : 'admin.texts.resetVietnamese')}
+                  </Button>
+                </div>
+              ))}
+            </div>
           </div>
         </Dialog>
       ) : null}

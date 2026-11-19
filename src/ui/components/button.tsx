@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import type { ButtonHTMLAttributes, ReactNode, Ref } from 'react';
 import { Icon } from './icons';
 import styles from './button.module.css';
 
@@ -14,6 +14,8 @@ export interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement
   block?: boolean;
   /** A button that holds only an icon: as wide as it is high (40 or 36 px), so it lines up with the controls next to it. */
   icon?: boolean;
+  /** React 19 passes `ref` as a prop. */
+  ref?: Ref<HTMLButtonElement>;
   children: ReactNode;
 }
 

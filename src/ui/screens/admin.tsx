@@ -7,6 +7,7 @@ import { useAccounts, useLoad, useStore } from '../store-context';
 import { useT, errorText } from '../i18n';
 import type { MessageKey } from '../i18n';
 import { CreateAccountDialog, LockDialog, ResetPasswordDialog } from './admin-accounts';
+import { AdminSettings } from './admin-settings';
 import { AdminTexts } from './admin-texts';
 import { deletedOn, groupsText, keptUntil, memberCount, toggleGroup, userFormProblem } from './admin-logic';
 import type { UserForm } from './admin-logic';
@@ -272,8 +273,8 @@ export function AdminScreen() {
       {data.error && data.error instanceof StoreError && data.error.code === 'forbidden' ? (
         body
       ) : (
-        <Tabs label={t('admin.tabs.label')} tabs={[{ id: 'users', label: t('admin.tabs.users') }, { id: 'texts', label: t('admin.tabs.texts') }]} selected={tab} onSelect={setTab}>
-          <div className={styles.panel}>{tab === 'texts' ? <AdminTexts /> : body}</div>
+        <Tabs label={t('admin.tabs.label')} tabs={[{ id: 'users', label: t('admin.tabs.users') }, { id: 'texts', label: t('admin.tabs.texts') }, { id: 'settings', label: t('admin.tabs.settings') }]} selected={tab} onSelect={setTab}>
+          <div className={styles.panel}>{tab === 'texts' ? <AdminTexts /> : tab === 'settings' ? <AdminSettings /> : body}</div>
         </Tabs>
       )}
     </ScreenFrame>
