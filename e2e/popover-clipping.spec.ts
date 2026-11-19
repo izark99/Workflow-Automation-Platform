@@ -105,3 +105,26 @@ test('a date picker inside a dialog opens above the dialog layer and can be used
   await page.keyboard.press('Enter');
   await expect(calendar).toHaveCount(0);
 });
+
+test('the items of the More menu are on one line and start at the left padding, with no empty check column', async ({ page }) => {
+  await page.goto('/admin');
+  await page.getByRole('table', { name: 'Users' }).locator('tbody tr').first().getByRole('button', { name: /^More/ }).click();
+  const menu = page.getByRole('listbox');
+  await expect(menu).toBeVisible();
+  const menuBox = (await menu.boundingBox())!;
+  for (const name of ['Reset password', 'Lock account']) {
+    const item = page.getByRole('option', { name });
+    const box = (await item.boundingBox())!;
+    expect(Math.round(box.height), `${name} is one line`).toBe(36);
+    const fit = await item.evaluate((el) => ({ over: el.scrollWidth - el.clientWidth, lines: Math.round(el.getBoundingClientRect().height) }));
+    expect(fit.over, `${name} is not cut off`).toBeLessThanOrEqual(0);
+    // The text starts at the 12 px padding of the item: no icon or empty column before it.
+    const textLeft = await item.evaluate((el) => {
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      return range.getBoundingClientRect().left - el.getBoundingClientRect().left;
+    });
+    expect(Math.round(textLeft), `${name} text offset`).toBeLessThanOrEqual(13);
+    expect(box.x + box.width).toBeLessThanOrEqual(menuBox.x + menuBox.width);
+  }
+});

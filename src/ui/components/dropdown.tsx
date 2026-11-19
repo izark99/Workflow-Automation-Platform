@@ -126,7 +126,8 @@ export function Dropdown({ label, options, value, onChange, width = 260, disable
           role="listbox"
           aria-label={label}
           className={styles.popover}
-          style={{ ...floating.style, width: (floating.anchorWidth || (typeof width === 'number' ? width : 0)) + 20 }}
+          // As wide as the button plus 20 px at least, and wider when an option needs it, but never wider than the window.
+          style={{ ...floating.style, minWidth: (floating.anchorWidth || (typeof width === 'number' ? width : 0)) + 20, width: 'max-content', maxWidth: 'calc(100vw - 16px)' }}
           onKeyDown={onListKey}
         >
           {options.map((o, i) => (
@@ -143,7 +144,8 @@ export function Dropdown({ label, options, value, onChange, width = 260, disable
               data-user-content={userContent ? '' : undefined}
               onClick={() => choose(i)}
             >
-              {i === selected ? <Icon name="check" /> : <span className={styles.check} />}
+              {/* A menu of actions (a button label that stays the same) has no selected item, so it has no check column. */}
+              {buttonLabel !== undefined ? null : i === selected ? <Icon name="check" /> : <span className={styles.check} />}
               {o.label}
             </button>
           ))}

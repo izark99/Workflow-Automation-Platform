@@ -54,6 +54,7 @@
   font: 500 13px var(--font-sans);
   color: var(--color-ink);
   text-align: left;
+  white-space: nowrap; /* an option is one line; the list grows to fit its longest option */
   cursor: pointer;
 }
 
