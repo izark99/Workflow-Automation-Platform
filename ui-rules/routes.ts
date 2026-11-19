@@ -171,6 +171,28 @@ export const ROUTES: RuleRoute[] = [
   },
   {
     path: '/admin',
+    name: '/admin (Settings tab)',
+    sidebar: true,
+    // The card with the number field, the info button and Save.
+    prepare: async (page) => {
+      await page.getByRole('tab', { name: /Settings/ }).click();
+      await page.locator('input[inputmode="numeric"]').waitFor();
+    },
+  },
+  {
+    path: '/admin',
+    name: '/admin (Settings tab, invalid value)',
+    sidebar: true,
+    // An error under the field, and Save off.
+    prepare: async (page) => {
+      await page.getByRole('tab', { name: /Settings/ }).click();
+      const field = page.locator('input[inputmode="numeric"]');
+      await field.fill('73');
+      await page.getByRole('alert').first().waitFor();
+    },
+  },
+  {
+    path: '/admin',
     name: '/admin (edit text dialog)',
     sidebar: true,
     prepare: async (page) => {

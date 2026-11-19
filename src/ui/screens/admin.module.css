@@ -143,3 +143,14 @@
   flex: 1;
   min-width: 0;
 }
+
+.settingsForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.settingsField {
+  width: 240px;
+}

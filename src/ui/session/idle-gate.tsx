@@ -39,7 +39,12 @@ export function IdleGate({ onExpired, onSignOut, children }: { onExpired: (hours
     let live = true;
     const read = (): void => {
       store.getAppSettings().then(
-        (s) => live && setLimit(idleLimit(s.idleTimeoutHours, hook('dfw.idleMs'))),
+        (s) => {
+          if (!live) return;
+          const next = idleLimit(s.idleTimeoutHours, hook('dfw.idleMs'));
+          // The same limit keeps the same object, so the tick of the clock below is not restarted by every poll.
+          setLimit((old) => (old && old.limitMs === next.limitMs && old.warnMs === next.warnMs && old.hours === next.hours ? old : next));
+        },
         // The limit cannot be read: the default applies, so a session never stays open without a limit.
         () => live && setLimit((old) => old ?? idleLimit(undefined, hook('dfw.idleMs'))),
       );
