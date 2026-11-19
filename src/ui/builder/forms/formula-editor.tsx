@@ -40,7 +40,10 @@ export function FormulaEditor({ label, hint, value, onChange, readOnly, source, 
   const [listOpen, setListOpen] = useState(false);
   const [query, setQuery] = useState('');
   const state = checkFormula(value, source.columns, todayIso(), expect, parameters);
-  const bad = state.kind === 'syntax_error' || state.kind === 'invalid' || state.kind === 'empty';
+  // An empty field is not an error on arrival: the guide shows, and the error comes when the user leaves the field.
+  const [touched, setTouched] = useState(false);
+  const guide = state.kind === 'empty' && !touched;
+  const bad = state.kind === 'syntax_error' || state.kind === 'invalid' || (state.kind === 'empty' && touched);
 
   const insert = (text: string, caretBack = 0): void => {
     const el = ref.current;
@@ -67,7 +70,9 @@ export function FormulaEditor({ label, hint, value, onChange, readOnly, source, 
         value={value}
         disabled={readOnly}
         error={bad ? state.message : undefined}
-        status={bad ? undefined : state.message}
+        note={guide ? state.message : undefined}
+        status={bad || guide ? undefined : state.message}
+        onBlur={() => setTouched(true)}
         onChange={(e) => onChange(e.target.value)}
       />
       <span className={styles.label}>{t('builder.formula.insertFunction')}</span>

@@ -58,6 +58,8 @@ export interface TextAreaFieldProps extends Omit<TextareaHTMLAttributes<HTMLText
   error?: string;
   /** A positive message, announced politely (for example "Formula is valid"). */
   status?: string;
+  /** A quiet guide, not an error and not a success: for example what to write in a field that is still empty. */
+  note?: string;
   mono?: boolean;
   /** What is typed is the user's own text (a list of names), which is never translated. */
   userContent?: boolean;
@@ -66,10 +68,10 @@ export interface TextAreaFieldProps extends Omit<TextareaHTMLAttributes<HTMLText
 }
 
 /** A labelled multi-line text field. It cannot be resized by the user. The hint is an info button after the label. */
-export function TextAreaField({ label, hint, error, status, mono = false, userContent = false, rows = 4, textareaRef, ...rest }: TextAreaFieldProps) {
+export function TextAreaField({ label, hint, error, status, note, mono = false, userContent = false, rows = 4, textareaRef, ...rest }: TextAreaFieldProps) {
   const id = useId();
   const noteId = `${id}-note`;
-  const describedBy = error || status ? noteId : undefined;
+  const describedBy = error || status || note ? noteId : undefined;
   return (
     <div>
       <div className={styles.field}>
@@ -85,6 +87,11 @@ export function TextAreaField({ label, hint, error, status, mono = false, userCo
         {error ? (
           <span className={styles.error} role="alert" style={{ display: 'block' }}>
             {error}
+          </span>
+        ) : null}
+        {note && !error && !status ? (
+          <span className={styles.note} style={{ display: 'block' }}>
+            {note}
           </span>
         ) : null}
         {status && !error ? (

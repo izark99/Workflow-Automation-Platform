@@ -134,3 +134,14 @@ test('the formula controls are disabled for a published version', async ({ page 
   await expect(formula(page)).toBeDisabled();
   await expect(panel(page).getByRole('button', { name: 'Insert IF', exact: true })).toBeDisabled();
 });
+
+test('an empty formula is a quiet guide on arrival and becomes an error only when the user leaves the field', async ({ page }) => {
+  await setup(page, 'Formula column');
+  await expect(panel(page).getByRole('alert')).toHaveCount(0);
+  await expect(panel(page)).toContainText('The formula is empty');
+  await formula(page).focus();
+  await formula(page).blur();
+  await expect(panel(page).getByRole('alert')).toContainText('The formula is empty');
+  await formula(page).fill('[age] * 2');
+  await expect(panel(page).getByRole('alert')).toHaveCount(0);
+});

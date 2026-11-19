@@ -140,7 +140,7 @@ Quality pass (SPEC 11.6)
 
 Close
 - [x] T4.10b (U1) Parameters panel: the Type and the default dropdowns fit inside the card.
-- [ ] T4.10c (U2) Formula editor: an empty formula is a neutral note until the field was touched, not a red error on arrival.
+- [x] T4.10c (U2) Formula editor: an empty formula is a neutral note until the field was touched, not a red error on arrival.
 - [ ] T4.10d (U3) Run Parameters card and Test tab: a required value shows its error after the field was touched or Run was pressed; Run stays disabled with a note.
 - [ ] T4.10e (U4) The three parameter value messages name the label of the parameter, not its key.
 - [ ] T4.10f (U5) A boolean parameter has no "(optional)" suffix.
@@ -183,6 +183,12 @@ None. The Pages file size blocker of T3.9 is solved by D71.
 ## Log
 
 Newest first.
+
+### 2026-11-19 T4.10c Formula and SQL editors: an empty field is a quiet guide, not an error (turn 34)
+Advisor not consulted: a small behaviour change that follows checklist item 6.
+Changed: `TextAreaField` has a `note` prop (quiet muted text, not an error and not a success); the formula editor (Filter, Formula column) and the SQL form show their "is empty" text as that note until the field loses focus, then as the error. Nothing else changes: a wrong formula still shows its error while the user types. e2e: the guide on arrival, the error after leaving the field, the error gone after typing.
+Gates run: `npm run check` exit 0 (985 tests); e2e formula, forms and output specs 30 passed; `test:ui-rules` on the formula editor, SQL form, function list, Configure tab and components routes, all three projects: 168 passed (a targeted run; the worker restarted during the first attempt, so it was run again from the start). Flow file diff and `testcase` status empty.
+Next: T4.10d.
 
 ### 2026-11-19 T4.10b Parameters panel: dropdowns fit the card (turn 33)
 Advisor not consulted: a small layout fix.

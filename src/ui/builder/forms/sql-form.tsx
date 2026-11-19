@@ -10,7 +10,10 @@ export function SqlForm({ step, onSettings, readOnly }: FormProps) {
   const t = useT();
   const [text, setText] = useState(typeof step.settings.sql === 'string' ? step.settings.sql : '');
   const check = checkSql(text);
-  const bad = check.kind !== 'ok';
+  // An empty query is not an error on arrival: the guide shows, and the error comes when the user leaves the field.
+  const [touched, setTouched] = useState(false);
+  const guide = check.kind === 'empty' && !touched;
+  const bad = check.kind !== 'ok' && !guide;
   return (
     <div className={styles.stack} style={{ paddingTop: 0 }}>
       <TextAreaField
@@ -22,7 +25,9 @@ export function SqlForm({ step, onSettings, readOnly }: FormProps) {
         value={text}
         disabled={readOnly}
         error={bad ? check.message : undefined}
-        status={bad ? undefined : check.message}
+        note={guide ? check.message : undefined}
+        status={bad || guide ? undefined : check.message}
+        onBlur={() => setTouched(true)}
         onChange={(e) => {
           setText(e.target.value);
           onSettings({ ...step.settings, sql: e.target.value });
