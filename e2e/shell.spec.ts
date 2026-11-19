@@ -100,6 +100,19 @@ test.describe('sidebar rail', () => {
     await expect.poll(async () => (await nav.boundingBox())?.width).toBe(232);
   });
 
+  test('the toggle is centred over the icon buttons of the rail', async ({ page }) => {
+    await page.goto('/flows');
+    const nav = page.getByRole('navigation', { name: 'Main' });
+    await nav.getByRole('button', { name: 'Collapse sidebar' }).click();
+    await expect.poll(async () => (await nav.boundingBox())?.width).toBe(64);
+    const centre = async (name: string) => {
+      const b = (await nav.getByRole(name === 'Flows' ? 'link' : 'button', { name }).boundingBox())!;
+      return b.x + b.width / 2;
+    };
+    const toggle = await centre('Expand sidebar');
+    for (const name of ['Create flow', 'Flows', 'Account menu']) expect(Math.abs((await centre(name)) - toggle), name).toBeLessThan(0.6);
+  });
+
   test('every action of the open sidebar is reachable from the rail by keyboard', async ({ page }) => {
     await page.goto('/flows');
     const nav = page.getByRole('navigation', { name: 'Main' });

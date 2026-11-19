@@ -534,8 +534,8 @@ export const ROUTES: RuleRoute[] = [
     sidebar: true,
     before: seedBigDraft,
     prepare: async (page) => {
-      await page.getByRole('button', { name: /^More actions for this table/ }).click();
-      await page.getByRole('option', { name: 'Paste from Excel', exact: true }).click();
+      await page.getByRole('button', { name: /More actions for this table/ }).click();
+      await page.getByRole('option', { name: /Paste from Excel/ }).click();
       await page.getByRole('dialog', { name: 'Paste from Excel' }).waitFor();
     },
   },
@@ -547,7 +547,7 @@ export const ROUTES: RuleRoute[] = [
     before: seedBigDraft,
     // One row per column: name, type, remove; Add column; the message that keeps Apply off.
     prepare: async (page) => {
-      await page.getByRole('button', { name: /^More actions for this table/ }).click();
+      await page.getByRole('button', { name: /More actions for this table/ }).click();
       await page.getByRole('option', { name: 'Columns', exact: true }).click();
       const dialog = page.getByRole('dialog', { name: 'Columns of the draft' });
       await dialog.getByRole('textbox', { name: 'Name of column 2' }).fill('ID');
@@ -560,8 +560,8 @@ export const ROUTES: RuleRoute[] = [
     sidebar: true,
     before: seedBigDraft,
     prepare: async (page) => {
-      await page.getByRole('button', { name: /^More actions for this table/ }).click();
-      await page.getByRole('option', { name: 'Edit description', exact: true }).click();
+      await page.getByRole('button', { name: /More actions for this table/ }).click();
+      await page.getByRole('option', { name: /Edit description/ }).click();
       await page.getByRole('dialog', { name: 'Description of the table' }).waitFor();
     },
   },
