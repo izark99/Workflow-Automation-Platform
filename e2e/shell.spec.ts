@@ -80,3 +80,81 @@ test('the data persists in the browser: a flow created before a reload is still 
   );
   expect(count).toBe(1);
 });
+
+test.describe('sidebar rail', () => {
+  test('collapses to 64 px, keeps the title and first block y, and is remembered after a reload', async ({ page }) => {
+    await page.goto('/flows');
+    const nav = page.getByRole('navigation', { name: 'Main' });
+    const h1 = async () => (await page.getByRole('heading', { level: 1 }).boundingBox())!.y;
+    const y = await h1();
+    expect(y).toBe(63);
+    await nav.getByRole('button', { name: 'Collapse sidebar' }).click();
+    await expect.poll(async () => (await nav.boundingBox())?.width).toBe(64);
+    expect(await h1()).toBe(63);
+    const first = async () => (await page.locator('[data-first-block]').first().boundingBox())!.y;
+    expect(await first()).toBe(123);
+    await page.reload();
+    await expect.poll(async () => (await page.getByRole('navigation', { name: 'Main' }).boundingBox())?.width).toBe(64);
+    await expect(page.getByRole('navigation', { name: 'Main' }).getByRole('button', { name: 'Expand sidebar' })).toHaveAttribute('aria-expanded', 'false');
+    await page.getByRole('navigation', { name: 'Main' }).getByRole('button', { name: 'Expand sidebar' }).click();
+    await expect.poll(async () => (await nav.boundingBox())?.width).toBe(232);
+  });
+
+  test('every action of the open sidebar is reachable from the rail by keyboard', async ({ page }) => {
+    await page.goto('/flows');
+    const nav = page.getByRole('navigation', { name: 'Main' });
+    await nav.getByRole('button', { name: 'Collapse sidebar' }).click();
+    await expect(nav.getByRole('link', { name: 'Flows' })).toHaveAttribute('aria-current', 'page');
+    for (const name of ['Create flow', 'Account menu']) {
+      const b = await nav.getByRole('button', { name }).boundingBox();
+      expect([b!.width, b!.height]).toEqual([40, 40]);
+    }
+    await nav.getByRole('link', { name: 'Reference tables' }).click();
+    await expect(page).toHaveURL(/\/reference-tables$/);
+    await expect(nav.getByRole('link', { name: 'Admin' })).toBeVisible();
+    // Create flow
+    await nav.getByRole('button', { name: 'Create flow' }).focus();
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await page.keyboard.press('Escape');
+    // The user popover holds the name, the role and the controls of the open footer.
+    const user = nav.getByRole('button', { name: 'Account menu' });
+    await user.focus();
+    await page.keyboard.press('Enter');
+    const pop = page.getByRole('dialog', { name: 'Account menu' });
+    await expect(pop.getByText('Harold')).toBeVisible();
+    await expect(pop.getByText('Admin', { exact: true })).toBeVisible();
+    await expect(pop.getByRole('button', { name: /Language/ })).toBeVisible();
+    await expect(pop.getByRole('button', { name: /Theme/ })).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(pop).toHaveCount(0);
+    await expect(user).toBeFocused();
+  });
+
+  test('the language and theme work from the popover', async ({ page }) => {
+    await page.goto('/flows');
+    const nav = page.getByRole('navigation', { name: 'Main' });
+    await nav.getByRole('button', { name: 'Collapse sidebar' }).click();
+    await nav.getByRole('button', { name: 'Account menu' }).click();
+    const pop = page.getByRole('dialog', { name: 'Account menu' });
+    await pop.getByRole('button', { name: /Theme/ }).click();
+    await page.getByRole('option', { name: 'Dark' }).click();
+    await expect(pop).toBeVisible();
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  });
+
+  test('Change password and Sign out are in the popover when sign-in is on, and sign out works', async ({ page }) => {
+    await page.addInitScript((json) => localStorage.setItem('dfw.auth', json), JSON.stringify([{ email: 'harold@example.com', password: 'correct horse battery' }]));
+    await page.goto('/flows');
+    await page.getByLabel('Email').fill('harold@example.com');
+    await page.getByLabel('Password').fill('correct horse battery');
+    await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+    const nav = page.getByRole('navigation', { name: 'Main' });
+    await nav.getByRole('button', { name: 'Collapse sidebar' }).click();
+    await nav.getByRole('button', { name: 'Account menu' }).click();
+    const pop = page.getByRole('dialog', { name: 'Account menu' });
+    await expect(pop.getByRole('button', { name: 'Change password' })).toBeVisible();
+    await pop.getByRole('button', { name: 'Sign out' }).click();
+    await expect(page.getByRole('heading', { name: 'Sign in', level: 1 })).toBeVisible();
+  });
+});

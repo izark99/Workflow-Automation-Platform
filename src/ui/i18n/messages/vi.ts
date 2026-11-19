@@ -17,6 +17,7 @@ export const vi: Record<MessageKey, string> = {
   'nav.createFlow': 'Tạo luồng',
   'nav.role.admin': 'Quản trị viên',
   'nav.role.user': 'Người dùng',
+  'nav.userMenu': 'Menu tài khoản',
   'nav.signOut': 'Đăng xuất',
   'nav.signOutFailed': 'Không đăng xuất được. Hãy đóng tab này hoặc thử lại.',
   'language.label': 'Ngôn ngữ',

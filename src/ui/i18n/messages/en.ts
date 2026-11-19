@@ -17,6 +17,7 @@ export const en = {
   'nav.createFlow': 'Create flow',
   'nav.role.admin': 'Admin',
   'nav.role.user': 'User',
+  'nav.userMenu': 'Account menu',
   'nav.signOut': 'Sign out',
   'nav.signOutFailed': 'Could not sign out. Close this tab, or try again.',
 

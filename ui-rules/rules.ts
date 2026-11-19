@@ -156,14 +156,14 @@ export const dangerSpacing: Rule = async (page) =>
     return bad;
   });
 
-/** DESIGN: the sidebar is 232 px wide on every screen that has it. */
-export const sidebarWidth: Rule = async (page) =>
-  page.evaluate(() => {
+/** DESIGN: the sidebar is 232 px wide on every screen that has it, and 64 px when it is collapsed to a rail. */
+export const sidebarWidth = async (page: Page, expected = 232): Promise<string[]> =>
+  page.evaluate((want) => {
     const nav = document.querySelector('nav[aria-label="Main"]');
     if (!nav) return ['no main navigation'];
     const w = Math.round(nav.getBoundingClientRect().width);
-    return w === 232 ? [] : [`the sidebar is ${w} px wide; expected 232`];
-  });
+    return w === want ? [] : [`the sidebar is ${w} px wide; expected ${want}`];
+  }, expected);
 
 /**
  * DESIGN: every control is reachable with the keyboard, with a visible focus ring. Tab through the page (up to 80 stops);

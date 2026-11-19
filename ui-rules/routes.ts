@@ -32,11 +32,19 @@ export interface RuleRoute {
   busy?: boolean;
   /** False when the route's own steps need the English texts, so the pseudo-locale check skips it. */
   pseudo?: boolean;
+  /** The sidebar is collapsed to its 64 px rail in this state of the route. */
+  railSidebar?: boolean;
   /** Runs before the page loads, for example to put data into the store. */
   before?: (page: Page) => Promise<void>;
   /** Puts the page in the state to check after it has loaded, for example by selecting a step. */
   prepare?: (page: Page) => Promise<void>;
 }
+
+/** Puts the named panels in the collapsed state before the page loads (the key of src/ui/panels/panel-state.ts). */
+export const collapsePanels = (...ids: string[]) => async (page: Page): Promise<void> => {
+  const state = Object.fromEntries(ids.map((id) => [id, true]));
+  await page.addInitScript((json) => localStorage.setItem('dfw.panels', json), JSON.stringify(state));
+};
 
 const USERS_JSON = JSON.stringify([{ email: 'harold@example.com', password: 'correct horse battery' }]);
 /** The sign-in screen needs the stand-in sign-in (D67): the key makes the app ask for a sign-in before it shows a route. */
@@ -149,6 +157,9 @@ export const ROUTES: RuleRoute[] = [
     },
   },
   { path: '/dev/components', sidebar: true, nav: false },
+  ...(['/flows', '/admin', '/flows/flow-timesheet/run'] as const).map(
+    (path): RuleRoute => ({ path, name: `${path} (sidebar rail)`, sidebar: true, railSidebar: true, before: collapsePanels('sidebar') }),
+  ),
   {
     path: '/flows/flow-timesheet/versions/4',
     name: '/flows/flow-timesheet/versions/4 (Test tab)',

@@ -71,11 +71,11 @@ for (const route of ROUTES) {
       });
     }
     if (route.sidebar && route.nav !== false) {
-      test('sidebar is 232 px wide', async ({ page }) => {
+      test(route.railSidebar ? 'sidebar is 64 px wide' : 'sidebar is 232 px wide', async ({ page }) => {
         await route.before?.(page);
         await page.goto(route.path);
         await page.waitForLoadState('networkidle');
-        expect(await sidebarWidth(page)).toEqual([]);
+        expect(await sidebarWidth(page, route.railSidebar ? 64 : 232)).toEqual([]);
       });
     }
     if (route.sidebar) {
