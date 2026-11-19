@@ -232,3 +232,15 @@ test('a user who is not the admin cannot open the screen and is told why', async
   await expect(page.getByRole('alert')).toContainText('Go back to the Flows list');
   await expect(page.getByRole('table', { name: 'Users' })).toHaveCount(0);
 });
+
+test('the explanations of "Access to shared flows" and "Deleted flows" are behind info buttons, not under the titles', async ({ page }) => {
+  await page.goto('/admin');
+  await expect(page.getByRole('heading', { name: 'Access to shared flows' })).toBeVisible();
+  await expect(page.getByText('Members of a ticked group can view and run the flow.')).toHaveCount(0);
+  await expect(page.getByText('A deleted flow is kept for 30 days.')).toHaveCount(0);
+  await page.getByRole('button', { name: 'About Access to shared flows' }).click();
+  await expect(page.getByText('Members of a ticked group can view and run the flow.')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: 'About Deleted flows' }).click();
+  await expect(page.getByText('A deleted flow is kept for 30 days.')).toBeVisible();
+});

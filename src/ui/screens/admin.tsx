@@ -154,8 +154,11 @@ export function AdminScreen() {
       <Card flush title={title}>
         <div className={styles.head}>
           <div className={styles.headText}>
-            <h2>{title}</h2>
-            {text ? <span className={styles.note}>{text}</span> : null}
+            {/* The explanation of a card is behind an info button (DESIGN checklist item 9), not under the title. */}
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <h2>{title}</h2>
+              {text ? <InfoTip label={title}>{text}</InfoTip> : null}
+            </div>
           </div>
           {action}
         </div>

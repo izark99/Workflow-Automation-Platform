@@ -144,7 +144,7 @@ Close
 - [x] T4.10d (U3) Run Parameters card and Test tab: a required value shows its error after the field was touched or Run was pressed; Run stays disabled with a note.
 - [x] T4.10e (U4) The three parameter value messages name the label of the parameter, not its key.
 - [x] T4.10f (U5) A boolean parameter has no "(optional)" suffix.
-- [ ] T4.10g (U6) Admin: the sentences under "Access to shared flows" and "Deleted flows" move into an info button.
+- [x] T4.10g (U6) Admin: the sentences under "Access to shared flows" and "Deleted flows" move into an info button.
 - [ ] T4.10h (U7) Builder canvas: no step card sits under the control bar after fit-to-screen.
 - [ ] T4.10i (U8) Filter output labels "match" and "no match" are 12 px and not crossed by the line.
 - [ ] T4.10j (U9) Builder settings panel with no step: the Parameters heading comes first, the "Select a step" sentence below it.
@@ -183,6 +183,12 @@ None. The Pages file size blocker of T3.9 is solved by D71.
 ## Log
 
 Newest first.
+
+### 2026-11-19 T4.10g Admin: the explanations move into info buttons (turn 38)
+Advisor not consulted: a small change that follows checklist item 9.
+Changed: the cards "Access to shared flows" and "Deleted flows" show their sentence behind an info button after the title (`InfoTip`), not under it; the text itself is unchanged. e2e: the sentences are not visible on arrival and each opens from its info button.
+Gates run: `npm run check` exit 0 (986 tests); e2e admin spec 15 passed; `test:ui-rules` on every Admin route (all states), all three projects: 360 passed (targeted). Flow file diff and `testcase` status empty.
+Next: T4.10h.
 
 ### 2026-11-19 T4.10f A switch has no "(optional)" suffix (turn 37)
 Advisor not consulted: a one-line label change.
