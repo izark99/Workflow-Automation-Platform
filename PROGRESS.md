@@ -161,7 +161,7 @@ idle sign-out, reference tables, quality pass, docs, final run. Migrations conti
 1440 px; the full `npm run test:ui-rules` runs in T5.6, T5.21 and T5.23.
 
 Collapsible panels (SPEC 12.4)
-- [ ] T5.1 Panel state in `src/ui/panels/`: the ids `sidebar`, `steps`, `settings`, `refList`; the state lives in `localStorage` under `dfw.panels` (JSON); every panel starts open; broken JSON, a wrong type or an unknown id gives the defaults; the inline script of `index.html` sets `data-panel-<id>="collapsed"` on `<html>` before first paint, like the theme; a hook `usePanel(id)` with `collapsed` and `toggle`. Unit tests: defaults, persistence, broken storage, unknown id, two panels independent.
+- [x] T5.1 Panel state in `src/ui/panels/`: the ids `sidebar`, `steps`, `settings`, `refList`; the state lives in `localStorage` under `dfw.panels` (JSON); every panel starts open; broken JSON, a wrong type or an unknown id gives the defaults; the inline script of `index.html` sets `data-panel-<id>="collapsed"` on `<html>` before first paint, like the theme; a hook `usePanel(id)` with `collapsed` and `toggle`. Unit tests: defaults, persistence, broken storage, unknown id, two panels independent.
 - [ ] T5.2 `PanelToggle` as in DESIGN "Collapsible panels": 36 px icon button, `aria-expanded`, `aria-controls`, the name from the catalog (`panels.collapse` and `panels.expand` with `{panel}`), chevron direction by side; width transition of at most 200 ms, none with `prefers-reduced-motion`; a demo of an open and a collapsed rail on `/dev/components` (both themes, a route of the UI rules); unit tests and an e2e keyboard test (Tab, Space, Enter, focus stays on the toggle); `emulateMedia` test for reduced motion. Catalog `en` and `vi`.
 - [ ] T5.3 Sidebar rail: the sidebar collapses to 64 px: toggle, "Create flow" as an icon `cta`, the three navigation items as icon buttons with names and `aria-current`, one user button that opens a popover with the name, the role, Language, Theme, Change password and Sign out (the controls of the open footer, same behaviour). The main column takes the space; the title y (63 px) and the first block y (123 px) do not change. e2e: collapse, reload keeps it, every action of the open sidebar is reachable by keyboard from the rail, sign out works from the popover. Catalog `en` and `vi`.
 - [ ] T5.4 Builder rails: the step list (184 to 48 px) and the settings panel (380 to 48 px) get toggles; the settings rail shows the selected step name upright (truncated, full name in `title`) and only the toggle when no step is selected; a click on a step card opens a collapsed settings panel; the canvas keeps the position of every step when a panel changes width, and "Fit to screen" uses the new size. e2e: step positions before and after, Fit to screen, add a step from the open list, the Parameters panel (no step selected) in both states, a published version (read-only) in both states.
@@ -232,6 +232,11 @@ None. The Pages file size blocker of T3.9 is solved by D71.
 ## Log
 
 Newest first.
+
+### 2026-11-19 T5.1 Panel state (turn 1)
+Changed: src/ui/panels/panel-state.ts (pure state, storage key `dfw.panels`, store with subscribe), use-panel.ts (`usePanel(id)`), panel-state.test.ts (6 tests), index.html (inline script sets `data-panel-<id>` before first paint).
+Gates run: check PASS (995 tests, exit 0).
+Next: T5.2 (PanelToggle).
 
 ### 2026-11-19 Phase 5 plan (documents only)
 Added SPEC section 12 (reference tables: import, view, adjust and who sees what; sign-out after inactivity; Texts in both languages; collapsible panels; gates), the Phase 5 parts of `docs/DESIGN.md`, the gate text of `PROMPT.md`, the Phase 5 goal in `GOALS.md`, the tasks T5.1 to T5.23 and the "Needs Harold" rows of this file. Changed in SPEC: the decisions, scope, data model (`app_settings`, `flow_ref_tables`), the permission table and the rule "every signed-in user can read every reference table", the phase table and 11.3 item 4. No code changed. `STATUS` is `IN PROGRESS` again for Phase 5.
