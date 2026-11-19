@@ -265,13 +265,13 @@ export function ReferenceTablesScreen() {
           <Card flush title={t('refTables.grid', { name: table.name })}>
             <div className={styles.head}>
               <div className={styles.headText}>
-                <h2 data-user-content>{table.name}</h2>
-                {table.description ? <span className={styles.note} data-user-content>{table.description}</span> : null}
-                {isAdmin ? (
-                  <span>
+                <div className={styles.titleLine}>
+                  <h2 data-user-content>{table.name}</h2>
+                  {isAdmin ? (
                     <Button compact onClick={() => { setDialogError(null); setDialog('description'); }}>{t('refTables.desc.button')}</Button>
-                  </span>
-                ) : null}
+                  ) : null}
+                </div>
+                {table.description ? <span className={styles.note} data-user-content>{table.description}</span> : null}
               </div>
               <div className={styles.headActions}>
                 {dirty ? (
