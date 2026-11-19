@@ -149,7 +149,7 @@ Close
 - [x] T4.10i (U8) Filter output labels "match" and "no match" are 12 px and not crossed by the line.
 - [x] T4.10j (U9) Builder settings panel with no step: the Parameters heading comes first, the "Select a step" sentence below it.
 - [x] T4.10k (U10) Spacing: 6, 9, 10, 13 and 14 px in shared components move to the 4 px grid without changing a height or y that a rule checks.
-- [ ] T4.11 `docs/DEPLOY.md`: a section "Upgrade an existing deployment" (back up, `npx supabase db push` for the new migrations, `npx supabase functions deploy admin-users`, check list for accounts, themes, texts and parameters); remove the limits that Phase 4 lifted; `scripts/deploy-doc.test.ts` updated. `README.md` mentions the new features.
+- [x] T4.11 `docs/DEPLOY.md`: a section "Upgrade an existing deployment" (back up, `npx supabase db push` for the new migrations, `npx supabase functions deploy admin-users`, check list for accounts, themes, texts and parameters); remove the limits that Phase 4 lifted; `scripts/deploy-doc.test.ts` updated. `README.md` mentions the new features.
 - [ ] T4.12 Final run: `npm ci`, then `npm run gates` (seven gates) and `npm run test:acceptance:pages`; set `STATUS: COMPLETE` only if both pass.
 
 ## Needs Harold
@@ -183,6 +183,12 @@ None. The Pages file size blocker of T3.9 is solved by D71.
 ## Log
 
 Newest first.
+
+### 2026-11-19 T4.11 Deployment guide and README (turn 43)
+Advisor not consulted: documentation; every claim was checked against the migrations, the function and the config.
+Changed: `docs/DEPLOY.md` has a new section "Deploy the account function" for a first deployment (`npx supabase functions deploy admin-users --project-ref <ref>`, `verify_jwt` stays on, the service key stays inside Supabase), a step 9 in "Check it works" for accounts, and the section "Upgrade an existing deployment" (back up, `npx supabase db push` for migrations 10 to 12 by name, deploy the function, deploy the app, check accounts, themes, texts and parameters, roll back the app only). The "Limits" no longer say that accounts and passwords are managed in the Supabase dashboard; they say that there is no sign-up and no email, the admin creates users and resets passwords in the app, and users are locked, not deleted. `scripts/deploy-doc.test.ts` has the new headings in order and 3 new tests (upgrade steps in order with the three migration files, the function and its config, no dashboard account management in the limits). `README.md` has a "What the app does" section and a pointer to DEPLOY.
+Gates run: `npm run check` exit 0 (989 tests, 10 of them in deploy-doc). No code changed, so the other gates were not re-run. Nothing was deployed (CLAUDE.md). Flow file diff and `testcase` status empty.
+Next: T4.12 (`npm ci`, full `npm run gates`, `npm run test:acceptance:pages`; consult the advisor before the final tick).
 
 ### 2026-11-19 T4.10k Spacing on the 4 px grid (turn 42)
 Advisor not consulted: CSS values, checked by the rules and the audit.

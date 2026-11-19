@@ -16,7 +16,7 @@ You need:
 - Node 22 and a clone of the repository on your computer, with `npm ci` done once (this installs the Supabase CLI).
 - The email addresses of the people who will sign in. One of them becomes the first admin.
 
-What is stored where: flows, flow versions, reference tables, users, groups and the run history (counts only) live in
+What is stored where: flows, flow versions, reference tables, users, groups, the edited UI texts and the run history (counts only) live in
 Supabase. The input files that people load never leave their browser. Do not put personal data in reference tables.
 
 Two keys exist, and they are not the same:
@@ -52,6 +52,20 @@ security on.
 
 If a migration fails, stop. Read the first error, fix it on a local Supabase with `npm run test:db`, and push again.
 Do not edit tables by hand in the dashboard: the next push would not know about the change.
+
+## Deploy the account function
+
+The Admin screen creates users, resets passwords and locks accounts through one Edge Function,
+`supabase/functions/admin-users`. It is the only server code of the app. It checks for itself that the caller is an
+active admin, so the service key stays inside Supabase: Supabase gives it to the function, and you do not copy it
+anywhere.
+
+```bash
+npx supabase functions deploy admin-users --project-ref <ref>
+```
+
+The setting `verify_jwt = true` in `supabase/config.toml` stays on. In the dashboard, Edge Functions lists
+`admin-users` as active. You test it in "Check it works" (step 9).
 
 ## Close sign-ups
 
@@ -151,6 +165,10 @@ curl -s "https://<ref>.supabase.co/rest/v1/flows" -H "apikey: <anon key>"
    file: the data requests only go to your Supabase project, and the only other host is `cdn.jsdelivr.net` (plain
    downloads of the engine code).
 8. In GitHub, Actions, run "Keep alive" by hand and check that it finishes green.
+9. As the admin, open Admin, Users, Add user, and create a test account with a first password of at least 10
+   characters. Sign in as that user in a private window: the app asks for a new password before anything else. Back
+   as the admin, lock the test user: their next request is refused and they see that the account is locked. Admin has
+   no delete for users, so leave the test account locked when you are done.
 
 If a run says the data engine could not be loaded from cdn.jsdelivr.net, the network blocks jsDelivr: ask IT to
 allow it.
@@ -159,14 +177,56 @@ If a step fails, the cause is almost always one of: a `VITE_` variable missing o
 data), the migrations not applied (sign-in works but the app says the profile is missing), or the first-admin step
 not run.
 
+## Upgrade an existing deployment
+
+Phase 4 added accounts managed in the app, a light and a dark theme, editable texts in English and Vietnamese, and flow
+parameters. A deployment that was set up with the nine earlier migrations needs these steps, in this order. A fresh
+deployment does not: "Apply the migrations" already applies all of them.
+
+1. **Back up first.** In the Supabase dashboard, Database, Backups: take a backup if your plan has one, and write down
+   the time. The migrations add columns and tables and change policies; they do not delete data, but you cannot undo
+   a policy change by hand. The app has no export of flows or reference tables.
+2. **Apply the new migrations** from your computer (`npx supabase link --project-ref <ref>` once, if you have not):
+
+   ```bash
+   npx supabase db push
+   ```
+
+   It lists three files, `20261118000010_ui_texts.sql`, `20261118000011_account_lock.sql` and
+   `20261118000012_end_sessions.sql`, and asks you to confirm. Existing users stay active and are not asked for a new
+   password. If the push fails, stop and read the first error; do not edit tables by hand.
+3. **Deploy the account function**, which is new in this phase:
+
+   ```bash
+   npx supabase functions deploy admin-users --project-ref <ref>
+   ```
+
+4. **Deploy the app.** Pushing to the branch that Cloudflare Pages builds starts the build (`npm run build:pages`).
+   Wait for it to finish. Do steps 2 and 3 before this one, so the new app finds the new database and the function.
+5. **Check it**, in this order:
+   - Accounts: open Admin, Users. Every existing user shows Active. Add a test user, sign in as them in a private
+     window (the app asks for a new password), then lock them from Admin and see that their next request is refused.
+   - Themes: in the sidebar, pick Light, Dark and System. The page changes at once and the choice is kept after a
+     reload.
+   - Texts: in the sidebar, switch to Vietnamese. In Admin, Texts, edit one text (for example `nav.flows`), reload as
+     another user and see the new text. Use Reset to give it back.
+   - Parameters: open a flow in the builder, select nothing and look at the Parameters panel on the right. Flows that
+     were built before this phase have none and run as before. Add a date parameter to a new draft, use it in a Filter
+     with `PARAM("key")`, publish, and run: the Run screen shows the value next to the files.
+6. **If something is wrong,** the app can be rolled back in Cloudflare Pages (Deployments, pick the previous one,
+   Rollback). The database changes stay; the old app ignores them. Do not undo a migration by hand.
+
 ## Limits
 
-- No sign-up, no password reset and no email invitation in the app. The admin creates accounts and resets passwords
-  in the Supabase dashboard.
+- There is no sign-up and no email invitation. The admin creates accounts in the app (Admin, Users, Add user) with a
+  first password that the person must change at the first sign-in, and resets a password the same way. Nobody can
+  reset their own forgotten password: ask the admin. The app does not send email.
+- The app does not delete users. Lock an account to stop it; a locked account cannot sign in and its sessions end.
 - A person without a profile (for example an account whose email matches another profile) can sign in but sees a
   message that they have no profile. Fix it in the dashboard: change the email, then ask them to sign in again.
 - A reference table version holds at most 50,000 rows. Published versions cannot change; a change is a new version.
 - Run history stores counts and ids only, never file content.
 - Backups and point-in-time recovery depend on your Supabase plan. Check what your plan offers before the data
   matters. The app has no export of flows or reference tables.
-- Choices made during the build, and why, are in `docs/DECISIONS.md` (the server part starts at D55).
+- Parameter values and the texts that people type into a flow stay in the browser; the run history keeps counts only.
+- Choices made during the build, and why, are in `docs/DECISIONS.md` (the server part starts at D55; accounts, texts and parameters start at D72).
