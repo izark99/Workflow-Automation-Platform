@@ -148,7 +148,7 @@ Close
 - [x] T4.10h (U7) Builder canvas: no step card sits under the control bar after fit-to-screen.
 - [x] T4.10i (U8) Filter output labels "match" and "no match" are 12 px and not crossed by the line.
 - [x] T4.10j (U9) Builder settings panel with no step: the Parameters heading comes first, the "Select a step" sentence below it.
-- [ ] T4.10k (U10) Spacing: 6, 9, 10, 13 and 14 px in shared components move to the 4 px grid without changing a height or y that a rule checks.
+- [x] T4.10k (U10) Spacing: 6, 9, 10, 13 and 14 px in shared components move to the 4 px grid without changing a height or y that a rule checks.
 - [ ] T4.11 `docs/DEPLOY.md`: a section "Upgrade an existing deployment" (back up, `npx supabase db push` for the new migrations, `npx supabase functions deploy admin-users`, check list for accounts, themes, texts and parameters); remove the limits that Phase 4 lifted; `scripts/deploy-doc.test.ts` updated. `README.md` mentions the new features.
 - [ ] T4.12 Final run: `npm ci`, then `npm run gates` (seven gates) and `npm run test:acceptance:pages`; set `STATUS: COMPLETE` only if both pass.
 
@@ -183,6 +183,12 @@ None. The Pages file size blocker of T3.9 is solved by D71.
 ## Log
 
 Newest first.
+
+### 2026-11-19 T4.10k Spacing on the 4 px grid (turn 42)
+Advisor not consulted: CSS values, checked by the rules and the audit.
+Changed: 6, 9, 10, 13 and 14 px gaps, margins and paddings in shared components and screens moved to 4 or 8 px steps (field and chip gaps 8, badge padding 8, option padding 12, toast 12, the shell and builder gaps 8 and 12, version timeline 8, reference table list 12 with a frame that does not move the text, the button default padding of the date picker arrows 0). The table header is 8 px 16 px with a 24 px line, so it stays 40 px high; `docs/DESIGN.md` says so and has a new "Spacing" section with the exceptions. `docs/UI_AUDIT.md` has a result section. The audit run after the change lists only the exceptions of that section.
+Gates run: `npm run check` exit 0 (986 tests); full `npm run test:ui-rules` exit 0 (light theme 1280 px: 540 passed; light theme 1440 px: 540 passed; dark theme 1440 px: 540 passed; 1620 total) on the change before the one-line `.nav` padding; full `npm run test:e2e` exit 0 (207 passed); after the `.nav` padding: `test:ui-rules` on the components and new-version-dialog routes, all three projects, 105 passed, and the components and versions e2e specs 21 passed. Flow file diff and `testcase` status empty.
+Next: T4.11 (DEPLOY.md upgrade section, README), then T4.12.
 
 ### 2026-11-19 T4.10j Builder settings panel with no step: the Parameters heading comes first (turn 41)
 Advisor not consulted: an order change.

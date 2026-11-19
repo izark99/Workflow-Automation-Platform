@@ -45,3 +45,11 @@ These are real but small or large, and the limit is 12 tasks.
 ## Gates
 
 None of the findings changes what a gate checks. U10 touches spacing values, so each of its steps keeps every height and y position that the UI rules check, and the whole of `test:ui-rules` runs after it.
+
+## Result of the fixes (T4.10b to T4.10k)
+
+All ten findings are fixed. The audit run was repeated after the last fix (86 passed). What it still lists under spacing is, by design:
+
+- `-2px` margins of the dropdown anchor (they keep the focus ring on the box), `3px` on the title row of the page header (it aligns the title with its info button), the `react-flow__panel` margins and `-1px` margins that React Flow owns, and `margin-top: auto` values that push a footer or the user block to the bottom (their size is the free space, not a gap).
+- `docs/DESIGN.md` now has a "Spacing" section that lists these exceptions, and the table header is 8 px 16 px with a 24 px line (still 40 px high).
+- Text under 12 px: only the React Flow attribution link remains (L4).

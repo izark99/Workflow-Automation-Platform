@@ -1,7 +1,7 @@
 .field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .labelRow {
@@ -71,7 +71,7 @@
 .textarea {
   box-sizing: border-box;
   width: 100%;
-  padding: 10px 12px;
+  padding: 8px 12px;
   border-radius: var(--radius-control);
   border: 1px solid var(--color-control);
   background: var(--color-card);

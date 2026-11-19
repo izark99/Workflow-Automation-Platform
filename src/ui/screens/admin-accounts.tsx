@@ -77,7 +77,7 @@ export function CreateAccountDialog({ busy, error, onCreate, onCancel }: { busy:
         <Field label={t('admin.userName')} value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
         <Field label={t('admin.userEmail')} value={f.email} autoComplete="off" onChange={(e) => setF({ ...f, email: e.target.value })} />
         <div>
-          <span style={{ display: 'block', fontWeight: 700, marginBottom: 6 }}>{t('admin.userRole')}</span>
+          <span style={{ display: 'block', fontWeight: 700, marginBottom: 8 }}>{t('admin.userRole')}</span>
           <Dropdown label={t('admin.userRole')} options={(['user', 'admin'] as const).map((r) => ({ value: r, label: t(`admin.roles.${r}` as MessageKey) }))} value={f.role} width={200} onChange={(role) => setF({ ...f, role: role as Role })} />
         </div>
         <PasswordField value={f.password} onChange={(password) => setF({ ...f, password })} />

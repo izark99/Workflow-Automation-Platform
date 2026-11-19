@@ -309,7 +309,7 @@ function UserDialog({ user, groups, busy, error, onSave, onCancel }: { user: Use
         <Field label={t('admin.userName')} value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
         <Field label={t('admin.userEmail')} hint={user ? undefined : t('admin.inviteHint')} value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} />
         <div>
-          <span style={{ display: 'block', fontWeight: 700, marginBottom: 6 }}>{t('admin.userRole')}</span>
+          <span style={{ display: 'block', fontWeight: 700, marginBottom: 8 }}>{t('admin.userRole')}</span>
           <Dropdown label={t('admin.userRole')} options={(['user', 'admin'] as const).map((r) => ({ value: r, label: t(`admin.roles.${r}` as MessageKey) }))} value={f.role} width={200} onChange={(role) => setF({ ...f, role: role as UserForm['role'] })} />
         </div>
         <div className={styles.groupBoxes} role="group" aria-label={t('admin.userGroups')}>
