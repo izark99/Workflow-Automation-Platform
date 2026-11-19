@@ -169,7 +169,7 @@ Collapsible panels (SPEC 12.4)
 - [x] T5.6 UI rules for panels: a rule that checks the open and the collapsed width of each panel, that the title and the first block keep their y, that nothing needs horizontal scrolling, and that no control of an open panel becomes unreachable; routes for each collapsed state (sidebar rail on Flows, Admin and Run; builder with each panel collapsed and with both; Reference tables list collapsed) in light at 1280 and 1440 px and dark at 1440 px; pseudo-locale and axe on them. Fix what it finds in this task or split it. Run the full `npm run test:ui-rules`.
 
 Texts in both languages (SPEC 12.3)
-- [ ] T5.7 Logic in `src/ui/screens/admin-texts-logic.ts`: one row for each key with the cells `en` and `vi` (default, current, edited); filters: search in the key and in both languages, screen (first part of the key), edited only; `validateTextPair` checks each text against the placeholders of its own default and returns the error of the text that fails; a text equal to its default is not stored. Unit tests for every function, including a placeholder missing in one language only.
+- [x] T5.7 Logic in `src/ui/screens/admin-texts-logic.ts`: one row for each key with the cells `en` and `vi` (default, current, edited); filters: search in the key and in both languages, screen (first part of the key), edited only; `validateTextPair` checks each text against the placeholders of its own default and returns the error of the text that fails; a text equal to its default is not stored. Unit tests for every function, including a placeholder missing in one language only.
 - [ ] T5.8 Migration `20261118000014_save_ui_texts.sql`: `public.save_ui_texts(p_entries jsonb, p_resets jsonb)` runs as the caller (security invoker, so the policies of `ui_texts` decide), upserts the entries and deletes the resets in one transaction; EXECUTE for `authenticated` only (D82). pgTAP: the admin saves two languages and resets one in one call; a user is refused; a bad locale or key rolls back every change of the call. Store: `saveUiTexts({ entries, resets })` in `DataStore`, `LocalStore` and `SupabaseStore` (an RPC), mapping tests, and `test:store` integration tests; the old `saveUiText` and `resetUiText` stay until T5.9 removes their last use.
 - [ ] T5.9 The Texts tab as in DESIGN "Texts tab": the table with Key, English, Vietnamese and Actions, the filters and the edit dialog with two text areas, the default under each, Reset per language, "Reset both", one atomic Save, Ctrl+Enter. No language control. Remove `saveUiText` and `resetUiText` when nothing uses them. e2e: edit both languages with one Save and see both in the table and after a reload; one invalid text saves nothing and the error sits under it; Reset both; the edited-only filter; keyboard order. Update the routes of the UI rules (the edit dialog). Catalog `en` and `vi`.
 
@@ -232,6 +232,11 @@ None. The Pages file size blocker of T3.9 is solved by D71.
 ## Log
 
 Newest first.
+
+### 2026-11-19 T5.7 Texts logic for both languages (turn 7)
+Changed: src/ui/screens/admin-texts-logic.ts (`textPairRows`, `filterPairRows`, `validateTextPair`, `pairChanges`; the one-language functions stay until T5.9 replaces the tab), admin-texts-logic.test.ts (10 new tests, including a placeholder missing in one language only and a text that goes back to its default).
+Gates run: check PASS (1009 tests, exit 0).
+Next: T5.8 (migration 14 `save_ui_texts` and store).
 
 ### 2026-11-19 T5.6 UI rules for panels (turn 6)
 Changed: ui-rules/rules.ts (`panelWidth`, `railShape`) with self-checks that prove they fail on a bad page, ui-rules/panels.spec.ts (each of the four panels: open and collapsed width, title y 63 and first block y 123 kept, no horizontal scroll, rail shape, collapsed state from storage on first paint, every control reachable after opening or in the rail; Space on a toggle). The routes of the collapsed panels were added in T5.3 to T5.5; pseudo-locale and axe run on them through the route loop.
