@@ -39,8 +39,8 @@ export function SettingsPanel({ definition, step, onChange, onDeleted, readOnly,
   if (!step) {
     return (
       <aside aria-label={t('builder.settings.panel')} className={styles.panel}>
-        <p className={styles.note}>{t('builder.settings.none')}</p>
         <ParametersPanel definition={definition} onChange={onChange} readOnly={readOnly} />
+        <p className={styles.note}>{t('builder.settings.none')}</p>
       </aside>
     );
   }
