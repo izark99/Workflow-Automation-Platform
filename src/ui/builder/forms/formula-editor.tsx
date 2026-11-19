@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef, useState } from 'react';
+import type { FlowParameter } from '../../../engine/flow/parameters';
 import type { Column } from '../../../engine/types';
 import { Button, Dialog, Dropdown, ErrorState, SearchField, TextAreaField } from '../../components';
 import { todayIso } from '../../screens/flows-logic';
@@ -18,10 +19,12 @@ export interface FormulaEditorProps {
   /** The type the result must have, for example boolean for a Filter condition. */
   expect?: Column['type'];
   rows?: number;
+  /** The parameters of the version, for PARAM("key"). */
+  parameters?: FlowParameter[];
 }
 
 /** A formula editor: the text, a message about it, buttons that insert functions and columns, and the list of all functions. */
-export function FormulaEditor({ label, hint, value, onChange, readOnly, source, expect, rows = 7 }: FormulaEditorProps) {
+export function FormulaEditor({ label, hint, value, onChange, readOnly, source, expect, rows = 7, parameters = [] }: FormulaEditorProps) {
   const t = useT();
   const ref = useRef<HTMLTextAreaElement>(null);
   // Where the cursor goes after the next render. It is set in the same commit that writes the new text, so typing right
@@ -36,7 +39,7 @@ export function FormulaEditor({ label, hint, value, onChange, readOnly, source, 
   });
   const [listOpen, setListOpen] = useState(false);
   const [query, setQuery] = useState('');
-  const state = checkFormula(value, source.columns, todayIso(), expect);
+  const state = checkFormula(value, source.columns, todayIso(), expect, parameters);
   const bad = state.kind === 'syntax_error' || state.kind === 'invalid' || state.kind === 'empty';
 
   const insert = (text: string, caretBack = 0): void => {
@@ -97,6 +100,16 @@ export function FormulaEditor({ label, hint, value, onChange, readOnly, source, 
           </Button>
         </div>
       )}
+      {parameters.length > 0 ? (
+        <Dropdown
+          label={t('builder.formula.insertParameter')}
+          options={[{ value: '', label: t('builder.formula.insertParameter') }, ...parameters.map((p) => ({ value: p.key, label: p.key }))]}
+          value=""
+          disabled={readOnly}
+          width={338}
+          onChange={(key) => key && insert(`PARAM("${key}")`)}
+        />
+      ) : null}
       {source.error ? <ErrorState what={t('builder.formula.loadFailed')} next={source.error} /> : null}
       {listOpen ? (
         <Dialog title={t('builder.formula.functionsTitle')} onClose={() => setListOpen(false)} actions={<Button onClick={() => setListOpen(false)}>{t('builder.formula.close')}</Button>}>

@@ -882,3 +882,11 @@ blank or mixed column in one month cannot change the types of another month.
 - `runFlow` takes `parameterValues` (by key) and checks them with `resolveParameterValues` right after the flow is validated and before any step runs: a required value must be given (`null` and empty text count as missing), the value must fit the type, a list value must be an option. Errors are coded (`engine.paramMissing`, `engine.paramWrongType`, `engine.paramNotOption`) with English and Vietnamese texts. The engine does not apply defaults; the Run screen fills them (T4.9e).
 - A list parameter is text in formulas. `PARAM` finds the key without regard to case, like the key rule of D77. An unknown key is a formula error at the key that names it and lists the known keys.
 
+## D79 Parameters panel in the builder (T4.9c)
+
+- The Parameters panel is shown in the settings panel when no step is selected, under the "select a step" note. It is not a tab of a step, because parameters belong to the version, not to a step. A published version, or a user who cannot edit, sees it read-only (every control disabled, with a note that says to create a new version).
+- Every change goes through `withParameters`, so a draft that is opened and not changed stays equal to the stored one (a test checks `isDirty`).
+- The panel shows the problems of the engine rules (`parameterProblems` runs `validateFlow` on the list and keeps the `invalid_parameters` errors, in the catalog language). The edit itself is never refused, so a half-typed key does not lose the user's text; publishing is blocked by the same rules in `publishBlockers`.
+- The formula editor checks `PARAM("key")` against the parameters of the version, using their defaults (or a blank) as stand-in values (`placeholderParameters`), and has an "Insert a parameter" list. `PARAM` is listed in the function list in its own group, Flow. The function-list test now expects the registered functions plus `PARAM`.
+- The Output step sort field is a plain text field with no check; PARAM works there at run time (T4.9b).
+

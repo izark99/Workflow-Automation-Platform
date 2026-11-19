@@ -1,4 +1,6 @@
 import { translate } from '../../i18n';
+import { placeholderParameters } from '../../../engine/flow/parameter-values';
+import type { FlowParameter } from '../../../engine/flow/parameters';
 import { compileFormula } from '../../../engine/formula/compile';
 import { FormulaError, parseFormula } from '../../../engine/formula/parse';
 import type { Column, ColumnType } from '../../../engine/types';
@@ -16,7 +18,7 @@ export type FormulaState =
  * input table the compiler also checks column names and types and gives the result type; `expect` is a type that the
  * result must have (a Filter condition must give boolean).
  */
-export function checkFormula(source: string, columns: Column[] | null, effectiveDate: string, expect?: ColumnType): FormulaState {
+export function checkFormula(source: string, columns: Column[] | null, effectiveDate: string, expect?: ColumnType, parameters: readonly FlowParameter[] = []): FormulaState {
   if (source.trim() === '') return { kind: 'empty', message: translate('builder.formula.state.empty') };
   try {
     parseFormula(source);
@@ -28,7 +30,7 @@ export function checkFormula(source: string, columns: Column[] | null, effective
     return { kind: 'unchecked', message: translate('builder.formula.state.unchecked') };
   }
   try {
-    const compiled = compileFormula(source, { columns, effectiveDate });
+    const compiled = compileFormula(source, { columns, effectiveDate, parameters: placeholderParameters(parameters) });
     if (expect && compiled.type !== expect) {
       return { kind: 'invalid', message: translate('builder.formula.state.wrongType', { actual: compiled.type, needed: expect === 'boolean' ? translate('builder.formula.state.needBoolean') : translate('builder.formula.state.needType', { type: expect }) }) };
     }

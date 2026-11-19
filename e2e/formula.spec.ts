@@ -78,13 +78,13 @@ test('All functions opens a searchable list; choosing one inserts it and closes 
   await expect(formula(page)).toHaveValue('WEEKDAY()');
 });
 
-test('the list holds every function of Tier 1 and EFFECTIVE_DATE, grouped', async ({ page }) => {
+test('the list holds every function and PARAM, grouped', async ({ page }) => {
   await setup(page, 'Formula column');
   await panel(page).getByRole('button', { name: 'All functions' }).click();
   const dialog = page.getByRole('dialog', { name: 'All functions' });
   await expect(dialog.getByRole('button', { name: /^Insert / })).toHaveCount(FUNCTION_DOCS.length);
-  expect(FUNCTION_DOCS.length).toBe(50);
-  for (const g of ['Logic', 'Math', 'Text', 'Date']) await expect(dialog.getByText(g, { exact: true })).toBeVisible();
+  expect(FUNCTION_DOCS.length).toBe(51);
+  for (const g of ['Logic', 'Math', 'Text', 'Date', 'Flow']) await expect(dialog.getByText(g, { exact: true })).toBeVisible();
 });
 
 test('Insert a column puts the column in square brackets at the cursor', async ({ page }) => {

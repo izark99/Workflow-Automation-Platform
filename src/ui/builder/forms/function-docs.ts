@@ -1,8 +1,8 @@
 import { translate } from '../../i18n';
 import type { MessageKey } from '../../i18n';
 
-// The Tier 1 functions as the function list shows them. A unit test keeps this list equal to the functions the engine registers.
-export type FunctionGroup = 'Logic' | 'Math' | 'Text' | 'Date';
+// The functions as the function list shows them. A unit test keeps this list equal to the functions the engine registers, plus PARAM.
+export type FunctionGroup = 'Logic' | 'Math' | 'Text' | 'Date' | 'Flow';
 
 export interface FunctionDoc {
   name: string;
@@ -75,12 +75,14 @@ export const FUNCTION_DOCS: FunctionDoc[] = [
   d('Date', 'DATEDIF(start, end, unit)'),
   d('Date', 'DAYS(end, start)'),
   d('Date', 'EFFECTIVE_DATE()'),
+  // Built into the formula compiler, not in the function registry: it needs the parameters of the flow.
+  d('Flow', 'PARAM(key)'),
 ];
 
 /** The functions that get a button next to the editor. All others are in the list. */
 export const COMMON_FUNCTIONS = ['IF', 'IFS', 'AND', 'OR', 'ROUND', 'TEXT', 'DATE', 'EFFECTIVE_DATE'];
 
-export const GROUP_ORDER: FunctionGroup[] = ['Logic', 'Math', 'Text', 'Date'];
+export const GROUP_ORDER: FunctionGroup[] = ['Logic', 'Math', 'Text', 'Date', 'Flow'];
 
 /** Functions whose name, signature or text contains the search text, ignoring case. */
 export function searchFunctions(query: string): FunctionDoc[] {

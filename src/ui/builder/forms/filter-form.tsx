@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useT } from '../../i18n';
+import { parametersOf } from '../../../engine/flow/parameters';
 import { FormulaEditor } from './formula-editor';
 import type { FormProps } from './types';
 import { useSourceColumns } from './use-source-columns';
@@ -20,6 +21,7 @@ export function FilterForm(props: FormProps) {
         readOnly={readOnly}
         source={source}
         expect="boolean"
+        parameters={parametersOf(props.definition)}
         rows={6}
         onChange={(next) => {
           setText(next);

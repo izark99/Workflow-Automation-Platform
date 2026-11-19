@@ -7,6 +7,7 @@ import { useT } from '../i18n';
 import { currentSource, deleteSteps, updateSettings, inputHandlesOf, inputTitle, renameStep, setInput, sourceOptions, STEP_CATALOG, stepNumbers } from './graph';
 import { FORMS } from './forms';
 import type { FormContext } from './forms/types';
+import { ParametersPanel } from './parameters-panel';
 import { StepPreview } from './step-preview';
 import styles from './settings-panel.module.css';
 
@@ -35,6 +36,7 @@ export function SettingsPanel({ definition, step, onChange, onDeleted, readOnly,
     return (
       <aside aria-label={t('builder.settings.panel')} className={styles.panel}>
         <p className={styles.note}>{t('builder.settings.none')}</p>
+        <ParametersPanel definition={definition} onChange={onChange} readOnly={readOnly} />
       </aside>
     );
   }

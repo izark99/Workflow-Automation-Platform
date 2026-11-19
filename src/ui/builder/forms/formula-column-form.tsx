@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Field } from '../../components';
 import { useT } from '../../i18n';
+import { parametersOf } from '../../../engine/flow/parameters';
 import { FormulaEditor } from './formula-editor';
 import type { FormProps } from './types';
 import { useSourceColumns } from './use-source-columns';
@@ -36,6 +37,7 @@ export function FormulaColumnForm(props: FormProps) {
         value={expression}
         readOnly={readOnly}
         source={source}
+        parameters={parametersOf(props.definition)}
         onChange={(text) => {
           setExpression(text);
           onSettings({ ...step.settings, expression: text });

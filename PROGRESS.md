@@ -131,7 +131,7 @@ Accounts (SPEC 11.1)
 Parameters (SPEC 11.5)
 - [x] T4.9a Definition format: new schema version with `parameters`; JSON schema and validation (unique keys, key pattern, types, list options, default of the right type); older definitions load with an empty list. `flows/monthly-timesheet.flow.json` stays unchanged and G1 still passes.
 - [x] T4.9b Engine: a run takes parameter values; checks required, type and list option before any step runs, with clear errors; `PARAM("key")` in the formula compiler with the parameter type; `params` view for the SQL step. Unit tests for every type.
-- [ ] T4.9c Builder: Parameters panel (add, edit, delete, Move up, Move down, read-only when published); the formula editor lists `PARAM` with the keys of the version.
+- [x] T4.9c Builder: Parameters panel (add, edit, delete, Move up, Move down, read-only when published); the formula editor lists `PARAM` with the keys of the version.
 - [ ] T4.9d Test tab asks for test values of the parameters used upstream of the selected step.
 - [ ] T4.9e Run screen: Parameters card above Files; errors under each field; Run disabled until the values are valid. e2e journey: a flow with a date parameter used in a Filter runs and gives the expected rows. Extend the privacy acceptance test: parameter values appear in no request.
 
@@ -173,6 +173,12 @@ None. The Pages file size blocker of T3.9 is solved by D71.
 ## Log
 
 Newest first.
+
+### 2026-11-19 T4.9c Parameters: the builder panel (turn 29)
+Advisor not consulted: the choices (only `withParameters`, panel when no step is selected) were set in D77 and D79.
+Changed: src/ui/builder/parameters-logic.ts and parameters-panel.tsx (+ css), settings-panel.tsx (panel under the "select a step" note), forms/formula-editor.tsx, formula-logic.ts, filter-form, formula-column-form (PARAM check with the parameters of the version, "Insert a parameter"), function-docs.ts (PARAM in group Flow), engine `placeholderParameters`, catalog en and vi (builder.params.*, builder.fn.PARAM), e2e/parameters-panel.spec.ts (3 journeys), e2e/formula.spec.ts (51 functions, group Flow), docs/DECISIONS.md D79.
+Gates run: `npm run check` exit 0 (977 tests); e2e specs parameters-panel, formula, settings-panel pass (13 tests, run three times); full `npm run test:ui-rules` exit 0 (light 1280 px: 505 passed; light 1440 px: 505 passed; dark 1440 px: 505 passed; 1515 total); `git diff main -- flows/monthly-timesheet.flow.json` empty; `git status --porcelain testcase` empty. Full `npm run test:e2e` not run this turn; it runs in the final gates (T4.12).
+Next: T4.9d (Test tab asks for test values of parameters used upstream).
 
 ### 2026-11-18 T4.9b Parameters: the engine side (turn 28)
 Advisor not consulted: the format and the open choices were settled in turn 27; the one change from the plan (typed literal and a `params` CTE instead of a view) is D78.

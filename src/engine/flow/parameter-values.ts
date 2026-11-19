@@ -58,3 +58,16 @@ export function parameterLiteral(p: ResolvedParameter): string {
       return v === null ? 'CAST(NULL AS VARCHAR)' : quoteString(String(v));
   }
 }
+
+/**
+ * Stand-in values for checking a formula in the builder, where no run has values yet: the default of each parameter, or a
+ * blank. Only the types matter for the check.
+ */
+export function placeholderParameters(parameters: readonly FlowParameter[]): ResolvedParameters {
+  const out: ResolvedParameters = {};
+  for (const p of parameters) {
+    if (typeof p.key !== 'string' || p.key === '') continue;
+    out[p.key] = { type: p.type, value: p.default !== undefined && fitsParameterType(p, p.default) ? p.default : null };
+  }
+  return out;
+}
