@@ -31,7 +31,7 @@ export function Dialog({ title, onClose, children, actions, width }: DialogProps
     const items = (): HTMLElement[] => Array.from(ref.current?.querySelectorAll<HTMLElement>(FOCUSABLE) ?? []).filter((el) => el.getClientRects().length > 0);
     // Focus the first control, not a destructive one: the dialog asks, the user decides.
     // A scroll region made focusable for the keyboard (data-dialog-scroll) is a stop of the dialog, but not the first one.
-    (items().find((el) => !el.hasAttribute('data-dialog-scroll')) ?? items()[0] ?? ref.current)?.focus();
+    (items().find((el) => el.hasAttribute('data-autofocus')) ?? items().find((el) => !el.hasAttribute('data-dialog-scroll')) ?? items()[0] ?? ref.current)?.focus();
     const onKey = (e: KeyboardEvent): void => {
       if (e.key === 'Escape') {
         e.preventDefault();

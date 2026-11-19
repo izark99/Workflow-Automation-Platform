@@ -19,6 +19,12 @@ test('the table has the columns Key, English, Vietnamese and Actions, and no lan
   await expect(row(page, 'nav.signOut')).toContainText('Sign out');
   await expect(row(page, 'nav.signOut')).toContainText('Đăng xuất');
   expect(Math.round((await row(page, 'nav.signOut').boundingBox())!.height)).toBe(57);
+  // A long key is cut with an ellipsis and keeps its full text in the title, so it never runs into the next column.
+  await search(page, 'common.datePicker.previousMonth');
+  await expect(page.locator('[title="common.datePicker.previousMonth"]')).toBeVisible();
+  const key = await page.locator('[title="common.datePicker.previousMonth"]').boundingBox();
+  const english = await row(page, 'common.datePicker.previousMonth').locator('td').nth(1).boundingBox();
+  expect(key!.x + key!.width).toBeLessThanOrEqual(english!.x + 1);
 });
 
 test('both languages are edited with one Save, and both show in the table and after a reload', async ({ page }) => {

@@ -115,3 +115,14 @@
   line-height: 20px;
   color: var(--color-muted);
 }
+
+/* Below the scroll region, always in view: progress, a failure of the save, and why Import is off. */
+.foot {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.foot:empty {
+  display: none;
+}

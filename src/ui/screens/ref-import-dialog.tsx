@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button, Chip, ChipGroup, DatePicker, Dialog, Dropdown, ErrorState, Field, InfoTip, ProgressBar, Table, TextAreaField } from '../components';
 import type { Column } from '../components';
 import { guessTypes, headerNames, listSheets, prepareImport, readGrid, MAX_IMPORT_ROWS } from '../../engine/refimport';
@@ -22,10 +22,16 @@ const sizeLabel = (bytes: number): string => (bytes >= 1e6 ? `${(bytes / 1e6).to
 function ProblemList({ problems, total, step }: { problems: ImportProblem[]; total: number; step: ImportStep }) {
   const t = useT();
   const own = problems.filter((p) => stepOfProblem(p) === step);
+  const box = useRef<HTMLDivElement>(null);
+  // The dialog scrolls: a problem that appears below the fold is brought into view.
+  const first = own[0]?.messageId ?? '';
+  useEffect(() => {
+    if (first) box.current?.scrollIntoView?.({ block: 'nearest' });
+  }, [first]);
   if (own.length === 0) return null;
   const { shown, more } = limitProblems(own, step === 'columns' ? total : own.length);
   return (
-    <div className={styles.problems} role="alert">
+    <div ref={box} className={styles.problems} role="alert">
       <ul>
         {shown.map((p, i) => (
           <li key={i} data-user-content>
@@ -316,6 +322,8 @@ export function ImportDialog({ tables, today, onClose, onImported }: ImportDialo
             )}
           </div>
 
+        </div>
+        <div className={styles.foot}>
           {saving ? (
             <div className={styles.progress}>
               <ProgressBar value={1} max={2} label={t('refTables.import.saving')} />

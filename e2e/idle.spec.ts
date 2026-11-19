@@ -47,6 +47,8 @@ test('a user who is not active sees the dialog with a countdown, then the quiet 
   await expect(dialog(page).getByRole('button', { name: 'Stay signed in' })).toBeVisible();
   await expect(dialog(page).getByRole('button', { name: 'Sign out now' })).toBeVisible();
   await expect(dialog(page)).not.toContainText('Unsaved changes');
+  // The safe button has the focus: Enter keeps the person signed in, it does not sign them out.
+  await expect(dialog(page).getByRole('button', { name: 'Stay signed in' })).toBeFocused();
   await page.clock.fastForward(5_000);
   await expect(dialog(page)).toContainText('00:24');
   await page.clock.fastForward(30_000);

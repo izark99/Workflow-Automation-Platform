@@ -97,7 +97,7 @@ export function IdleGate({ onExpired, onSignOut, children }: { onExpired: (hours
           actions={
             <>
               <Button onClick={onSignOut}>{t('session.idle.signOut')}</Button>
-              <Button variant="primary" onClick={() => tracker.touch(true)}>
+              <Button variant="primary" data-autofocus onClick={() => tracker.touch(true)}>
                 {t('session.idle.stay')}
               </Button>
             </>

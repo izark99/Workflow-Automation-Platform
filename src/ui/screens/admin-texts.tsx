@@ -112,7 +112,7 @@ export function AdminTexts() {
   };
 
   const columns: Column<TextPairRow>[] = [
-    { key: 'key', header: t('admin.texts.cols.key'), width: 220, userContent: true, render: (r) => <span className={styles.keyText} data-code>{r.key}</span> },
+    { key: 'key', header: t('admin.texts.cols.key'), width: 220, userContent: true, render: (r) => <span className={styles.keyText} title={r.key} data-code>{r.key}</span> },
     { key: 'en', header: t('admin.texts.cols.english'), render: (r) => <TextCellView cell={r.en} /> },
     { key: 'vi', header: t('admin.texts.cols.vietnamese'), render: (r) => <TextCellView cell={r.vi} /> },
     {

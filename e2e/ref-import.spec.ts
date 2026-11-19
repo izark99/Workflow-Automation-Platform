@@ -126,6 +126,11 @@ test('a bad file lists at most 5 problems with row and column under the columns,
   await expect(list).toContainText(/and \d+ more\./);
   await expect(importButton(page)).toBeDisabled();
   await expect(dialog(page)).toContainText('Fix the columns above.');
+  // The reason is outside the scroll region, so it is always in view, and so is the first problem (scrolled into view).
+  const box = await dialog(page).boundingBox();
+  const why = await dialog(page).getByText('Fix the columns above.').boundingBox();
+  expect(why!.y + why!.height).toBeLessThanOrEqual(box!.y + box!.height);
+  await expect(list.locator('li').first()).toBeInViewport();
   await page.keyboard.press('Escape');
   await expect(page.getByRole('list', { name: 'Reference tables' }).getByRole('link')).toHaveCount(3);
 });

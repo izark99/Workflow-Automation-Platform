@@ -252,7 +252,7 @@ export function ReferenceTablesScreen() {
                 <span data-user-content>{x.name}</span>
                 <span className={styles.itemSub}>{tableSummary(x, today)}</span>
                 {!isAdmin ? (
-                  <span className={styles.itemSub} data-user-content>
+                  <span className={`${styles.itemSub} ${styles.itemClip}`} title={usedByLine(x.usedBy)} data-user-content>
                     {usedByLine(x.usedBy)}
                   </span>
                 ) : null}
