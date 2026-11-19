@@ -230,7 +230,9 @@ describe('reference tables', () => {
     expect((await refused(stores.admin.saveRefTableVersion(tableId, 2, { rows: tooMany }))).message).toContain('at most 50,000 rows');
     table = await stores.admin.publishRefTableVersion(tableId, 2);
     expect(table.versions[0]).toMatchObject({ versionNo: 1, validTo: '2026-06-30' });
-    expect((await stores.other.listRefTables())[0]?.versions.map((v) => v.status)).toEqual(['published', 'published']);
+    // Since migration 17 a user reads the rows of a table only through a flow that reads it (T5.19 adds the tests of each role).
+    expect((await stores.other.listRefTables()).find((t) => t.id === tableId)?.versions).toEqual([]);
+    expect((await stores.admin.listRefTables()).find((t) => t.id === tableId)?.versions.map((v) => v.status)).toEqual(['published', 'published']);
   });
 });
 

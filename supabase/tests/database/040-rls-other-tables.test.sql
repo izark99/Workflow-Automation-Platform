@@ -39,15 +39,17 @@ insert into public.ref_table_versions (ref_table_id, version_no, valid_from, sta
   ('20000000-0000-0000-0000-000000000001', 1, '2026-01-01', 'published', '[]', '[]'),
   ('20000000-0000-0000-0000-000000000001', 2, '2026-07-01', 'draft', '[]', '[]');
 
--- Reference tables: everyone signed in reads, the admin writes
+-- Reference tables: everyone signed in reads the name and the description, the admin writes. Since migration 17 the versions
+-- (columns and rows) are read by the admin and by a person who may view a flow that reads the table; the flows of this test
+-- read no table, so a user reads no version here (160-ref-table-visibility covers the permission table).
 select public.act_as('00000000-0000-0000-0000-0000000000a1');
 select is((select count(*)::int from public.ref_tables), 1, 'owner reads reference tables');
-select is((select count(*)::int from public.ref_table_versions), 2, 'owner reads reference table versions');
+select is((select count(*)::int from public.ref_table_versions), 0, 'owner reads no version of a table that no flow of theirs reads');
 select public.act_as('00000000-0000-0000-0000-0000000000a2');
 select is((select count(*)::int from public.ref_tables), 1, 'member reads reference tables');
 select public.act_as('00000000-0000-0000-0000-0000000000a3');
 select is((select count(*)::int from public.ref_tables), 1, 'other user reads reference tables');
-select is((select count(*)::int from public.ref_table_versions), 2, 'other user reads reference table versions');
+select is((select count(*)::int from public.ref_table_versions), 0, 'other user reads no version of a table that no flow of theirs reads');
 select throws_ok($$insert into public.ref_tables (name) values ('Mine')$$, '42501', null, 'a user cannot create a reference table');
 with u as (update public.ref_tables set name = 'Hacked' returning 1)
   select is((select count(*)::int from u), 0, 'a user cannot rename a reference table');
