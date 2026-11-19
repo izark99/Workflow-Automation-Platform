@@ -20,7 +20,7 @@ export function AppendForm({ step, onSettings, readOnly }: FormProps) {
           options={[{ value: 'name', label: t('builder.append.byName') }, { value: 'position', label: t('builder.append.byPosition') }]}
           value={match}
           disabled={readOnly}
-          width={338}
+          width="100%"
           onChange={(m) => {
             setMatch(m as AppendMatch);
             onSettings({ ...step.settings, match: m });

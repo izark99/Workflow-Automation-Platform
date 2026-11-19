@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { popoverLayer, useFloating } from './floating';
 import { Icon } from './icons';
 import { isTypeAheadKey, moveIndex, typeAhead } from './list-keys';
 import type { ListKey } from './list-keys';
-import { opensUp, useOutsideClose } from './popover';
+import { useOutsideClose } from './popover';
 import styles from './popover.module.css';
 
 export interface DropdownOption {
@@ -40,13 +42,14 @@ export function Dropdown({ label, options, value, onChange, width = 260, disable
   const typed = useRef({ text: '', timer: 0 });
   const listId = useId();
   const selected = options.findIndex((o) => o.value === value);
-  const [up, setUp] = useState(false);
+  const popRef = useRef<HTMLDivElement>(null);
+  const floating = useFloating(rootRef, popRef, open);
 
   const close = useCallback((returnFocus: boolean) => {
     setOpen(false);
     if (returnFocus) triggerRef.current?.focus();
   }, []);
-  useOutsideClose(rootRef, open, () => close(false));
+  useOutsideClose([rootRef, popRef], open, () => close(false));
 
   useEffect(() => {
     if (skipFocus.current) {
@@ -57,7 +60,6 @@ export function Dropdown({ label, options, value, onChange, width = 260, disable
   }, [open, active]);
 
   const openList = (): void => {
-    setUp(opensUp(rootRef.current, options.length * 38 + 12));
     setActive(selected >= 0 ? selected : 0);
     setOpen(true);
   };
@@ -79,7 +81,8 @@ export function Dropdown({ label, options, value, onChange, width = 260, disable
       e.preventDefault();
       close(true);
     } else if (e.key === 'Tab') {
-      close(false);
+      close(true); // focus goes back to the button, so the Tab that follows moves on from it
+
     } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Home' || e.key === 'End') {
       e.preventDefault();
       setActive((a) => moveIndex(a, options.length, e.key as ListKey));
@@ -115,8 +118,17 @@ export function Dropdown({ label, options, value, onChange, width = 260, disable
         {buttonLabel ?? current}
         <Icon name="chevronDown" />
       </button>
-      {open ? (
-        <div id={listId} role="listbox" aria-label={label} className={`${styles.popover} ${up ? styles.up : ''}`} style={{ width: width === '100%' ? 'calc(100% + 20px)' : width + 20 }} onKeyDown={onListKey}>
+      {open && popoverLayer()
+        ? createPortal(
+        <div
+          id={listId}
+          ref={popRef}
+          role="listbox"
+          aria-label={label}
+          className={styles.popover}
+          style={{ ...floating.style, width: (floating.anchorWidth || (typeof width === 'number' ? width : 0)) + 20 }}
+          onKeyDown={onListKey}
+        >
           {options.map((o, i) => (
             <button
               key={o.value}
@@ -135,8 +147,10 @@ export function Dropdown({ label, options, value, onChange, width = 260, disable
               {o.label}
             </button>
           ))}
-        </div>
-      ) : null}
+        </div>,
+        popoverLayer()!,
+      )
+        : null}
     </div>
   );
 }

@@ -97,3 +97,22 @@ test('Change password in the sidebar: the checks, the toast, and the new passwor
   await signIn(page, 'a-long-new-password');
   await expect(page.getByRole('heading', { name: 'Flows', level: 1 })).toBeVisible();
 });
+
+test('the four controls of the signed-in sidebar footer have the same width, height and left edge', async ({ page }) => {
+  await start(page);
+  await signIn(page);
+  const footer = page.getByRole('navigation', { name: 'Main' });
+  const controls = [
+    footer.getByRole('button', { name: /^Language/ }),
+    footer.getByRole('button', { name: /^Theme/ }),
+    footer.getByRole('button', { name: 'Change password' }),
+    footer.getByRole('button', { name: 'Sign out' }),
+  ];
+  const boxes = [];
+  for (const c of controls) boxes.push((await c.boundingBox())!);
+  for (const b of boxes) {
+    expect(Math.round(b.width)).toBe(Math.round(boxes[0]!.width));
+    expect(Math.round(b.height)).toBe(Math.round(boxes[0]!.height));
+    expect(Math.round(b.x)).toBe(Math.round(boxes[0]!.x));
+  }
+});

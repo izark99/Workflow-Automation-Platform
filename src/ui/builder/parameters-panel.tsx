@@ -155,7 +155,7 @@ function DefaultValue({ n, p, readOnly, onPatch }: { n: number; p: FlowParameter
           <span className={styles.fieldLabel}>{label}</span>
           <div className={styles.inline}>
             <DatePicker label={label} value={typeof p.default === 'string' ? p.default : todayIso()} disabled={readOnly} width={180} onChange={(iso) => onPatch({ default: iso })} />
-            <Button compact disabled={readOnly || p.default === undefined} aria-label={t('common.numbered', { label: t('builder.params.noDefault'), n })} onClick={() => onPatch({ default: undefined })}>
+            <Button disabled={readOnly || p.default === undefined} aria-label={t('common.numbered', { label: t('builder.params.noDefault'), n })} onClick={() => onPatch({ default: undefined })}>
               {t('builder.params.noDefault')}
             </Button>
           </div>

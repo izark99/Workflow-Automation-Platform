@@ -23,10 +23,10 @@ function PasswordField({ value, onChange }: { value: string; onChange: (v: strin
       <div className={styles.passwordField}>
         <Field label={t('admin.password')} hint={t('admin.passwordHint')} value={value} autoComplete="off" spellCheck={false} onChange={(e) => onChange(e.target.value)} />
       </div>
-      <Button compact onClick={() => onChange(generatePassword(GENERATED_PASSWORD_LENGTH))}>
+      <Button onClick={() => onChange(generatePassword(GENERATED_PASSWORD_LENGTH))}>
         {t('admin.generate')}
       </Button>
-      <Button compact disabled={value === ''} onClick={() => void copy()}>
+      <Button disabled={value === ''} onClick={() => void copy()}>
         {t('admin.copy')}
       </Button>
     </div>
@@ -78,7 +78,7 @@ export function CreateAccountDialog({ busy, error, onCreate, onCancel }: { busy:
         <Field label={t('admin.userEmail')} value={f.email} autoComplete="off" onChange={(e) => setF({ ...f, email: e.target.value })} />
         <div>
           <span style={{ display: 'block', fontWeight: 700, marginBottom: 8 }}>{t('admin.userRole')}</span>
-          <Dropdown label={t('admin.userRole')} options={(['user', 'admin'] as const).map((r) => ({ value: r, label: t(`admin.roles.${r}` as MessageKey) }))} value={f.role} width={200} onChange={(role) => setF({ ...f, role: role as Role })} />
+          <Dropdown label={t('admin.userRole')} options={(['user', 'admin'] as const).map((r) => ({ value: r, label: t(`admin.roles.${r}` as MessageKey) }))} value={f.role} width="100%" onChange={(role) => setF({ ...f, role: role as Role })} />
         </div>
         <PasswordField value={f.password} onChange={(password) => setF({ ...f, password })} />
         <Checkbox checked={f.mustChangePassword} onChange={(mustChangePassword) => setF({ ...f, mustChangePassword })}>

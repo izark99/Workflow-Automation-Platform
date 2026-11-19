@@ -75,7 +75,7 @@
 .signOut {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: stretch; /* the buttons are as wide as the language and theme controls above them */
   gap: 8px;
   margin-top: 12px;
 }

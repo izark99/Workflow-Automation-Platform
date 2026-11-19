@@ -192,8 +192,8 @@ deployment does not: "Apply the migrations" already applies all of them.
    npx supabase db push
    ```
 
-   It lists three files, `20261118000010_ui_texts.sql`, `20261118000011_account_lock.sql` and
-   `20261118000012_end_sessions.sql`, and asks you to confirm. Existing users stay active and are not asked for a new
+   It lists four files, `20261118000010_ui_texts.sql`, `20261118000011_account_lock.sql`,
+   `20261118000012_end_sessions.sql` and `20261118000013_ui_text_stamp_revoke.sql`, and asks you to confirm. Existing users stay active and are not asked for a new
    password. If the push fails, stop and read the first error; do not edit tables by hand.
 3. **Deploy the account function**, which is new in this phase:
 

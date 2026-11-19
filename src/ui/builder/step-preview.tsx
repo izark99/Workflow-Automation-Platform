@@ -85,7 +85,7 @@ export function StepPreview({ definition, step, files, onFile, refTables, parame
     <div className={styles.block} style={{ gap: 16 }}>
       <div className={styles.block}>
         <span className={styles.label}>{t('builder.preview.date')}</span>
-        <DatePicker label={t('builder.preview.date')} value={date} onChange={setDate} width={338} />
+        <DatePicker label={t('builder.preview.date')} value={date} onChange={setDate} width="100%" />
       </div>
       {used.length > 0 ? (
         <div className={styles.block}>

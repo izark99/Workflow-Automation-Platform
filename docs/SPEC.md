@@ -269,7 +269,7 @@ date, a department code, or a yes/no switch.
 1. A flow version holds a list of parameters in its definition. Each has a key (letters, digits, underscore; unique in the version), a label, a type, "required", an optional default, and help text (shown in an (i)).
 2. Types: `date` (date picker), `text`, `number`, `list` (a dropdown of fixed options written in the parameter) and `boolean` (checkbox).
 3. Formulas read a parameter with `PARAM("key")`. The type of the result is the type of the parameter. An unknown key is a syntax error that names the key. Parameters work in every place that takes a formula: Filter, Formula column, Output sort.
-4. The SQL step sees the values as a one-row view named `params`, one column per key.
+4. The SQL step sees the values as a one-row table named `params`, one column per key, next to its inputs `in1`, `in2` (decision D78).
 5. The Run screen shows a Parameters card next to the files. Each value is checked before the run starts (required, type, list option); the error sits under the field. The Test tab of the builder asks for test values the same way.
 6. Parameter values stay in the browser like file content: they are not sent to the server and not written to `run_log`. They are not remembered between runs; the defaults of the definition fill the form.
 7. A flow without parameters works as before. The definition format gets a new version number, and older definitions load with an empty list of parameters, so the acceptance flow file stays unchanged.

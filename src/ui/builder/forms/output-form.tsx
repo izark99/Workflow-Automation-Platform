@@ -42,7 +42,7 @@ export function OutputForm(props: FormProps) {
       <Field label={t('builder.output.file')} hint={t('builder.output.fileHint')} value={v.file} disabled={readOnly} error={errors.file} onChange={(e) => apply({ ...v, file: e.target.value })} />
       <div>
         <span className={styles.label}>{t('builder.output.format')}</span>
-        <Dropdown label={t('builder.output.format')} options={(['xlsx', 'csv'] as const).map((f) => ({ value: f, label: t(`builder.output.formats.${f}` as MessageKey) }))} value={v.format} disabled={readOnly} width={338} onChange={(format) => apply({ ...v, format: format as OutputFormat })} />
+        <Dropdown label={t('builder.output.format')} options={(['xlsx', 'csv'] as const).map((f) => ({ value: f, label: t(`builder.output.formats.${f}` as MessageKey) }))} value={v.format} disabled={readOnly} width="100%" onChange={(format) => apply({ ...v, format: format as OutputFormat })} />
       </div>
       {v.format === 'xlsx' ? <Field label={t('builder.output.sheet')} hint={t('builder.output.sheetHint')} value={v.sheet} disabled={readOnly} error={errors.sheet} onChange={(e) => apply({ ...v, sheet: e.target.value })} /> : null}
       {clash ? <ErrorState what={t('builder.output.clash')} next={clash} /> : null}
@@ -73,7 +73,7 @@ export function OutputForm(props: FormProps) {
                   <Field label={t('common.numbered', { label: t('builder.output.sortFormula'), n: i + 1 })} value={k.expression} disabled={readOnly} onChange={(e) => patchSort(i, { expression: e.target.value })} />
                 )}
               </div>
-              <Button compact disabled={readOnly} aria-label={t('builder.output.removeSort', { n: i + 1 })} onClick={() => apply({ ...v, sort: v.sort.filter((_, j) => j !== i) })}>
+              <Button icon disabled={readOnly} aria-label={t('builder.output.removeSort', { n: i + 1 })} onClick={() => apply({ ...v, sort: v.sort.filter((_, j) => j !== i) })}>
                 <Icon name="close" />
               </Button>
             </div>

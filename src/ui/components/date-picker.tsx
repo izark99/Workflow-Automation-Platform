@@ -1,9 +1,11 @@
+import { createPortal } from 'react-dom';
+import { popoverLayer, useFloating } from './floating';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { useT, formatDate } from '../i18n';
 import { addMonths, dayLabel, monthCells, monthOf, monthTitle, moveDate, weekdays } from './date-logic';
 import type { DateKey } from './date-logic';
 import { Icon } from './icons';
-import { opensUp, useOutsideClose } from './popover';
+import { useOutsideClose } from './popover';
 import styles from './popover.module.css';
 
 export interface DatePickerProps {
@@ -12,7 +14,8 @@ export interface DatePickerProps {
   /** ISO date, `2026-09-30`. */
   value: string;
   onChange: (iso: string) => void;
-  width?: number;
+  /** Pixels, or `'100%'` to fill the space that the parent gives. */
+  width?: number | '100%';
   disabled?: boolean;
   /** Starts open, for the components page. */
   defaultOpen?: boolean;
@@ -31,13 +34,14 @@ export function DatePicker({ label, value, onChange, width = 180, disabled = fal
   const triggerRef = useRef<HTMLButtonElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const dialogId = useId();
-  const [up, setUp] = useState(false);
 
   const close = useCallback((returnFocus: boolean) => {
     setOpen(false);
     if (returnFocus) triggerRef.current?.focus();
   }, []);
-  useOutsideClose(rootRef, open, () => close(false));
+  const popRef = useRef<HTMLDivElement>(null);
+  const floating = useFloating(rootRef, popRef, open);
+  useOutsideClose([rootRef, popRef], open, () => close(false));
 
   // Focus the focused day after every move.
   useEffect(() => {
@@ -53,7 +57,6 @@ export function DatePicker({ label, value, onChange, width = 180, disabled = fal
     setShown(monthOf(iso));
   };
   const openPicker = (): void => {
-    setUp(opensUp(rootRef.current, 330));
     show(value);
     setOpen(true);
   };
@@ -78,7 +81,7 @@ export function DatePicker({ label, value, onChange, width = 180, disabled = fal
   };
 
   return (
-    <div className={styles.anchor} ref={rootRef}>
+    <div className={styles.anchor} ref={rootRef} style={width === '100%' ? { display: 'block' } : undefined}>
       <button
         ref={triggerRef}
         type="button"
@@ -94,8 +97,17 @@ export function DatePicker({ label, value, onChange, width = 180, disabled = fal
         <Icon name="calendar" />
         {formatDate(value)}
       </button>
-      {open ? (
-        <div id={dialogId} role="dialog" aria-label={t('common.datePicker.choose', { label: label.toLowerCase() })} className={`${styles.popover} ${styles.calendar} ${up ? styles.up : ''}`} onKeyDown={onKey}>
+      {open && popoverLayer()
+        ? createPortal(
+        <div
+          id={dialogId}
+          ref={popRef}
+          role="dialog"
+          aria-label={t('common.datePicker.choose', { label: label.toLowerCase() })}
+          className={`${styles.popover} ${styles.calendar}`}
+          style={floating.style}
+          onKeyDown={onKey}
+        >
           <div className={styles.monthRow}>
             <button type="button" className={styles.nav} aria-label={t('common.datePicker.previousMonth')} onClick={() => step(-1)}>
               <Icon name="chevronLeft" />
@@ -132,8 +144,10 @@ export function DatePicker({ label, value, onChange, width = 180, disabled = fal
               ),
             )}
           </div>
-        </div>
-      ) : null}
+        </div>,
+        popoverLayer()!,
+      )
+        : null}
     </div>
   );
 }

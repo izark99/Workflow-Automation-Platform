@@ -92,7 +92,7 @@ export function ColumnMappingForm({ step, definition, onSettings, readOnly, cont
               <div className={styles.grow}>
                 <Field label={t('builder.form.mapping.source')} value={r.source} disabled={readOnly} onChange={(e) => patch(i, { source: e.target.value })} />
               </div>
-              <Button compact aria-label={t('builder.form.mapping.remove', { name: r.source || t('builder.form.mapping.thisRow') })} disabled={readOnly} onClick={() => apply(rows.filter((_, j) => j !== i))}>
+              <Button icon aria-label={t('builder.form.mapping.remove', { name: r.source || t('builder.form.mapping.thisRow') })} disabled={readOnly} onClick={() => apply(rows.filter((_, j) => j !== i))}>
                 <Icon name="close" />
               </Button>
             </div>

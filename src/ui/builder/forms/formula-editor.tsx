@@ -95,12 +95,12 @@ export function FormulaEditor({ label, hint, value, onChange, readOnly, source, 
           options={[{ value: '', label: t('builder.formula.insertColumn') }, ...source.columns.map((c) => ({ value: c.name, label: c.name }))]}
           value=""
           disabled={readOnly}
-          width={338}
+          width="100%"
           onChange={(name) => name && insert(columnReference(name))}
         />
       ) : (
         <div>
-          <Button compact busy={source.loading} onClick={() => void source.load()}>
+          <Button block busy={source.loading} onClick={() => void source.load()}>
             {t('builder.formula.loadColumns')}
           </Button>
         </div>
@@ -111,7 +111,7 @@ export function FormulaEditor({ label, hint, value, onChange, readOnly, source, 
           options={[{ value: '', label: t('builder.formula.insertParameter') }, ...parameters.map((p) => ({ value: p.key, label: p.key }))]}
           value=""
           disabled={readOnly}
-          width={338}
+          width="100%"
           onChange={(key) => key && insert(`PARAM("${key}")`)}
         />
       ) : null}
