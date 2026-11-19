@@ -1,14 +1,16 @@
 import type { FlowDefinition } from '../../engine/flow/types';
 import { validateFlow } from '../../engine/flow/validate';
-import { formatDate, planPublish } from '../../engine/versions';
+import { planPublish } from '../../engine/versions';
+import { translate, formatDate } from '../i18n';
 import type { FlowRecord, FlowVersionRecord, User } from '../../store/types';
 
 const two = (iso: string): string => formatDate(iso).replace(/^(\d) /, '0$1 ');
 
 /** The text of a version in the dropdown: `v3, from 01 Jul 2026`, `v2, 01 Apr 2026 to 30 Jun 2026`, `v4, draft from 01 Jan 2027`. */
 export function versionOptionLabel(v: Pick<FlowVersionRecord, 'versionNo' | 'validFrom' | 'validTo' | 'status'>): string {
-  if (v.status === 'draft') return `v${v.versionNo}, draft from ${two(v.validFrom)}`;
-  return v.validTo === null ? `v${v.versionNo}, from ${two(v.validFrom)}` : `v${v.versionNo}, ${two(v.validFrom)} to ${two(v.validTo)}`;
+  const n = v.versionNo;
+  if (v.status === 'draft') return translate('common.version.draftFrom', { n, from: two(v.validFrom) });
+  return v.validTo === null ? translate('common.version.from', { n, from: two(v.validFrom) }) : translate('common.version.range', { n, from: two(v.validFrom), to: two(v.validTo) });
 }
 
 /** Same JSON, whatever the order of keys. */
@@ -37,10 +39,10 @@ export function publishSummaryFor(versions: (Pick<FlowVersionRecord, 'versionNo'
   const plan = planPublish(versions, versionNo, what);
   if (!plan.ok) return { ok: false, text: plan.message };
   const v = versions.find((x) => x.versionNo === versionNo)!;
-  const tail = 'A published version cannot be changed. To change it later, create a new version from it.';
+  const tail = translate('builder.publishSummary.tail');
   const text = plan.ends
-    ? `Publishing v${versionNo} will end v${plan.ends.versionNo} on ${two(plan.ends.validTo)}. v${versionNo} is valid from ${two(v.validFrom)}. ${tail}`
-    : `Publishing v${versionNo} makes it valid from ${two(v.validFrom)}. ${tail}`;
+    ? translate('builder.publishSummary.ends', { n: versionNo, prev: plan.ends.versionNo, prevEnd: two(plan.ends.validTo), from: two(v.validFrom), tail })
+    : translate('builder.publishSummary.simple', { n: versionNo, from: two(v.validFrom), tail });
   return { ok: true, text };
 }
 

@@ -2,8 +2,8 @@ import { readXlsx, XlsxReadError, type CellValue } from '../xlsx-stream';
 import { requireColumn } from '../nodes/columns';
 import { checkFileSize } from '../size-guard';
 import { createTableStatement, insertRowsStatements, quoteIdent, quoteString } from '../sql';
-import { strings } from '../../ui/strings';
-import { EngineError, type Cell, type Column, type ColumnType, type LoadedTable, type SqlRunner } from '../types';
+import { megabytes } from '../messages';
+import { coded, EngineError, type Cell, type Column, type ColumnType, type LoadedTable, type SqlRunner } from '../types';
 
 export interface InputFileSettings {
   /** Logical name of the input, for example "Timesheet". The run screen asks for one file per key. */
@@ -285,7 +285,7 @@ export async function loadInputFile(
 ): Promise<LoadedTable> {
   const check = checkFileSize(file);
   if (!check.ok) {
-    throw new EngineError('file_too_large', strings.xlsxTooLarge(file.name, check.sizeBytes, check.limitBytes), nodeId);
+    throw coded('file_too_large', 'engine.fileTooLarge', { fileName: file.name, size: megabytes(check.sizeBytes), limit: megabytes(check.limitBytes) }, nodeId);
   }
   const isCsv = /\.(csv|txt)$/i.test(file.name);
   return isCsv ? loadCsv(runner, file, settings, relation, nodeId) : loadXlsx(runner, file, settings, relation, nodeId);

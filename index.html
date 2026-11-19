@@ -4,6 +4,19 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Data Flow</title>
+    <script>
+      // Sets the theme before the first paint (docs/DESIGN.md, Theme rules). Keep in step with src/ui/theme.ts.
+      (function () {
+        var c = 'system';
+        try {
+          var v = localStorage.getItem('dfw.theme');
+          if (v === 'light' || v === 'dark') c = v;
+        } catch (e) {}
+        var t = c === 'system' ? (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : c;
+        document.documentElement.setAttribute('data-theme', t);
+        document.documentElement.style.colorScheme = t;
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

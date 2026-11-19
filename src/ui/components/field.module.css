@@ -1,7 +1,15 @@
-.label {
+.field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
+}
+
+.labelRow {
+  display: flex;
+  align-items: center;
+}
+
+.label {
   font-weight: 700;
 }
 
@@ -18,13 +26,6 @@
 
 .input[aria-invalid='true'] {
   border-color: var(--color-danger);
-}
-
-.hint {
-  font-weight: 400;
-  font-size: 13px;
-  line-height: 20px;
-  color: var(--color-muted);
 }
 
 .error {
@@ -70,7 +71,7 @@
 .textarea {
   box-sizing: border-box;
   width: 100%;
-  padding: 10px 12px;
+  padding: 8px 12px;
   border-radius: var(--radius-control);
   border: 1px solid var(--color-control);
   background: var(--color-card);
@@ -92,4 +93,11 @@
   font-weight: 500;
   font-size: 12px;
   color: var(--color-badge-ink);
+}
+
+.note {
+  font-weight: 400;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--color-muted);
 }

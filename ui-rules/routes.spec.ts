@@ -2,6 +2,15 @@ import { expect, test } from '@playwright/test';
 import { ROUTES } from './routes';
 import { COMMON_RULES, headerPosition, sidebarWidth } from './rules';
 
+// The dark project must really run in the dark theme: otherwise a green run would prove nothing.
+test('the app runs in the theme of the project, and the page colours differ between themes', async ({ page }, testInfo) => {
+  const wanted = testInfo.project.use.colorScheme ?? 'light';
+  await page.goto('/flows');
+  expect(await page.evaluate(() => document.documentElement.getAttribute('data-theme'))).toBe(wanted);
+  const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+  expect(bg).toBe(wanted === 'dark' ? 'rgb(14, 26, 25)' : 'rgb(240, 253, 250)');
+});
+
 for (const route of ROUTES) {
   test.describe(`route ${route.name ?? route.path}`, () => {
     for (const [name, rule] of Object.entries(COMMON_RULES)) {

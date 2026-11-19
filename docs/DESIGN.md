@@ -69,6 +69,13 @@ the dark fills are light:
 | `--color-danger` | `#B91C1C` | `#F87171` |
 | `--color-skeleton` | `#DCE7EA` | `#22362F` |
 
+The extra tokens of the screens follow the same rule. Dark values: `--color-badge-ink` `#99F6E4`, `--color-danger-soft`
+`#3A1717`, `--color-danger-ink` `#FECACA`, `--color-note-bg` `#2B1A0E`, `--color-note-ink` `#FED7AA`,
+`--color-draft-ink` `#FDBA74`, `--color-ended-ink` `#CBD5E1`, `--color-overlay` `rgb(0 0 0 / 60%)` (light: the teal
+at 35%), `--shadow-popover` black at 50%. The toast uses `--color-bg` as its text colour on `--color-ink`, so it
+inverts in both themes. `--color-on-fill` is gone: filled primary buttons, selected days, checked boxes and the
+in-effect segment use `--color-on-primary`; the CTA button uses `--color-on-cta`.
+
 The dark values were checked for these pairs (WCAG contrast): ink on bg 15.4, ink on card 13.9, muted on card 8.1,
 control on card 4.8, focus on card 10.9, on-primary on primary 9.2, on-cta on cta 7.9, danger on card 5.8, ink on
 primary-soft 10.1. Task T4.1 adds a unit test that computes every pair of both themes, so a later change cannot
@@ -107,9 +114,9 @@ Rules:
 - Minimum window width 1280 px. No horizontal page scroll at 1280 or 1440.
 - Sidebar 232 px, white, the same on every screen except the builder.
 - Main column: padding 32 px 40 px, 24 px between blocks.
-- Page header has a fixed structure and height on every screen: breadcrumb line 24 px, title 36 px, one action on the right. The title sits at the same y on every screen (63 px), and the first block starts at the same y on every screen. Up to Phase 3 a 21 px subtitle sat under the title and the first block started at 148 px. From Phase 4 the subtitle moves into an info button after the title (section "Info button"); task T4.6a measures the new y of the first block, writes it here, and updates the UI rule in the same commit.
+- Page header has a fixed structure and height on every screen: breadcrumb line 24 px, title 36 px with an info button after it (the old subtitle text, SPEC 11.2), one action on the right. The title sits at the same y on every screen (63 px), and the first block starts at the same y on every screen: **123 px** from Phase 4 (it was 148 px when a 21 px subtitle sat under the title). The header is 67 px high (24 + 4 + 3 + 36). The UI rule `headerPosition` checks both values.
 - Cards: white, 1 px line border, radius 12 px, padding 20 px, or no padding when they hold a table.
-- Tables: header cell padding 10 px 16 px, 12 px bold muted text; body rows 56 px high plus a 1 px divider; numbers right-aligned; cells do not wrap.
+- Tables: header cell padding 8 px 16 px with a 24 px line (a 40 px header; it was 10 px 16 px with a 20 px line), 12 px bold muted text; body rows 56 px high plus a 1 px divider; numbers right-aligned; cells do not wrap.
 - Builder: header bar 64 px, step list 184 px, settings panel 380 px, canvas in between. Step cards 240 x 56 px, 40 px apart, selected card with a 2 px accent border.
 
 ## Components built for this app
@@ -156,6 +163,10 @@ Explanations live behind an info button (SPEC 11.2), not as visible paragraphs.
 - Builder: a "Parameters" button (compact, secondary) in the builder header opens a 380 px panel in place of the settings panel: a list of parameters (label, key, type badge) with Add, edit and reorder by keyboard (Move up, Move down). Read-only for a published version.
 - Run screen: a Parameters card above the Files card, one row per parameter in the definition order: label with info button, the control for its type, the error under it. The card is hidden when the flow has no parameters.
 - The Test tab shows the parameters used upstream of the selected step, in a compact form above the files.
+
+## Spacing
+
+Gaps, margins and padding are on the 4 px grid (4, 8, 12, 16, 20, 24, 32, 40). The exceptions are 1 and 2 px hairlines and borders, the styles that React Flow owns (its panel margins), the negative 2 px offset that draws a focus ring around a control, and the 3 px that aligns the title with its info button in the page header. Do not add other values; `ui-audit/audit.spec.ts` lists the ones that are left.
 
 ## UI quality checklist (Phase 4)
 

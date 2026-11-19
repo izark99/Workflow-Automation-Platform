@@ -24,3 +24,5 @@ export { PageHeader } from './page-header';
 export { ScreenFrame } from './screen-frame';
 export { ButtonLink } from './button-link';
 export { CrumbLink } from './crumb-link';
+export { InfoTip } from './info-tip';
+export type { InfoTipProps } from './info-tip';

@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import type { MouseEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import type { ParameterValue } from '../../engine/flow/parameters';
 import type { FlowDefinition, NodeType } from '../../engine/flow/types';
 import { Badge, Button, ButtonLink, Dropdown, ErrorState, ToastProvider, useToast } from '../components';
 import { canRunFlow, todayIso } from '../screens/flows-logic';
 import { useLoad, useStore } from '../store-context';
-import { strings } from '../strings';
+import { useT, errorText } from '../i18n';
 import { CopyFlowDialog, DiscardDialog, NewVersionDialog, PublishDialog } from './builder-dialogs';
 import { Canvas } from './canvas';
 import type { Selection } from './canvas';
@@ -16,7 +17,6 @@ import { newVersionProblem, suggestStart } from '../screens/versions-logic';
 import { canEditFlow, isDirty, publishBlockers, publishSummary, versionOptionLabel } from './version-logic';
 import styles from './builder.module.css';
 
-const t = strings.builder;
 
 type Dialogs = 'publish' | 'newVersion' | 'copyFlow' | null;
 
@@ -32,6 +32,7 @@ export function BuilderScreen() {
 }
 
 function Builder() {
+  const t = useT();
   const { id = '', versionNo = '1' } = useParams();
   const store = useStore();
   const navigate = useNavigate();
@@ -40,6 +41,8 @@ function Builder() {
   const me = useLoad((s) => s.currentUser());
   const refs = useLoad((s) => s.listRefTables());
   const [testFiles, setTestFiles] = useState<Record<string, File>>({});
+  // Test values of the parameters. They stay in the browser, like the test files, and are not saved with the flow.
+  const [testValues, setTestValues] = useState<Record<string, ParameterValue | undefined>>({});
   const version = flow.data?.versions.find((v) => v.versionNo === Number(versionNo));
   const [definition, setDefinition] = useState<FlowDefinition>(emptyDefinition());
   const [selection, setSelection] = useState<Selection>({ nodes: [], edges: [] });
@@ -90,7 +93,7 @@ function Builder() {
   if (flow.error || (!flow.loading && !version)) {
     return (
       <main style={{ padding: '32px 40px' }}>
-        <ErrorState what={t.notFound} next={t.notFoundNext} actions={<ButtonLink compact to="/flows">{t.flowsLink}</ButtonLink>} />
+        <ErrorState what={t('builder.notFound')} next={t('builder.notFoundNext')} actions={<ButtonLink compact to="/flows">{t('builder.flowsLink')}</ButtonLink>} />
       </main>
     );
   }
@@ -104,7 +107,7 @@ function Builder() {
       flow.reload();
       return true;
     } catch (e) {
-      setError({ what: t.saveFailed, next: e instanceof Error ? e.message : '' });
+      setError({ what: t('builder.saveFailed'), next: errorText(e) });
       return false;
     } finally {
       setBusy(null);
@@ -115,7 +118,7 @@ function Builder() {
     if (!version || !flow.data) return;
     const blockers = publishBlockers(definition);
     if (blockers) {
-      setDialogError(`${t.cannotPublishNext} ${blockers}`);
+      setDialogError(`${t('builder.cannotPublishNext')} ${blockers}`);
       return;
     }
     setBusy('publish');
@@ -127,9 +130,9 @@ function Builder() {
       await store.publishFlowVersion(id, version.versionNo);
       flow.reload();
       setDialog(null);
-      toast(`${t.publishedToast(version.versionNo)} ${summary.ok ? summary.text.split('. ')[0] + '.' : ''}`.trim());
+      toast(`${t('builder.publishedToast', { n: version.versionNo })} ${summary.ok ? summary.text.split('. ')[0] + '.' : ''}`.trim());
     } catch (e) {
-      setDialogError(e instanceof Error ? e.message : t.publishFailed);
+      setDialogError(errorText(e, t('builder.publishFailed')));
     } finally {
       setBusy(null);
     }
@@ -146,7 +149,7 @@ function Builder() {
       navigate(`/flows/${id}/versions/${created}`);
       flow.reload();
     } catch (e) {
-      setDialogError(e instanceof Error ? e.message : t.versionFailed);
+      setDialogError(errorText(e, t('builder.versionFailed')));
     } finally {
       setBusy(null);
     }
@@ -160,7 +163,7 @@ function Builder() {
       setDialog(null);
       navigate(`/flows/${copy.id}/versions/1`);
     } catch (e) {
-      setDialogError(e instanceof Error ? e.message : t.copyFailed);
+      setDialogError(errorText(e, t('builder.copyFailed')));
     } finally {
       setBusy(null);
     }
@@ -173,65 +176,65 @@ function Builder() {
     <div className={styles.page}>
       <header className={styles.bar}>
         <Link to="/flows" className={styles.crumb} onClick={guard('/flows')}>
-          {t.flowsLink}
+          {t('builder.flowsLink')}
         </Link>
         <span className={styles.slash} aria-hidden="true">
           /
         </span>
-        <h1 className={styles.title}>{flow.data?.name ?? ''}</h1>
+        <h1 className={styles.title} data-user-content>{flow.data?.name ?? ''}</h1>
         {version ? (
           <Dropdown
-            label={t.version}
+            label={t('builder.version')}
             options={versions.map((v) => ({ value: String(v.versionNo), label: versionOptionLabel(v) }))}
             value={String(version.versionNo)}
             width={260}
             onChange={(no) => go(`/flows/${id}/versions/${no}`)}
           />
         ) : null}
-        {version ? <Badge>{published ? t.versionBadgePublished : t.versionBadgeDraft}</Badge> : null}
+        {version ? <Badge>{published ? t('builder.versionBadgePublished') : t('builder.versionBadgeDraft')}</Badge> : null}
         {dirty ? (
           <span className={styles.dirty} role="status">
-            {t.unsaved}
+            {t('builder.unsaved')}
           </span>
         ) : null}
         <div className={styles.barActions}>
           <ButtonLink to={`/flows/${id}/versions`} onClick={guard(`/flows/${id}/versions`)}>
-            {t.versions}
+            {t('builder.versions')}
           </ButtonLink>
           {editable && version && !published ? (
             <>
-              <Button busy={busy === 'save'} disabled={!dirty} onClick={() => void save().then((ok) => ok && toast(t.savedTitle(version.versionNo)))}>
-                {busy === 'save' ? t.saving : t.saveDraft}
+              <Button busy={busy === 'save'} disabled={!dirty} onClick={() => void save().then((ok) => ok && toast(t('builder.savedTitle', { n: version.versionNo })))}>
+                {busy === 'save' ? t('builder.saving') : t('builder.saveDraft')}
               </Button>
               <Button variant="primary" onClick={() => { setDialogError(null); setDialog('publish'); }}>
-                {t.publish}
+                {t('builder.publish')}
               </Button>
             </>
           ) : null}
           {flow.data && canRunFlow(flow.data) ? (
             <ButtonLink variant="cta" to={`/flows/${id}/run`} onClick={guard(`/flows/${id}/run`)}>
-              {t.run}
+              {t('builder.run')}
             </ButtonLink>
           ) : (
             <Button variant="cta" disabled>
-              {t.run}
+              {t('builder.run')}
             </Button>
           )}
         </div>
       </header>
       {version && published && editable ? (
         <div className={styles.notice} role="status">
-          <span>{t.publishedNotice(version.versionNo)}</span>
+          <span>{t('builder.publishedNotice', { n: version.versionNo })}</span>
           <Button compact onClick={() => { setDialogError(null); setDialog('newVersion'); }}>
-            {t.newVersion}
+            {t('builder.newVersion')}
           </Button>
         </div>
       ) : null}
       {version && me.data && !editable && flow.data ? (
         <div className={styles.notice} role="status">
-          <span>{t.noEditNotice}</span>
+          <span>{t('builder.noEditNotice')}</span>
           <Button compact onClick={() => { setDialogError(null); setDialog('copyFlow'); }}>
-            {t.copyFlow}
+            {t('builder.copyFlow')}
           </Button>
         </div>
       ) : null}
@@ -261,6 +264,8 @@ function Builder() {
           testFiles={testFiles}
           onTestFile={(key, file) => setTestFiles((f) => ({ ...f, [key]: file }))}
           refTables={refs.data ?? []}
+          parameterValues={testValues}
+          onParameterValue={(key, value) => setTestValues((v) => ({ ...v, [key]: value }))}
         />
       </main>
       {dialog === 'publish' && version && summary ? (

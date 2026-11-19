@@ -12,7 +12,7 @@ const fill = async (page: Page, email: string, password: string) => {
 };
 const signIn = async (page: Page) => {
   await fill(page, USERS[0]!.email, USERS[0]!.password);
-  await page.getByRole('button', { name: 'Sign in' }).click();
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Flows', level: 1 })).toBeVisible();
 };
 
@@ -36,16 +36,16 @@ test('a person who is not signed in sees only the sign-in screen, and no data is
 test('a form that is not complete says what is missing and what to do', async ({ page }) => {
   await withSignIn(page);
   await page.goto('/flows');
-  await page.getByRole('button', { name: 'Sign in' }).click();
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
   await expect(alertText(page)).toContainText('You could not be signed in.');
   await expect(alertText(page)).toContainText('Enter your email address, then sign in.');
 
   await fill(page, 'harold', 'x');
-  await page.getByRole('button', { name: 'Sign in' }).click();
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
   await expect(alertText(page)).toContainText('"harold" is not an email address. Type it like name@company.com.');
 
   await fill(page, 'harold@example.com', '');
-  await page.getByRole('button', { name: 'Sign in' }).click();
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
   await expect(alertText(page)).toContainText('Enter your password, then sign in.');
   await expect(page.getByRole('heading', { name: 'Sign in', level: 1 })).toBeVisible();
 });
@@ -54,11 +54,11 @@ test('a wrong password and an unknown email give the same message, and the perso
   await withSignIn(page);
   await page.goto('/flows');
   await fill(page, 'harold@example.com', 'not the password');
-  await page.getByRole('button', { name: 'Sign in' }).click();
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
   const message = 'The email or the password is wrong. Check both and try again.';
   await expect(alertText(page)).toContainText(message);
   await fill(page, 'nobody@example.com', USERS[0]!.password);
-  await page.getByRole('button', { name: 'Sign in' }).click();
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
   await expect(alertText(page)).toContainText(message);
   await expect(page.getByRole('heading', { name: 'Flows', level: 1 })).toHaveCount(0);
 });
@@ -99,7 +99,7 @@ test('a session that ends by itself says so on the sign-in screen, and the next 
   await expect(page.getByRole('navigation')).toHaveCount(0);
 
   await fill(page, USERS[0]!.email, USERS[0]!.password);
-  await page.getByRole('button', { name: 'Sign in' }).click();
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Flows', level: 1 })).toBeVisible();
   await expect(page.getByText('Your session ended.')).toHaveCount(0);
 });
@@ -111,5 +111,5 @@ test('the sign-in form is reachable with the keyboard: email, password, Sign in'
   await page.keyboard.press('Tab');
   await expect(page.getByLabel('Password')).toBeFocused();
   await page.keyboard.press('Tab');
-  await expect(page.getByRole('button', { name: 'Sign in' })).toBeFocused();
+  await expect(page.getByRole('button', { name: 'Sign in', exact: true })).toBeFocused();
 });

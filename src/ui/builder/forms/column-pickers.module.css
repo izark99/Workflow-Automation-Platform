@@ -1,7 +1,7 @@
 .chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
 }
 
 .chip {
@@ -30,11 +30,11 @@
 
 .label {
   display: block;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   font-weight: 700;
 }
 
-.hint {
+.note {
   margin: 0;
   font-size: 13px;
   line-height: 20px;
@@ -59,4 +59,15 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.labelRow {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+
+.labelText {
+  font-weight: 700;
 }

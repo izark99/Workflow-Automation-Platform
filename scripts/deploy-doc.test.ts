@@ -9,7 +9,7 @@ describe('docs/DEPLOY.md', () => {
   it('exists and has the steps in order', () => {
     expect(doc.length).toBeGreaterThan(1000);
     const headings = [...doc.matchAll(/^## (.+)$/gm)].map((m) => m[1]!);
-    const order = ['Before you start', 'Create the Supabase project', 'Apply the migrations', 'Close sign-ups', 'Create the first admin', 'Deploy the app on Cloudflare Pages', 'Keep the project awake', 'Check it works', 'Limits'];
+    const order = ['Before you start', 'Create the Supabase project', 'Apply the migrations', 'Deploy the account function', 'Close sign-ups', 'Create the first admin', 'Deploy the app on Cloudflare Pages', 'Keep the project awake', 'Check it works', 'Upgrade an existing deployment', 'Limits'];
     expect(headings.filter((h) => order.includes(h))).toEqual(order);
   });
 
@@ -43,6 +43,34 @@ describe('docs/DEPLOY.md', () => {
     expect(doc).toMatch(/25 MiB/);
     expect(doc).toContain('cdn.jsdelivr.net');
     expect(doc).toMatch(/ask IT to allow/i);
+  });
+
+  it('has an upgrade section that applies the new migrations and deploys the function, in order', () => {
+    const section = doc.slice(doc.indexOf('## Upgrade an existing deployment'), doc.indexOf('## Limits'));
+    expect(section.length).toBeGreaterThan(500);
+    const at = (text: string) => section.indexOf(text);
+    const order = ['Back up first', 'npx supabase db push', 'npx supabase functions deploy admin-users', 'Deploy the app', 'Check it'];
+    for (const o of order) expect(at(o), o).toBeGreaterThan(-1);
+    expect(order.map(at)).toEqual([...order.map(at)].sort((a, b) => a - b));
+    // Every migration that Phase 4 added is named, and each one exists.
+    for (const m of ['20261118000010_ui_texts.sql', '20261118000011_account_lock.sql', '20261118000012_end_sessions.sql']) {
+      expect(section, m).toContain(m);
+      expect(existsSync(`supabase/migrations/${m}`), m).toBe(true);
+    }
+    for (const word of ['Accounts', 'Themes', 'Texts', 'Parameters']) expect(section).toContain(word);
+  });
+
+  it('deploys the function that exists, with the JWT check on, and does not hand out the service key', () => {
+    expect(existsSync('supabase/functions/admin-users/index.ts')).toBe(true);
+    expect(readFileSync('supabase/config.toml', 'utf8')).toMatch(/\[functions\.admin-users\][^[]*verify_jwt = true/);
+    expect(doc).toMatch(/functions deploy admin-users/);
+    expect(doc).toMatch(/service key stays inside Supabase/);
+  });
+
+  it('no longer says that accounts and passwords are managed in the dashboard', () => {
+    const limits = doc.slice(doc.indexOf('## Limits'));
+    expect(limits).not.toMatch(/in the Supabase dashboard/);
+    expect(limits).toMatch(/Add user/);
   });
 
   it('states what the build does not do', () => {

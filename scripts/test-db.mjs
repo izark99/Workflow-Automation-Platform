@@ -8,7 +8,7 @@
 // Set DB_KEEP_RUNNING=1 to leave the database up after the run.
 import { ensureDocker, supabase, withRetry } from './lib/local-supabase.mjs';
 
-const SKIPPED_SERVICES = 'gotrue,postgrest,kong';
+const SKIPPED_SERVICES = 'gotrue,postgrest,kong,edge-runtime';
 
 async function main() {
   await ensureDocker();

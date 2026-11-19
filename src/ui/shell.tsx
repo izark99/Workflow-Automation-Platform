@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { Button, Dialog, Dropdown, ErrorState, Field, Icon, ToastProvider } from './components';
+import { Button, Dialog, Dropdown, ErrorState, Field, Icon, ToastProvider, useToast } from './components';
 import type { IconName } from './components';
 import { useAuth } from './auth-gate';
 import { useLoad, useStore } from './store-context';
-import { strings } from './strings';
+import { NewPasswordForm } from './change-password';
+import { LanguageSwitch } from './language-switch';
+import { ThemeSwitch } from './theme-switch';
+import { useT, errorText } from './i18n';
 import styles from './shell.module.css';
-
-const t = strings.nav;
 
 /** What the shell offers to the screen inside it (read with `useOutletContext`). */
 export interface ShellContext {
@@ -23,10 +24,28 @@ function NavItem({ to, icon, children }: { to: string; icon: IconName; children:
   );
 }
 
+function ChangePasswordDialog({ onClose }: { onClose: () => void }) {
+  const t = useT();
+  const auth = useAuth();
+  const toast = useToast();
+  return (
+    <Dialog title={t('nav.changePasswordTitle')} onClose={onClose} actions={<Button onClick={onClose}>{t('nav.cancel')}</Button>}>
+      <NewPasswordForm
+        submitLabel={t('nav.changePassword')}
+        onSave={async (password) => {
+          await auth?.changePassword(password);
+          toast(t('nav.passwordChanged'));
+          onClose();
+        }}
+      />
+    </Dialog>
+  );
+}
+
 function CreateFlowDialog({ admin, onClose }: { admin: boolean; onClose: () => void }) {
   const store = useStore();
   const navigate = useNavigate();
-  const d = strings.createFlowDialog;
+  const t = useT();
   const [name, setName] = useState('');
   const [scope, setScope] = useState<'personal' | 'shared'>('personal');
   const [error, setError] = useState<{ what: string; next: string } | null>(null);
@@ -34,7 +53,7 @@ function CreateFlowDialog({ admin, onClose }: { admin: boolean; onClose: () => v
 
   const create = async (): Promise<void> => {
     if (!name.trim()) {
-      setError({ what: d.emptyName, next: d.emptyNameNext });
+      setError({ what: t('flows.createDialog.emptyName'), next: t('flows.createDialog.emptyNameNext') });
       return;
     }
     setBusy(true);
@@ -43,20 +62,20 @@ function CreateFlowDialog({ admin, onClose }: { admin: boolean; onClose: () => v
       navigate(`/flows/${flow.id}/versions/1`);
       onClose();
     } catch (e) {
-      setError({ what: d.failed, next: e instanceof Error ? e.message : '' });
+      setError({ what: t('flows.createDialog.failed'), next: errorText(e) });
       setBusy(false);
     }
   };
 
   return (
     <Dialog
-      title={d.title}
+      title={t('flows.createDialog.title')}
       onClose={onClose}
       actions={
         <>
-          <Button onClick={onClose}>{d.cancel}</Button>
+          <Button onClick={onClose}>{t('flows.createDialog.cancel')}</Button>
           <Button variant="primary" busy={busy} onClick={() => void create()}>
-            {d.create}
+            {t('flows.createDialog.create')}
           </Button>
         </>
       }
@@ -68,13 +87,13 @@ function CreateFlowDialog({ admin, onClose }: { admin: boolean; onClose: () => v
           void create();
         }}
       >
-        <Field label={d.name} placeholder={d.namePlaceholder} value={name} onChange={(e) => setName(e.target.value)} />
+        <Field label={t('flows.createDialog.name')} placeholder={t('flows.createDialog.namePlaceholder')} value={name} onChange={(e) => setName(e.target.value)} />
         {admin ? (
           <Dropdown
-            label={d.scope}
+            label={t('flows.createDialog.scope')}
             options={[
-              { value: 'personal', label: d.personal },
-              { value: 'shared', label: d.shared },
+              { value: 'personal', label: t('flows.createDialog.personal') },
+              { value: 'shared', label: t('flows.createDialog.shared') },
             ]}
             value={scope}
             onChange={(v) => setScope(v as 'personal' | 'shared')}
@@ -89,41 +108,50 @@ function CreateFlowDialog({ admin, onClose }: { admin: boolean; onClose: () => v
 
 /** The frame of every screen except the builder: sidebar 232 px and the main column (32 px 40 px, 24 px between blocks). */
 export function Shell() {
+  const t = useT();
   const user = useLoad((s) => s.currentUser());
   const [creating, setCreating] = useState(false);
   const [signOutProblem, setSignOutProblem] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
   const auth = useAuth();
   const me = user.data;
   return (
     <ToastProvider>
     <div className={styles.frame}>
-      <nav aria-label={t.label} className={styles.nav}>
+      <nav aria-label={t('nav.label')} className={styles.nav}>
         <div className={styles.brand}>
           <Icon name="flow" size={22} />
-          {strings.brand}
+          {t('app.brand')}
         </div>
         <div className={styles.create}>
           <Button variant="cta" onClick={() => setCreating(true)}>
-            {t.createFlow}
+            {t('nav.createFlow')}
           </Button>
         </div>
         <NavItem to="/flows" icon="flow">
-          {t.flows}
+          {t('nav.flows')}
         </NavItem>
         <NavItem to="/reference-tables" icon="table">
-          {t.refTables}
+          {t('nav.refTables')}
         </NavItem>
         {me?.role === 'admin' ? (
           <NavItem to="/admin" icon="shield">
-            {t.admin}
+            {t('nav.admin')}
           </NavItem>
         ) : null}
         {me ? (
           <div className={styles.user}>
-            <span className={styles.userName}>{me.name}</span>
-            <span className={styles.userRole}>{strings.roles[me.role]}</span>
+            <span className={styles.userName} data-user-content>{me.name}</span>
+            <span className={styles.userRole}>{t(me.role === 'admin' ? 'nav.role.admin' : 'nav.role.user')}</span>
+            <div className={styles.prefs}>
+              <LanguageSwitch />
+              <ThemeSwitch />
+            </div>
             {auth ? (
               <div className={styles.signOut}>
+                <Button compact onClick={() => setChangingPassword(true)}>
+                  {t('nav.changePassword')}
+                </Button>
                 <Button
                   compact
                   onClick={() => {
@@ -131,9 +159,9 @@ export function Shell() {
                     auth.signOut().catch(() => setSignOutProblem(true));
                   }}
                 >
-                  {strings.signIn.signOut}
+                  {t('nav.signOut')}
                 </Button>
-                {signOutProblem ? <span role="alert" className={styles.signOutProblem}>{strings.signIn.signOutFailed}</span> : null}
+                {signOutProblem ? <span role="alert" className={styles.signOutProblem}>{t('nav.signOutFailed')}</span> : null}
               </div>
             ) : null}
           </div>
@@ -142,6 +170,7 @@ export function Shell() {
       <main className={styles.main}>
         <Outlet context={{ openCreateFlow: () => setCreating(true) } satisfies ShellContext} />
       </main>
+      {changingPassword ? <ChangePasswordDialog onClose={() => setChangingPassword(false)} /> : null}
       {creating ? <CreateFlowDialog admin={me?.role === 'admin'} onClose={() => setCreating(false)} /> : null}
     </div>
     </ToastProvider>

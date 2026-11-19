@@ -2,15 +2,15 @@
 
 Written by `npm run spike` from `docs/spike-raw.json`. Do not edit by hand: the next run overwrites this file.
 
-Machine: Chromium 153.0.8010.12 (headless), Node v22.23.4, 4 vCPUs, 16 GB RAM. Each run uses a production build and a fresh browser.
+Machine: Chromium 157.0.8103.78 (headless), Node v22.23.5, 4 vCPUs, 16 GB RAM. Each run uses a production build and a fresh browser.
 
 Peak memory is the highest resident size of the browser renderer process (kernel `VmHWM`), which holds the page, the file bytes and DuckDB-WASM. Load time covers reading the file and creating the DuckDB table. Group-by is one query that counts, sums and averages over 200 group keys. Row counts of 1,048,576 include the header row.
 
 ## Chosen reading strategies
 
-Chosen xlsx reading strategy: `xlsx-stream`. It finished 3 of 3 runs with a total load time of 124.7 s.
+Chosen xlsx reading strategy: `xlsx-stream`. It finished 3 of 3 runs with a total load time of 144.0 s.
 
-Chosen csv reading strategy: `duckdb-csv`. It finished 3 of 3 runs with a total load time of 5.9 s.
+Chosen csv reading strategy: `duckdb-csv`. It finished 3 of 3 runs with a total load time of 8.4 s.
 
 Rule: the strategy that finishes, with the right row count, at the most file sizes. A tie goes to the lower total load time.
 
@@ -20,18 +20,18 @@ Each row shows the chosen strategy of its format.
 
 | File | Format | Rows | File MB | Strategy | Status | Load s | Peak memory MB | Group-by ms | Tab survived |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| rows-100000.xlsx | xlsx | 100,000 | 29 | `xlsx-stream` | ok | 7.1 | 788 | 31 | yes |
-| rows-500000.xlsx | xlsx | 500,000 | 143 | `xlsx-stream` | ok | 37.4 | 1061 | 49 | yes |
-| rows-1048576.xlsx | xlsx | 1,048,576 | 300 | `xlsx-stream` | ok | 80.3 | 1166 | 40 | yes |
-| rows-100000.csv | csv | 100,000 | 36 | `duckdb-csv` | ok | 0.6 | 351 | 22 | yes |
-| rows-500000.csv | csv | 500,000 | 180 | `duckdb-csv` | ok | 1.8 | 677 | 38 | yes |
-| rows-1048576.csv | csv | 1,048,576 | 378 | `duckdb-csv` | ok | 3.6 | 1126 | 61 | yes |
+| rows-100000.xlsx | xlsx | 100,000 | 29 | `xlsx-stream` | ok | 8.7 | 808 | 38 | yes |
+| rows-500000.xlsx | xlsx | 500,000 | 143 | `xlsx-stream` | ok | 47.3 | 1107 | 48 | yes |
+| rows-1048576.xlsx | xlsx | 1,048,576 | 300 | `xlsx-stream` | ok | 87.9 | 1177 | 48 | yes |
+| rows-100000.csv | csv | 100,000 | 36 | `duckdb-csv` | ok | 0.9 | 377 | 43 | yes |
+| rows-500000.csv | csv | 500,000 | 180 | `duckdb-csv` | ok | 2.8 | 697 | 54 | yes |
+| rows-1048576.csv | csv | 1,048,576 | 378 | `duckdb-csv` | ok | 4.8 | 1162 | 99 | yes |
 
 ## Targets from SPEC section 8
 
-- A 200,000-row xlsx loads in under 30 s: not measured directly. Linear estimate between the 100,000-row (7.1 s) and 500,000-row (37.4 s) runs of `xlsx-stream`: 14.6 s. Met (estimate).
-- A csv file at the full row limit loads without a crash: met (`duckdb-csv`, status ok, 3.6 s).
-- xlsx at the full row limit: loaded with `xlsx-stream` in 80.3 s, peak 1166 MB. The "save as csv" warning is still needed above the measured size.
+- A 200,000-row xlsx loads in under 30 s: not measured directly. Linear estimate between the 100,000-row (8.7 s) and 500,000-row (47.3 s) runs of `xlsx-stream`: 18.4 s. Met (estimate).
+- A csv file at the full row limit loads without a crash: met (`duckdb-csv`, status ok, 4.8 s).
+- xlsx at the full row limit: loaded with `xlsx-stream` in 87.9 s, peak 1177 MB. The "save as csv" warning is still needed above the measured size.
 - Size guard input for T0.5: largest xlsx that loaded with `xlsx-stream`: 300 MB; smallest that failed: none.
 
 ## Strategies
@@ -44,7 +44,7 @@ Each row shows the chosen strategy of its format.
 
 The app refuses an xlsx file above 300.0 MB (300,002,342 bytes, the largest xlsx that loaded) before it reads a byte, and shows the "save as csv" warning instead. The benchmark runs above bypass the guard (`?guard=off`) to measure the raw strategies. Each run of `npm run spike` then loads an xlsx just above the limit with the guard on.
 
-A 301 MB xlsx was refused in 129 ms with this message: "guard-check.xlsx is 301.0 MB, which is above the 300.0 MB this app can read safely from an .xlsx file. Open the file in Excel, save the sheet as .csv, and load the .csv file instead."
+A 301 MB xlsx was refused in 151 ms with this message: "guard-check.xlsx is 301.0 MB, which is above the 300.0 MB this app can read safely from an .xlsx file. Open the file in Excel, save the sheet as .csv, and load the .csv file instead."
 
 Result: passed.
 
@@ -52,18 +52,18 @@ Result: passed.
 
 | File | Format | Rows | File MB | Strategy | Status | Load s | Peak memory MB | Group-by ms | Tab survived |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| rows-100000.xlsx | xlsx | 100,000 | 29 | `sheetjs-whole` | ok | 12.4 | 2228 | 32 | yes |
-| rows-100000.xlsx | xlsx | 100,000 | 29 | `xlsx-stream` | ok | 7.1 | 788 | 31 | yes |
-| rows-100000.csv | csv | 100,000 | 36 | `sheetjs-whole` | ok | 9.7 | 1987 | 41 | yes |
-| rows-100000.csv | csv | 100,000 | 36 | `duckdb-csv` | ok | 0.6 | 351 | 22 | yes |
-| rows-500000.xlsx | xlsx | 500,000 | 143 | `sheetjs-whole` | error | - | 2118 | - | yes |
-| rows-500000.xlsx | xlsx | 500,000 | 143 | `xlsx-stream` | ok | 37.4 | 1061 | 49 | yes |
-| rows-500000.csv | csv | 500,000 | 180 | `sheetjs-whole` | ok | 53.6 | 9323 | 33 | yes |
-| rows-500000.csv | csv | 500,000 | 180 | `duckdb-csv` | ok | 1.8 | 677 | 38 | yes |
-| rows-1048576.xlsx | xlsx | 1,048,576 | 300 | `sheetjs-whole` | error | - | 4248 | - | yes |
-| rows-1048576.xlsx | xlsx | 1,048,576 | 300 | `xlsx-stream` | ok | 80.3 | 1166 | 40 | yes |
-| rows-1048576.csv | csv | 1,048,576 | 378 | `sheetjs-whole` | ok | 128.8 | 10330 | 69 | yes |
-| rows-1048576.csv | csv | 1,048,576 | 378 | `duckdb-csv` | ok | 3.6 | 1126 | 61 | yes |
+| rows-100000.xlsx | xlsx | 100,000 | 29 | `sheetjs-whole` | ok | 15.8 | 2324 | 81 | yes |
+| rows-100000.xlsx | xlsx | 100,000 | 29 | `xlsx-stream` | ok | 8.7 | 808 | 38 | yes |
+| rows-100000.csv | csv | 100,000 | 36 | `sheetjs-whole` | ok | 12.1 | 1815 | 44 | yes |
+| rows-100000.csv | csv | 100,000 | 36 | `duckdb-csv` | ok | 0.9 | 377 | 43 | yes |
+| rows-500000.xlsx | xlsx | 500,000 | 143 | `sheetjs-whole` | error | - | 2136 | - | yes |
+| rows-500000.xlsx | xlsx | 500,000 | 143 | `xlsx-stream` | ok | 47.3 | 1107 | 48 | yes |
+| rows-500000.csv | csv | 500,000 | 180 | `sheetjs-whole` | ok | 64.7 | 9653 | 53 | yes |
+| rows-500000.csv | csv | 500,000 | 180 | `duckdb-csv` | ok | 2.8 | 697 | 54 | yes |
+| rows-1048576.xlsx | xlsx | 1,048,576 | 300 | `sheetjs-whole` | error | - | 3524 | - | yes |
+| rows-1048576.xlsx | xlsx | 1,048,576 | 300 | `xlsx-stream` | ok | 87.9 | 1177 | 48 | yes |
+| rows-1048576.csv | csv | 1,048,576 | 378 | `sheetjs-whole` | ok | 145.9 | 9637 | 71 | yes |
+| rows-1048576.csv | csv | 1,048,576 | 378 | `duckdb-csv` | ok | 4.8 | 1162 | 99 | yes |
 
 ## Failures
 

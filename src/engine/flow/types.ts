@@ -1,3 +1,6 @@
+import { PARAMETER_TYPES } from './parameters';
+import type { FlowParameter } from './parameters';
+
 /**
  * Flow definition: the single JSON format that the canvas writes and the engine runs.
  *
@@ -6,7 +9,11 @@
  * node type; this file only knows the envelope and the ports.
  */
 
-export const FLOW_SCHEMA_VERSION = 1;
+/** The first format. A new flow and every flow without parameters stay in it. */
+export const BASE_SCHEMA_VERSION = 1;
+/** The latest format: it may carry `parameters`. Older definitions load with an empty list, and are never rewritten. */
+export const FLOW_SCHEMA_VERSION = 2;
+export const SUPPORTED_SCHEMA_VERSIONS = [1, 2] as const;
 
 export const NODE_TYPES = [
   'input_file',
@@ -46,10 +53,12 @@ export interface FlowEdge {
 }
 
 export interface FlowDefinition {
-  schemaVersion: typeof FLOW_SCHEMA_VERSION;
+  schemaVersion: (typeof SUPPORTED_SCHEMA_VERSIONS)[number];
   name?: string;
   nodes: FlowNode[];
   edges: FlowEdge[];
+  /** From schemaVersion 2. Missing in a version 1 definition, which means no parameters. */
+  parameters?: FlowParameter[];
 }
 
 export interface FlowEdgeResolved {
@@ -109,8 +118,25 @@ export const flowJsonSchema = {
   type: 'object',
   required: ['schemaVersion', 'nodes', 'edges'],
   properties: {
-    schemaVersion: { const: FLOW_SCHEMA_VERSION },
+    schemaVersion: { enum: [...SUPPORTED_SCHEMA_VERSIONS] },
     name: { type: 'string' },
+    parameters: {
+      type: 'array',
+      description: 'From schemaVersion 2. Each key is unique without regard to case.',
+      items: {
+        type: 'object',
+        required: ['key', 'label', 'type', 'required'],
+        properties: {
+          key: { type: 'string', pattern: '^[A-Za-z_][A-Za-z0-9_]*$', maxLength: 40 },
+          label: { type: 'string', minLength: 1 },
+          type: { enum: [...PARAMETER_TYPES] },
+          required: { type: 'boolean' },
+          default: { type: ['string', 'number', 'boolean'] },
+          options: { type: 'array', items: { type: 'string', minLength: 1 }, uniqueItems: true },
+          help: { type: 'string' },
+        },
+      },
+    },
     nodes: {
       type: 'array',
       items: {

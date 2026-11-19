@@ -3,9 +3,12 @@ import path from 'node:path';
 import type { Page } from '@playwright/test';
 import type { LoggedRequest } from '../scripts/lib/request-audit';
 import { cdnBundles } from '../src/engine/runner/duckdb-bundles';
+import type { ParameterValues } from '../src/engine/flow/parameter-values';
 import type { RunArgs, RunReply } from './page';
 
 export interface DatasetConfig {
+  /** Values of the flow parameters, by key. */
+  parameterValues?: ParameterValues;
   name: string;
   /** Folder of the dataset, relative to the repository root. */
   dir: string;
@@ -32,6 +35,7 @@ export async function runDataset(page: Page, flow: unknown, ds: DatasetConfig): 
   const args: RunArgs = {
     flow,
     effectiveDate: ds.effectiveDate,
+    parameterValues: ds.parameterValues,
     files: Object.fromEntries(
       Object.entries(ds.inputs).map(([key, rel]) => [key, { name: path.basename(rel), base64: b64(path.join(ds.dir, rel)) }]),
     ),

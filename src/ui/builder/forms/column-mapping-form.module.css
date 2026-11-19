@@ -4,7 +4,7 @@
   gap: 12px;
 }
 
-.hint {
+.note {
   margin: 0;
   font-size: 13px;
   line-height: 20px;
@@ -46,7 +46,7 @@
 
 .typeLabel {
   display: block;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   font-weight: 700;
 }
 

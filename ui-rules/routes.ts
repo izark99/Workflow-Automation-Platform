@@ -1,5 +1,6 @@
 // Every route that the UI rules run on. A route added to the app is added here in the same task, so it is checked at once.
 import type { Page } from '@playwright/test';
+import { seedParameterFlow } from '../e2e/parameter-flow';
 import { seedRunnableFlow } from '../e2e/runnable-flow';
 import { seedSnapshot } from '../src/store/seed';
 
@@ -29,6 +30,8 @@ export interface RuleRoute {
   skeleton?: boolean;
   /** The route shows a skeleton while it loads, but not in a table (the Run screen): only `aria-busy` and the delay are checked. */
   busy?: boolean;
+  /** False when the route's own steps need the English texts, so the pseudo-locale check skips it. */
+  pseudo?: boolean;
   /** Runs before the page loads, for example to put data into the store. */
   before?: (page: Page) => Promise<void>;
   /** Puts the page in the state to check after it has loaded, for example by selecting a step. */
@@ -41,6 +44,21 @@ const withSignIn = async (page: Page): Promise<void> => {
   await page.addInitScript((json) => localStorage.setItem('dfw.auth', json), USERS_JSON);
 };
 
+/** A signed-in person whose account has a flag (the change-password screen, the locked screen). */
+const withAccountFlag = (flag: 'mustChangePassword' | 'locked') => async (page: Page): Promise<void> => {
+  const snapshot = seedSnapshot();
+  snapshot.users.find((u) => u.id === 'user-harold')![flag] = true;
+  await page.addInitScript(([auth, seed]) => {
+    localStorage.setItem('dfw.auth', auth!);
+    localStorage.setItem('dfw.seed', seed!);
+  }, [USERS_JSON, JSON.stringify(snapshot)] as const);
+};
+const signInAs = async (page: Page): Promise<void> => {
+  await page.getByLabel(/Email/).fill('harold@example.com');
+  await page.getByLabel(/^\W*Password\W*$/).fill('correct horse battery');
+  await page.getByRole('button', { name: /^\W*Sign in\W*$/ }).click();
+};
+
 export const ROUTES: RuleRoute[] = [
   // The sign-in screen has no sidebar and no page header. It is shown instead of any route when nobody is signed in.
   { path: '/flows', name: 'sign-in screen', sidebar: false, nav: false, before: withSignIn },
@@ -51,8 +69,32 @@ export const ROUTES: RuleRoute[] = [
     nav: false,
     before: withSignIn,
     prepare: async (page) => {
-      await page.getByRole('button', { name: 'Sign in' }).click();
-      await page.getByRole('alert').waitFor();
+      await page.getByRole('button', { name: /^\W*Sign in\W*$/ }).click();
+      await page.getByRole('alert').first().waitFor();
+    },
+  },
+  {
+    path: '/flows',
+    name: 'change-password screen',
+    sidebar: false,
+    nav: false,
+    before: withAccountFlag('mustChangePassword'),
+    prepare: async (page) => {
+      await signInAs(page);
+      await page.getByRole('button', { name: /Save password/ }).waitFor();
+      await page.getByRole('button', { name: /Save password/ }).click(); // the empty form shows its error
+      await page.getByRole('alert').first().waitFor();
+    },
+  },
+  {
+    path: '/flows',
+    name: 'locked-account screen',
+    sidebar: false,
+    nav: false,
+    before: withAccountFlag('locked'),
+    prepare: async (page) => {
+      await signInAs(page);
+      await page.getByRole('alert').first().waitFor();
     },
   },
   {
@@ -68,6 +110,27 @@ export const ROUTES: RuleRoute[] = [
       await page.getByRole('button', { name: 'Sign out' }).waitFor();
       await page.evaluate(() => (window as unknown as { dfwAuth: { expire: () => void } }).dfwAuth.expire());
       await page.getByText('Your session ended.').waitFor();
+    },
+  },
+  {
+    path: '/admin',
+    name: '/admin (Texts tab)',
+    sidebar: true,
+    table: true,
+    // The tab with the search field, two dropdowns, a table of 40 texts and the pager.
+    prepare: async (page) => {
+      await page.getByRole('tab', { name: /Texts/ }).click();
+      await page.getByRole('button', { name: /Edit nav\.flows/ }).waitFor();
+    },
+  },
+  {
+    path: '/admin',
+    name: '/admin (edit text dialog)',
+    sidebar: true,
+    prepare: async (page) => {
+      await page.getByRole('tab', { name: /Texts/ }).click();
+      await page.getByRole('button', { name: /Edit nav\.flows/ }).click();
+      await page.getByRole('dialog').waitFor();
     },
   },
   { path: '/flows', sidebar: true, table: true, skeleton: true },
@@ -129,7 +192,7 @@ export const ROUTES: RuleRoute[] = [
     sidebar: false,
     // A new Formula column step: name field, formula text, message, function buttons, load columns.
     prepare: async (page) => {
-      await page.getByRole('button', { name: 'Add step Formula column' }).click();
+      await page.getByRole('button', { name: /Add step\W*Formula column/ }).click();
       const panel = page.getByRole('complementary', { name: 'Step settings' });
       await panel.getByRole('tab', { name: 'Configure' }).click();
       await panel.getByRole('textbox', { name: 'Formula' }).waitFor();
@@ -141,11 +204,11 @@ export const ROUTES: RuleRoute[] = [
     sidebar: false,
     // The dialog with the searchable list of all functions.
     prepare: async (page) => {
-      await page.getByRole('button', { name: 'Add step Formula column' }).click();
+      await page.getByRole('button', { name: /Add step\W*Formula column/ }).click();
       const panel = page.getByRole('complementary', { name: 'Step settings' });
       await panel.getByRole('tab', { name: 'Configure' }).click();
       await panel.getByRole('button', { name: 'All functions' }).click();
-      await page.getByRole('dialog', { name: 'All functions' }).getByRole('button', { name: 'Insert IF', exact: true }).waitFor();
+      await page.getByRole('dialog', { name: 'All functions' }).getByRole('button', { name: /Insert IF\W*$/ }).waitFor();
     },
   },
   {
@@ -172,7 +235,7 @@ export const ROUTES: RuleRoute[] = [
       const panel = page.getByRole('complementary', { name: 'Step settings' });
       await panel.getByRole('tab', { name: 'Configure' }).click();
       await panel.getByRole('textbox', { name: 'Column name' }).fill('dept');
-      await panel.getByRole('button', { name: 'Add', exact: true }).click();
+      await panel.getByRole('button', { name: /^\W*Add\W*$/ }).click();
       await panel.getByRole('button', { name: 'Add aggregation' }).click();
       await panel.getByRole('button', { name: 'Remove aggregation 1' }).waitFor();
     },
@@ -188,7 +251,7 @@ export const ROUTES: RuleRoute[] = [
       await panel.getByRole('tab', { name: 'Configure' }).click();
       const keep = panel.getByRole('group', { name: 'Columns to keep' });
       await keep.getByRole('textbox', { name: 'Column name' }).fill('id');
-      await keep.getByRole('button', { name: 'Add', exact: true }).click();
+      await keep.getByRole('button', { name: /^\W*Add\W*$/ }).click();
       await keep.getByRole('button', { name: 'Remove id from Columns to keep' }).waitFor();
     },
   },
@@ -201,9 +264,9 @@ export const ROUTES: RuleRoute[] = [
       await page.getByRole('button', { name: 'Add step Pivot' }).click();
       const panel = page.getByRole('complementary', { name: 'Step settings' });
       await panel.getByRole('tab', { name: 'Configure' }).click();
-      await panel.getByRole('button', { name: /^The new columns come from/ }).click();
-      await page.getByRole('option', { name: /^A reference table/ }).click();
-      await panel.getByRole('button', { name: /^Reference table/ }).waitFor();
+      await panel.getByRole('button', { name: /^\W*The new columns come from/ }).click();
+      await page.getByRole('option', { name: /^\W*A reference table/ }).click();
+      await panel.getByRole('button', { name: /^\W*Reference table/ }).waitFor();
     },
   },
   {
@@ -228,7 +291,7 @@ export const ROUTES: RuleRoute[] = [
       await page.getByRole('button', { name: 'Add step Append' }).click();
       const panel = page.getByRole('complementary', { name: 'Step settings' });
       await panel.getByRole('tab', { name: 'Configure' }).click();
-      await panel.getByRole('button', { name: /^Match columns/ }).waitFor();
+      await panel.getByRole('button', { name: /^\W*Match columns/ }).waitFor();
     },
   },
   {
@@ -280,14 +343,54 @@ export const ROUTES: RuleRoute[] = [
     // The three cards with a file chosen, the progress gone, the result tab and its table.
     prepare: async (page) => {
       await page.locator('input[type=file]').setInputFiles({ name: 'people.csv', mimeType: 'text/csv', buffer: Buffer.from('name,kind\nAnn,WEEK\nBob,MONTH\n') });
-      await page.getByRole('button', { name: 'Run flow' }).click();
+      await page.getByRole('button', { name: /^\W*Run flow\W*$/ }).click();
       await page.getByRole('heading', { name: 'Result: run finished' }).waitFor({ timeout: 60_000 });
+    },
+  },
+  {
+    path: '/flows/flow-param/run',
+    name: '/flows/flow-param/run (Parameters card)',
+    sidebar: true,
+    before: seedParameterFlow,
+    // The Parameters card with one input of each type. The required date is blank: the note says so, and its error shows after the field was touched.
+    prepare: async (page) => {
+      await page.getByRole('status').filter({ hasText: /Cut-off date/ }).waitFor();
+      await page.getByRole('button', { name: /Choose a date/ }).focus();
+      await page.getByRole('button', { name: /Choose a date/ }).blur();
+      await page.getByRole('alert').first().waitFor();
+    },
+  },
+  {
+    path: '/flows/flow-param/versions/2',
+    name: '/flows/flow-param/versions/2 (Parameters panel)',
+    sidebar: false,
+    before: seedParameterFlow,
+    // A draft with five parameters and no step selected: the Parameters panel with a control for each type of default.
+    prepare: async (page) => {
+      await page.getByRole('group', { name: /Parameter 5/ }).waitFor();
+    },
+  },
+  {
+    path: '/flows/flow-param/versions/2',
+    name: '/flows/flow-param/versions/2 (Test values of the parameters)',
+    sidebar: false,
+    before: seedParameterFlow,
+    // The Test tab of the Filter step, which reads the date parameter: its input, the note, and the error after the field was left.
+    prepare: async (page) => {
+      await page.locator('.react-flow__node').filter({ hasText: 'Keep' }).first().click();
+      const panel = page.getByRole('complementary', { name: 'Step settings' });
+      await panel.getByRole('tab', { name: /Test/ }).click();
+      await panel.getByRole('status').filter({ hasText: /Cut-off date/ }).waitFor();
+      await panel.getByRole('button', { name: /Choose a date/ }).focus();
+      await panel.getByRole('button', { name: /Choose a date/ }).blur();
+      await panel.getByRole('alert').first().waitFor();
     },
   },
   {
     path: '/flows/flow-timesheet/versions',
     name: '/flows/flow-timesheet/versions (new version dialog with a clash)',
     sidebar: true,
+    pseudo: false, // its steps click buttons by their exact English names
     // The dialog with the date picker and the message about a start day inside an existing version.
     prepare: async (page) => {
       await page.getByRole('button', { name: 'New version', exact: true }).click();
@@ -326,6 +429,48 @@ export const ROUTES: RuleRoute[] = [
     prepare: async (page) => {
       await page.getByRole('button', { name: 'New table' }).first().click();
       await page.getByRole('dialog', { name: 'New reference table' }).waitFor();
+    },
+  },
+  {
+    path: '/admin',
+    name: '/admin (add user dialog)',
+    sidebar: true,
+    // The Create account dialog: three fields, the role dropdown, the password row with Generate and Copy, a checkbox.
+    prepare: async (page) => {
+      await page.getByRole('button', { name: /^\W*Add user\W*$/ }).first().click();
+      const dialog = page.getByRole('dialog');
+      await dialog.getByRole('button', { name: /Generate/ }).click();
+      await dialog.getByRole('button', { name: /Copy/ }).waitFor();
+    },
+  },
+  {
+    path: '/admin',
+    name: '/admin (user menu open)',
+    sidebar: true,
+    // The "More" menu of a row with its two actions.
+    prepare: async (page) => {
+      await page.getByRole('button', { name: /More actions for\W*Lan/ }).click();
+      await page.getByRole('option').first().waitFor();
+    },
+  },
+  {
+    path: '/admin',
+    name: '/admin (lock dialog)',
+    sidebar: true,
+    prepare: async (page) => {
+      await page.getByRole('button', { name: /More actions for\W*Lan/ }).click();
+      await page.getByRole('option').nth(1).click();
+      await page.getByRole('dialog').waitFor();
+    },
+  },
+  {
+    path: '/admin',
+    name: '/admin (reset password dialog)',
+    sidebar: true,
+    prepare: async (page) => {
+      await page.getByRole('button', { name: /More actions for\W*Lan/ }).click();
+      await page.getByRole('option').first().click();
+      await page.getByRole('dialog').waitFor();
     },
   },
   {

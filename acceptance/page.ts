@@ -1,6 +1,7 @@
 // Browser side of the acceptance test: runs the real engine, in the real browser runner, on files that the test hands
 // in, and returns the output files. It has no knowledge of any dataset.
 import * as XLSX from 'xlsx';
+import type { ParameterValues } from '../src/engine/flow/parameter-values';
 import { runFlow } from '../src/engine/run';
 import { createBrowserRunner } from '../src/engine/runner/browser-runner';
 import { buildOutputFiles } from '../src/engine/output/export';
@@ -13,6 +14,8 @@ export interface RunArgs {
   /** Input files by the logical key of the Input step. */
   files: Record<string, { name: string; base64: string }>;
   /** A workbook that holds reference tables, one per sheet, valid from `validFrom` with no end date. */
+  /** The values of the flow parameters, by key. */
+  parameterValues?: ParameterValues;
   reference?: { base64: string; validFrom: string; sheets: string[] };
 }
 
@@ -85,6 +88,7 @@ async function run(args: RunArgs): Promise<RunReply> {
     const result = await runFlow(runner, {
       flow: prepared.definition,
       effectiveDate: args.effectiveDate,
+      parameterValues: args.parameterValues,
       files,
       refTables: prepared.refTables,
     });

@@ -78,13 +78,13 @@ test('All functions opens a searchable list; choosing one inserts it and closes 
   await expect(formula(page)).toHaveValue('WEEKDAY()');
 });
 
-test('the list holds every function of Tier 1 and EFFECTIVE_DATE, grouped', async ({ page }) => {
+test('the list holds every function and PARAM, grouped', async ({ page }) => {
   await setup(page, 'Formula column');
   await panel(page).getByRole('button', { name: 'All functions' }).click();
   const dialog = page.getByRole('dialog', { name: 'All functions' });
   await expect(dialog.getByRole('button', { name: /^Insert / })).toHaveCount(FUNCTION_DOCS.length);
-  expect(FUNCTION_DOCS.length).toBe(50);
-  for (const g of ['Logic', 'Math', 'Text', 'Date']) await expect(dialog.getByText(g, { exact: true })).toBeVisible();
+  expect(FUNCTION_DOCS.length).toBe(51);
+  for (const g of ['Logic', 'Math', 'Text', 'Date', 'Flow']) await expect(dialog.getByText(g, { exact: true })).toBeVisible();
 });
 
 test('Insert a column puts the column in square brackets at the cursor', async ({ page }) => {
@@ -133,4 +133,15 @@ test('the formula controls are disabled for a published version', async ({ page 
   await panel(page).getByRole('tab', { name: 'Configure' }).click();
   await expect(formula(page)).toBeDisabled();
   await expect(panel(page).getByRole('button', { name: 'Insert IF', exact: true })).toBeDisabled();
+});
+
+test('an empty formula is a quiet guide on arrival and becomes an error only when the user leaves the field', async ({ page }) => {
+  await setup(page, 'Formula column');
+  await expect(panel(page).getByRole('alert')).toHaveCount(0);
+  await expect(panel(page)).toContainText('The formula is empty');
+  await formula(page).focus();
+  await formula(page).blur();
+  await expect(panel(page).getByRole('alert')).toContainText('The formula is empty');
+  await formula(page).fill('[age] * 2');
+  await expect(panel(page).getByRole('alert')).toHaveCount(0);
 });

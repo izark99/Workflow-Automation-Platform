@@ -1,3 +1,4 @@
+import { translate } from '../../i18n';
 // Pure part of the Column mapping form: rows as text, settings, and the paste from Excel.
 export const COLUMN_TYPES = ['text', 'number', 'date', 'boolean'] as const;
 export type MappingType = (typeof COLUMN_TYPES)[number];
@@ -43,7 +44,7 @@ export function duplicateSources(rows: MappingRow[]): string[] {
  */
 export function settingsFromRows(rows: MappingRow[], previous: Record<string, unknown>): { settings?: Record<string, unknown>; error?: string } {
   const dup = duplicateSources(rows);
-  if (dup.length > 0) return { error: `The source column "${dup[0]}" is listed more than once. Remove one of the rows.` };
+  if (dup.length > 0) return { error: translate('builder.form.mapping.error.duplicate', { name: dup[0]! }) };
   const columns = rows
     .filter((r) => r.source.trim() !== '')
     .map((r) => {
@@ -72,27 +73,27 @@ export type PasteResult = { ok: true; rows: MappingRow[] } | { ok: false; messag
 export function parsePaste(text: string): PasteResult {
   const lines = text.replace(/\r\n?/g, '\n').split('\n');
   while (lines.length > 0 && lines[lines.length - 1]!.trim() === '') lines.pop();
-  if (lines.length === 0) return { ok: false, message: 'There is nothing to paste. Copy the cells in Excel first, then paste again.' };
+  if (lines.length === 0) return { ok: false, message: translate('builder.form.mapping.error.pasteEmpty') };
   const table = lines.map((l) => l.split('\t').map((c) => c.trim()));
   if (HEADER.includes((table[0]?.[0] ?? '').toLowerCase())) table.shift();
-  if (table.length === 0) return { ok: false, message: 'The pasted text has a header row but no columns under it. Copy the rows too.' };
+  if (table.length === 0) return { ok: false, message: translate('builder.form.mapping.error.pasteNoColumns') };
   const rows: MappingRow[] = [];
   for (let i = 0; i < table.length; i++) {
     const [source = '', name = '', typeText = '', keepText = ''] = table[i] as string[];
-    const where = `Row ${i + 1} of the pasted text`;
-    if (source === '') return { ok: false, message: `${where} has no source column in its first cell. Put the column name in the first cell, then paste again.` };
+    const n = i + 1;
+    if (source === '') return { ok: false, message: translate('builder.form.mapping.error.pasteNoSource', { n }) };
     const t = typeText.toLowerCase();
     if (t !== '' && t !== 'as is' && !COLUMN_TYPES.includes(t as MappingType)) {
-      return { ok: false, message: `${where}: "${typeText}" is not a type. Use text, number, date or boolean, or leave the cell empty.` };
+      return { ok: false, message: translate('builder.form.mapping.error.pasteType', { n, value: typeText }) };
     }
     const k = keepText.toLowerCase();
     if (!TRUE_WORDS.has(k) && !FALSE_WORDS.has(k)) {
-      return { ok: false, message: `${where}: "${keepText}" is not yes or no in the keep cell. Use yes or no, or leave the cell empty.` };
+      return { ok: false, message: translate('builder.form.mapping.error.pasteKeep', { n, value: keepText }) };
     }
     rows.push({ source, keep: !FALSE_WORDS.has(k), name: name === source ? '' : name, type: t === '' || t === 'as is' ? '' : (t as MappingType) });
   }
   const dup = duplicateSources(rows);
-  if (dup.length > 0) return { ok: false, message: `The source column "${dup[0]}" appears more than once in the pasted text. Keep one row for it, then paste again.` };
+  if (dup.length > 0) return { ok: false, message: translate('builder.form.mapping.error.pasteDuplicate', { name: dup[0]! }) };
   return { ok: true, rows };
 }
 

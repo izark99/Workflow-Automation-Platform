@@ -1,0 +1,70 @@
+// Store and sign-in errors as codes (SPEC 11.3). Same scheme as src/engine/messages.ts: an error with a `messageId`
+// carries the parameters of its text, the UI shows the catalog text of that id, and the English template below is the
+// fallback and the text of `message`. A test keeps it equal to the `en` catalog. Parameters named `what` and `action`
+// are short English phrases chosen by the caller ("save the flow"); they are not translated yet.
+import { fillTemplate } from '../engine/messages';
+import type { MessageParams } from '../engine/messages';
+
+export const STORE_MESSAGES = {
+  'errors.noUser': 'No user is signed in. Sign in and try again.',
+  'errors.textEmpty': 'A text cannot be empty. Type the text, or use Reset to go back to the default.',
+  'errors.accountLocked': 'This account is locked. Ask the admin.',
+  'errors.auth.locked': 'This account is locked. Ask the admin.',
+  'errors.account.signedOut': 'You are not signed in. Sign in and try again.',
+  'errors.account.notAdmin': 'Only an active admin can manage accounts. Ask the admin.',
+  'errors.account.badRequest': 'The request is not understood. Reload the page and try again.',
+  'errors.account.emailInvalid': '"{email}" is not an email address. Type an address like name@company.com.',
+  'errors.account.passwordShort': 'The password needs at least {min} characters. Type a longer password.',
+  'errors.account.roleInvalid': 'The role must be user or admin. Choose one of them.',
+  'errors.account.emailTaken': 'An account with the email {email} exists. Use another email address.',
+  'errors.account.userMissing': 'This user does not exist any more. Reload the page.',
+  'errors.account.selfLock': 'You cannot lock your own account. Ask another admin.',
+  'errors.account.lastAdmin': 'At least one active admin is needed. Make another user an admin first, then change this user.',
+  'errors.account.failed': 'The account could not be changed: {detail}. Try again.',
+  'errors.account.unreachable': 'Could not reach the account service. Check your connection and try again.',
+  'errors.auth.samePassword': 'The new password is the same as the old one. Choose a different password.',
+  'errors.noProfile': 'Your account has no profile yet. Ask the admin to add you, then sign in again.',
+  'errors.adminOnly': 'Only the admin can {what}. Ask the admin.',
+  'errors.notAllowed': 'You are not allowed to {action}. Ask the admin if you need this right.',
+  'errors.cannotChange': 'You cannot change {what}, or it no longer exists. Reload the page and try again.',
+  'errors.flowNotFound': 'This flow does not exist or you cannot open it. Go back to the Flows list.',
+  'errors.sharedFlowReadOnly': 'You can view and run this shared flow, but only the admin can change it. Copy it to a personal flow to edit.',
+  'errors.sharedFlowAdminOnly': 'Only the admin creates shared flows. Create a personal flow instead.',
+  'errors.notSharedFlow': 'Only a shared flow has group access. Make the flow shared first.',
+  'errors.flowNotDeleted': 'This flow is not in the deleted list. It may have been restored already.',
+  'errors.flowNeedsName': 'A flow needs a name. Type a name and try again.',
+  'errors.refTableNotFound': 'This reference table does not exist. Go back to the Reference tables list.',
+  'errors.refTableNeedsName': 'A reference table needs a name. Type a name and try again.',
+  'errors.refTableExists': 'A reference table named "{name}" exists. Choose another name.',
+  'errors.userNotFound': 'There is no user "{id}".',
+  'errors.userGone': 'This user does not exist any more. Reload the page.',
+  'errors.userNeedsNameEmail': 'A user needs a name and an email address. Fill both and save again.',
+  'errors.userViaAuth': 'A new user is added in Supabase Auth (see docs/DEPLOY.md). They appear in this list after that; then you can set their role and groups here.',
+  'errors.lastAdmin': 'At least one admin is needed. Make another user an admin first, then change this user.',
+  'errors.emailExists': 'A user with the email {email} exists. Use another email address.',
+  'errors.groupNeedsName': 'A group needs a name. Type a name and save again.',
+  'errors.groupExists': 'A group named "{name}" exists. Choose another name.',
+  'errors.groupGone': 'This group does not exist any more. Reload the page.',
+  'errors.versionNotFound': 'Version v{n} does not exist. Pick a version from the list.',
+  'errors.versionReadOnly': 'v{n} is published and read-only. Create a new version from it to make changes.',
+  'errors.datesOverlap': 'These dates overlap another published version. Change the valid-from or valid-to date so the ranges do not share a day.',
+  'errors.nameTaken': 'Could not {action}: that name or email is already used. Use another one and try again.',
+  'errors.itemNotFound': 'This item does not exist or you cannot open it. Go back to the list and try again.',
+  'errors.couldNotCheck': 'Could not {action}: {detail}. Check what you entered and try again.',
+  'errors.couldNotConnect': 'Could not {action}: {detail}. Check the connection and try again.',
+  'errors.startNotDate': '"{value}" is not a date. Pick a start date in the date picker.',
+  'errors.endNotDate': '"{value}" is not a date. Pick an end date or leave it empty.',
+  'errors.endBeforeStart': 'The end date {end} is before the start date {start}. Change one of them.',
+  'errors.tooManyRows': 'A reference table version holds at most {max} rows, and this one has {n}. Remove rows and save again.',
+  'errors.auth.invalidCredentials': 'The email or the password is wrong. Check both and try again.',
+  'errors.auth.emailNotConfirmed': 'This email address is not confirmed yet. Open the confirmation message that was sent to it, then sign in.',
+  'errors.auth.tooManyAttempts': 'Too many attempts. Wait a minute and try again.',
+  'errors.auth.unreachable': 'Could not reach the server. Check your connection and try again.',
+  'errors.auth.failedDetail': 'Sign-in failed: {detail}. Try again, or ask the admin if it keeps failing.',
+  'errors.auth.failed': 'Sign-in failed. Try again, or ask the admin if it keeps failing.',
+  'errors.auth.signOutFailed': 'Could not sign out: {detail}. Close the tab, or try again.',
+} as const;
+
+export type StoreMessageId = keyof typeof STORE_MESSAGES;
+
+export const storeText = (id: StoreMessageId, params?: MessageParams): string => fillTemplate(STORE_MESSAGES[id], params);

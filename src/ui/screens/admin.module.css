@@ -48,3 +48,55 @@
   display: flex;
   flex-direction: column;
 }
+
+.textsToolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.textsSearch {
+  flex: 1;
+  max-width: 320px;
+}
+
+.textsSearch > * {
+  width: 100%;
+}
+
+.clip {
+  display: block;
+  max-width: 340px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.keyText {
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding-top: 24px;
+}
+
+.passwordRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.passwordField {
+  flex: 1;
+  min-width: 0;
+}

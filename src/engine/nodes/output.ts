@@ -104,7 +104,7 @@ export function checkOutputNodes(flow: Pick<FlowDefinition, 'nodes'>): void {
  */
 export const outputNode: NodeModule = {
   type: 'output',
-  compile: ({ node, inputs, effectiveDate }) => {
+  compile: ({ node, inputs, effectiveDate, parameters }) => {
     const input = inputs.in!;
     const s = parseOutputSettings(node.settings, node.id);
     const columns = s.columns ? s.columns.map((c) => requireColumn(input.columns, c, node.id)) : input.columns;
@@ -121,7 +121,7 @@ export const outputNode: NodeModule = {
       const expr =
         k.column !== undefined
           ? quoteIdent(requireColumn(input.columns, k.column, node.id).name)
-          : compileStepFormula(k.expression, { columns: input.columns, effectiveDate }, { id: node.id, label: 'Output', setting: 'sort' }).sql;
+          : compileStepFormula(k.expression, { columns: input.columns, effectiveDate, parameters }, { id: node.id, label: 'Output', setting: 'sort' }).sql;
       return `${expr} ${k.direction.toUpperCase()} NULLS LAST`;
     });
     order.push('rowid');

@@ -4,15 +4,14 @@ import { Badge, Button, ButtonLink, Card, Chip, ChipGroup, Dialog, EmptyState, E
 import type { Column } from '../components';
 import type { ShellContext } from '../shell';
 import { useLoad, useStore } from '../store-context';
-import { strings } from '../strings';
+import { translateMessage, useT, errorText } from '../i18n';
 import type { FlowRecord } from '../../store/types';
 import { canDeleteFlow, canRunFlow, describeRange, describeSteps, filterFlows, todayIso, versionInEffect, versionToOpen } from './flows-logic';
 import type { ScopeFilter } from './flows-logic';
 import styles from './flows.module.css';
 
-const t = strings.flowsScreen;
-
 export function FlowsScreen() {
+  const t = useT();
   const store = useStore();
   const toast = useToast();
   const { openCreateFlow } = useOutletContext<ShellContext>();
@@ -28,11 +27,11 @@ export function FlowsScreen() {
     if (!toDelete) return;
     try {
       await store.deleteFlow(toDelete.id);
-      toast(t.deleted(toDelete.name));
+      toast(t('flows.deleted', { name: toDelete.name }));
       setToDelete(null);
       data.reload();
     } catch (e) {
-      setDeleteError(e instanceof Error ? e.message : t.deleteFailed);
+      setDeleteError(errorText(e, t('flows.deleteFailed')));
     }
   };
 
@@ -43,58 +42,58 @@ export function FlowsScreen() {
   const columns: Column<FlowRecord>[] = [
     {
       key: 'flow',
-      header: t.cols.flow,
+      header: t('flows.cols.flow'),
       render: (f) => (
         <>
-          <b>{f.name}</b>
+          <b data-user-content>{f.name}</b>
           <br />
-          <span className={styles.sub}>{describeSteps((versionToOpen(f, today) ?? f.versions[0])?.definition)}</span>
+          <span className={styles.sub}>{translateMessage(describeSteps((versionToOpen(f, today) ?? f.versions[0])?.definition))}</span>
         </>
       ),
     },
     {
       key: 'scope',
-      header: t.cols.scope,
+      header: t('flows.cols.scope'),
       render: (f) => (
         <>
-          <Badge tone={f.scope === 'shared' ? 'outline' : 'soft'}>{f.scope === 'shared' ? t.shared : t.personal}</Badge>
+          <Badge tone={f.scope === 'shared' ? 'outline' : 'soft'}>{f.scope === 'shared' ? t('flows.shared') : t('flows.personal')}</Badge>
           <br />
-          <span className={styles.sub}>{f.scope === 'shared' ? (f.groupNames ?? []).join(', ') || '-' : t.onlyOwner}</span>
+          <span className={styles.sub}>{f.scope === 'shared' ? <span data-user-content>{(f.groupNames ?? []).join(', ') || '-'}</span> : t('flows.onlyOwner')}</span>
         </>
       ),
     },
-    { key: 'owner', header: t.cols.owner, render: (f) => f.ownerName ?? '' },
+    { key: 'owner', header: t('flows.cols.owner'), render: (f) => <span data-user-content>{f.ownerName ?? ''}</span> },
     {
       key: 'version',
-      header: t.cols.version,
+      header: t('flows.cols.version'),
       render: (f) => {
         const v = versionInEffect(f, today) ?? versionToOpen(f, today);
         return v ? (
           <>
-            v{v.versionNo} <Badge tone="soft">{v.status === 'published' ? t.published : t.draft}</Badge>
+            {t('common.versionLabel', { n: v.versionNo })} <Badge tone="soft">{v.status === 'published' ? t('flows.published') : t('flows.draft')}</Badge>
           </>
         ) : null;
       },
     },
-    { key: 'range', header: t.cols.range, render: (f) => describeRange(versionInEffect(f, today)) },
+    { key: 'range', header: t('flows.cols.range'), render: (f) => translateMessage(describeRange(versionInEffect(f, today))) },
     {
       key: 'actions',
-      header: t.cols.actions,
+      header: t('flows.cols.actions'),
       render: (f) => {
         const open = versionToOpen(f, today);
         return (
           <div className={styles.actions}>
-            <ButtonLink compact to={`/flows/${f.id}/versions/${open?.versionNo ?? 1}`} aria-label={`${t.open} ${f.name}`}>
-              {t.open}
+            <ButtonLink compact to={`/flows/${f.id}/versions/${open?.versionNo ?? 1}`} aria-label={t('flows.openFlow', { name: f.name })}>
+              {t('flows.open')}
             </ButtonLink>
             {canRunFlow(f) ? (
-              <ButtonLink compact variant="primary" to={`/flows/${f.id}/run`} aria-label={`${t.run} ${f.name}`}>
-                {t.run}
+              <ButtonLink compact variant="primary" to={`/flows/${f.id}/run`} aria-label={t('flows.runFlow', { name: f.name })}>
+                {t('flows.run')}
               </ButtonLink>
             ) : null}
             {me && canDeleteFlow(me, f) ? (
-              <Button compact variant="danger" aria-label={`${t.delete} ${f.name}`} onClick={() => { setDeleteError(null); setToDelete(f); }}>
-                {t.delete}
+              <Button compact variant="danger" aria-label={t('flows.deleteFlow', { name: f.name })} onClick={() => { setDeleteError(null); setToDelete(f); }}>
+                {t('flows.delete')}
               </Button>
             ) : null}
           </div>
@@ -105,58 +104,57 @@ export function FlowsScreen() {
 
   let body;
   if (data.error) {
-    body = <ErrorState what={strings.loadFailed} next={strings.loadFailedNext} actions={<Button compact onClick={data.reload}>{t.retry}</Button>} />;
+    body = <ErrorState what={t('errors.loadFailed')} next={t('errors.loadFailedNext')} actions={<Button compact onClick={data.reload}>{t('flows.retry')}</Button>} />;
   } else if (data.loading) {
-    body = showSkeleton ? <SkeletonTable weights={[30, 16, 8, 14, 14, 18]} rows={3} label={t.loading} /> : null;
+    body = showSkeleton ? <SkeletonTable weights={[30, 16, 8, 14, 14, 18]} rows={3} label={t('flows.loading')} /> : null;
   } else if (flows.length === 0) {
-    body = <EmptyState title={t.emptyTitle} text={t.emptyText} action={<Button variant="primary" onClick={openCreateFlow}>{strings.nav.createFlow}</Button>} />;
+    body = <EmptyState title={t('flows.emptyTitle')} text={t('flows.emptyText')} action={<Button variant="primary" onClick={openCreateFlow}>{t('nav.createFlow')}</Button>} />;
   } else if (shown.length === 0) {
     body = (
       <EmptyState
-        title={t.noMatchTitle}
-        text={t.noMatchText}
-        action={<Button variant="primary" onClick={() => { setScope('all'); setSearch(''); }}>{t.clear}</Button>}
+        title={t('flows.noMatchTitle')}
+        text={t('flows.noMatchText')}
+        action={<Button variant="primary" onClick={() => { setScope('all'); setSearch(''); }}>{t('flows.clear')}</Button>}
       />
     );
   } else {
-    body = <Table label={t.table} columns={columns} rows={shown} rowKey={(f) => f.id} />;
+    body = <Table label={t('flows.table')} columns={columns} rows={shown} rowKey={(f) => f.id} />;
   }
 
   return (
-    <ScreenFrame breadcrumb={<span>{strings.screens.flows.crumb}</span>} title={strings.screens.flows.title} subtitle={strings.screens.flows.subtitle}>
+    <ScreenFrame breadcrumb={<span>{t('flows.screen.crumb')}</span>} title={t('flows.screen.title')} subtitle={me?.role === 'admin' ? `${t('flows.screen.subtitle')} ${t('flows.adminNote')}` : t('flows.screen.subtitle')}>
       <div className={styles.toolbar}>
-        <ChipGroup label={t.filterLabel}>
-          {([['all', t.all], ['personal', t.personal], ['shared', t.shared]] as const).map(([key, label]) => (
+        <ChipGroup label={t('flows.filterLabel')}>
+          {([['all', t('flows.all')], ['personal', t('flows.personal')], ['shared', t('flows.shared')]] as const).map(([key, label]) => (
             <Chip key={key} pressed={scope === key} onClick={() => setScope(key)}>
               {label}
             </Chip>
           ))}
         </ChipGroup>
         <span className={styles.search}>
-          <SearchField label={t.search} placeholder={t.searchPlaceholder} value={search} onChange={(e) => setSearch(e.target.value)} />
+          <SearchField label={t('flows.search')} placeholder={t('flows.searchPlaceholder')} value={search} onChange={(e) => setSearch(e.target.value)} />
         </span>
       </div>
-      <Card flush title={t.table}>
+      <Card flush title={t('flows.table')}>
         <div className={styles.tableSlot} aria-busy={data.loading ? 'true' : undefined}>
           {body}
         </div>
       </Card>
-      {me?.role === 'admin' ? <p className={styles.note}>{t.adminNote}</p> : null}
       {toDelete ? (
         <Dialog
-          title={t.confirmTitle(toDelete.name)}
+          title={t('flows.confirmTitle', { name: toDelete.name })}
           onClose={() => setToDelete(null)}
           actions={
             <>
-              <Button onClick={() => setToDelete(null)}>{t.cancel}</Button>
+              <Button onClick={() => setToDelete(null)}>{t('flows.cancel')}</Button>
               <Button variant="danger" onClick={() => void confirmDelete()}>
-                {t.delete}
+                {t('flows.delete')}
               </Button>
             </>
           }
         >
-          {t.confirmText(toDelete.versions.length)}
-          {deleteError ? <ErrorState what={t.deleteFailed} next={deleteError} /> : null}
+          {t('flows.confirmText', { versions: toDelete.versions.length })}
+          {deleteError ? <ErrorState what={t('flows.deleteFailed')} next={deleteError} /> : null}
         </Dialog>
       ) : null}
     </ScreenFrame>

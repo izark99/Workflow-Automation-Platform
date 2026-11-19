@@ -4,7 +4,8 @@ import { COMMON_FUNCTIONS, FUNCTION_DOCS, GROUP_ORDER, searchFunctions } from '.
 
 describe('function list', () => {
   it('lists exactly the functions that the engine registers, each once', () => {
-    expect(FUNCTION_DOCS.map((f) => f.name).sort()).toEqual(Object.keys(defaultFunctions).sort());
+    // PARAM is built into the compiler, because it reads the parameters of the flow.
+    expect(FUNCTION_DOCS.map((f) => f.name).sort()).toEqual([...Object.keys(defaultFunctions), 'PARAM'].sort());
     expect(new Set(FUNCTION_DOCS.map((f) => f.name)).size).toBe(FUNCTION_DOCS.length);
   });
   it('each entry has a signature that starts with its name, a group and a text', () => {
@@ -21,7 +22,8 @@ describe('function list', () => {
     const wrong: string[] = [];
     for (const doc of FUNCTION_DOCS) {
       if (doc.signature.includes('...')) continue;
-      const spec = defaultFunctions[doc.name]!;
+      const spec = defaultFunctions[doc.name];
+      if (!spec) continue; // PARAM takes one key, written in the formula
       const inner = doc.signature.slice(doc.signature.indexOf('(') + 1, -1).trim();
       const n = inner === '' ? 0 : inner.split(',').length;
       if (n !== spec.max) wrong.push(`${doc.name}: signature has ${n}, engine takes ${spec.min} to ${spec.max}`);

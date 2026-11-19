@@ -12,10 +12,10 @@ const memoryStorage = () => {
 
 describe('signInProblem', () => {
   it('asks for what is missing, with what to do', () => {
-    expect(signInProblem('', 'x')).toBe('Enter your email address, then sign in.');
-    expect(signInProblem('   ', 'x')).toBe('Enter your email address, then sign in.');
-    expect(signInProblem('ann', 'x')).toBe('"ann" is not an email address. Type it like name@company.com.');
-    expect(signInProblem('ann@example.test', '')).toBe('Enter your password, then sign in.');
+    expect(signInProblem('', 'x')).toEqual({ code: 'emailMissing' });
+    expect(signInProblem('   ', 'x')).toEqual({ code: 'emailMissing' });
+    expect(signInProblem('ann', 'x')).toEqual({ code: 'emailInvalid', email: 'ann' });
+    expect(signInProblem('ann@example.test', '')).toEqual({ code: 'passwordMissing' });
   });
 
   it('accepts an email and a password', () => {

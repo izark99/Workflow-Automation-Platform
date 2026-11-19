@@ -2,6 +2,10 @@ import { runFlow } from '../../engine/run';
 import { createBrowserRunner } from '../../engine/runner/browser-runner';
 import type { FileSource } from '../../engine/input/load';
 import type { FlowDefinition } from '../../engine/flow/types';
+import type { ParameterValues } from '../../engine/flow/parameter-values';
+import { parametersOf } from '../../engine/flow/parameters';
+import { withUsedParametersOnly } from '../../engine/flow/parameters-used';
+import { initialValues } from '../parameter-logic';
 import { EngineError } from '../../engine/types';
 import type { Cell, Column, SqlRunner } from '../../engine/types';
 import { prepareRun } from '../../engine/versions';
@@ -35,6 +39,8 @@ export interface PreviewRequest {
   files: Record<string, FileSource>;
   refTables: RefTable[];
   effectiveDate: string;
+  /** Test values of the parameters, by key. A parameter without a value uses its default. */
+  parameterValues?: ParameterValues;
   signal?: AbortSignal;
   /** Tests pass a Node runner here. */
   runner?: SqlRunner;
@@ -43,13 +49,16 @@ export interface PreviewRequest {
 /** Runs the sub-flow in the browser and returns the first 100 rows of one table. Reference tables are the versions valid on the date. */
 export async function runPreview(req: PreviewRequest): Promise<PreviewData> {
   const runner = req.runner ?? (await previewRunner());
+  // A preview runs the steps up to the selected one, so it asks only for the parameters that these steps read.
+  const definition = withUsedParametersOnly(req.definition);
+  const parameterValues = initialValues(parametersOf(definition), req.parameterValues);
   const prepared = prepareRun({
     flowName: 'preview',
-    flowVersions: [{ versionNo: 1, validFrom: '1900-01-01', validTo: null, definition: req.definition }],
+    flowVersions: [{ versionNo: 1, validFrom: '1900-01-01', validTo: null, definition }],
     refTables: req.refTables,
     effectiveDate: req.effectiveDate,
   });
-  const result = await runFlow(runner, { flow: req.definition, effectiveDate: req.effectiveDate, files: req.files, refTables: prepared.refTables, signal: req.signal });
+  const result = await runFlow(runner, { flow: definition, parameterValues, effectiveDate: req.effectiveDate, files: req.files, refTables: prepared.refTables, signal: req.signal });
   try {
     const table = result.tables.get(`${req.nodeId}/${req.handle}`);
     const data = await result.preview(req.nodeId, req.handle);

@@ -1,3 +1,5 @@
+import { engineText } from './messages';
+import type { EngineMessageId, MessageParams } from './messages';
 /** Shared data types of the engine. No React, no Supabase. */
 
 export type ColumnType = 'text' | 'number' | 'date' | 'boolean';
@@ -57,11 +59,21 @@ export type EngineErrorCode =
 export class EngineError extends Error {
   readonly code: EngineErrorCode;
   readonly nodeId: string | undefined;
+  /** Id of the message in the catalog and its parameters. Without an id the English `message` is shown. */
+  readonly messageId: string | undefined;
+  readonly params: Record<string, string | number> | undefined;
 
-  constructor(code: EngineErrorCode, message: string, nodeId?: string) {
+  constructor(code: EngineErrorCode, message: string, nodeId?: string, detail?: { messageId: string; params?: Record<string, string | number> }) {
     super(message);
     this.name = 'EngineError';
     this.code = code;
     this.nodeId = nodeId;
+    this.messageId = detail?.messageId;
+    this.params = detail?.params;
   }
+}
+
+/** An engine error with a message id: the message is the English template filled with the parameters. */
+export function coded(code: EngineErrorCode, messageId: EngineMessageId, params: MessageParams = {}, nodeId?: string): EngineError {
+  return new EngineError(code, engineText(messageId, params), nodeId, { messageId, params });
 }

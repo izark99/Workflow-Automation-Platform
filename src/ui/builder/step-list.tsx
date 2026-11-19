@@ -1,18 +1,20 @@
-import { Button } from '../components';
+import { Button, InfoTip } from '../components';
 import type { NodeType } from '../../engine/flow/types';
 import { STEP_CATALOG, STEP_GROUPS } from './graph';
-import { strings } from '../strings';
+import { useT } from '../i18n';
 import styles from './builder.module.css';
 
 /** The drag payload type. Dragging is the mouse path; the buttons are the keyboard path (Enter or Space adds the step). */
 export const DRAG_TYPE = 'application/x-dfw-step';
 
 export function StepList({ onAdd, disabled }: { onAdd: (type: NodeType) => void; disabled: boolean }) {
-  const t = strings.builder;
+  const t = useT();
   return (
-    <aside aria-label={t.stepTypes} className={styles.stepList}>
-      <h2>{t.addStep}</h2>
-      <p className={styles.hint}>{t.addStepHint}</p>
+    <aside aria-label={t('builder.stepTypes')} className={styles.stepList}>
+      <div className={styles.titleRow}>
+        <h2>{t('builder.addStep')}</h2>
+        <InfoTip label={t('builder.addStep')}>{t('builder.addStepHint')}</InfoTip>
+      </div>
       {STEP_GROUPS.map((g) => (
         <div key={g.label} role="group" aria-label={g.label} style={{ display: 'contents' }}>
           <span className={styles.group} aria-hidden="true">
@@ -30,7 +32,7 @@ export function StepList({ onAdd, disabled }: { onAdd: (type: NodeType) => void;
                 e.dataTransfer.effectAllowed = 'copy';
               }}
               onClick={() => onAdd(type)}
-              aria-label={`${t.add} ${STEP_CATALOG[type].label}`}
+              aria-label={t('builder.addStepButton', { name: STEP_CATALOG[type].label })}
             >
               {STEP_CATALOG[type].label}
             </Button>

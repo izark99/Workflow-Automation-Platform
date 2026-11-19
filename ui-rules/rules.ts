@@ -2,9 +2,9 @@ import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
 
 // Each rule returns a list of violations (empty = the rule holds). Numbers come from docs/DESIGN.md and were checked
-// against design/screens/*.html with getBoundingClientRect: title y 63, first block y 148, table row 57, buttons 40/36.
+// against design/screens/*.html with getBoundingClientRect: title y 63, first block y 123 (148 before Phase 4), table row 57, buttons 40/36.
 export const TITLE_Y = 63;
-export const FIRST_BLOCK_Y = 148;
+export const FIRST_BLOCK_Y = 123;
 export const ROW_HEIGHT = 57;
 export const BUTTON_HEIGHTS = [36, 40];
 
@@ -16,12 +16,32 @@ export const buttonHeights: Rule = async (page) =>
     for (const el of document.querySelectorAll('button')) {
       const r = el.getBoundingClientRect();
       if (r.width === 0 && r.height === 0) continue;
+      if (el.hasAttribute('data-infotip')) {
+        // The one exception to 36 and 40 px: the info button is exactly 24 x 24 px (WCAG 2.2 target size).
+        if (r.width !== 24 || r.height !== 24) bad.push(`info button "${el.getAttribute('aria-label') ?? ''}" is ${r.width} x ${r.height} px; it must be 24 x 24`);
+        continue;
+      }
       if (!allowed.includes(Math.round(r.height * 10) / 10)) {
         bad.push(`button "${(el.getAttribute('aria-label') ?? el.textContent ?? '').trim()}" is ${r.height} px high; allowed: ${allowed.join(', ')}`);
       }
     }
     return bad;
   }, BUTTON_HEIGHTS);
+
+/**
+ * SPEC 11.2: explanations live behind an info button. A visible element whose CSS class is named "hint" is an explanation
+ * paragraph; state messages use the class "note". (The class names are kept in production builds by CSS modules.)
+ */
+export const noHintParagraphs: Rule = async (page) =>
+  page.evaluate(() => {
+    const bad: string[] = [];
+    for (const el of document.querySelectorAll('[class*="_hint_"], [class*="_help_"], [class*="_subtitle_"]')) {
+      const r = el.getBoundingClientRect();
+      if (r.width === 0 && r.height === 0) continue;
+      bad.push(`visible hint paragraph: "${(el.textContent ?? '').trim().slice(0, 60)}"; move it into an info button`);
+    }
+    return bad;
+  });
 
 export const forbiddenElements: Rule = async (page) =>
   page.evaluate(() => {
@@ -65,7 +85,7 @@ export const tableRows: Rule = async (page) =>
     return bad;
   }, ROW_HEIGHT);
 
-/** Sidebar screens: the h1 sits at y 63 and the block with data-first-block at y 148. */
+/** Sidebar screens: the h1 sits at y 63 and the block with data-first-block at y 123. */
 export const headerPosition: Rule = async (page) =>
   page.evaluate(
     ([titleY, blockY]) => {
@@ -179,6 +199,7 @@ export const keyboardFocusRing: Rule = async (page) => {
 /** Rules that run on every route. */
 export const COMMON_RULES: Record<string, Rule> = {
   'button heights': buttonHeights,
+  'no visible hint paragraphs': noHintParagraphs,
   'forbidden elements': forbiddenElements,
   'one cta': oneCta,
   'no horizontal scroll': noHorizontalScroll,
@@ -188,3 +209,48 @@ export const COMMON_RULES: Record<string, Rule> = {
   'keyboard focus ring': keyboardFocusRing,
   'accessibility (axe)': axeSeriousOrCritical,
 };
+
+/**
+ * SPEC 11.3: every visible text comes from the catalog. With the pseudo-locale on, the catalog wraps each text in the
+ * markers and so any visible text or text attribute outside the markers is a literal. Text inside `[data-user-content]`
+ * is user data (names, file content) and is never translated. Text without a letter (digits, punctuation) is allowed.
+ */
+export async function untranslatedText(page: Page, selector: string): Promise<string[]> {
+  return page.evaluate((sel) => {
+    const bad: string[] = [];
+    const root = document.querySelector(sel);
+    if (!root) return [`no element matches ${sel}`];
+    // Markers can nest (a text passed as a parameter of another text): strip the innermost pairs until none are left.
+    // Dates such as 30 Sep 2026 keep their English month name until T4.7e puts month names in the catalog.
+    const date = /\b(?:\d{1,2} )?(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d{4}\b/g;
+    const outside = (text: string): boolean => {
+      let rest = text.replace(date, '');
+      for (let prev = ''; prev !== rest; ) {
+        prev = rest;
+        rest = rest.replace(/\u27E6[^\u27E6\u27E7]*\u27E7/gu, '');
+      }
+      return /\p{L}/u.test(rest);
+    };
+    const skip = '[data-user-content], [data-code], .react-flow__attribution'; // user data, formula syntax such as function names, and the React Flow attribution link
+    const visible = (el: Element): boolean => {
+      const r = el.getBoundingClientRect();
+      const s = getComputedStyle(el);
+      return (r.width > 0 || r.height > 0) && s.visibility !== 'hidden' && s.display !== 'none';
+    };
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+      const el = n.parentElement;
+      const text = n.textContent ?? '';
+      if (!el || !text.trim() || el.closest(skip) || el.closest('script, style') || !visible(el)) continue;
+      if (outside(text)) bad.push(`text outside the catalog: "${text.trim().slice(0, 60)}" in <${el.tagName.toLowerCase()}${el.className && typeof el.className === 'string' ? '.' + el.className.split(' ')[0] : ''}>`);
+    }
+    for (const el of [root, ...root.querySelectorAll('*')]) {
+      if (el.closest(skip) || !visible(el)) continue;
+      for (const attr of ['placeholder', 'aria-label', 'title', 'alt']) {
+        const value = el.getAttribute(attr);
+        if (value && outside(value)) bad.push(`${attr} outside the catalog: "${value.slice(0, 60)}"`);
+      }
+    }
+    return bad;
+  }, selector);
+}

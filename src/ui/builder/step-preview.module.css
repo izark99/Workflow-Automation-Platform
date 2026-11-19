@@ -1,7 +1,7 @@
 .block {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .label {
@@ -37,4 +37,9 @@
 .chips {
   display: flex;
   gap: 8px;
+}
+
+.labelRow {
+  display: flex;
+  align-items: center;
 }

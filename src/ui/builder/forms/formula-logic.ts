@@ -1,3 +1,6 @@
+import { translate } from '../../i18n';
+import { placeholderParameters } from '../../../engine/flow/parameter-values';
+import type { FlowParameter } from '../../../engine/flow/parameters';
 import { compileFormula } from '../../../engine/formula/compile';
 import { FormulaError, parseFormula } from '../../../engine/formula/parse';
 import type { Column, ColumnType } from '../../../engine/types';
@@ -10,32 +13,30 @@ export type FormulaState =
   | { kind: 'invalid'; message: string }
   | { kind: 'valid'; type: ColumnType; message: string };
 
-const EMPTY = 'The formula is empty. Write a formula, for example [OT hours] > 4.';
-
 /**
  * What to tell the user about a formula. Without columns only the way it is written is checked. With the columns of the
  * input table the compiler also checks column names and types and gives the result type; `expect` is a type that the
  * result must have (a Filter condition must give boolean).
  */
-export function checkFormula(source: string, columns: Column[] | null, effectiveDate: string, expect?: ColumnType): FormulaState {
-  if (source.trim() === '') return { kind: 'empty', message: EMPTY };
+export function checkFormula(source: string, columns: Column[] | null, effectiveDate: string, expect?: ColumnType, parameters: readonly FlowParameter[] = []): FormulaState {
+  if (source.trim() === '') return { kind: 'empty', message: translate('builder.formula.state.empty') };
   try {
     parseFormula(source);
   } catch (e) {
-    if (e instanceof FormulaError) return { kind: 'syntax_error', message: `Character ${e.position + 1}: ${e.message}` };
+    if (e instanceof FormulaError) return { kind: 'syntax_error', message: translate('builder.formula.state.position', { position: e.position + 1, message: e.message }) };
     throw e;
   }
   if (columns === null) {
-    return { kind: 'unchecked', message: 'The formula is written correctly. Load the columns to check the column names and the result type.' };
+    return { kind: 'unchecked', message: translate('builder.formula.state.unchecked') };
   }
   try {
-    const compiled = compileFormula(source, { columns, effectiveDate });
+    const compiled = compileFormula(source, { columns, effectiveDate, parameters: placeholderParameters(parameters) });
     if (expect && compiled.type !== expect) {
-      return { kind: 'invalid', message: `The formula gives a ${compiled.type}, but this step needs ${expect === 'boolean' ? 'true or false' : `a ${expect}`}. Compare the value with something, for example [Column] > 0.` };
+      return { kind: 'invalid', message: translate('builder.formula.state.wrongType', { actual: compiled.type, needed: expect === 'boolean' ? translate('builder.formula.state.needBoolean') : translate('builder.formula.state.needType', { type: expect }) }) };
     }
-    return { kind: 'valid', type: compiled.type, message: `Formula is valid. Result type: ${compiled.type}.` };
+    return { kind: 'valid', type: compiled.type, message: translate('builder.formula.state.valid', { type: compiled.type }) };
   } catch (e) {
-    if (e instanceof FormulaError) return { kind: 'invalid', message: `Character ${e.position + 1}: ${e.message}` };
+    if (e instanceof FormulaError) return { kind: 'invalid', message: translate('builder.formula.state.position', { position: e.position + 1, message: e.message }) };
     throw e;
   }
 }

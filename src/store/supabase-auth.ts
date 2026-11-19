@@ -1,6 +1,7 @@
 // AuthService on Supabase Auth. The same client also serves SupabaseStore, so a sign-in here is the session there.
 import type { Session, SupabaseClient } from '@supabase/supabase-js';
-import { AuthError, authErrorMessage, type AuthEvent, type AuthService, type AuthSession } from './auth';
+import { AuthError, authErrorFrom, type AuthEvent, type AuthService, type AuthSession } from './auth';
+import { storeText } from './messages';
 
 const toSession = (s: Session | null): AuthSession | null => (s?.user ? { userId: s.user.id, email: s.user.email ?? '' } : null);
 
@@ -19,15 +20,20 @@ export class SupabaseAuth implements AuthService {
   async signIn(email: string, password: string): Promise<AuthSession> {
     const { data, error } = await this.client.auth.signInWithPassword({ email: email.trim(), password });
     const session = toSession(data.session);
-    if (error || !session) throw new AuthError(authErrorMessage(error ?? {}));
+    if (error || !session) throw authErrorFrom(error ?? {});
     return session;
+  }
+
+  async changePassword(newPassword: string): Promise<void> {
+    const { error } = await this.client.auth.updateUser({ password: newPassword });
+    if (error) throw authErrorFrom({ code: (error as { code?: string }).code, name: error.name, status: (error as { status?: number }).status, message: error.message });
   }
 
   async signOut(): Promise<void> {
     this.signingOut = true;
     try {
       const { error } = await this.client.auth.signOut();
-      if (error) throw new AuthError(`Could not sign out: ${error.message}. Close the tab, or try again.`);
+      if (error) throw new AuthError(storeText('errors.auth.signOutFailed', { detail: error.message }), { messageId: 'errors.auth.signOutFailed', params: { detail: error.message } });
     } finally {
       this.signingOut = false;
     }

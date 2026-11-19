@@ -1,7 +1,8 @@
 import { planPublish } from '../engine/versions';
 import type { VersionRange } from '../engine/versions';
 import { checkRange, checkRowCap } from './checks';
-import { KEEP_DELETED_DAYS, StoreError } from './types';
+import { KEEP_DELETED_DAYS, StoreError, storeError, type StoreErrorCode } from './types';
+import type { StoreMessageId } from './messages';
 import type {
   DataStore,
   FlowRecord,
@@ -12,6 +13,8 @@ import type {
   RefVersionPatch,
   RunLogEntry,
   Scope,
+  UiText,
+  UiTextLocale,
   User,
   VersionPatch,
 } from './types';
@@ -24,6 +27,8 @@ export interface Snapshot {
   flows: FlowRecord[];
   refTables: RefTableRecord[];
   runLog: RunLogEntry[];
+  /** Edited UI texts. Missing in a snapshot saved before Phase 4. */
+  uiTexts?: UiText[];
 }
 
 /** Where the snapshot lives between page loads. The browser uses IndexedDB (decision D37); the tests use memory. */
@@ -53,8 +58,8 @@ export interface LocalStoreOptions {
 
 const DAY = 86_400_000;
 
-const fail = (code: ConstructorParameters<typeof StoreError>[0], message: string): never => {
-  throw new StoreError(code, message);
+const fail = (code: StoreErrorCode, id: StoreMessageId, params?: Record<string, string | number>): never => {
+  throw storeError(code, id, params);
 };
 
 /** The data store of the browser. It enforces the permission table of SPEC section 7 in code, as row-level security does on the server. */
@@ -85,12 +90,15 @@ export class LocalStore implements DataStore {
   }
 
   private who(s: Snapshot): User {
-    return s.users.find((u) => u.id === s.currentUserId) ?? fail('forbidden', 'No user is signed in. Sign in and try again.');
+    const user = s.users.find((u) => u.id === s.currentUserId) ?? fail('forbidden', 'errors.noUser');
+    // The database refuses a locked account at once (D75); the local store does the same.
+    if (user.locked) fail('forbidden', 'errors.accountLocked');
+    return user;
   }
 
   private mustBeAdmin(s: Snapshot, what: string): User {
     const u = this.who(s);
-    if (u.role !== 'admin') fail('forbidden', `Only the admin can ${what}. Ask the admin.`);
+    if (u.role !== 'admin') fail('forbidden', 'errors.adminOnly', { what });
     return u;
   }
 
@@ -116,8 +124,8 @@ export class LocalStore implements DataStore {
   private flowFor(s: Snapshot, id: string, edit: boolean): FlowRecord {
     const u = this.who(s);
     const f = s.flows.find((x) => x.id === id);
-    if (!f || !this.canSee(u, f)) return fail('not_found', 'This flow does not exist or you cannot open it. Go back to the Flows list.');
-    if (edit && !this.canEdit(u, f)) fail('forbidden', 'You can view and run this shared flow, but only the admin can change it. Copy it to a personal flow to edit.');
+    if (!f || !this.canSee(u, f)) return fail('not_found', 'errors.flowNotFound');
+    if (edit && !this.canEdit(u, f)) fail('forbidden', 'errors.sharedFlowReadOnly');
     return f;
   }
 
@@ -128,7 +136,7 @@ export class LocalStore implements DataStore {
   /** For tests and the dev tools: sign in as another seeded user. */
   async switchUser(userId: string): Promise<void> {
     const s = await this.open();
-    if (!s.users.some((u) => u.id === userId)) fail('not_found', `There is no user "${userId}".`);
+    if (!s.users.some((u) => u.id === userId)) fail('not_found', 'errors.userNotFound', { id: userId });
     s.currentUserId = userId;
     await this.commit(s);
   }
@@ -142,13 +150,13 @@ export class LocalStore implements DataStore {
   async saveUser(user: User): Promise<User> {
     const s = await this.open();
     this.mustBeAdmin(s, 'change users');
-    if (!user.name.trim() || !user.email.includes('@')) fail('invalid', 'A user needs a name and an email address. Fill both and save again.');
+    if (!user.name.trim() || !user.email.includes('@')) fail('invalid', 'errors.userNeedsNameEmail');
     const i = s.users.findIndex((u) => u.id === user.id);
     if (user.role !== 'admin' && i >= 0 && s.users[i]!.role === 'admin' && !s.users.some((u, j) => j !== i && u.role === 'admin')) {
-      fail('conflict', 'At least one admin is needed. Make another user an admin first, then change this user.');
+      fail('conflict', 'errors.lastAdmin');
     }
     if (s.users.some((u, j) => j !== i && u.email.toLowerCase() === user.email.trim().toLowerCase())) {
-      fail('conflict', `A user with the email ${user.email.trim()} exists. Use another email address.`);
+      fail('conflict', 'errors.emailExists', { email: user.email.trim() });
     }
     const saved = { ...user, name: user.name.trim(), email: user.email.trim(), groupIds: user.groupIds.filter((g) => s.groups.some((x) => x.id === g)), id: user.id || this.nextId(s, 'user') };
     if (i >= 0) s.users[i] = saved;
@@ -167,11 +175,11 @@ export class LocalStore implements DataStore {
     const s = await this.open();
     this.mustBeAdmin(s, 'change groups');
     const name = group.name.trim();
-    if (!name) fail('invalid', 'A group needs a name. Type a name and save again.');
-    if (s.groups.some((g) => g.id !== group.id && g.name.toLowerCase() === name.toLowerCase())) fail('conflict', `A group named "${name}" exists. Choose another name.`);
+    if (!name) fail('invalid', 'errors.groupNeedsName');
+    if (s.groups.some((g) => g.id !== group.id && g.name.toLowerCase() === name.toLowerCase())) fail('conflict', 'errors.groupExists', { name });
     let saved: Group;
     if (group.id) {
-      const existing = s.groups.find((g) => g.id === group.id) ?? fail('not_found', 'This group does not exist any more. Reload the page.');
+      const existing = s.groups.find((g) => g.id === group.id) ?? fail('not_found', 'errors.groupGone');
       existing.name = name;
       saved = existing;
     } else {
@@ -185,10 +193,56 @@ export class LocalStore implements DataStore {
   async deleteGroup(id: string): Promise<void> {
     const s = await this.open();
     this.mustBeAdmin(s, 'delete groups');
-    if (!s.groups.some((g) => g.id === id)) fail('not_found', 'This group does not exist any more. Reload the page.');
+    if (!s.groups.some((g) => g.id === id)) fail('not_found', 'errors.groupGone');
     s.groups = s.groups.filter((g) => g.id !== id);
     for (const u of s.users) u.groupIds = u.groupIds.filter((g) => g !== id);
     for (const f of s.flows) f.groupIds = f.groupIds.filter((g) => g !== id);
+    await this.commit(s);
+  }
+
+  /** For `LocalAccountAdmin`: runs a change of the accounts as the signed-in admin and saves the snapshot when it succeeds. */
+  async changeAccounts(change: (s: Snapshot, actor: User, newId: () => string) => void): Promise<void> {
+    const s = await this.open();
+    const actor = this.mustBeAdmin(s, 'manage accounts');
+    change(s, actor, () => this.nextId(s, 'user'));
+    await this.commit(s);
+  }
+
+  async accountStatus(): Promise<{ locked: boolean; mustChangePassword: boolean }> {
+    const s = await this.open();
+    const user = s.users.find((u) => u.id === s.currentUserId) ?? fail('forbidden', 'errors.noUser');
+    return { locked: user.locked === true, mustChangePassword: user.mustChangePassword === true };
+  }
+
+  async clearMustChangePassword(): Promise<void> {
+    const s = await this.open();
+    this.who(s).mustChangePassword = false;
+    await this.commit(s);
+  }
+
+  async listUiTexts(): Promise<UiText[]> {
+    const s = await this.open();
+    return structuredClone(s.uiTexts ?? []);
+  }
+
+  async saveUiText(input: { locale: UiTextLocale; key: string; value: string }): Promise<UiText> {
+    const s = await this.open();
+    this.mustBeAdmin(s, 'edit texts');
+    const value = input.value;
+    if (value.trim() === '') fail('invalid', 'errors.textEmpty');
+    const list = (s.uiTexts ??= []);
+    const saved: UiText = { locale: input.locale, key: input.key, value, updatedAt: this.now().toISOString() };
+    const at = list.findIndex((t) => t.locale === input.locale && t.key === input.key);
+    if (at >= 0) list[at] = saved;
+    else list.push(saved);
+    await this.commit(s);
+    return structuredClone(saved);
+  }
+
+  async resetUiText(locale: UiTextLocale, key: string): Promise<void> {
+    const s = await this.open();
+    this.mustBeAdmin(s, 'edit texts');
+    s.uiTexts = (s.uiTexts ?? []).filter((t) => !(t.locale === locale && t.key === key));
     await this.commit(s);
   }
 
@@ -206,8 +260,8 @@ export class LocalStore implements DataStore {
   async createFlow({ name, scope }: { name: string; scope: Scope }): Promise<FlowRecord> {
     const s = await this.open();
     const u = this.who(s);
-    if (!name.trim()) fail('invalid', 'A flow needs a name. Type a name and try again.');
-    if (scope === 'shared' && u.role !== 'admin') fail('forbidden', 'Only the admin creates shared flows. Create a personal flow instead.');
+    if (!name.trim()) fail('invalid', 'errors.flowNeedsName');
+    if (scope === 'shared' && u.role !== 'admin') fail('forbidden', 'errors.sharedFlowAdminOnly');
     const flow: FlowRecord = {
       id: this.nextId(s, 'flow'),
       name: name.trim(),
@@ -245,7 +299,7 @@ export class LocalStore implements DataStore {
     const s = await this.open();
     this.mustBeAdmin(s, 'change who can use a shared flow');
     const f = this.flowFor(s, id, true);
-    if (f.scope !== 'shared') fail('invalid', 'Only a shared flow has group access. Make the flow shared first.');
+    if (f.scope !== 'shared') fail('invalid', 'errors.notSharedFlow');
     f.groupIds = groupIds.filter((g) => s.groups.some((x) => x.id === g));
     await this.commit(s);
     return structuredClone(f);
@@ -266,7 +320,7 @@ export class LocalStore implements DataStore {
   private deletedFlow(s: Snapshot, id: string): FlowRecord {
     this.mustBeAdmin(s, 'restore or remove deleted flows');
     const f = s.flows.find((x) => x.id === id && x.deletedAt);
-    return f ?? fail('not_found', 'This flow is not in the deleted list. It may have been restored already.');
+    return f ?? fail('not_found', 'errors.flowNotDeleted');
   }
 
   async restoreFlow(id: string): Promise<FlowRecord> {
@@ -295,8 +349,8 @@ export class LocalStore implements DataStore {
   }
 
   private versionOf<T extends VersionRange & { status: string }>(versions: T[], no: number, forEdit: boolean): T {
-    const v = versions.find((x) => x.versionNo === no) ?? fail('not_found', `Version v${no} does not exist. Pick a version from the list.`);
-    if (forEdit && v.status === 'published') fail('conflict', `v${no} is published and read-only. Create a new version from it to make changes.`);
+    const v = versions.find((x) => x.versionNo === no) ?? fail('not_found', 'errors.versionNotFound', { n: no });
+    if (forEdit && v.status === 'published') fail('conflict', 'errors.versionReadOnly', { n: no });
     return v;
   }
 
@@ -337,14 +391,14 @@ export class LocalStore implements DataStore {
 
   private tableFor(s: Snapshot, id: string): RefTableRecord {
     this.mustBeAdmin(s, 'change reference tables');
-    return s.refTables.find((t) => t.id === id) ?? fail('not_found', 'This reference table does not exist. Go back to the Reference tables list.');
+    return s.refTables.find((t) => t.id === id) ?? fail('not_found', 'errors.refTableNotFound');
   }
 
   async createRefTable({ name, description, columns }: { name: string; description: string; columns: RefTableVersionRecord['columns'] }): Promise<RefTableRecord> {
     const s = await this.open();
     this.mustBeAdmin(s, 'create reference tables');
-    if (!name.trim()) fail('invalid', 'A reference table needs a name. Type a name and try again.');
-    if (s.refTables.some((t) => t.name.toLowerCase() === name.trim().toLowerCase())) fail('conflict', `A reference table named "${name.trim()}" exists. Choose another name.`);
+    if (!name.trim()) fail('invalid', 'errors.refTableNeedsName');
+    if (s.refTables.some((t) => t.name.toLowerCase() === name.trim().toLowerCase())) fail('conflict', 'errors.refTableExists', { name: name.trim() });
     const table: RefTableRecord = {
       id: this.nextId(s, 'ref'),
       name: name.trim(),
@@ -419,7 +473,7 @@ const draftVersion = (versionNo: number, validFrom: string, changeNote: string, 
  */
 function publish<T extends VersionRange & { status: 'draft' | 'published' }>(versions: T[], versionNo: number, what: string): void {
   const plan = planPublish(versions, versionNo, what);
-  if (!plan.ok) return fail(plan.kind === 'not_found' ? 'not_found' : 'conflict', plan.message);
+  if (!plan.ok) throw new StoreError(plan.kind === 'not_found' ? 'not_found' : 'conflict', plan.message); // the engine's text, English
   versions.find((x) => x.versionNo === versionNo)!.status = 'published';
   if (plan.ends) versions.find((x) => x.versionNo === plan.ends!.versionNo)!.validTo = plan.ends.validTo;
 }

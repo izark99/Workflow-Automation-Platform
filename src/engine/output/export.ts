@@ -2,7 +2,7 @@ import * as XLSX from 'xlsx';
 import type { FlowDefinition } from '../flow/types';
 import { parseOutputSettings, type OutputSettings } from '../nodes/output';
 import type { RunResult } from '../run';
-import { EngineError, type Cell, type TableData } from '../types';
+import { coded, type Cell, type TableData } from '../types';
 
 export interface OutputFile {
   /** File name with extension, safe for a download. */
@@ -83,7 +83,7 @@ const safeName = (s: string) => s.replace(/[\\/:*?"<>|]/g, '_');
 export async function buildOutputFiles(result: RunResult, flow: Pick<FlowDefinition, 'nodes'>): Promise<OutputFile[]> {
   const steps = flow.nodes.filter((n) => n.type === 'output');
   if (steps.length === 0) {
-    throw new EngineError('invalid_flow', 'The flow has no Output step, so there is no file to write. Add an Output step after the step whose result you want.');
+    throw coded('invalid_flow', 'engine.noOutputStep');
   }
   const files = new Map<string, { settings: OutputSettings; table: TableData }[]>();
   for (const node of steps) {

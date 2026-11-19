@@ -7,6 +7,8 @@ export interface Column<T> {
   /** Numbers are right-aligned. */
   align?: 'left' | 'right';
   render: (row: T) => ReactNode;
+  /** The header and the cells hold user data (column names, file content): the pseudo-locale rule does not expect catalog text. */
+  userContent?: boolean;
 }
 
 export interface TableProps<T> {
@@ -25,7 +27,7 @@ export function Table<T>({ label, columns, rows, rowKey }: TableProps<T>) {
         <thead>
           <tr>
             {columns.map((c) => (
-              <th key={c.key} scope="col" className={cls(styles.th ?? '', c.align)}>
+              <th key={c.key} scope="col" className={cls(styles.th ?? '', c.align)} data-user-content={c.userContent ? '' : undefined}>
                 {c.header}
               </th>
             ))}
@@ -35,7 +37,7 @@ export function Table<T>({ label, columns, rows, rowKey }: TableProps<T>) {
           {rows.map((row) => (
             <tr key={rowKey(row)}>
               {columns.map((c) => (
-                <td key={c.key} className={cls(styles.td ?? '', c.align)}>
+                <td key={c.key} className={cls(styles.td ?? '', c.align)} data-user-content={c.userContent ? '' : undefined}>
                   {c.render(row)}
                 </td>
               ))}

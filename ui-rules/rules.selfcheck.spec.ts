@@ -1,8 +1,24 @@
 import { expect, test } from '@playwright/test';
-import { axeSeriousOrCritical, buttonHeights, dangerSpacing, duplicateButtonNames, forbiddenElements, headerPosition, keyboardFocusRing, noHorizontalScroll, oneCta, sidebarWidth, tableRows } from './rules';
+import { axeSeriousOrCritical, buttonHeights, dangerSpacing, noHintParagraphs, untranslatedText, duplicateButtonNames, forbiddenElements, headerPosition, keyboardFocusRing, noHorizontalScroll, oneCta, sidebarWidth, tableRows } from './rules';
 
 // Each rule must fail on a page that breaks it, and pass on a page that does not.
 const bad = (html: string) => `<!doctype html><html lang="en"><head><title>t</title></head><body style="margin:0">${html}</body></html>`;
+
+test('hint paragraphs: a visible element with a hint class fails, a note and a hidden hint pass', async ({ page }) => {
+  await page.setContent(bad('<p class="_hint_x1">Explains something</p>'));
+  expect((await noHintParagraphs(page)).length).toBe(1);
+  await page.setContent(bad('<p class="_note_x1">State</p><p class="_hint_x1" style="display:none">h</p>'));
+  expect(await noHintParagraphs(page)).toEqual([]);
+});
+
+test('info button: 24 x 24 px passes, 26 x 26 and 24 x 36 fail', async ({ page }) => {
+  await page.setContent(bad('<button data-infotip style="width:24px;height:24px;padding:0;border:0">i</button>'));
+  expect(await buttonHeights(page)).toEqual([]);
+  await page.setContent(bad('<button data-infotip style="width:26px;height:26px;padding:0;border:0">i</button>'));
+  expect((await buttonHeights(page)).length).toBe(1);
+  await page.setContent(bad('<button data-infotip style="width:24px;height:36px;padding:0;border:0">i</button>'));
+  expect((await buttonHeights(page)).length).toBe(1);
+});
 
 test('button heights: 30 px fails, 36 and 40 pass', async ({ page }) => {
   await page.setContent(bad('<button style="height:30px">a</button>'));
@@ -39,10 +55,10 @@ test('table rows: 56 px fails, 57 px passes', async ({ page }) => {
   expect(await tableRows(page)).toEqual([]);
 });
 
-test('header position: a title at y 0 fails, y 63 and block at y 148 pass', async ({ page }) => {
+test('header position: a title at y 0 fails, y 63 and block at y 123 pass', async ({ page }) => {
   await page.setContent(bad('<h1>t</h1><div data-first-block>b</div>'));
   expect((await headerPosition(page)).length).toBe(2);
-  await page.setContent(bad('<div style="height:63px"></div><h1 style="margin:0;height:36px">t</h1><div style="height:49px"></div><div data-first-block>b</div>'));
+  await page.setContent(bad('<div style="height:63px"></div><h1 style="margin:0;height:36px">t</h1><div style="height:24px"></div><div data-first-block>b</div>'));
   expect(await headerPosition(page)).toEqual([]);
 });
 
@@ -84,4 +100,13 @@ test('keyboard focus ring: a button with no outline fails, one with a 2 px outli
   expect(await keyboardFocusRing(page)).toEqual([]);
   await page.setContent(bad('<label style="display:inline-block" class="w"><style>.w:focus-within{outline:2px solid #0d9488}</style><input type="text" style="outline:0"></label>'));
   expect(await keyboardFocusRing(page)).toEqual([]);
+});
+
+test('pseudo-locale: a text outside the markers fails, marked text, user content and digits pass', async ({ page }) => {
+  await page.setContent(bad('<main><p>Plain text</p></main>'));
+  expect((await untranslatedText(page, 'main')).length).toBe(1);
+  await page.setContent(bad('<main><p>\u27E6Flows\u27E7</p><p data-user-content>Harold</p><p>12 / 30</p><input placeholder="\u27E6Name\u27E7"></main>'));
+  expect(await untranslatedText(page, 'main')).toEqual([]);
+  await page.setContent(bad('<main><input placeholder="Name"><button aria-label="Close">1</button></main>'));
+  expect((await untranslatedText(page, 'main')).length).toBe(2);
 });

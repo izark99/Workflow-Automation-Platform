@@ -4,6 +4,8 @@
  */
 import type { Cell, Column } from '../engine/types';
 import type { VersionRange } from '../engine/versions';
+import { storeText } from './messages';
+import type { StoreMessageId } from './messages';
 
 export type Role = 'admin' | 'user';
 export type Scope = 'personal' | 'shared';
@@ -14,6 +16,10 @@ export interface User {
   email: string;
   role: Role;
   groupIds: string[];
+  /** The account is locked by an admin (SPEC 11.1): it cannot sign in and reads nothing. */
+  locked?: boolean;
+  /** The user must choose a new password at the next sign-in. */
+  mustChangePassword?: boolean;
 }
 
 export interface Group {
@@ -90,13 +96,33 @@ export const KEEP_DELETED_DAYS = 30;
 export type StoreErrorCode = 'not_found' | 'forbidden' | 'invalid' | 'conflict';
 
 /** Every message says what failed and what to do next. */
+export type UiTextLocale = 'en' | 'vi';
+
+/** An edited text: the value replaces the default of the catalog for that locale. */
+export interface UiText {
+  locale: UiTextLocale;
+  key: string;
+  value: string;
+  updatedAt: string;
+}
+
 export class StoreError extends Error {
   readonly code: StoreErrorCode;
-  constructor(code: StoreErrorCode, message: string) {
+  /** Id of the message in the catalog and its parameters. Without an id the English `message` is shown. */
+  readonly messageId: string | undefined;
+  readonly params: Record<string, string | number> | undefined;
+  constructor(code: StoreErrorCode, message: string, detail?: { messageId: string; params?: Record<string, string | number> }) {
     super(message);
     this.name = 'StoreError';
     this.code = code;
+    this.messageId = detail?.messageId;
+    this.params = detail?.params;
   }
+}
+
+/** A store error with a message id: the message is the English template filled with the parameters. */
+export function storeError(code: StoreErrorCode, messageId: StoreMessageId, params: Record<string, string | number> = {}): StoreError {
+  return new StoreError(code, storeText(messageId, params), { messageId, params });
 }
 
 export interface DataStore {
@@ -125,6 +151,14 @@ export interface DataStore {
   purgeFlow(id: string): Promise<void>;
   /** Admin only. Removes the deleted flows that were kept longer than 30 days. Returns how many. */
   purgeExpired(): Promise<number>;
+  /** The own account: locked by an admin, or the password must be changed. Readable even when the account is locked. */
+  accountStatus(): Promise<{ locked: boolean; mustChangePassword: boolean }>;
+  /** After the user chose a new password. */
+  clearMustChangePassword(): Promise<void>;
+  /** The edited UI texts (SPEC 11.3). Everyone reads them, also before signing in; only an admin changes them. */
+  listUiTexts(): Promise<UiText[]>;
+  saveUiText(input: { locale: UiTextLocale; key: string; value: string }): Promise<UiText>;
+  resetUiText(locale: UiTextLocale, key: string): Promise<void>;
 
   saveFlowVersion(flowId: string, versionNo: number, patch: VersionPatch): Promise<FlowRecord>;
   /** A new draft, copied from `copyFrom` when given. */

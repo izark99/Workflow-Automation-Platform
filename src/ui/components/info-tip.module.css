@@ -1,0 +1,80 @@
+.anchor {
+  position: relative;
+  display: inline-flex;
+  vertical-align: middle;
+  /* 24 px tall button in a 21 px text line: the negative margins keep the line height of the label or title. */
+  margin: -2px 0 -2px 4px;
+}
+
+.button {
+  box-sizing: border-box;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+}
+
+.button:hover,
+.button[aria-expanded='true'] {
+  color: var(--color-ink);
+}
+
+.popover {
+  position: absolute;
+  left: 0;
+  top: 28px;
+  z-index: 5;
+  box-sizing: border-box;
+  width: max-content;
+  max-width: 320px;
+  padding: 12px;
+  border: 1px solid var(--color-control);
+  border-radius: var(--radius-control);
+  background: var(--color-card);
+  color: var(--color-ink);
+  box-shadow: var(--shadow-popover);
+  font: 400 13px/19px var(--font-sans);
+  font-weight: 400;
+  text-align: left;
+  white-space: normal;
+}
+
+/* A 4 px bridge between the button and the popover, so the pointer can cross the gap without closing it. */
+.popover::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -5px;
+  height: 5px;
+}
+
+.up {
+  top: auto;
+  bottom: 28px;
+}
+
+.up::before {
+  top: auto;
+  bottom: -5px;
+}
+
+.end {
+  left: auto;
+  right: 0;
+}
+
+.hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}

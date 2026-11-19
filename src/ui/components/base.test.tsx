@@ -76,11 +76,17 @@ describe('Field and SearchField', () => {
     expect(out).toContain(`id="${id}"`);
     expect(out).toContain('type="text"');
   });
-  it('links the error and the hint with aria-describedby and marks the input invalid', () => {
-    const out = html(<Field label="Name" hint="Use letters" error="Name is empty. Type a name." />);
+  it('links the error with aria-describedby and marks the input invalid', () => {
+    const out = html(<Field label="Name" error="Name is empty. Type a name." />);
     expect(out).toContain('aria-invalid="true"');
     expect(out).toContain('aria-describedby=');
     expect(out).toContain('role="alert"');
+  });
+  it('shows a hint only as an info button after the label, never as a paragraph', () => {
+    const out = html(<Field label="Name" hint="Use letters" />);
+    expect(out).toContain('data-infotip');
+    expect(out).toContain('aria-label="About Name"');
+    expect(out).not.toContain('Use letters'); // the text appears only when the popover is open
   });
   it('SearchField is type=text with an accessible name, never type=search', () => {
     const out = html(<SearchField label="Search flows" placeholder="Flow name" />);

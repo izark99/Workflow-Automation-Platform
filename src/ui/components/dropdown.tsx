@@ -16,14 +16,21 @@ export interface DropdownProps {
   options: DropdownOption[];
   value: string;
   onChange: (value: string) => void;
-  width?: number;
+  /** Pixels, or `'100%'` to fill the space that the parent gives (a card whose width changes with a scroll bar). */
+  width?: number | '100%';
   disabled?: boolean;
   /** Starts open, for the components page. */
   defaultOpen?: boolean;
+  /** A menu: the button always shows this text (the options are actions) and `label` names it for assistive technology. */
+  buttonLabel?: string;
+  /** A 36 px button, for a table row. */
+  compact?: boolean;
+  /** The options are the user's own texts (names they typed), which are never translated. */
+  userContent?: boolean;
 }
 
 /** Button with a chevron and a popover list. Arrow keys, Home, End, Enter, Space, Escape and type-ahead. */
-export function Dropdown({ label, options, value, onChange, width = 260, disabled = false, defaultOpen = false }: DropdownProps) {
+export function Dropdown({ label, options, value, onChange, width = 260, disabled = false, defaultOpen = false, buttonLabel, compact = false, userContent = false }: DropdownProps) {
   const [open, setOpen] = useState(defaultOpen);
   const [active, setActive] = useState(() => (defaultOpen ? Math.max(0, options.findIndex((o) => o.value === value)) : -1));
   const skipFocus = useRef(defaultOpen);
@@ -90,25 +97,26 @@ export function Dropdown({ label, options, value, onChange, width = 260, disable
 
   const current = options[selected]?.label ?? '';
   return (
-    <div className={styles.anchor} ref={rootRef}>
+    <div className={styles.anchor} ref={rootRef} style={width === '100%' ? { display: 'block' } : undefined}>
       <button
         ref={triggerRef}
         type="button"
-        className={`${styles.trigger} ${styles.between}`}
+        className={`${styles.trigger} ${styles.between} ${compact ? styles.compactTrigger : ''}`}
         style={{ width }}
+        data-user-content={userContent ? '' : undefined}
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-controls={open ? listId : undefined}
-        aria-label={`${label}: ${current}`}
+        aria-label={buttonLabel === undefined ? `${label}: ${current}` : label}
         disabled={disabled}
         onClick={() => (open ? close(false) : openList())}
         onKeyDown={onTriggerKey}
       >
-        {current}
+        {buttonLabel ?? current}
         <Icon name="chevronDown" />
       </button>
       {open ? (
-        <div id={listId} role="listbox" aria-label={label} className={`${styles.popover} ${up ? styles.up : ''}`} style={{ width: width + 20 }} onKeyDown={onListKey}>
+        <div id={listId} role="listbox" aria-label={label} className={`${styles.popover} ${up ? styles.up : ''}`} style={{ width: width === '100%' ? 'calc(100% + 20px)' : width + 20 }} onKeyDown={onListKey}>
           {options.map((o, i) => (
             <button
               key={o.value}
@@ -120,6 +128,7 @@ export function Dropdown({ label, options, value, onChange, width = 260, disable
               aria-selected={i === selected}
               tabIndex={i === active ? 0 : -1}
               className={styles.option}
+              data-user-content={userContent ? '' : undefined}
               onClick={() => choose(i)}
             >
               {i === selected ? <Icon name="check" /> : <span className={styles.check} />}

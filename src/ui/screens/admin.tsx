@@ -1,30 +1,36 @@
 import { useState } from 'react';
-import { Button, Card, Checkbox, Dialog, Dropdown, EmptyState, ErrorState, Field, ScreenFrame, SkeletonTable, Table, useDelayedLoading, useToast } from '../components';
+import { Badge, Button, Card, Checkbox, Dialog, Dropdown, EmptyState, ErrorState, Field, InfoTip, ScreenFrame, SkeletonTable, Table, Tabs, useDelayedLoading, useToast } from '../components';
 import type { Column } from '../components';
 import { StoreError } from '../../store/types';
 import type { FlowRecord, Group, User } from '../../store/types';
-import { useLoad, useStore } from '../store-context';
-import { adminStrings as t, strings } from '../strings';
+import { useAccounts, useLoad, useStore } from '../store-context';
+import { useT, errorText } from '../i18n';
+import type { MessageKey } from '../i18n';
+import { CreateAccountDialog, LockDialog, ResetPasswordDialog } from './admin-accounts';
+import { AdminTexts } from './admin-texts';
 import { deletedOn, groupsText, keptUntil, memberCount, toggleGroup, userFormProblem } from './admin-logic';
 import type { UserForm } from './admin-logic';
 import styles from './admin.module.css';
 
-type Dialogs = { kind: 'user'; user: User | null } | { kind: 'group'; group: Group | null } | { kind: 'deleteGroup'; group: Group } | { kind: 'purge'; flow: FlowRecord } | null;
+type Dialogs = { kind: 'user'; user: User | null } | { kind: 'create' } | { kind: 'reset'; user: User } | { kind: 'lock'; user: User; lock: boolean } | { kind: 'group'; group: Group | null } | { kind: 'deleteGroup'; group: Group } | { kind: 'purge'; flow: FlowRecord } | null;
 
-const message = (e: unknown, fallback: string): string => (e instanceof Error ? e.message : fallback);
+const message = (e: unknown, fallback: string): string => errorText(e, fallback);
 
 /** Admin: users, groups, access of groups to shared flows, and deleted flows with restore. */
 export function AdminScreen() {
+  const t = useT();
   const store = useStore();
+  const accounts = useAccounts();
   const toast = useToast();
   const data = useLoad(async (s) => {
     const me = await s.currentUser();
-    if (me.role !== 'admin') throw new StoreError('forbidden', t.forbidden);
+    if (me.role !== 'admin') throw new StoreError('forbidden', t('admin.forbidden'));
     // A flow that was deleted more than 30 days ago is removed for good when the admin opens this screen.
     await s.purgeExpired();
     return { users: await s.listUsers(), groups: await s.listGroups(), flows: await s.listFlows(), deleted: await s.listDeletedFlows() };
   });
   const showSkeleton = useDelayedLoading(data.loading && !data.data);
+  const [tab, setTab] = useState('users');
   const [dialog, setDialog] = useState<Dialogs>(null);
   const [dialogError, setDialogError] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
@@ -56,60 +62,90 @@ export function AdminScreen() {
   let body;
   if (data.error) {
     const forbidden = data.error instanceof StoreError && data.error.code === 'forbidden';
-    body = <ErrorState what={forbidden ? t.forbidden : t.loadFailed} next={forbidden ? t.forbiddenNext : data.error.message} />;
+    body = <ErrorState what={forbidden ? t('admin.forbidden') : t('admin.loadFailed')} next={forbidden ? t('admin.forbiddenNext') : errorText(data.error)} />;
   } else if (!d) {
-    body = showSkeleton ? <SkeletonTable weights={[16, 24, 10, 20, 12]} rows={3} label="Loading the admin data" /> : null;
+    body = showSkeleton ? <SkeletonTable weights={[16, 24, 10, 20, 12]} rows={3} label={t('admin.loading')} /> : null;
   } else {
     const shared = d.flows.filter((f) => f.scope === 'shared');
     const userColumns: Column<User>[] = [
-      { key: 'name', header: t.userCols.name, render: (u) => <b>{u.name}</b> },
-      { key: 'email', header: t.userCols.email, render: (u) => u.email },
-      { key: 'role', header: t.userCols.role, render: (u) => t.roles[u.role] },
-      { key: 'groups', header: t.userCols.groups, render: (u) => groupsText(u, d.groups) },
-      { key: 'actions', header: t.userCols.actions, render: (u) => <Button compact aria-label={`${t.edit} ${u.name}`} onClick={() => open({ kind: 'user', user: u })}>{t.edit}</Button> },
+      { key: 'name', header: t('admin.userCols.name'), userContent: true, render: (u) => <b>{u.name}</b> },
+      { key: 'email', header: t('admin.userCols.email'), userContent: true, render: (u) => u.email },
+      { key: 'role', header: t('admin.userCols.role'), render: (u) => t(`admin.roles.${u.role}` as MessageKey) },
+      { key: 'groups', header: t('admin.userCols.groups'), userContent: true, render: (u) => groupsText(u, d.groups) },
+      {
+        key: 'status',
+        header: t('admin.userCols.status'),
+        render: (u) => (
+          <div className={styles.actions}>
+            <Badge tone={u.locked ? 'outline' : 'soft'}>{u.locked ? t('admin.status.locked') : t('admin.status.active')}</Badge>
+            {u.mustChangePassword ? <Badge tone="outline">{t('admin.status.mustChange')}</Badge> : null}
+          </div>
+        ),
+      },
+      { key: 'actions', header: t('admin.userCols.actions'), render: (u) => (
+          <div className={styles.actions}>
+            <Button compact aria-label={t('admin.userDialogEdit', { name: u.name })} onClick={() => open({ kind: 'user', user: u })}>
+              {t('admin.edit')}
+            </Button>
+            <Dropdown
+              compact
+              width={96}
+              label={t('admin.menu.moreFor', { name: u.name })}
+              buttonLabel={t('admin.menu.more')}
+              options={[
+                { value: 'reset', label: t('admin.menu.reset') },
+                { value: 'lock', label: u.locked ? t('admin.menu.unlock') : t('admin.menu.lock') },
+              ]}
+              value=""
+              onChange={(v) => open(v === 'reset' ? { kind: 'reset', user: u } : { kind: 'lock', user: u, lock: !u.locked })}
+            />
+          </div>
+        ),
+      },
     ];
     const groupColumns: Column<Group>[] = [
-      { key: 'name', header: t.groupCols.name, render: (g) => <b>{g.name}</b> },
-      { key: 'members', header: t.groupCols.members, align: 'right', render: (g) => memberCount(g, d.users) },
+      { key: 'name', header: t('admin.groupCols.name'), userContent: true, render: (g) => <b>{g.name}</b> },
+      { key: 'members', header: t('admin.groupCols.members'), align: 'right', render: (g) => memberCount(g, d.users) },
       {
         key: 'actions',
-        header: t.groupCols.actions,
+        header: t('admin.groupCols.actions'),
         render: (g) => (
           <div className={styles.actions}>
-            <Button compact aria-label={`${t.rename} ${g.name}`} onClick={() => open({ kind: 'group', group: g })}>{t.rename}</Button>
-            <Button compact variant="danger" aria-label={`${t.delete} ${g.name}`} onClick={() => open({ kind: 'deleteGroup', group: g })}>{t.delete}</Button>
+            <Button compact aria-label={t('admin.renameGroup', { name: g.name })} onClick={() => open({ kind: 'group', group: g })}>{t('admin.rename')}</Button>
+            <Button compact variant="danger" aria-label={t('admin.deleteGroupLabel', { name: g.name })} onClick={() => open({ kind: 'deleteGroup', group: g })}>{t('admin.delete')}</Button>
           </div>
         ),
       },
     ];
     const accessColumns: Column<FlowRecord>[] = [
-      { key: 'flow', header: t.accessCols.flow, render: (f) => <b>{f.name}</b> },
+      { key: 'flow', header: t('admin.accessCols.flow'), userContent: true, render: (f) => <b>{f.name}</b> },
       ...d.groups.map((g) => ({
         key: g.id,
         header: g.name,
+        userContent: true,
         render: (f: FlowRecord) => (
           <div className={styles.check}>
             <Checkbox
               checked={f.groupIds.includes(g.id)}
-              label={t.access(g.name, f.name)}
-              onChange={(on) => void run(() => store.setFlowGroups(f.id, toggleGroup(f, d.groups, g.id, on)), t.accessSaved, t.accessFailed, false)}
+              label={t('admin.access', { group: g.name, flow: f.name })}
+              onChange={(on) => void run(() => store.setFlowGroups(f.id, toggleGroup(f, d.groups, g.id, on)), t('admin.accessSaved'), t('admin.accessFailed'), false)}
             />
           </div>
         ),
       })),
     ];
     const deletedColumns: Column<FlowRecord>[] = [
-      { key: 'flow', header: t.deletedCols.flow, render: (f) => <b>{f.name}</b> },
-      { key: 'owner', header: t.deletedCols.owner, render: (f) => f.ownerName ?? '' },
-      { key: 'on', header: t.deletedCols.deletedOn, render: (f) => deletedOn(f.deletedAt ?? '') },
-      { key: 'until', header: t.deletedCols.keptUntil, render: (f) => keptUntil(f.deletedAt ?? '') },
+      { key: 'flow', header: t('admin.deletedCols.flow'), userContent: true, render: (f) => <b>{f.name}</b> },
+      { key: 'owner', header: t('admin.deletedCols.owner'), userContent: true, render: (f) => f.ownerName ?? '' },
+      { key: 'on', header: t('admin.deletedCols.deletedOn'), render: (f) => deletedOn(f.deletedAt ?? '') },
+      { key: 'until', header: t('admin.deletedCols.keptUntil'), render: (f) => keptUntil(f.deletedAt ?? '') },
       {
         key: 'actions',
-        header: t.deletedCols.actions,
+        header: t('admin.deletedCols.actions'),
         render: (f) => (
           <div className={styles.actions}>
-            <Button compact aria-label={`${t.restore} ${f.name}`} onClick={() => void run(() => store.restoreFlow(f.id), t.restored(f.name), t.deletedFailed, false)}>{t.restore}</Button>
-            <Button compact variant="danger" aria-label={`${t.deleteForGood} ${f.name}`} onClick={() => open({ kind: 'purge', flow: f })}>{t.deleteForGood}</Button>
+            <Button compact aria-label={t('admin.restoreFlow', { name: f.name })} onClick={() => void run(() => store.restoreFlow(f.id), t('admin.restored', { name: f.name }), t('admin.deletedFailed'), false)}>{t('admin.restore')}</Button>
+            <Button compact variant="danger" aria-label={t('admin.deleteForGoodFlow', { name: f.name })} onClick={() => open({ kind: 'purge', flow: f })}>{t('admin.deleteForGood')}</Button>
           </div>
         ),
       },
@@ -118,8 +154,11 @@ export function AdminScreen() {
       <Card flush title={title}>
         <div className={styles.head}>
           <div className={styles.headText}>
-            <h2>{title}</h2>
-            {text ? <span className={styles.note}>{text}</span> : null}
+            {/* The explanation of a card is behind an info button (DESIGN checklist item 9), not under the title. */}
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <h2>{title}</h2>
+              {text ? <InfoTip label={title}>{text}</InfoTip> : null}
+            </div>
           </div>
           {action}
         </div>
@@ -128,30 +167,57 @@ export function AdminScreen() {
     );
     body = (
       <>
-        {problem ? <ErrorState what={t.deletedFailed} next={problem} /> : null}
+        {problem ? <ErrorState what={t('admin.deletedFailed')} next={problem} /> : null}
         {section(
-          t.usersTitle,
+          t('admin.usersTitle'),
           null,
-          <Button onClick={() => open({ kind: 'user', user: null })}>{t.invite}</Button>,
+          <Button onClick={() => open({ kind: 'create' })}>{t('admin.invite')}</Button>,
           <>
-            <Table label={t.usersTitle} columns={userColumns} rows={d.users} rowKey={(u) => u.id} />
-            <div className={styles.foot}><p className={styles.note}>{t.usersCount(d.users.length)}</p></div>
+            <Table label={t('admin.usersTitle')} columns={userColumns} rows={d.users} rowKey={(u) => u.id} />
+            <div className={styles.foot}><p className={styles.note}>{t('admin.usersCount', { n: d.users.length })}</p></div>
           </>,
         )}
-        {section(t.groupsTitle, null, <Button onClick={() => open({ kind: 'group', group: null })}>{t.newGroup}</Button>, <Table label={t.groupsTitle} columns={groupColumns} rows={d.groups} rowKey={(g) => g.id} />)}
+        {section(t('admin.groupsTitle'), null, <Button onClick={() => open({ kind: 'group', group: null })}>{t('admin.newGroup')}</Button>, <Table label={t('admin.groupsTitle')} columns={groupColumns} rows={d.groups} rowKey={(g) => g.id} />)}
         {section(
-          t.accessTitle,
-          t.accessText,
+          t('admin.accessTitle'),
+          t('admin.accessText'),
           null,
-          shared.length === 0 ? <EmptyState title={t.noShared} text="" action={null} /> : <Table label={t.accessTitle} columns={accessColumns} rows={shared} rowKey={(f) => f.id} />,
+          shared.length === 0 ? <EmptyState title={t('admin.noShared')} text="" action={null} /> : <Table label={t('admin.accessTitle')} columns={accessColumns} rows={shared} rowKey={(f) => f.id} />,
         )}
         {section(
-          t.deletedTitle,
-          t.deletedText,
+          t('admin.deletedTitle'),
+          t('admin.deletedText'),
           null,
-          d.deleted.length === 0 ? <div className={styles.foot}><p className={styles.note}>{t.noDeleted}</p></div> : <Table label={t.deletedTitle} columns={deletedColumns} rows={d.deleted} rowKey={(f) => f.id} />,
+          d.deleted.length === 0 ? <div className={styles.foot}><p className={styles.note}>{t('admin.noDeleted')}</p></div> : <Table label={t('admin.deletedTitle')} columns={deletedColumns} rows={d.deleted} rowKey={(f) => f.id} />,
         )}
 
+        {dialog?.kind === 'create' ? (
+          <CreateAccountDialog
+            busy={busy}
+            error={dialogError}
+            onCancel={() => setDialog(null)}
+            onCreate={(f) => void run(() => accounts.createAccount({ email: f.email, name: f.name, password: f.password, role: f.role, mustChangePassword: f.mustChangePassword }), t('admin.userAdded', { name: f.name }), t('admin.accountFailed'), true)}
+          />
+        ) : null}
+        {dialog?.kind === 'reset' ? (
+          <ResetPasswordDialog
+            user={dialog.user}
+            busy={busy}
+            error={dialogError}
+            onCancel={() => setDialog(null)}
+            onReset={(password, mustChange) => void run(() => accounts.resetPassword(dialog.user.id, password, mustChange), t('admin.resetDone', { name: dialog.user.name }), t('admin.accountFailed'), true)}
+          />
+        ) : null}
+        {dialog?.kind === 'lock' ? (
+          <LockDialog
+            user={dialog.user}
+            lock={dialog.lock}
+            busy={busy}
+            error={dialogError}
+            onCancel={() => setDialog(null)}
+            onConfirm={() => void run(() => (dialog.lock ? accounts.lock(dialog.user.id) : accounts.unlock(dialog.user.id)), t(dialog.lock ? 'admin.locked' : 'admin.unlocked', { name: dialog.user.name }), t('admin.accountFailed'), true)}
+          />
+        ) : null}
         {dialog?.kind === 'user' ? (
           <UserDialog
             user={dialog.user}
@@ -159,41 +225,41 @@ export function AdminScreen() {
             busy={busy}
             error={dialogError}
             onCancel={() => setDialog(null)}
-            onSave={(f) => void run(() => store.saveUser({ id: dialog.user?.id ?? '', name: f.name, email: f.email, role: f.role, groupIds: f.groupIds }), dialog.user ? null : `${f.name.trim()} added.`, t.userSaveFailed, true)}
+            onSave={(f) => void run(() => store.saveUser({ id: dialog.user?.id ?? '', name: f.name, email: f.email, role: f.role, groupIds: f.groupIds }), dialog.user ? null : t('admin.userAdded', { name: f.name.trim() }), t('admin.userSaveFailed'), true)}
           />
         ) : null}
-        {dialog?.kind === 'group' ? <GroupDialog group={dialog.group} busy={busy} error={dialogError} onCancel={() => setDialog(null)} onSave={(name) => void run(() => store.saveGroup({ id: dialog.group?.id, name }), null, t.groupSaveFailed, true)} /> : null}
+        {dialog?.kind === 'group' ? <GroupDialog group={dialog.group} busy={busy} error={dialogError} onCancel={() => setDialog(null)} onSave={(name) => void run(() => store.saveGroup({ id: dialog.group?.id, name }), null, t('admin.groupSaveFailed'), true)} /> : null}
         {dialog?.kind === 'deleteGroup' ? (
           <Dialog
-            title={t.groupDeleteTitle(dialog.group.name)}
+            title={t('admin.groupDeleteTitle', { name: dialog.group.name })}
             onClose={() => setDialog(null)}
             actions={
               <>
-                <Button onClick={() => setDialog(null)}>{t.cancel}</Button>
-                <Button variant="danger" busy={busy} onClick={() => void run(() => store.deleteGroup(dialog.group.id), null, t.groupSaveFailed, true)}>{t.delete}</Button>
+                <Button onClick={() => setDialog(null)}>{t('admin.cancel')}</Button>
+                <Button variant="danger" busy={busy} onClick={() => void run(() => store.deleteGroup(dialog.group.id), null, t('admin.groupSaveFailed'), true)}>{t('admin.delete')}</Button>
               </>
             }
           >
             <div className={styles.dialogBody}>
-              <span>{t.groupDeleteText(memberCount(dialog.group, d.users), shared.filter((f) => f.groupIds.includes(dialog.group.id)).length)}</span>
-              {dialogError ? <ErrorState what={t.groupSaveFailed} next={dialogError} /> : null}
+              <span>{t('admin.groupDeleteText', { members: memberCount(dialog.group, d.users), flows: shared.filter((f) => f.groupIds.includes(dialog.group.id)).length })}</span>
+              {dialogError ? <ErrorState what={t('admin.groupSaveFailed')} next={dialogError} /> : null}
             </div>
           </Dialog>
         ) : null}
         {dialog?.kind === 'purge' ? (
           <Dialog
-            title={t.purgeTitle(dialog.flow.name)}
+            title={t('admin.purgeTitle', { name: dialog.flow.name })}
             onClose={() => setDialog(null)}
             actions={
               <>
-                <Button onClick={() => setDialog(null)}>{t.cancel}</Button>
-                <Button variant="danger" busy={busy} onClick={() => void run(() => store.purgeFlow(dialog.flow.id), t.purged(dialog.flow.name), t.deletedFailed, true)}>{t.deleteForGood}</Button>
+                <Button onClick={() => setDialog(null)}>{t('admin.cancel')}</Button>
+                <Button variant="danger" busy={busy} onClick={() => void run(() => store.purgeFlow(dialog.flow.id), t('admin.purged', { name: dialog.flow.name }), t('admin.deletedFailed'), true)}>{t('admin.deleteForGood')}</Button>
               </>
             }
           >
             <div className={styles.dialogBody}>
-              <span>{t.purgeText}</span>
-              {dialogError ? <ErrorState what={t.deletedFailed} next={dialogError} /> : null}
+              <span>{t('admin.purgeText')}</span>
+              {dialogError ? <ErrorState what={t('admin.deletedFailed')} next={dialogError} /> : null}
             </div>
           </Dialog>
         ) : null}
@@ -202,22 +268,29 @@ export function AdminScreen() {
   }
 
   return (
-    <ScreenFrame breadcrumb={<span>{strings.screens.admin.crumb}</span>} title={strings.screens.admin.title} subtitle={strings.screens.admin.subtitle}>
-      {body}
+    <ScreenFrame breadcrumb={<span>{t('admin.screen.crumb')}</span>} title={t('admin.screen.title')} subtitle={t('admin.screen.subtitle')}>
+      {data.error && data.error instanceof StoreError && data.error.code === 'forbidden' ? (
+        body
+      ) : (
+        <Tabs label={t('admin.tabs.label')} tabs={[{ id: 'users', label: t('admin.tabs.users') }, { id: 'texts', label: t('admin.tabs.texts') }]} selected={tab} onSelect={setTab}>
+          <div className={styles.panel}>{tab === 'texts' ? <AdminTexts /> : body}</div>
+        </Tabs>
+      )}
     </ScreenFrame>
   );
 }
 
 function UserDialog({ user, groups, busy, error, onSave, onCancel }: { user: User | null; groups: Group[]; busy: boolean; error: string | null; onSave: (f: UserForm) => void; onCancel: () => void }) {
+  const t = useT();
   const [f, setF] = useState<UserForm>({ name: user?.name ?? '', email: user?.email ?? '', role: user?.role ?? 'user', groupIds: user?.groupIds ?? [] });
   const [local, setLocal] = useState<string | null>(null);
   return (
     <Dialog
-      title={user ? t.userDialogEdit(user.name) : t.userDialogNew}
+      title={user ? t('admin.userDialogEdit', { name: user.name }) : t('admin.userDialogNew')}
       onClose={onCancel}
       actions={
         <>
-          <Button onClick={onCancel}>{t.cancel}</Button>
+          <Button onClick={onCancel}>{t('admin.cancel')}</Button>
           <Button
             variant="primary"
             busy={busy}
@@ -227,53 +300,55 @@ function UserDialog({ user, groups, busy, error, onSave, onCancel }: { user: Use
               if (!p) onSave(f);
             }}
           >
-            {user ? t.save : t.inviteConfirm}
+            {user ? t('admin.save') : t('admin.inviteConfirm')}
           </Button>
         </>
       }
     >
       <div className={styles.dialogBody}>
-        {user ? null : <span>{t.inviteHint}</span>}
-        <Field label={t.userName} value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
-        <Field label={t.userEmail} value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} />
+        <Field label={t('admin.userName')} value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
+        <Field label={t('admin.userEmail')} hint={user ? undefined : t('admin.inviteHint')} value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} />
         <div>
-          <span style={{ display: 'block', fontWeight: 700, marginBottom: 6 }}>{t.userRole}</span>
-          <Dropdown label={t.userRole} options={(['user', 'admin'] as const).map((r) => ({ value: r, label: t.roles[r] }))} value={f.role} width={200} onChange={(role) => setF({ ...f, role: role as UserForm['role'] })} />
+          <span style={{ display: 'block', fontWeight: 700, marginBottom: 8 }}>{t('admin.userRole')}</span>
+          <Dropdown label={t('admin.userRole')} options={(['user', 'admin'] as const).map((r) => ({ value: r, label: t(`admin.roles.${r}` as MessageKey) }))} value={f.role} width={200} onChange={(role) => setF({ ...f, role: role as UserForm['role'] })} />
         </div>
-        <div className={styles.groupBoxes} role="group" aria-label={t.userGroups}>
-          <span style={{ fontWeight: 700 }}>{t.userGroups}</span>
-          <span className={styles.note}>{t.userGroupsHint}</span>
+        <div className={styles.groupBoxes} role="group" aria-label={t('admin.userGroups')}>
+          <span style={{ display: 'flex', alignItems: 'center', fontWeight: 700 }}>
+            {t('admin.userGroups')}
+            <InfoTip label={t('admin.userGroups')}>{t('admin.userGroupsHint')}</InfoTip>
+          </span>
           {groups.map((g) => (
             <Checkbox key={g.id} checked={f.groupIds.includes(g.id)} onChange={(on) => setF({ ...f, groupIds: on ? [...f.groupIds, g.id] : f.groupIds.filter((x) => x !== g.id) })}>
-              {g.name}
+              <span data-user-content>{g.name}</span>
             </Checkbox>
           ))}
         </div>
-        {local ? <ErrorState what={t.userSaveFailed} next={local} /> : null}
-        {error ? <ErrorState what={t.userSaveFailed} next={error} /> : null}
+        {local ? <ErrorState what={t('admin.userSaveFailed')} next={local} /> : null}
+        {error ? <ErrorState what={t('admin.userSaveFailed')} next={error} /> : null}
       </div>
     </Dialog>
   );
 }
 
 function GroupDialog({ group, busy, error, onSave, onCancel }: { group: Group | null; busy: boolean; error: string | null; onSave: (name: string) => void; onCancel: () => void }) {
+  const t = useT();
   const [name, setName] = useState(group?.name ?? '');
   return (
     <Dialog
-      title={group ? t.groupDialogRename(group.name) : t.groupDialogNew}
+      title={group ? t('admin.groupDialogRename', { name: group.name }) : t('admin.groupDialogNew')}
       onClose={onCancel}
       actions={
         <>
-          <Button onClick={onCancel}>{t.cancel}</Button>
+          <Button onClick={onCancel}>{t('admin.cancel')}</Button>
           <Button variant="primary" busy={busy} onClick={() => onSave(name)}>
-            {t.save}
+            {t('admin.save')}
           </Button>
         </>
       }
     >
       <div className={styles.dialogBody}>
-        <Field label={t.groupName} value={name} onChange={(e) => setName(e.target.value)} />
-        {error ? <ErrorState what={t.groupSaveFailed} next={error} /> : null}
+        <Field label={t('admin.groupName')} value={name} onChange={(e) => setName(e.target.value)} />
+        {error ? <ErrorState what={t('admin.groupSaveFailed')} next={error} /> : null}
       </div>
     </Dialog>
   );

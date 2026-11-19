@@ -1,6 +1,6 @@
 // Page side of the benchmark. Playwright calls window.__bench.run(file, strategy).
 import { checkFileSize } from '../engine/size-guard';
-import { strings } from '../ui/strings';
+import { engineText, megabytes } from '../engine/messages';
 import type { BenchRequest, BenchResponse, Strategy } from './bench-types';
 
 declare global {
@@ -20,7 +20,7 @@ function run(file: File, strategy: Strategy): Promise<BenchResponse> {
       blocked: true,
       strategy,
       fileName: file.name,
-      error: strings.xlsxTooLarge(file.name, size.sizeBytes, size.limitBytes),
+      error: engineText('engine.fileTooLarge', { fileName: file.name, size: megabytes(size.sizeBytes), limit: megabytes(size.limitBytes) }),
     });
   }
   // A fresh worker per run keeps runs independent of each other.

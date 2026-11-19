@@ -1,4 +1,4 @@
-import { EngineError, type Cell, type Column, type TableData } from './types';
+import { coded, EngineError, type Cell, type Column, type TableData } from './types';
 
 /** The validity of one version. Dates are ISO text. `validTo: null` means the version is still in effect. */
 export interface VersionRange {
@@ -49,10 +49,10 @@ const covers = (v: VersionRange, date: string) => v.validFrom <= date && (v.vali
 function checkRanges(versions: VersionRange[], what: string): void {
   for (const v of versions) {
     if (!isIsoDate(v.validFrom) || (v.validTo !== null && !isIsoDate(v.validTo))) {
-      throw new EngineError('invalid_versions', `Version ${v.versionNo} of ${what} has a date that is not a real date such as 2026-09-30. Correct the dates of that version.`);
+      throw coded('invalid_versions', 'engine.versionDateInvalid', { n: v.versionNo, what });
     }
     if (v.validTo !== null && v.validTo < v.validFrom) {
-      throw new EngineError('invalid_versions', `Version ${v.versionNo} of ${what} ends before it starts (${formatDate(v.validTo)} is before ${formatDate(v.validFrom)}). Correct the dates of that version.`);
+      throw coded('invalid_versions', 'engine.versionEndsBeforeStart', { n: v.versionNo, what, end: formatDate(v.validTo), start: formatDate(v.validFrom) });
     }
   }
 }
@@ -68,36 +68,27 @@ export function resolveVersion<T extends VersionRange>(
 ): T {
   const { what } = options;
   if (!isIsoDate(effectiveDate)) {
-    throw new EngineError('invalid_versions', `The effective date "${effectiveDate}" is not a real date such as 2026-09-30. Pick the date again.`);
+    throw coded('invalid_versions', 'engine.effectiveDateInvalid', { date: effectiveDate });
   }
   checkRanges(versions, what);
   const isDraft = (v: VersionRange) => v.status === 'draft';
   const usable = versions.filter((v) => !isDraft(v) || options.includeDrafts);
   const hits = usable.filter((v) => covers(v, effectiveDate));
   if (hits.length > 1) {
-    throw new EngineError(
-      'invalid_versions',
-      `Versions ${hits.map((v) => v.versionNo).join(' and ')} of ${what} both cover ${formatDate(effectiveDate)}. Change their dates so that versions do not overlap.`,
-    );
+    throw coded('invalid_versions', 'engine.versionsOverlap', { numbers: hits.map((v) => v.versionNo).join(' and '), what, date: formatDate(effectiveDate) });
   }
   if (hits.length === 1) return hits[0]!;
 
   const published = versions.filter((v) => !isDraft(v));
   if (published.length === 0) {
-    throw new EngineError('no_version', `There is no published version of ${what}. Publish a version that covers ${formatDate(effectiveDate)}.`);
+    throw coded('no_version', 'engine.noPublishedVersion', { what, date: formatDate(effectiveDate) });
   }
   const draft = versions.find((v) => isDraft(v) && covers(v, effectiveDate));
   if (draft) {
-    throw new EngineError(
-      'no_version',
-      `Only a draft version (${draft.versionNo}) of ${what} covers ${formatDate(effectiveDate)}, and a draft does not take effect. Publish it, or pick another effective date.`,
-    );
+    throw coded('no_version', 'engine.onlyDraftCovers', { n: draft.versionNo, what, date: formatDate(effectiveDate) });
   }
   const periods = [...published].sort((a, b) => a.validFrom.localeCompare(b.validFrom)).map((v) => `version ${v.versionNo}: ${describeRange(v)}`);
-  throw new EngineError(
-    'no_version',
-    `No version of ${what} is valid on ${formatDate(effectiveDate)}. Its published versions cover: ${periods.join('; ')}. Pick an effective date inside one of these periods, or add a version that covers it.`,
-  );
+  throw coded('no_version', 'engine.noVersionValid', { what, date: formatDate(effectiveDate), periods: periods.join('; ') });
 }
 
 /** Pairs of version numbers whose ranges share at least one day. Used to refuse overlapping versions. */

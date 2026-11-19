@@ -1,15 +1,16 @@
 import { useState } from 'react';
-import { Badge, Button, Card, Checkbox, DatePicker, Dialog, Dropdown, EmptyState, ErrorState, Field, PageHeader, ProgressBar, SearchField, SkeletonTable, Tabs, ToastProvider, useToast } from '../components';
-import { devStrings as t } from '../strings';
+import { Badge, Button, Card, Checkbox, DatePicker, Dialog, Dropdown, EmptyState, ErrorState, Field, InfoTip, PageHeader, ProgressBar, SearchField, SkeletonTable, Tabs, ToastProvider, useToast } from '../components';
+import { useT } from '../i18n';
 import styles from './dev-components.module.css';
 
-const VERSIONS = [
-  { value: 'v3', label: 'v3, from 01 Jul 2026' },
-  { value: 'v2', label: 'v2, 01 Apr 2026 to 30 Jun 2026' },
-  { value: 'v1', label: 'v1, 01 Jan 2026 to 31 Mar 2026' },
-];
 
 function Content() {
+  const t = useT();
+  const VERSIONS = [
+    { value: 'v3', label: t('common.version.from', { n: 3, from: '01 Jul 2026' }) },
+    { value: 'v2', label: t('common.version.range', { n: 2, from: '01 Apr 2026', to: '30 Jun 2026' }) },
+    { value: 'v1', label: t('common.version.range', { n: 1, from: '01 Jan 2026', to: '31 Mar 2026' }) },
+  ];
   const [version, setVersion] = useState('v3');
   const [date, setDate] = useState('2026-09-30');
   const [checked, setChecked] = useState(true);
@@ -19,115 +20,129 @@ function Content() {
 
   return (
     <main className={styles.main}>
-      <PageHeader breadcrumb={<span>{t.crumb}</span>} title={t.title} subtitle={t.subtitle} />
+      <PageHeader breadcrumb={<span>{t('dev.crumb')}</span>} title={t('dev.title')} subtitle={t('dev.subtitle')} />
       <div className={styles.grid} data-first-block>
-        <Card title={t.buttons}>
+        <Card title={t('dev.buttons')}>
           <div className={styles.row}>
-            <span className={styles.rowLabel}>Default, 40 px</span>
-            <Button variant="cta">Run</Button>
-            <Button variant="primary">New version</Button>
-            <Button>Save draft</Button>
-            <Button variant="danger">Delete step</Button>
-            <Button disabled>Not available</Button>
-            <Button variant="primary" busy>Running</Button>
+            <span className={styles.rowLabel}>{t('dev.demo.default40Px')}</span>
+            <Button variant="cta">{t('dev.demo.run')}</Button>
+            <Button variant="primary">{t('dev.demo.newVersion')}</Button>
+            <Button>{t('dev.demo.saveDraft')}</Button>
+            <Button variant="danger">{t('dev.demo.deleteStep')}</Button>
+            <Button disabled>{t('dev.demo.notAvailable')}</Button>
+            <Button variant="primary" busy>{t('dev.demo.running')}</Button>
           </div>
           <div className={styles.row}>
-            <span className={styles.rowLabel}>Compact, 36 px</span>
-            <Button compact variant="primary">Run</Button>
-            <Button compact>Open</Button>
-            <Button compact variant="danger">Delete</Button>
-            <Button compact disabled>Not available</Button>
+            <span className={styles.rowLabel}>{t('dev.demo.compact36Px')}</span>
+            <Button compact variant="primary">{t('dev.demo.run')}</Button>
+            <Button compact>{t('dev.demo.open')}</Button>
+            <Button compact variant="danger">{t('dev.demo.delete')}</Button>
+            <Button compact disabled>{t('dev.demo.notAvailable')}</Button>
           </div>
-          <p className={styles.note}>{t.buttonsNote}</p>
+          <p className={styles.note}>{t('dev.buttonsNote')}</p>
         </Card>
-        <Card title={t.fields}>
+        <Card title={t('dev.fields')}>
           <div className={styles.row} style={{ gap: 24, alignItems: 'flex-end' }}>
             <div style={{ width: 240 }}>
-              <Field label="New column name" defaultValue="OT flag" />
+              <Field label={t('dev.demo.newColumnName')} defaultValue="OT flag" />
             </div>
-            <SearchField label="Search flows" placeholder="Flow name" />
+            <SearchField label={t('dev.demo.searchFlows')} placeholder={t('dev.demo.flowName')} />
           </div>
           <div className={styles.row}>
-            <span className={styles.rowLabel}>Checkbox</span>
-            <Checkbox checked={checked} onChange={setChecked}>View and run</Checkbox>
-            <Checkbox checked={false} onChange={() => undefined}>View and run</Checkbox>
-            <Checkbox checked={false} disabled onChange={() => undefined}>Not available</Checkbox>
+            <span className={styles.rowLabel}>{t('dev.demo.checkbox')}</span>
+            <Checkbox checked={checked} onChange={setChecked}>{t('dev.demo.viewAndRun')}</Checkbox>
+            <Checkbox checked={false} onChange={() => undefined}>{t('dev.demo.viewAndRun')}</Checkbox>
+            <Checkbox checked={false} disabled onChange={() => undefined}>{t('dev.demo.notAvailable')}</Checkbox>
           </div>
-          <Tabs label="Step settings" tabs={[{ id: 'setup', label: 'Setup' }, { id: 'configure', label: 'Configure' }, { id: 'test', label: 'Test' }]} selected={tab} onSelect={setTab}>
-            <p className={styles.note}>Selected tab: {tab}</p>
+          <Tabs label={t('dev.demo.stepSettings')} tabs={[{ id: 'setup', label: t('dev.demo.setup') }, { id: 'configure', label: t('dev.demo.configure') }, { id: 'test', label: t('dev.demo.test') }]} selected={tab} onSelect={setTab}>
+            <p className={styles.note}>{t('dev.demo.selectedTab')}{' '}<span data-code>{tab}</span></p>
           </Tabs>
           <div className={styles.row}>
-            <Badge>Published</Badge>
-            <Badge tone="outline">Shared</Badge>
-            <Button compact onClick={() => toast('Draft saved')}>Show toast</Button>
+            <Badge>{t('dev.demo.published')}</Badge>
+            <Badge tone="outline">{t('dev.demo.shared')}</Badge>
+            <Button compact onClick={() => toast('Draft saved')}>{t('dev.demo.showToast')}</Button>
           </div>
         </Card>
         <div className={styles.mid} style={{ display: 'contents' }}>
-          <Card title={t.dropdown}>
+          <Card title={t('dev.dropdown')}>
             <div className={styles.popovers} style={{ minHeight: 190 }}>
-              <Dropdown label="Version" options={VERSIONS} value={version} onChange={setVersion} />
-              <Dropdown label="Open version list" options={VERSIONS} value="v3" onChange={() => undefined} defaultOpen />
+              <Dropdown label={t('dev.demo.version')} options={VERSIONS} value={version} onChange={setVersion} />
+              <Dropdown label={t('dev.demo.openVersionList')} options={VERSIONS} value="v3" onChange={() => undefined} defaultOpen />
             </div>
           </Card>
         </div>
-        <Card title={t.datePicker}>
+        <Card title={t('dev.demo.infoButton')}>
+          <div className={styles.popovers} style={{ minHeight: 120 }}>
+            <span>
+              {t('dev.demo.effectiveDate')}
+              <InfoTip label={t('dev.demo.effectiveDate')}>{t('dev.demo.theDateARun')}</InfoTip>
+            </span>
+            <span>
+              {t('dev.demo.openInfoButton')}
+              <InfoTip label={t('dev.demo.openInfoButton')} defaultOpen>
+                {t('dev.demo.opensOnClickEnter')}
+              </InfoTip>
+            </span>
+          </div>
+        </Card>
+        <Card title={t('dev.datePicker')}>
           <div className={styles.popovers} style={{ minHeight: 360 }}>
-            <DatePicker label="Effective date" value={date} onChange={setDate} />
-            <DatePicker label="Open date picker" value="2026-09-30" onChange={() => undefined} defaultOpen />
+            <DatePicker label={t('dev.demo.effectiveDate')} value={date} onChange={setDate} />
+            <DatePicker label={t('dev.demo.openDatePicker')} value="2026-09-30" onChange={() => undefined} defaultOpen />
           </div>
         </Card>
-        <Card title={t.loading}>
+        <Card title={t('dev.loading')}>
           <div className={styles.skeleton}>
-            <SkeletonTable weights={[30, 16, 8, 14, 14, 18]} rows={3} label="Loading flows" />
+            <SkeletonTable weights={[30, 16, 8, 14, 14, 18]} rows={3} label={t('dev.demo.loadingFlows')} />
           </div>
-          <p className={styles.note}>{t.loadingNote}</p>
+          <p className={styles.note}>{t('dev.loadingNote')}</p>
         </Card>
-        <Card title={t.empty}>
-          <EmptyState title="No flows yet" text="Create your first flow, or ask the admin to share one with your group." action={<Button variant="primary">Create flow</Button>} />
+        <Card title={t('dev.empty')}>
+          <EmptyState title={t('dev.demo.noFlowsYet')} text={t('dev.demo.createYourFirstFlow')} action={<Button variant="primary">{t('dev.demo.createFlow')}</Button>} />
         </Card>
-        <Card title={t.progress}>
-          <ProgressBar value={7} max={12} label="Run progress" />
+        <Card title={t('dev.progress')}>
+          <ProgressBar value={7} max={12} label={t('dev.demo.runProgress')} />
           <div className={styles.split}>
             <span>
-              <b>Step 7 of 12</b>: Group OT hours
+              <b>{t('dev.demo.step7Of12')}</b>{t('dev.demo.groupOtHours')}
             </span>
-            <Button compact>Cancel run</Button>
+            <Button compact>{t('dev.demo.cancelRun')}</Button>
           </div>
         </Card>
-        <Card title={t.error}>
+        <Card title={t('dev.error')}>
           <ErrorState
-            what="The timesheet file could not be read."
-            next="Row 3 has no header named Employee ID. Check the header row in the Input file step, or choose another file."
+            what={t('dev.demo.theTimesheetFileCould')}
+            next={t('dev.demo.row3HasNo')}
             actions={
               <>
-                <Button compact>Choose another file</Button>
-                <Button compact>Open the step</Button>
+                <Button compact>{t('dev.demo.chooseAnotherFile')}</Button>
+                <Button compact>{t('dev.demo.openTheStep')}</Button>
               </>
             }
           />
         </Card>
-        <Card title={t.confirm}>
+        <Card title={t('dev.confirm')}>
           <div className={styles.row}>
             <Button variant="danger" onClick={() => setConfirm(true)}>
-              Delete flow
+              {t('dev.demo.deleteFlow')}
             </Button>
           </div>
         </Card>
       </div>
       {confirm ? (
         <Dialog
-          title="Delete Monthly timesheet summary?"
+          title={t('dev.demo.deleteMonthlyTimesheetSummary')}
           onClose={() => setConfirm(false)}
           actions={
             <>
-              <Button onClick={() => setConfirm(false)}>Cancel</Button>
+              <Button onClick={() => setConfirm(false)}>{t('dev.demo.cancel')}</Button>
               <Button variant="danger" onClick={() => setConfirm(false)}>
-                Delete flow
+                {t('dev.demo.deleteFlow')}
               </Button>
             </>
           }
         >
-          The flow and its 4 versions move to Deleted flows. The admin can restore it within 30 days.
+          {t('dev.demo.theFlowAndIts')}
         </Dialog>
       ) : null}
     </main>

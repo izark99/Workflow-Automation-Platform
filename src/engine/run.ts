@@ -1,10 +1,12 @@
+import { resolveParameterValues, type ParameterValues } from './flow/parameter-values';
+import { parametersOf } from './flow/parameters';
 import { resolveEdgeHandles, topologicalOrder, validateFlow } from './flow/validate';
 import { loadInputFile, parseInputSettings, type FileSource } from './input/load';
 import { checkOutputNodes } from './nodes/output';
 import { defaultRegistry } from './nodes/registry';
 import type { NodeRegistry } from './nodes/types';
 import { boundarySelectList, createTableStatements, quoteIdent } from './sql';
-import { EngineError, type Column, type LoadedTable, type SqlRunner, type TableData } from './types';
+import { coded, type Column, type LoadedTable, type SqlRunner, type TableData } from './types';
 
 export const PREVIEW_ROWS = 100;
 
@@ -19,6 +21,8 @@ export interface RunOptions {
   files?: Record<string, FileSource>;
   /** Reference tables by name, already resolved to the version valid on the effective date. */
   refTables?: Record<string, TableData>;
+  /** The values of the flow parameters, by key. Checked before any step runs. */
+  parameterValues?: ParameterValues;
   registry?: NodeRegistry;
   signal?: AbortSignal;
   onNode?: (event: { nodeId: string; status: 'start' | 'done' }) => void;
@@ -46,14 +50,11 @@ let runCounter = 0;
 export async function runFlow(runner: SqlRunner, options: RunOptions): Promise<RunResult> {
   const validation = validateFlow(options.flow);
   if (!validation.ok) {
-    throw new EngineError(
-      'invalid_flow',
-      `The flow cannot run. ${validation.errors.map((e) => e.message).join(' ')}`,
-      validation.errors[0]?.nodeId,
-    );
+    throw coded('invalid_flow', 'engine.invalidFlow', { problems: validation.errors.map((e) => e.message).join(' ') }, validation.errors[0]?.nodeId);
   }
   const flow = validation.flow;
   checkOutputNodes(flow);
+  const parameters = resolveParameterValues(parametersOf(flow), options.parameterValues);
   const registry = options.registry ?? defaultRegistry;
   const prefix = `r${++runCounter}_`;
   const created: string[] = [];
@@ -72,7 +73,7 @@ export async function runFlow(runner: SqlRunner, options: RunOptions): Promise<R
   options.signal?.addEventListener('abort', onAbort);
   const checkCancelled = () => {
     if (options.signal?.aborted) {
-      throw new EngineError('cancelled', 'The run was cancelled. Start it again when you are ready.');
+      throw coded('cancelled', 'engine.cancelled');
     }
   };
 
@@ -85,11 +86,7 @@ export async function runFlow(runner: SqlRunner, options: RunOptions): Promise<R
     for (const node of flow.nodes.filter((n) => n.type === 'input_file')) {
       const settings = parseInputSettings(node.settings, node.id);
       if (seenKeys.has(settings.key)) {
-        throw new EngineError(
-          'invalid_settings',
-          `Two input steps use the key "${settings.key}". Give each input step its own key, because each key gets one file.`,
-          node.id,
-        );
+        throw coded('invalid_settings', 'engine.duplicateKey', { key: settings.key }, node.id);
       }
       seenKeys.add(settings.key);
       const file = options.files?.[settings.key];
@@ -115,11 +112,7 @@ export async function runFlow(runner: SqlRunner, options: RunOptions): Promise<R
       const node = byId.get(id)!;
       const module = registry[node.type];
       if (!module) {
-        throw new EngineError(
-          'unsupported_node',
-          `Step "${id}" is a ${node.type} step, which this version of the app cannot run yet. Remove it or update the app.`,
-          id,
-        );
+        throw coded('unsupported_node', 'engine.unsupportedStep', { step: id, type: node.type }, id);
       }
       options.onNode?.({ nodeId: id, status: 'start' });
 
@@ -134,6 +127,7 @@ export async function runFlow(runner: SqlRunner, options: RunOptions): Promise<R
         inputTables,
         refTables,
         effectiveDate: options.effectiveDate,
+        parameters,
         query: (sql) => runner.query(sql),
       });
 
@@ -145,11 +139,7 @@ export async function runFlow(runner: SqlRunner, options: RunOptions): Promise<R
         } catch (e) {
           checkCancelled();
           const reason = e instanceof Error ? e.message : String(e);
-          throw new EngineError(
-            'node_failed',
-            `Step "${id}" failed: ${reason} Open the step, check its settings and run again.`,
-            id,
-          );
+          throw coded('node_failed', 'engine.stepFailed', { step: id, reason }, id);
         }
         created.push(relation);
         const count = await runner.query(`SELECT count(*) AS c FROM ${quoteIdent(relation)}`);
@@ -173,7 +163,7 @@ export async function runFlow(runner: SqlRunner, options: RunOptions): Promise<R
   const read = async (nodeId: string, handle: string | undefined, limit: number | undefined): Promise<TableData> => {
     const table = handle ? tables.get(`${nodeId}/${handle}`) : [...tables.values()].find((t) => t.nodeId === nodeId);
     if (!table) {
-      throw new EngineError('node_failed', `Step "${nodeId}" has no result to show. Run the flow first.`, nodeId);
+      throw coded('node_failed', 'engine.noResult', { step: nodeId }, nodeId);
     }
     const columns: Column[] = table.columns;
     const cap = limit === undefined ? '' : ` LIMIT ${Math.max(0, Math.floor(limit))}`;

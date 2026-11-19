@@ -117,4 +117,18 @@ describe('runPreview on the Node engine', () => {
     const def = chain(['input_file']);
     await expect(runPreview({ definition: def, nodeId: 'input_file-1', handle: 'out', files: {}, refTables: [], effectiveDate: '2026-09-30', runner })).rejects.toThrow(/No file was provided|Choose a file/);
   });
+  it('a preview asks only for the parameters that its steps read, and uses defaults for values not given', async () => {
+    let def = chain(['input_file', 'filter']);
+    def = { ...def, schemaVersion: 2, parameters: [
+      { key: 'min_age', label: 'Min age', type: 'number', required: true },
+      { key: 'unused', label: 'Unused', type: 'text', required: true },
+      { key: 'floor', label: 'Floor', type: 'number', required: true, default: 0 },
+    ], nodes: def.nodes.map((n) => (n.type === 'filter' ? { ...n, settings: { condition: '[age] > PARAM("min_age") + PARAM("floor")' } } : n)) };
+    const t = previewTarget(def, def.nodes[1]!);
+    if (t.kind !== 'ready') throw new Error('not ready');
+    const base = { definition: t.definition, nodeId: t.nodeId, handle: t.handle, files: { 'input_file-1': csv('name,age\nAnn,31\nBob,42\n') }, refTables: [], effectiveDate: '2026-09-30', runner };
+    const data = await runPreview({ ...base, parameterValues: { min_age: 35 } });
+    expect(data.rows).toEqual([['Bob', 42]]);
+    await expect(runPreview(base)).rejects.toThrow(/"Min age" needs a value/);
+  });
 });

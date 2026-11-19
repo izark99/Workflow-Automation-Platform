@@ -23,6 +23,9 @@ test('a selected step shows its number, name and description, and the tabs Setup
   await newFlow(page);
   await addStep(page, 'Filter');
   await expect(panel(page).getByRole('heading', { name: '1. Filter' })).toBeVisible();
+  // The description is behind the info button after the title (SPEC 11.2).
+  await expect(panel(page)).not.toContainText('Keeps the rows that match a condition.');
+  await panel(page).getByRole('button', { name: 'About Filter' }).click();
   await expect(panel(page)).toContainText('Keeps the rows that match a condition.');
   const tabs = panel(page).getByRole('tab');
   await expect(tabs).toHaveText(['Setup', 'Configure', 'Test']);
@@ -101,4 +104,16 @@ test('a published version is read-only in the panel too', async ({ page }) => {
   await expect(panel(page).getByText('This version is published and read-only')).toBeVisible();
   await expect(panel(page).getByRole('textbox', { name: 'Step name' })).toBeDisabled();
   await expect(panel(page).getByRole('button', { name: 'Delete step' })).toBeDisabled();
+});
+
+test('without a selected step the panel starts with the Parameters heading; the sentence about selecting a step comes after it', async ({ page }) => {
+  await newFlow(page);
+  const order = await panel(page).evaluate((el) => {
+    const heading = el.querySelector('h2')!;
+    const note = Array.from(el.querySelectorAll('p')).find((p) => (p.textContent ?? '').includes('Select a step on the canvas'))!;
+    return { heading: heading.textContent, headingFirst: !!(heading.compareDocumentPosition(note) & Node.DOCUMENT_POSITION_FOLLOWING), top: heading.getBoundingClientRect().top - el.getBoundingClientRect().top };
+  });
+  expect(order.heading).toBe('Parameters');
+  expect(order.headingFirst).toBe(true);
+  expect(order.top).toBeLessThan(40); // the heading is at the top of the panel, below its 20 px padding
 });

@@ -1,6 +1,7 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
-import { createBackend } from '../store';
+import { createBackend, LocalAccountAdmin, LocalStore } from '../store';
+import type { AccountAdmin } from '../store';
 import type { AuthService } from '../store/auth';
 import type { DataStore } from '../store/types';
 import { BuilderScreen } from './builder/builder-screen';
@@ -13,12 +14,27 @@ import { DevComponents } from './screens/dev-components';
 import { AuthGate } from './auth-gate';
 import { Shell } from './shell';
 import { StoreProvider } from './store-context';
+import { applyUiTexts, useT } from './i18n';
+import { ThemeProvider } from './theme-context';
 
 // The components page is development only: it is built in when VITE_DEV_ROUTES=true (the dev server, the UI-rules and e2e builds).
 const DEV_ROUTES = import.meta.env.DEV || import.meta.env.VITE_DEV_ROUTES === 'true';
 
-export function App({ store, auth }: { store?: DataStore; auth?: AuthService | null }) {
-  const backend = useMemo(() => (store ? { store, auth: auth ?? null } : createBackend()), [store, auth]);
+export function App({ store, auth, accounts }: { store?: DataStore; auth?: AuthService | null; accounts?: AccountAdmin }) {
+  useT(); // re-renders the whole tree when the language or an edited text changes, also parts that read texts outside React
+  const backend = useMemo(() => (store ? { store, auth: auth ?? null, accounts: accounts ?? (store instanceof LocalStore ? new LocalAccountAdmin(store) : undefined) } : createBackend()), [store, auth, accounts]);
+  // The edited texts are applied over the catalog when the app starts. They are readable before sign-in, so the sign-in
+  // screen shows them too. If they cannot be read, the defaults stay.
+  useEffect(() => {
+    let live = true;
+    backend.store.listUiTexts().then(
+      (texts) => live && applyUiTexts(texts),
+      () => undefined,
+    );
+    return () => {
+      live = false;
+    };
+  }, [backend.store]);
   const routes = (
     <BrowserRouter>
         <Routes>
@@ -36,6 +52,8 @@ export function App({ store, auth }: { store?: DataStore; auth?: AuthService | n
     </BrowserRouter>
   );
   return (
-    <StoreProvider store={backend.store}>{backend.auth ? <AuthGate auth={backend.auth}>{routes}</AuthGate> : routes}</StoreProvider>
+    <ThemeProvider>
+      <StoreProvider store={backend.store} accounts={backend.accounts}>{backend.auth ? <AuthGate auth={backend.auth}>{routes}</AuthGate> : routes}</StoreProvider>
+    </ThemeProvider>
   );
 }

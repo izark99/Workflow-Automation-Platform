@@ -1,6 +1,8 @@
 import { Handle, Position } from '@xyflow/react';
 import type { Node, NodeProps } from '@xyflow/react';
 import type { FlowNode } from '../../engine/flow/types';
+import { translate } from '../i18n';
+import type { MessageKey } from '../i18n';
 import { STEP_CATALOG } from './graph';
 import styles from './builder.module.css';
 
@@ -13,8 +15,8 @@ export interface StepCardData extends Record<string, unknown> {
 
 export type StepCardNode = Node<StepCardData, 'step'>;
 
-const HANDLE_NAMES: Record<string, string> = { in: '', out: '', in1: '', in2: '', in3: '', match: 'match', nomatch: 'no match', left: 'left', right: 'right' };
-const handleName = (h: string): string => HANDLE_NAMES[h] ?? h;
+const HANDLE_NAMES: Record<string, MessageKey | ''> = { in: '', out: '', in1: '', in2: '', in3: '', match: 'builder.port.match', nomatch: 'builder.port.noMatch', left: 'builder.handle.left', right: 'builder.handle.right' };
+const handleName = (h: string): string => (HANDLE_NAMES[h] === undefined ? h : HANDLE_NAMES[h] === '' ? '' : translate(HANDLE_NAMES[h] as MessageKey));
 const at = (i: number, n: number): string => `${((i + 1) / (n + 1)) * 100}%`;
 
 /** A step as a 240 x 56 px card: number, name and type. Inputs sit on top, outputs at the bottom. */
@@ -29,7 +31,7 @@ export function StepCard({ data, selected }: NodeProps<StepCardNode>) {
         {number}
       </span>
       <span className={styles.cardText}>
-        <span className={styles.cardTitle}>{step.label ?? step.id}</span>
+        <span className={styles.cardTitle} data-user-content>{step.label ?? step.id}</span>
         <span className={styles.cardSub}>{STEP_CATALOG[step.type].label}</span>
       </span>
       {outputs.map((h, i) => (
@@ -37,7 +39,7 @@ export function StepCard({ data, selected }: NodeProps<StepCardNode>) {
       ))}
       {outputs.length > 1
         ? outputs.map((h, i) => (
-            <span key={`label-${h}`} className={styles.handleLabel} style={{ left: at(i, outputs.length), bottom: -22, transform: 'translateX(-50%)' }} aria-hidden="true">
+            <span key={`label-${h}`} className={styles.handleLabel} style={{ left: at(i, outputs.length), bottom: -24, transform: 'translateX(8px)' }} aria-hidden="true">
               {handleName(h)}
             </span>
           ))

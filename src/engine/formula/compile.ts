@@ -1,3 +1,4 @@
+import { parameterColumnType, parameterLiteral, type ResolvedParameters } from '../flow/parameter-values';
 import { requireColumn } from '../nodes/columns';
 import { quoteIdent, quoteString } from '../sql';
 import { EngineError, type Column, type ColumnType } from '../types';
@@ -12,6 +13,8 @@ export interface CompileEnv {
   columns: Column[];
   /** ISO date of the run, for EFFECTIVE_DATE. */
   effectiveDate: string;
+  /** The values of the flow parameters in this run, for PARAM("key"). */
+  parameters?: ResolvedParameters;
 }
 
 export type { Compiled } from './functions';
@@ -137,7 +140,24 @@ function compileCall(
   return spec.compile(ctx);
 }
 
+/** PARAM("key"): the value of a flow parameter, with the type of the parameter. The key is written in the formula. */
+function compileParam(e: Extract<Expr, { kind: 'call' }>, env: CompileEnv): Compiled {
+  const arg = e.args[0];
+  if (e.args.length !== 1 || arg?.kind !== 'string') {
+    throw new FormulaError('PARAM needs the key of a parameter written as text, for example PARAM("period_end"). Write the key in quotes.', e.start, e.end - e.start);
+  }
+  const keys = Object.keys(env.parameters ?? {});
+  const key = keys.find((k) => k === arg.value) ?? keys.find((k) => k.toLowerCase() === arg.value.toLowerCase());
+  const found = key === undefined ? undefined : env.parameters![key];
+  if (!found) {
+    const known = keys.length === 0 ? 'This flow has no parameters. Add one in the Parameters panel of the builder.' : `The parameters are: ${keys.join(', ')}.`;
+    throw new FormulaError(`There is no parameter with the key "${arg.value}". ${known}`, arg.start, arg.end - arg.start);
+  }
+  return { sql: parameterLiteral(found), type: parameterColumnType(found.type) };
+}
+
 function compile(e: Expr, env: CompileEnv, registry: FunctionRegistry): Compiled {
+  if (e.kind === 'call' && e.name === 'PARAM') return compileParam(e, env);
   switch (e.kind) {
     case 'number':
       return { sql: `(${e.value}::DOUBLE)`, type: 'number' };

@@ -36,7 +36,7 @@
   border: 1px solid var(--color-control);
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-popover);
-  padding: 6px;
+  padding: 8px;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -53,7 +53,7 @@
   gap: 8px;
   width: 100%;
   height: var(--size-button-compact);
-  padding: 0 10px;
+  padding: 0 12px;
   border: 0;
   border-radius: 6px;
   background: none;
@@ -99,6 +99,7 @@
   border: 1px solid var(--color-control);
   background: var(--color-card);
   color: var(--color-ink);
+  padding: 0; /* the browser default is 1 px 6 px, which is off the grid and not needed in a fixed-size box */
   cursor: pointer;
 }
 
@@ -130,6 +131,12 @@
 .day[aria-pressed='true'] {
   background: var(--color-primary);
   border-color: var(--color-primary);
-  color: var(--color-on-fill);
+  color: var(--color-on-primary);
   font-weight: 700;
+}
+
+.compactTrigger {
+  height: var(--size-button-compact);
+  padding: 0 12px;
+  font-size: 13px;
 }

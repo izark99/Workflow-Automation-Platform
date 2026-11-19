@@ -32,8 +32,11 @@ test('the layout follows the design: header bar 64 px, step list 184 px, grouped
   const list = page.getByRole('complementary', { name: 'Step types' });
   expect(Math.round((await list.boundingBox())!.width)).toBe(184);
   for (const group of ['Files', 'Shape', 'Combine', 'Advanced']) await expect(list.getByRole('group', { name: group })).toHaveCount(1);
-  await expect(list.getByRole('button')).toHaveCount(11);
-  expect(Math.round((await list.getByRole('button').first().boundingBox())!.height)).toBe(36);
+  // Eleven step buttons of 36 px, plus the 24 px info button after the title.
+  const stepButtons = list.getByRole('button', { name: /^Add step / });
+  await expect(stepButtons).toHaveCount(11);
+  await expect(list.getByRole('button')).toHaveCount(12);
+  expect(Math.round((await stepButtons.first().boundingBox())!.height)).toBe(36);
   // The seed flow of this test has only a draft, so Run is off until a version is published (T2.15).
   await expect(page.getByRole('button', { name: 'Run' })).toBeDisabled();
 });

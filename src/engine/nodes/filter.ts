@@ -9,11 +9,11 @@ import type { NodeModule } from './types';
  */
 export const filterNode: NodeModule = {
   type: 'filter',
-  compile: ({ node, inputs, effectiveDate }) => {
+  compile: ({ node, inputs, effectiveDate, parameters }) => {
     const input = inputs.in!;
     const condition = compileStepFormula(
       node.settings.condition,
-      { columns: input.columns, effectiveDate },
+      { columns: input.columns, effectiveDate, parameters },
       { id: node.id, label: 'Filter', setting: 'condition' },
     );
     if (condition.type !== 'boolean') {
