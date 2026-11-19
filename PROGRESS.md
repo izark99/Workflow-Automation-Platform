@@ -173,7 +173,7 @@ Decisions with a default. Build with the default unless this list says otherwise
 | Phase 4: password rule | At least 10 characters; Generate makes 16 characters. No other complexity rule |
 | Phase 4: effect of Lock | Immediate: the open session loses all access through row-level security, and Auth refuses new sign-ins |
 | Phase 4: delete a user | Not offered. Lock instead (the user's flows and run history stay) |
-| Phase 4: parameter in formulas | `PARAM("key")`; in the SQL step a one-row view `params` |
+| Phase 4: parameter in formulas | `PARAM("key")`; in the SQL step a one-row table `params` (D78) |
 | Phase 4: remember parameter values between runs | No (values may be personal data); the defaults of the definition fill the form |
 
 ## Blockers
@@ -459,7 +459,7 @@ Next: T4.2.
 Changed: docs/SPEC.md (section 11 and the rows it touches in sections 1, 2, 4, 7, 10), docs/DESIGN.md (dark tokens with checked contrast, theme rules, Info button, account dialogs, parameters, UI quality checklist, header rule), PROMPT.md (G4 and G5 extended, new G6, rules on texts and the Edge Function), GOALS.md (Phase 4 goal), CLAUDE.md (paths, commands, text rule), PROGRESS.md (status, Phase 4 tasks, Phase 4 defaults under Needs Harold).
 Requested by Harold: account management by the admin, help text behind info buttons, editable texts (i18n), light and dark themes, React Flow following the system theme (bug), flow parameters on the Run screen, UI quality pass.
 No code changed and no gate run. Status set to IN PROGRESS, so the loop starts Phase 4 instead of re-running the final gates.
-Live deployment (not part of the loop): Supabase project `workflow-automation-platform` (ap-southeast-1) and https://workflow-automation-platform.pages.dev, set up on 2026-11-18 with the nine Phase 3 migrations. Phase 4 changes reach it only through the upgrade steps of T4.11.
+Live deployment (not part of the loop): Supabase project `workflow-automation-platform` (ap-southeast-1) and https://workflow-automation-platform.pages.dev, set up on 2026-11-18 with the nine Phase 3 migrations. Upgraded to Phase 4 on 2026-11-19, after pull request 4 was merged: migrations `20261118000010` to `20261118000012` applied and the function `admin-users` (version 1, `verify_jwt` on) deployed, with the Supabase tools at Harold's request, following the upgrade steps of `docs/DEPLOY.md`. The migration history of the project holds the repo versions of the three files, so `npx supabase db push` sees nothing to apply. Checked after the upgrade: 10 restrictive `_active_only` policies, the 8 new functions and 2 triggers exist, the one admin is active, the function refuses a call without a token and with the anon key, a visitor reads `ui_texts` and is refused on `flows`. The Pages site already served the Phase 4 build. Not done: no backup was taken (the project held one profile and no flows), no test user was created, and the Vietnamese wording is still for Harold to review.
 
 ### 2026-11-18 Pages build loads DuckDB-WASM from jsDelivr (owner's choice A', D71)
 Changed: src/engine/runner/{browser-runner.ts,duckdb-bundles.ts,duckdb-bundles.test.ts,duckdb-self-hosted.ts}, src/ui/builder/preview-runner.ts (passes the runner's message through), vite.config.ts (`--mode pages`), scripts/check-dist-size.mjs, scripts/lib/request-audit.{ts,test.ts} (exact list of allowed code addresses), acceptance/{helpers.ts,privacy.spec.ts,timesheet.spec.ts,cdn.spec.ts}, package.json (`build:pages`, `test:acceptance:pages`), docs/DEPLOY.md, scripts/deploy-doc.test.ts, docs/DECISIONS.md (D71).
