@@ -132,7 +132,7 @@ Parameters (SPEC 11.5)
 - [x] T4.9a Definition format: new schema version with `parameters`; JSON schema and validation (unique keys, key pattern, types, list options, default of the right type); older definitions load with an empty list. `flows/monthly-timesheet.flow.json` stays unchanged and G1 still passes.
 - [x] T4.9b Engine: a run takes parameter values; checks required, type and list option before any step runs, with clear errors; `PARAM("key")` in the formula compiler with the parameter type; `params` view for the SQL step. Unit tests for every type.
 - [x] T4.9c Builder: Parameters panel (add, edit, delete, Move up, Move down, read-only when published); the formula editor lists `PARAM` with the keys of the version.
-- [ ] T4.9d Test tab asks for test values of the parameters used upstream of the selected step.
+- [x] T4.9d Test tab asks for test values of the parameters used upstream of the selected step.
 - [ ] T4.9e Run screen: Parameters card above Files; errors under each field; Run disabled until the values are valid. e2e journey: a flow with a date parameter used in a Filter runs and gives the expected rows. Extend the privacy acceptance test: parameter values appear in no request.
 
 Quality pass (SPEC 11.6)
@@ -173,6 +173,12 @@ None. The Pages file size blocker of T3.9 is solved by D71.
 ## Log
 
 Newest first.
+
+### 2026-11-19 T4.9d Parameters: test values in the builder (turn 30)
+Advisor not consulted: the design follows D77 to D79; the new choices are D80.
+Changed: src/engine/flow/parameters-used.ts (`parametersUsedBy`, `withUsedParametersOnly`), src/ui/parameter-logic.ts (`initialValues`, `parameterValueErrors`), src/ui/parameter-inputs.tsx (+ css; one input per type, shared with T4.9e), builder preview-runner (parameter values, used parameters only), step-preview.tsx (inputs, Preview disabled while invalid), settings-panel, builder-screen (test values held like test files), load-columns and the two forms that load columns, catalog en and vi (`run.params.*`, `builder.preview.params*`, `engine.paramMissing` wording), tests: parameters-used (4), parameter-logic (2), preview-logic (1), e2e parameters-panel (1 new journey).
+Gates run: `npm run check` exit 0 (985 tests); `npm run test:acceptance` exit 0 (7 passed, 1 skipped); `npm run test:acceptance:pages` exit 0 (8 passed); e2e parameters-panel and preview specs 12 passed; `git diff main -- flows/monthly-timesheet.flow.json` empty; `git status --porcelain testcase` empty. `npm run test:ui-rules` was not re-run: no route shows a parameter yet, so no rendered page changed; T4.9e adds the Run screen card and runs it in full.
+Next: T4.9e (Run screen Parameters card, e2e journey, privacy test).
 
 ### 2026-11-19 T4.9c Parameters: the builder panel (turn 29)
 Advisor not consulted: the choices (only `withParameters`, panel when no step is selected) were set in D77 and D79.

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { FlowDefinition, FlowNode } from '../../engine/flow/types';
 import { NODE_PORTS } from '../../engine/flow/types';
+import type { ParameterValue } from '../../engine/flow/parameters';
 import type { RefTable } from '../../engine/versions';
 import { Button, Dropdown, ErrorState, Field, InfoTip, Tabs } from '../components';
 import { useT } from '../i18n';
@@ -24,10 +25,13 @@ export interface SettingsPanelProps {
   testFiles: Record<string, File>;
   onTestFile: (key: string, file: File) => void;
   refTables: RefTable[];
+  /** Test values of the parameters, by key. */
+  parameterValues: Record<string, ParameterValue | undefined>;
+  onParameterValue: (key: string, value: ParameterValue | undefined) => void;
 }
 
 /** The 380 px panel at the right: the selected step with the tabs Setup, Configure and Test. */
-export function SettingsPanel({ definition, step, onChange, onDeleted, readOnly, testFiles, onTestFile, refTables }: SettingsPanelProps) {
+export function SettingsPanel({ definition, step, onChange, onDeleted, readOnly, testFiles, onTestFile, refTables, parameterValues, onParameterValue }: SettingsPanelProps) {
   const t = useT();
   const [tab, setTab] = useState<SettingsTab>('setup');
   const [error, setError] = useState<string | null>(null);
@@ -67,8 +71,8 @@ export function SettingsPanel({ definition, step, onChange, onDeleted, readOnly,
           {tab === 'setup' ? (
             <SetupTab key={step.id} definition={definition} step={step} onChange={onChange} readOnly={readOnly} error={error} setError={setError} />
           ) : null}
-          {tab === 'configure' ? <ConfigureTab step={step} definition={definition} onChange={onChange} readOnly={readOnly} context={{ testFiles, refTables }} /> : null}
-          {tab === 'test' ? <StepPreview key={step.id} definition={definition} step={step} files={testFiles} onFile={onTestFile} refTables={refTables} /> : null}
+          {tab === 'configure' ? <ConfigureTab step={step} definition={definition} onChange={onChange} readOnly={readOnly} context={{ testFiles, refTables, parameterValues }} /> : null}
+          {tab === 'test' ? <StepPreview key={step.id} definition={definition} step={step} files={testFiles} onFile={onTestFile} refTables={refTables} parameterValues={parameterValues} onParameterValue={onParameterValue} /> : null}
         </div>
       </Tabs>
       <div className={styles.footer}>

@@ -80,3 +80,39 @@ test('a published version shows its parameters as read-only', async ({ page }) =
   await expect(panel(page)).toContainText('This version is published, so its parameters cannot change.');
   await expect(panel(page).getByRole('button', { name: 'Add parameter', exact: true })).toBeDisabled();
 });
+
+const csv = (text: string) => ({ name: 'people.csv', mimeType: 'text/csv', buffer: Buffer.from(text) });
+const rows = (page: Page) => panel(page).getByRole('table', { name: 'Preview rows' }).locator('tbody tr');
+
+test('the Test tab asks for the parameters that the steps read, and only for those; the preview runs with the value', async ({ page }) => {
+  await newFlow(page);
+  for (const [key, type] of [['min_age', 'Number'], ['unused', 'Text']] as const) {
+    const n = key === 'min_age' ? 1 : 2;
+    await panel(page).getByRole('button', { name: 'Add parameter', exact: true }).click();
+    await panel(page).getByRole('textbox', { name: `Key ${n}` }).fill(key);
+    await panel(page).getByRole('textbox', { name: `Label ${n}` }).fill(key === 'min_age' ? 'Minimum age' : 'Not used');
+    await panel(page).getByRole('button', { name: new RegExp(`^Type ${n}`) }).click();
+    await page.getByRole('option', { name: type }).click();
+  }
+  await page.getByRole('button', { name: 'Add step Input file' }).click();
+  await page.getByRole('button', { name: 'Add step Filter' }).click();
+  await panel(page).getByRole('button', { name: /^Input from: None/ }).press('ArrowDown');
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('Enter');
+  await expect(page.locator('.react-flow__edge')).toHaveCount(1);
+  await panel(page).getByRole('tab', { name: 'Configure' }).click();
+  await panel(page).getByRole('textbox', { name: 'Condition' }).fill('[age] > PARAM("min_age")');
+  await panel(page).getByRole('tab', { name: 'Test' }).click();
+
+  await expect(panel(page).getByText('Test values of the parameters')).toBeVisible();
+  await expect(panel(page).getByRole('textbox', { name: 'Minimum age' })).toBeVisible();
+  await expect(panel(page).getByText('Not used')).toHaveCount(0);
+  await expect(panel(page).getByRole('alert')).toContainText('min_age');
+  await panel(page).locator('input[type=file]').setInputFiles(csv('name,age\nAnn,31\nBob,42\n'));
+  await expect(panel(page).getByRole('button', { name: 'Preview first rows' })).toBeDisabled();
+  await panel(page).getByRole('textbox', { name: 'Minimum age' }).fill('35');
+  await expect(panel(page).getByRole('alert')).toHaveCount(0);
+  await panel(page).getByRole('button', { name: 'Preview first rows' }).click();
+  await expect(rows(page)).toHaveCount(1, { timeout: 30_000 });
+  await expect(rows(page).first()).toContainText('Bob');
+});

@@ -1,0 +1,33 @@
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.labelRow {
+  display: flex;
+  align-items: center;
+}
+
+.label {
+  font-weight: 700;
+}
+
+.inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.error {
+  margin: 0;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--color-danger);
+}

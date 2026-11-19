@@ -890,3 +890,10 @@ blank or mixed column in one month cannot change the types of another month.
 - The formula editor checks `PARAM("key")` against the parameters of the version, using their defaults (or a blank) as stand-in values (`placeholderParameters`), and has an "Insert a parameter" list. `PARAM` is listed in the function list in its own group, Flow. The function-list test now expects the registered functions plus `PARAM`.
 - The Output step sort field is a plain text field with no check; PARAM works there at run time (T4.9b).
 
+## D80 Test values of parameters in the builder (T4.9d)
+
+- A preview runs only the selected step and the steps before it, so it asks only for the parameters that these steps read: those named in a `PARAM("key")` in any setting, and all of them when a SQL step reads `params` (`parametersUsedBy`). The definition that is run is cut to those parameters (`withUsedParametersOnly`), so a required parameter that no step before reads never blocks a preview.
+- The Test tab shows one input per used parameter (`ParameterInputs`, shared with the Run screen of T4.9e). The default fills a value that was not typed. The Preview button is disabled while a value is invalid, and the error is under the field. Test values are held by the builder screen like the test files: they stay while another step is selected, stay in the browser, and are not saved with the flow.
+- The same values feed "Load columns" in the formula editor and the Column mapping form, so a step that reads a parameter upstream can load its columns.
+- `engine.paramMissing` no longer says "on the Run screen", because the builder shows it too.
+

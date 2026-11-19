@@ -22,7 +22,7 @@ export function useSourceColumns({ step, definition, context }: Pick<FormProps, 
     setLoading(true);
     setError(null);
     try {
-      setColumns(await loadSourceColumns(definition, step, context.testFiles, context.refTables, todayIso(), inputHandle));
+      setColumns(await loadSourceColumns(definition, step, context.testFiles, context.refTables, todayIso(), inputHandle, context.parameterValues));
     } catch (e) {
       setError(errorText(e));
     } finally {

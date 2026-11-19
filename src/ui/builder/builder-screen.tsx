@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { MouseEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import type { ParameterValue } from '../../engine/flow/parameters';
 import type { FlowDefinition, NodeType } from '../../engine/flow/types';
 import { Badge, Button, ButtonLink, Dropdown, ErrorState, ToastProvider, useToast } from '../components';
 import { canRunFlow, todayIso } from '../screens/flows-logic';
@@ -40,6 +41,8 @@ function Builder() {
   const me = useLoad((s) => s.currentUser());
   const refs = useLoad((s) => s.listRefTables());
   const [testFiles, setTestFiles] = useState<Record<string, File>>({});
+  // Test values of the parameters. They stay in the browser, like the test files, and are not saved with the flow.
+  const [testValues, setTestValues] = useState<Record<string, ParameterValue | undefined>>({});
   const version = flow.data?.versions.find((v) => v.versionNo === Number(versionNo));
   const [definition, setDefinition] = useState<FlowDefinition>(emptyDefinition());
   const [selection, setSelection] = useState<Selection>({ nodes: [], edges: [] });
@@ -261,6 +264,8 @@ function Builder() {
           testFiles={testFiles}
           onTestFile={(key, file) => setTestFiles((f) => ({ ...f, [key]: file }))}
           refTables={refs.data ?? []}
+          parameterValues={testValues}
+          onParameterValue={(key, value) => setTestValues((v) => ({ ...v, [key]: value }))}
         />
       </main>
       {dialog === 'publish' && version && summary ? (

@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FlowDefinition, FlowNode } from '../../engine/flow/types';
+import type { ParameterValue } from '../../engine/flow/parameters';
+import { parametersUsedBy } from '../../engine/flow/parameters-used';
 import type { FileSource } from '../../engine/input/load';
 import { checkFileSize } from '../../engine/size-guard';
 import { EngineError } from '../../engine/types';
@@ -8,6 +10,8 @@ import type { RefTable } from '../../engine/versions';
 import { Button, Chip, ChipGroup, DatePicker, EmptyState, ErrorState, InfoTip, SkeletonTable, Table } from '../components';
 import type { Column } from '../components';
 import { useT, errorText } from '../i18n';
+import { ParameterInputs } from '../parameter-inputs';
+import { initialValues, parameterValueErrors } from '../parameter-logic';
 import { todayIso } from '../screens/flows-logic';
 import { formatCell, neededFiles, previewKey, previewTarget } from './preview-logic';
 import { runPreview } from './preview-runner';
@@ -21,6 +25,9 @@ export interface StepPreviewProps {
   files: Record<string, File>;
   onFile: (key: string, file: File) => void;
   refTables: RefTable[];
+  /** Test values of the parameters, by key. Held by the builder screen like the test files. */
+  parameterValues: Record<string, ParameterValue | undefined>;
+  onParameterValue: (key: string, value: ParameterValue | undefined) => void;
 }
 
 type State = { status: 'idle' } | { status: 'loading' } | { status: 'ready'; data: PreviewData; key: string } | { status: 'error'; message: string };
@@ -28,7 +35,7 @@ type State = { status: 'idle' } | { status: 'loading' } | { status: 'ready'; dat
 const asSource = (f: File): FileSource => ({ name: f.name, size: f.size, blob: f });
 
 /** The Test tab: effective date, test files, and the first rows of the step, run in this browser. */
-export function StepPreview({ definition, step, files, onFile, refTables }: StepPreviewProps) {
+export function StepPreview({ definition, step, files, onFile, refTables, parameterValues, onParameterValue }: StepPreviewProps) {
   const t = useT();
   const [date, setDate] = useState(todayIso());
   const [handle, setHandle] = useState<string | undefined>(undefined);
@@ -43,7 +50,12 @@ export function StepPreview({ definition, step, files, onFile, refTables }: Step
 
   const needed = neededFiles(target.definition);
   const missing = needed.filter((n) => !files[n.key]);
-  const key = previewKey(target.definition, target.nodeId, target.handle, date);
+  // Only the parameters that the steps up to this one read are asked for. The default fills a value that was not typed.
+  const used = parametersUsedBy(target.definition);
+  const values = initialValues(used, parameterValues);
+  const valueErrors = parameterValueErrors(used, values);
+  const invalid = Object.keys(valueErrors).length > 0;
+  const key = previewKey(target.definition, target.nodeId, target.handle, date) + JSON.stringify(values);
 
   const run = async (): Promise<void> => {
     abort.current?.abort();
@@ -59,7 +71,7 @@ export function StepPreview({ definition, step, files, onFile, refTables }: Step
         if (!guard.ok) throw new EngineError('file_too_large', t('engine.fileTooLarge', { fileName: f.name, size: megabytes(guard.sizeBytes), limit: megabytes(guard.limitBytes) }));
         sources[n.key] = asSource(f);
       }
-      const data = await runPreview({ definition: target.definition, nodeId: target.nodeId, handle: target.handle, files: sources, refTables, effectiveDate: date, signal: controller.signal });
+      const data = await runPreview({ definition: target.definition, nodeId: target.nodeId, handle: target.handle, files: sources, refTables, effectiveDate: date, parameterValues: values, signal: controller.signal });
       if (!controller.signal.aborted) setState({ status: 'ready', data, key });
     } catch (e) {
       if (!controller.signal.aborted) setState({ status: 'error', message: errorText(e) });
@@ -75,6 +87,15 @@ export function StepPreview({ definition, step, files, onFile, refTables }: Step
         <span className={styles.label}>{t('builder.preview.date')}</span>
         <DatePicker label={t('builder.preview.date')} value={date} onChange={setDate} width={338} />
       </div>
+      {used.length > 0 ? (
+        <div className={styles.block}>
+          <span className={styles.labelRow}>
+            <span className={styles.label}>{t('builder.preview.paramsTitle')}</span>
+            <InfoTip label={t('builder.preview.paramsTitle')}>{t('builder.preview.paramsHint')}</InfoTip>
+          </span>
+          <ParameterInputs parameters={used} values={values} errors={valueErrors} onChange={onParameterValue} />
+        </div>
+      ) : null}
       {needed.length > 0 ? (
         <div className={styles.block}>
           <span className={styles.labelRow}>
@@ -99,7 +120,7 @@ export function StepPreview({ definition, step, files, onFile, refTables }: Step
         </div>
       ) : null}
       <div>
-        <Button variant="primary" busy={state.status === 'loading'} disabled={missing.length > 0} onClick={() => void run()}>
+        <Button variant="primary" busy={state.status === 'loading'} disabled={missing.length > 0 || invalid} onClick={() => void run()}>
           {state.status === 'loading' ? t('builder.preview.busy') : t('builder.preview.button')}
         </Button>
       </div>
