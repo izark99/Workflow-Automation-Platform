@@ -136,9 +136,19 @@ Parameters (SPEC 11.5)
 - [x] T4.9e Run screen: Parameters card above Files; errors under each field; Run disabled until the values are valid. e2e journey: a flow with a date parameter used in a Filter runs and gives the expected rows. Extend the privacy acceptance test: parameter values appear in no request.
 
 Quality pass (SPEC 11.6)
-- [ ] T4.10a UI review: screenshots of every route in both themes at 1440 px, checked against the DESIGN "UI quality checklist"; `docs/UI_AUDIT.md` with numbered findings, each with screen, item of the checklist, severity and fix; add one task per finding below (T4.10b, T4.10c, ...), at most 12, the rest listed as later in the audit.
+- [x] T4.10a UI review: screenshots of every route in both themes at 1440 px, checked against the DESIGN "UI quality checklist"; `docs/UI_AUDIT.md` with numbered findings, each with screen, item of the checklist, severity and fix; add one task per finding below (T4.10b, T4.10c, ...), at most 12, the rest listed as later in the audit.
 
 Close
+- [ ] T4.10b (U1) Parameters panel: the Type and the default dropdowns fit inside the card.
+- [ ] T4.10c (U2) Formula editor: an empty formula is a neutral note until the field was touched, not a red error on arrival.
+- [ ] T4.10d (U3) Run Parameters card and Test tab: a required value shows its error after the field was touched or Run was pressed; Run stays disabled with a note.
+- [ ] T4.10e (U4) The three parameter value messages name the label of the parameter, not its key.
+- [ ] T4.10f (U5) A boolean parameter has no "(optional)" suffix.
+- [ ] T4.10g (U6) Admin: the sentences under "Access to shared flows" and "Deleted flows" move into an info button.
+- [ ] T4.10h (U7) Builder canvas: no step card sits under the control bar after fit-to-screen.
+- [ ] T4.10i (U8) Filter output labels "match" and "no match" are 12 px and not crossed by the line.
+- [ ] T4.10j (U9) Builder settings panel with no step: the Parameters heading comes first, the "Select a step" sentence below it.
+- [ ] T4.10k (U10) Spacing: 6, 9, 10, 13 and 14 px in shared components move to the 4 px grid without changing a height or y that a rule checks.
 - [ ] T4.11 `docs/DEPLOY.md`: a section "Upgrade an existing deployment" (back up, `npx supabase db push` for the new migrations, `npx supabase functions deploy admin-users`, check list for accounts, themes, texts and parameters); remove the limits that Phase 4 lifted; `scripts/deploy-doc.test.ts` updated. `README.md` mentions the new features.
 - [ ] T4.12 Final run: `npm ci`, then `npm run gates` (seven gates) and `npm run test:acceptance:pages`; set `STATUS: COMPLETE` only if both pass.
 
@@ -173,6 +183,12 @@ None. The Pages file size blocker of T3.9 is solved by D71.
 ## Log
 
 Newest first.
+
+### 2026-11-19 T4.10a UI review (turn 32)
+Advisor not consulted: a review with no code change to the app.
+Done: 86 screenshots (43 route states in light and dark at 1440 px) and script measurements (`ui-audit/audit.spec.ts`, `playwright.ui-audit.config.ts`, not a gate); the main screens read on the screenshots in both themes. `docs/UI_AUDIT.md` has 10 findings (U1 to U10), each with screen, checklist item, severity and fix, and 4 later items (L1 to L4). Ten tasks added (T4.10b to T4.10k); under the limit of 12. Measured clean: one h1 per page, no skipped levels, no transition over 200 ms, nothing moves with reduced motion, numbers right-aligned, no unreachable clickable element.
+Gates run: `npm run check` and `npx tsc` pass with the new folder in `tsconfig.json`; the audit run itself: 86 passed. No app code changed, so the other gates were not re-run. `git diff main -- flows/monthly-timesheet.flow.json` empty; `git status --porcelain testcase` empty.
+Next: T4.10b.
 
 ### 2026-11-19 T4.9e Parameters: the Run screen (turn 31)
 Advisor not consulted: the design follows SPEC 11.5 and D77 to D80; the new choices are D81.
