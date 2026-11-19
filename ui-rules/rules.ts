@@ -254,3 +254,36 @@ export async function untranslatedText(page: Page, selector: string): Promise<st
     return bad;
   }, selector);
 }
+
+/** DESIGN, Collapsible panels: a panel is exactly `expected` px wide, and the page needs no horizontal scrolling. */
+export const panelWidth = async (page: Page, selector: string, expected: number): Promise<string[]> =>
+  page.evaluate(
+    ([sel, want]) => {
+      const bad: string[] = [];
+      const el = document.querySelector(sel as string);
+      if (!el) return [`no panel matches ${sel}`];
+      const w = Math.round(el.getBoundingClientRect().width);
+      if (w !== want) bad.push(`${sel} is ${w} px wide; expected ${want}`);
+      const doc = document.documentElement;
+      if (doc.scrollWidth > doc.clientWidth) bad.push(`the page scrolls horizontally (${doc.scrollWidth} > ${doc.clientWidth})`);
+      return bad;
+    },
+    [selector, expected] as const,
+  );
+
+/** DESIGN, Collapsible panels: a collapsed panel never scrolls, and every button in it is a toggle or a 36 or 40 px icon button. */
+export const railShape: (page: Page, selector: string) => Promise<string[]> = async (page, selector) =>
+  page.evaluate((sel) => {
+    const bad: string[] = [];
+    const el = document.querySelector(sel);
+    if (!el) return [`no panel matches ${sel}`];
+    const cs = getComputedStyle(el);
+    if (el.scrollHeight > el.clientHeight + 1 && cs.overflowY !== 'hidden') bad.push(`${sel} scrolls in its collapsed state`);
+    for (const b of Array.from(el.querySelectorAll('button'))) {
+      const r = b.getBoundingClientRect();
+      if (r.width === 0) continue;
+      if (r.width > 48) bad.push(`a button in the rail is ${Math.round(r.width)} px wide`);
+      if (!b.getAttribute('aria-label') && !b.textContent?.trim()) bad.push('a button in the rail has no name');
+    }
+    return bad;
+  }, selector);
