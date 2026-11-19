@@ -102,18 +102,32 @@
 .headText {
   display: flex;
   flex-direction: column;
+  gap: 4px;
+}
+
+/* The name of the table with its "Edit description" button on one line. */
+.titleLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
 }
 
 .headActions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  /* On the right of the name when there is room, and on the right of its own line when the buttons wrap below it. */
+  justify-content: flex-end;
+  margin-left: auto;
   gap: 8px;
 }
 
 .chips {
   display: flex;
   flex-wrap: wrap;
+  /* Centred, so the Draft or Published badge is not stretched to the height of the version chip with its text at the top. */
+  align-items: center;
   gap: 8px;
   padding: 16px 20px;
 }
