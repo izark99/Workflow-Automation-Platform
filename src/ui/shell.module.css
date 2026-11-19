@@ -122,6 +122,13 @@
   z-index: 1;
 }
 
+/* In the rail the toggle is centred over the 40 px icon buttons below it (they are centred in the 64 px rail). */
+.navRail .toggle {
+  right: auto;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
 .railTop {
   height: 40px; /* room for the toggle */
 }

@@ -7,6 +7,11 @@ const URL = '/reference-tables';
 const grid = (page: Page, name: string) => page.getByRole('table', { name: `Rows of ${name}` });
 const gridRows = (page: Page, name: string) => grid(page, name).locator('tbody tr');
 const toastWith = (page: Page, text: string) => page.getByRole('status').filter({ hasText: text });
+/** The actions that are not on the toolbar: Edit description, Columns, Paste from Excel, New version (of a draft). */
+const fromMenu = async (page: Page, item: string) => {
+  await page.getByRole('button', { name: /^More actions for this table/ }).click();
+  await page.getByRole('option', { name: item, exact: true }).click();
+};
 const list = (page: Page) => page.getByRole('list', { name: 'Reference tables' });
 const seed = async (page: Page, change: (s: ReturnType<typeof seedSnapshot>) => void) => {
   const s = seedSnapshot();
@@ -136,7 +141,7 @@ test('a long table is shown in pages of 100 rows and edits on another page are k
 test('Paste from Excel replaces the rows: a header row is skipped and cells go by column name; a bad paste is refused with what to do', async ({ page }) => {
   await seed(page, withBigDraft);
   await page.goto(`${URL}?table=ref-big&v=1`);
-  await page.getByRole('button', { name: 'Paste from Excel' }).click();
+  await fromMenu(page, 'Paste from Excel');
   const dialog = page.getByRole('dialog', { name: 'Paste from Excel' });
   await dialog.getByRole('textbox', { name: 'Pasted cells' }).fill('a\tb\tc\td\te');
   await dialog.getByRole('button', { name: 'Use these rows' }).click();
@@ -311,7 +316,7 @@ test.describe('adjust a draft', () => {
   test('add, rename, change the type of and remove columns; the grid follows, and Save keeps them', async ({ page }) => {
     await seed(page, small);
     await page.goto(SMALL);
-    await page.getByRole('button', { name: 'Columns', exact: true }).click();
+    await fromMenu(page, 'Columns');
     const d = dialogOf(page);
     expect(Math.round((await d.boundingBox())!.width)).toBe(640);
     await d.getByRole('textbox', { name: 'Name of column 1' }).fill('Code of day');
@@ -328,7 +333,7 @@ test.describe('adjust a draft', () => {
     await expect(page.getByRole('status').filter({ hasText: 'Unsaved changes' })).toBeVisible();
     await page.getByRole('textbox', { name: 'Row 1, When' }).fill('2026-09-30');
     // Remove the second column.
-    await page.getByRole('button', { name: 'Columns', exact: true }).click();
+    await fromMenu(page, 'Columns');
     await dialogOf(page).getByRole('button', { name: 'Remove column 2' }).click();
     await dialogOf(page).getByRole('button', { name: 'Apply' }).click();
     await expect(grid(page, 'Small draft').getByRole('columnheader')).toHaveText(['Code of day', 'When', '']);
@@ -343,7 +348,7 @@ test.describe('adjust a draft', () => {
   test('a repeated or empty column name and a table with no columns keep Apply off and say what to do', async ({ page }) => {
     await seed(page, small);
     await page.goto(SMALL);
-    await page.getByRole('button', { name: 'Columns', exact: true }).click();
+    await fromMenu(page, 'Columns');
     const d = dialogOf(page);
     await d.getByRole('textbox', { name: 'Name of column 2' }).fill('CODE');
     await expect(d.getByRole('alert')).toContainText('The name "CODE" is used by columns 1 and 2');
@@ -359,7 +364,7 @@ test.describe('adjust a draft', () => {
   test('a changed type checks the cells when the draft is saved, and nothing is saved on an error', async ({ page }) => {
     await seed(page, small);
     await page.goto(SMALL);
-    await page.getByRole('button', { name: 'Columns', exact: true }).click();
+    await fromMenu(page, 'Columns');
     await dialogOf(page).getByRole('button', { name: /^Type of column 1/ }).click();
     await page.getByRole('option', { name: 'Number' }).click();
     await dialogOf(page).getByRole('button', { name: 'Apply' }).click();
@@ -371,7 +376,7 @@ test.describe('adjust a draft', () => {
 
   test('the admin changes the description of a table; the name stays; also on a published table', async ({ page }) => {
     await page.goto(URL);
-    await page.getByRole('button', { name: 'Edit description' }).click();
+    await fromMenu(page, 'Edit description');
     const d = page.getByRole('dialog', { name: 'Description of the table' });
     await d.getByRole('textbox', { name: 'What the table holds' }).fill('Codes of the day');
     await d.getByRole('button', { name: 'Save description' }).click();
@@ -395,7 +400,7 @@ test.describe('adjust a draft', () => {
   test('changed columns count as unsaved changes: leaving the table asks first', async ({ page }) => {
     await seed(page, small);
     await page.goto(SMALL);
-    await page.getByRole('button', { name: 'Columns', exact: true }).click();
+    await fromMenu(page, 'Columns');
     await dialogOf(page).getByRole('button', { name: 'Add column' }).click();
     await dialogOf(page).getByRole('textbox', { name: 'Name of column 3' }).fill('extra');
     await dialogOf(page).getByRole('button', { name: 'Apply' }).click();
@@ -403,5 +408,44 @@ test.describe('adjust a draft', () => {
     await expect(page.getByRole('dialog', { name: 'Discard unsaved changes?' })).toBeVisible();
     await page.getByRole('button', { name: 'Keep editing' }).click();
     await expect(grid(page, 'Small draft').getByRole('columnheader')).toHaveText(['code', 'limit', 'extra', '']);
+  });
+});
+
+test.describe('the toolbar of a table is short: the main action, and a More menu', () => {
+  const draft = (s: ReturnType<typeof seedSnapshot>) => {
+    s.refTables.push({ id: 'ref-d', name: 'Tool draft', description: 'd', versions: [{ versionNo: 1, validFrom: '2026-01-01', validTo: null, status: 'draft', columns: [{ name: 'k', type: 'text' }], rows: [['a']] }] });
+  };
+  const toolbar = (page: Page) => page.locator('section[aria-label="Table details"]').getByRole('button');
+
+  test('a draft shows Save changes, Publish and More; the rest is in the menu', async ({ page }) => {
+    await seed(page, draft);
+    await page.goto(`${URL}?table=ref-d&v=1`);
+    await expect(page.getByRole('button', { name: 'Save changes' })).toBeVisible();
+    const names = await toolbar(page).evaluateAll((els) => els.map((e) => (e.getAttribute('aria-label') ?? e.textContent ?? '').trim()).filter((n) => !/^(Remove row|Add row|v\d)/.test(n)));
+    expect(names).toEqual(['Save changes', 'Publish', 'More actions for this table']);
+    await page.getByRole('button', { name: /^More actions for this table/ }).click();
+    await expect(page.getByRole('option')).toHaveText(['Edit description', 'Columns', 'Paste from Excel', 'New version']);
+  });
+
+  test('a published version shows New version and More, and More holds only Edit description', async ({ page }) => {
+    await page.goto(URL);
+    await expect(page.getByRole('button', { name: 'New version', exact: true })).toBeVisible();
+    await page.getByRole('button', { name: /^More actions for this table/ }).click();
+    await expect(page.getByRole('option')).toHaveText(['Edit description']);
+  });
+
+  test('the menu opens New version for a draft too', async ({ page }) => {
+    await seed(page, draft);
+    await page.goto(`${URL}?table=ref-d&v=1`);
+    await fromMenu(page, 'New version');
+    await expect(page.getByRole('dialog', { name: /^New version from v1/ })).toBeVisible();
+  });
+
+  test('the toolbar stays on one line next to the name at 1440 px', async ({ page }) => {
+    await seed(page, draft);
+    await page.goto(`${URL}?table=ref-d&v=1`);
+    const name = await page.locator('section[aria-label="Table details"] h2').boundingBox();
+    const more = await page.getByRole('button', { name: /^More actions for this table/ }).boundingBox();
+    expect(Math.abs((name!.y + name!.height / 2) - (more!.y + more!.height / 2))).toBeLessThan(40);
   });
 });

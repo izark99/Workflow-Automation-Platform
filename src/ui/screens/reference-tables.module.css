@@ -105,13 +105,6 @@
   gap: 4px;
 }
 
-/* The name of the table with its "Edit description" button on one line. */
-.titleLine {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px;
-}
 
 .headActions {
   display: flex;

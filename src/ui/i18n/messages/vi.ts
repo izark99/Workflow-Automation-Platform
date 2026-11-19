@@ -521,6 +521,7 @@ export const vi: Record<MessageKey, string> = {
   'refTables.import.why.targetTable': 'Hãy chọn một bảng.',
   'refTables.import.why.targetNoDraft': 'Bảng này không có bản nháp. Hãy chọn bảng khác.',
   'refTables.import.why.targetDate': 'Hãy chọn ngày bắt đầu không trùng với phiên bản khác.',
+  'refTables.menu.label': 'Thêm thao tác cho bảng này',
   'refTables.cols.button': 'Cột',
   'refTables.cols.title': 'Các cột của bản nháp',
   'refTables.cols.name': 'Tên cột {n}',

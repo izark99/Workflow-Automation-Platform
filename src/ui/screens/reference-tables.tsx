@@ -265,12 +265,7 @@ export function ReferenceTablesScreen() {
           <Card flush title={t('refTables.grid', { name: table.name })}>
             <div className={styles.head}>
               <div className={styles.headText}>
-                <div className={styles.titleLine}>
-                  <h2 data-user-content>{table.name}</h2>
-                  {isAdmin ? (
-                    <Button compact onClick={() => { setDialogError(null); setDialog('description'); }}>{t('refTables.desc.button')}</Button>
-                  ) : null}
-                </div>
+                <h2 data-user-content>{table.name}</h2>
                 {table.description ? <span className={styles.note} data-user-content>{table.description}</span> : null}
               </div>
               <div className={styles.headActions}>
@@ -279,20 +274,41 @@ export function ReferenceTablesScreen() {
                     {t('refTables.unsaved')}
                   </span>
                 ) : null}
+                {/* A draft shows what the admin does most: save, then publish. The rest is in the menu. */}
                 {editable ? (
                   <>
-                    <Button onClick={() => setDialog('columns')}>{t('refTables.cols.button')}</Button>
-                    <Button onClick={() => { setPasteText(''); setDialogError(null); setDialog('paste'); }}>{t('refTables.paste')}</Button>
                     <Button variant="primary" busy={busy === 'save'} disabled={!dirty} onClick={() => void save()}>
                       {busy === 'save' ? t('refTables.saving') : t('refTables.save')}
                     </Button>
+                    <Button disabled={dirty} onClick={() => { setDialogError(null); setDialog('publish'); }}>
+                      {t('refTables.publish')}
+                    </Button>
                   </>
                 ) : null}
-                {isAdmin ? <Button onClick={() => { setDialogError(null); setDialog('newVersion'); }}>{t('refTables.newVersion')}</Button> : null}
-                {editable ? (
-                  <Button variant="primary" disabled={dirty} onClick={() => { setDialogError(null); setDialog('publish'); }}>
-                    {t('refTables.publish')}
-                  </Button>
+                {/* A published version is read-only: the one thing to do with it is a new version. */}
+                {isAdmin && !editable ? <Button onClick={() => { setDialogError(null); setDialog('newVersion'); }}>{t('refTables.newVersion')}</Button> : null}
+                {isAdmin ? (
+                  <Dropdown
+                    width={112}
+                    label={t('refTables.menu.label')}
+                    buttonLabel={t('admin.menu.more')}
+                    options={[
+                      { value: 'description', label: t('refTables.desc.button') },
+                      ...(editable
+                        ? [
+                            { value: 'columns', label: t('refTables.cols.button') },
+                            { value: 'paste', label: t('refTables.paste') },
+                            { value: 'newVersion', label: t('refTables.newVersion') },
+                          ]
+                        : []),
+                    ]}
+                    value=""
+                    onChange={(v) => {
+                      setDialogError(null);
+                      if (v === 'paste') setPasteText('');
+                      setDialog(v as Dialogs);
+                    }}
+                  />
                 ) : null}
               </div>
             </div>

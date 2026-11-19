@@ -536,6 +536,7 @@ export const en = {
   'refTables.import.why.targetTable': 'Choose a table.',
   'refTables.import.why.targetNoDraft': 'This table has no draft. Choose another table.',
   'refTables.import.why.targetDate': 'Choose a start date that does not overlap another version.',
+  'refTables.menu.label': 'More actions for this table',
   'refTables.cols.button': 'Columns',
   'refTables.cols.title': 'Columns of the draft',
   'refTables.cols.name': 'Name of column {n}',
