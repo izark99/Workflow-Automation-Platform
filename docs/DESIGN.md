@@ -112,12 +112,13 @@ Rules:
 ## Layout
 
 - Minimum window width 1280 px. No horizontal page scroll at 1280 or 1440.
-- Sidebar 232 px, white, the same on every screen except the builder.
+- Sidebar 232 px open (64 px as a rail, Phase 5), white, the same on every screen except the builder.
 - Main column: padding 32 px 40 px, 24 px between blocks.
 - Page header has a fixed structure and height on every screen: breadcrumb line 24 px, title 36 px with an info button after it (the old subtitle text, SPEC 11.2), one action on the right. The title sits at the same y on every screen (63 px), and the first block starts at the same y on every screen: **123 px** from Phase 4 (it was 148 px when a 21 px subtitle sat under the title). The header is 67 px high (24 + 4 + 3 + 36). The UI rule `headerPosition` checks both values.
 - Cards: white, 1 px line border, radius 12 px, padding 20 px, or no padding when they hold a table.
 - Tables: header cell padding 8 px 16 px with a 24 px line (a 40 px header; it was 10 px 16 px with a 20 px line), 12 px bold muted text; body rows 56 px high plus a 1 px divider; numbers right-aligned; cells do not wrap.
-- Builder: header bar 64 px, step list 184 px, settings panel 380 px, canvas in between. Step cards 240 x 56 px, 40 px apart, selected card with a 2 px accent border.
+- Builder: header bar 64 px, step list 184 px, settings panel 380 px (each 48 px as a rail, Phase 5), canvas in between. Step cards 240 x 56 px, 40 px apart, selected card with a 2 px accent border.
+- The widths above are the open widths. Collapsing a panel changes only its width and the width of what is next to it: the header, the title y (63 px) and the first block y (123 px) do not move (SPEC 12.4).
 
 ## Components built for this app
 
@@ -134,6 +135,7 @@ accessibility library is allowed, a styled UI kit is not):
 | Dialog | Focus trap, Escape closes, focus returns to the opener |
 | Table, Card, Badge, Skeleton, Toast | As drawn on screen 7 |
 | Info button (Phase 4) | See "Info button" below |
+| Panel toggle (Phase 5) | See "Collapsible panels" below |
 | Theme switch and language switch (Phase 4) | In the sidebar footer, above Sign out: two compact dropdowns, "Theme" (Light, Dark, System) and "Language" (English, Tiếng Việt). The sign-in screen has the same two controls in its top right corner |
 
 Forbidden in the DOM: `<select>`, `input[type=date]`, `input[type=checkbox]`,
@@ -197,3 +199,40 @@ Used by the review of SPEC 11.6. Each item is checked on every route in both the
 - Text contrast 4.5:1 or more. Control borders 3:1 or more. In both themes.
 - Every control is reachable and usable with the keyboard, with a visible focus ring.
 - No information by color alone: breaches show a word, not only a red number.
+
+## Collapsible panels (Phase 5)
+
+- Four panels collapse (SPEC 12.4): the sidebar (232 to 64 px), the builder step list (184 to 48 px), the builder settings panel (380 to 48 px) and the Reference tables list (to 48 px).
+- The toggle is a compact (36 px) secondary icon button with `aria-expanded` and `aria-controls`, at the top of the panel on its inner edge: a chevron that points to the edge the panel sits on when it is open (left chevron for a left panel) and away from it when collapsed. Its accessible name says what it does and which panel: "Collapse sidebar", "Expand settings panel". The toggle sits 12 px from the top and 8 px from the inner edge.
+- A rail has the card colour, a 1 px line on its inner edge, and no padding other than 8 px; it never scrolls.
+- Sidebar rail (64 px): the toggle, then the "Create flow" button as a 40 x 40 px `cta` icon button, then the three navigation items as 40 x 40 px icon buttons (the current one with the soft primary background, `aria-current`), and at the bottom one 40 x 40 px user button (the first letter of the name) that opens a popover with the name, the role, Language, Theme, Change password and Sign out. Every icon button has an accessible name and a `title` from the catalog.
+- Step list rail: the toggle only. Settings panel rail: the toggle, and below it the step name written upright (`writing-mode: vertical-rl`, 13 px, muted, one line, truncated with an ellipsis, full name in `title`); with no step selected the rail shows only the toggle.
+- Motion: the width changes in at most 200 ms (`ease-out`); with `prefers-reduced-motion` it changes at once. Contents that do not fit while the width changes are clipped, never wrapped.
+- Both themes: the rail and the toggle use the tokens of the card and the line; no new colour.
+
+## Reference table import (Phase 5)
+
+- A "Import file" button (secondary, default size) sits in the Reference tables header next to "New table", for the admin only. It opens a dialog 720 px wide.
+- Steps in one dialog, top to bottom, each shown when it applies: file (the visible button "Choose file", the name of the file after it); sheet (a dropdown, xlsx only); header row (a field, default 1); preview (a table of the first 20 rows with the columns as headers); columns (one row per column: a field for the name and a dropdown for the type); target (three chips: "New table", "New version", "Replace the draft", then the fields of the chosen target).
+- Errors are listed under the step that caused them, each with row and column (SPEC 12.1 item 4), at most 5, then "and {n} more". The Import button stays disabled while the file, the columns or the target are invalid, and a note says why, as on the Run screen.
+- While the file is read or the table is saved, the dialog shows a progress bar with the step ("Reading the file", "Saving"). Cancel works while reading.
+- After a successful import the dialog closes, the new draft is open on the screen, and a toast says "Imported {n} rows as a draft. Check it, then publish."
+- The screen for a user has no Import button and shows a "Used by" line under the title of each table in the list and above the grid (the flow names, three at most, then "and {n} more").
+
+## Admin: Settings tab and the inactivity dialog (Phase 5)
+
+- Admin gets a third tab, Settings (after Users and Texts). It has one card, "Sign-out after inactivity", with a number field "Hours without activity" (1 to 72), an info button that explains what counts as activity and that the check runs in the browser, and a Save button (default size, enabled only when the value changed and is valid). A saved value shows a toast.
+- The inactivity dialog (SPEC 12.2) is a modal dialog titled "Still there?", with the text "You will be signed out in {time} because there was no activity." and, when there are unsaved changes, a second line "Unsaved changes will be lost." Buttons: "Stay signed in" (primary) and "Sign out now" (secondary). The countdown is announced to screen readers once a minute and at 10 seconds, not every second. It never has a close button.
+- The sign-in screen shows "You were signed out after {hours} hours without activity." as a quiet note (muted text with an info icon, not an error box) above the form.
+
+## Texts tab (Phase 5)
+
+- Columns: Key (monospace 13 px, 220 px), English, Vietnamese (each takes half of the rest, text clamped to two lines, `data-user-content` on the text because it is the admin's data), Actions (Edit, and Reset when the key has an edit). A cell whose text differs from the default has a soft "Edited" badge under the text.
+- Toolbar: the search field, a screen dropdown, and an "Edited only" chip. There is no language control.
+- The edit dialog is 880 px wide: the key on top (monospace); below, two equal columns, English and Vietnamese, each with a labelled text area (5 rows), the default under it in muted 12 px text, and a compact "Reset" button for that language; errors sit under the text area that failed; the footer has "Cancel", "Reset both" (secondary) and "Save" (primary).
+
+## Phase 5 additions to the checklist
+
+- Item 8 (keyboard) also covers the panel toggles: every toggle is reachable by Tab in reading order, Space and Enter work, and the focus stays on the toggle when the panel changes width.
+- Item 11 (both themes) also covers the rails, the import dialog and the inactivity dialog.
+- A UI rule per panel checks the open width and the collapsed width, that the title and the first block keep their y, that nothing needs horizontal scrolling, and that every control of an open panel is reachable when the panel is collapsed (the sidebar rail) or after opening it (the others).

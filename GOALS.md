@@ -44,3 +44,14 @@ Before you paste it: make sure `main` has every Phase 3 change and the D71 Pages
 ```
 /goal Read PROMPT.md and follow it exactly, one task per turn, Phase 4 only. The goal is met when your Evidence block in this conversation shows all of: every Phase 4 task in PROGRESS.md is ticked, including the tasks that T4.10a added from docs/UI_AUDIT.md; "npm run test:functions" exited 0 on a local Supabase; "npm run test:ui-rules" exited 0 in the light theme at 1280 and 1440 px and in the dark theme at 1440 px; a full "npm run gates" started after "npm ci" exited 0 with all seven gates passing; "npm run test:acceptance:pages" exited 0; "git diff main -- flows/monthly-timesheet.flow.json" is empty; "head -1 PROGRESS.md" prints STATUS: COMPLETE; "git status --porcelain testcase" is empty. Also stop when "head -1 PROGRESS.md" prints STATUS: BLOCKED, or after 80 turns.
 ```
+
+## Phase 5: Reference tables, idle sign-out, texts, panels
+
+Before you paste it: make sure `main` has every Phase 4 change (and the follow-up pull requests), and that line 1 of
+`PROGRESS.md` says `STATUS: IN PROGRESS`. Review the "Needs Harold" rows marked Phase 5 first, above all the first one
+(who sees the rows of a reference table): the build uses the default unless the list says otherwise.
+
+```
+/goal Read PROMPT.md and follow it exactly, one task per turn, Phase 5 only. The goal is met when your Evidence block in this conversation shows all of: every Phase 5 task in PROGRESS.md is ticked, including the tasks that T5.21 added from docs/UI_AUDIT_P5.md; "npm run test:functions" exited 0 on a local Supabase; "npm run test:db" exited 0 on a local Supabase with the migrations 14 to 17 applied from zero; "npm run test:ui-rules" exited 0 in the light theme at 1280 and 1440 px and in the dark theme at 1440 px, with the routes of the collapsed panels included; a full "npm run gates" started after "npm ci" exited 0 with all seven gates passing; "npm run test:acceptance:pages" exited 0; "git diff main -- flows/monthly-timesheet.flow.json" is empty; "head -1 PROGRESS.md" prints STATUS: COMPLETE; "git status --porcelain testcase" is empty. Also stop when "head -1 PROGRESS.md" prints STATUS: BLOCKED, or after 75 turns.
+```
+
