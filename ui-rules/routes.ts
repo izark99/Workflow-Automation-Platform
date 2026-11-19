@@ -121,6 +121,44 @@ export const ROUTES: RuleRoute[] = [
     },
   },
   {
+    path: '/flows',
+    name: 'sign-in screen after the inactivity limit',
+    sidebar: false,
+    nav: false,
+    before: async (page) => {
+      await withSignIn(page);
+      await page.addInitScript(() => {
+        localStorage.setItem('dfw.authSession', JSON.stringify({ userId: 'memory-harold@example.com', email: 'harold@example.com' }));
+        localStorage.setItem('dfw.idleMs', '60000');
+        localStorage.setItem('dfw.lastActivity', String(Date.now() - 3 * 3_600_000));
+      });
+    },
+    // The quiet note (muted text with an info icon) above the form.
+    prepare: async (page) => {
+      await page.locator('p[role="status"][class*="quiet"]').waitFor();
+    },
+  },
+  {
+    path: '/flows',
+    name: '/flows (inactivity dialog)',
+    sidebar: true,
+    table: true,
+    before: async (page) => {
+      await withSignIn(page);
+      await page.addInitScript(() => {
+        localStorage.setItem('dfw.authSession', JSON.stringify({ userId: 'memory-harold@example.com', email: 'harold@example.com' }));
+        localStorage.setItem('dfw.idleMs', '60000');
+      });
+      await page.clock.install();
+    },
+    // 40 s without activity of a 60 s limit: the dialog with the countdown shows (the last 30 s).
+    prepare: async (page) => {
+      await page.locator('tbody tr').first().waitFor();
+      await page.clock.fastForward(40_000);
+      await page.getByRole('dialog').waitFor();
+    },
+  },
+  {
     path: '/admin',
     name: '/admin (Texts tab)',
     sidebar: true,

@@ -91,16 +91,30 @@ export function createActivityTracker(options: TrackerOptions): ActivityTracker 
     last = Math.max(last, parseLastActivity(e.newValue, now()));
   };
 
-  const options2 = { capture: true, passive: true };
-  for (const type of ACTIVITY_EVENTS) events?.addEventListener(type, onActivity, options2);
+  // `focus` does not bubble: without capture only the window getting focus reaches this listener. An element that takes
+  // focus (a dialog that opens) is not a person doing something.
+  const optionsFor = (type: string) => (type === 'focus' ? { passive: true } : { capture: true, passive: true });
+  for (const type of ACTIVITY_EVENTS) events?.addEventListener(type, onActivity, optionsFor(type));
   options.storageEvents?.addEventListener('storage', onStorage);
+
+  // A run that ends is activity at that moment: a three-hour run must not end the session the instant it finishes.
+  const trackedHolds: HoldRegistry = {
+    hold() {
+      const release = holds.hold();
+      return () => {
+        release();
+        touch(true);
+      };
+    },
+    active: () => holds.active(),
+  };
 
   return {
     touch,
     last: () => (holds.active() ? now() : last),
-    holds,
+    holds: trackedHolds,
     stop() {
-      for (const type of ACTIVITY_EVENTS) events?.removeEventListener(type, onActivity, options2);
+      for (const type of ACTIVITY_EVENTS) events?.removeEventListener(type, onActivity, optionsFor(type));
       options.storageEvents?.removeEventListener('storage', onStorage);
     },
   };

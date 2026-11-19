@@ -623,6 +623,14 @@ export const en = {
   'dev.demo.panelOpen': 'Open',
   'dev.demo.panelCollapsed': 'Collapsed',
 
+  'session.idle.title': 'Still there?',
+  'session.idle.text': 'You will be signed out in {time} because there was no activity.',
+  'session.idle.unsaved': 'Unsaved changes will be lost.',
+  'session.idle.stay': 'Stay signed in',
+  'session.idle.signOut': 'Sign out now',
+  'session.idle.announce': 'You will be signed out in {time}.',
+  'signIn.idleEnded': 'You were signed out after {hours, plural, one {# hour} other {# hours}} without activity.',
+
   'dev.crumb': 'Design reference',
   'dev.title': 'Components and states',
   'dev.subtitle': 'Every control is built for this app. No browser-default dropdown, date picker, or checkbox is used.',

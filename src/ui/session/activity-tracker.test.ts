@@ -139,6 +139,17 @@ describe('hold registry (a run in progress counts as activity)', () => {
     vi.setSystemTime(60_000);
     expect(tracker.last()).toBe(60_000);
     release();
-    expect(tracker.last()).toBe(1000);
+    // The end of a run is activity at that moment, so a long run does not end the session as soon as it finishes.
+    expect(tracker.last()).toBe(60_000);
+  });
+  it('a release writes the time at once', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(5000);
+    const store = memory();
+    const tracker = createActivityTracker({ storage: store, events: fakeWindow(), now: () => Date.now() });
+    const release = tracker.holds.hold();
+    vi.setSystemTime(9000);
+    release();
+    expect(store.data.get(LAST_ACTIVITY_KEY)).toBe('9000');
   });
 });

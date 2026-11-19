@@ -602,6 +602,14 @@ export const vi: Record<MessageKey, string> = {
   'dev.demo.panelOpen': 'Mở',
   'dev.demo.panelCollapsed': 'Đã thu gọn',
 
+  'session.idle.title': 'Bạn còn ở đó không?',
+  'session.idle.text': 'Bạn sẽ bị đăng xuất sau {time} vì không có hoạt động nào.',
+  'session.idle.unsaved': 'Các thay đổi chưa lưu sẽ bị mất.',
+  'session.idle.stay': 'Giữ đăng nhập',
+  'session.idle.signOut': 'Đăng xuất ngay',
+  'session.idle.announce': 'Bạn sẽ bị đăng xuất sau {time}.',
+  'signIn.idleEnded': 'Bạn đã bị đăng xuất sau {hours, plural, other {# giờ}} không hoạt động.',
+
   'dev.crumb': 'Tài liệu thiết kế',
   'dev.title': 'Thành phần và trạng thái',
   'dev.subtitle': 'Mọi điều khiển đều được xây riêng cho ứng dụng này. Không dùng danh sách thả xuống, bộ chọn ngày hay hộp kiểm mặc định của trình duyệt.',

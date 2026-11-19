@@ -1,3 +1,4 @@
+import { useReportUnsaved } from '../session/unsaved';
 import { useEffect, useRef, useState } from 'react';
 import type { ClipboardEvent, MouseEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
@@ -64,6 +65,7 @@ export function ReferenceTablesScreen() {
   }, [table, version]);
 
   const dirty = editable && touched;
+  useReportUnsaved(dirty);
   const { collapsed: listCollapsed, toggle: toggleList } = usePanel('refList');
 
   const [dialog, setDialog] = useState<Dialogs>(null);

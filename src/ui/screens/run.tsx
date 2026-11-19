@@ -1,3 +1,4 @@
+import { useHoldActivity } from '../session/tracker';
 import type { ParameterValue } from '../../engine/flow/parameters';
 import { parametersOf } from '../../engine/flow/parameters';
 import { ParameterInputs, PendingParametersNote } from '../parameter-inputs';
@@ -70,6 +71,8 @@ export function RunScreen() {
   const hasParameters = parameters.length > 0;
   const missing = inputs.filter((i) => !files[i.key]);
   const running = state.status === 'running';
+  // A run in progress counts as activity, so a long run is not cut off by the inactivity limit (SPEC 12.2 item 2).
+  useHoldActivity(running);
 
   const choose = (key: string, file: File): void => {
     const guard = checkFileSize(file);

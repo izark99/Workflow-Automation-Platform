@@ -1,7 +1,8 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { AuthService, AuthSession } from '../store/auth';
-import { gateAfterEvent, gateAfterSession, type GateState } from './auth-gate-logic';
+import { gateAfterEvent, gateAfterIdle, gateAfterSession, type GateState } from './auth-gate-logic';
+import { IdleGate } from './session/idle-gate';
 import { ChangePasswordScreen, LockedScreen } from './change-password';
 import { SignInScreen } from './sign-in';
 import { useStore } from './store-context';
@@ -46,10 +47,18 @@ export function AuthGate({ auth, children }: { auth: AuthService; children: Reac
   const info = useMemo<AuthInfo | null>(() => (session ? { session, signOut: () => auth.signOut(), changePassword: (p: string) => auth.changePassword(p) } : null), [session, auth]);
 
   if (state.status === 'loading') return <div className={styles.page} role="status" aria-busy="true" aria-label={tr('signIn.checking')} />;
-  if (state.status === 'signedOut') return <SignInScreen auth={auth} ended={state.notice === 'ended'} />;
+  if (state.status === 'signedOut') return <SignInScreen auth={auth} ended={state.notice === 'ended'} idleHours={state.notice === 'idle' ? state.idleHours : undefined} />;
   return (
     <AuthContext.Provider key={state.session.userId} value={info}>
-      <AccountGate auth={auth}>{children}</AccountGate>
+      <AccountGate
+        auth={auth}
+        onIdle={(hours) => {
+          setState(gateAfterIdle(hours));
+          void auth.signOut().catch(() => undefined);
+        }}
+      >
+        {children}
+      </AccountGate>
     </AuthContext.Provider>
   );
 }
@@ -73,7 +82,7 @@ type AccountState = { status: 'checking' } | { status: 'ok' } | { status: 'locke
  * so a session that an admin locks meanwhile ends with a clear message. If the status cannot be read the app is shown:
  * the database refuses a locked account anyway.
  */
-function AccountGate({ auth, children }: { auth: AuthService; children: ReactNode }) {
+function AccountGate({ auth, onIdle, children }: { auth: AuthService; onIdle: (hours: number) => void; children: ReactNode }) {
   const store = useStore();
   const tr = useT();
   const [state, setState] = useState<AccountState>({ status: 'checking' });
@@ -115,5 +124,9 @@ function AccountGate({ auth, children }: { auth: AuthService; children: ReactNod
       />
     );
   }
-  return <>{children}</>;
+  return (
+    <IdleGate onExpired={onIdle} onSignOut={() => void auth.signOut()}>
+      {children}
+    </IdleGate>
+  );
 }
