@@ -324,3 +324,67 @@ describe('updateRefTable', () => {
     expect((await stores.other.listRefTables()).find((t) => t.id === made.id)?.description).toBe('after');
   });
 });
+
+describe('who reads the rows of a reference table (migration 17, SPEC 12.1)', () => {
+  const reads = (table: string) => ({ schemaVersion: 1, nodes: [{ id: 'l1', type: 'lookup_join', settings: { source: { kind: 'reference', table } } }], edges: [] });
+  const columns = [{ name: 'k', type: 'text' as const }];
+  const view = async (who: Who, name: string) => (await stores[who].listRefTables()).find((t) => t.name === name)!;
+  let personalId = '';
+  let sharedId = '';
+
+  it('every user sees the name and description of every table, but no rows until a flow reads the table', async () => {
+    await stores.admin.createRefTable({ name: 'Role table', description: 'for the role test', columns });
+    const made = (await stores.admin.listRefTables()).find((t) => t.name === 'Role table')!;
+    await stores.admin.saveRefTableVersion(made.id, 1, { rows: [['x']] });
+    await stores.admin.createRefTable({ name: 'Role table shared', description: 'second', columns });
+    const second = (await stores.admin.listRefTables()).find((t) => t.name === 'Role table shared')!;
+    await stores.admin.saveRefTableVersion(second.id, 1, { rows: [['y']] });
+    for (const who of ['owner', 'member', 'other'] as const) {
+      const t = await view(who, 'Role table');
+      expect(t.description, who).toBe('for the role test');
+      expect(t.versions, who).toEqual([]);
+      expect(t.usedBy, who).toEqual([]);
+    }
+    expect((await view('admin', 'Role table')).versions[0]?.rows).toEqual([['x']]);
+  });
+
+  it('the owner of a personal flow reads the table it reads, with the draft version, and nobody else does', async () => {
+    const flow = await stores.owner.createFlow({ name: 'Role personal', scope: 'personal' });
+    personalId = flow.id;
+    await stores.owner.saveFlowVersion(flow.id, 1, { definition: reads('Role table') });
+    const t = await view('owner', 'Role table');
+    expect(t.usedBy).toEqual(['Role personal']);
+    expect(t.versions[0]).toMatchObject({ status: 'draft', rows: [['x']] });
+    expect((await view('other', 'Role table')).versions).toEqual([]);
+    expect((await view('member', 'Role table')).usedBy).toEqual([]);
+    expect((await view('owner', 'Role table shared')).versions).toEqual([]);
+    // The admin sees the flow in usedBy too.
+    expect((await view('admin', 'Role table')).usedBy).toContain('Role personal');
+  });
+
+  it('a shared flow gives the table to the members of its group, and the run can resolve it for them', async () => {
+    const flow = await stores.admin.createFlow({ name: 'Role shared', scope: 'shared' });
+    sharedId = flow.id;
+    await stores.admin.saveFlowVersion(flow.id, 1, { definition: reads('Role table shared') });
+    await stores.admin.setFlowGroups(flow.id, [hrGroup]);
+    const t = await view('member', 'Role table shared');
+    expect(t.usedBy).toEqual(['Role shared']);
+    expect(t.versions[0]?.rows).toEqual([['y']]);
+    expect((await view('other', 'Role table shared')).versions).toEqual([]);
+    expect((await view('owner', 'Role table shared')).versions).toEqual([]);
+  });
+
+  it('a deleted flow gives no access, and restoring it gives the access back', async () => {
+    await stores.owner.deleteFlow(personalId);
+    expect((await view('owner', 'Role table')).versions).toEqual([]);
+    expect((await view('admin', 'Role table')).usedBy).not.toContain('Role personal');
+    await stores.admin.restoreFlow(personalId);
+    expect((await view('owner', 'Role table')).versions.length).toBe(1);
+  });
+
+  it('editing the flow so that it no longer reads the table takes the access away', async () => {
+    await stores.admin.saveFlowVersion(sharedId, 1, { definition: { schemaVersion: 1, nodes: [], edges: [] } });
+    expect((await view('member', 'Role table shared')).versions).toEqual([]);
+    expect((await view('member', 'Role table shared')).usedBy).toEqual([]);
+  });
+});

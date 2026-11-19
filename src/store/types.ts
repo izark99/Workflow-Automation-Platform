@@ -55,6 +55,12 @@ export interface RefTableVersionRecord extends VersionRange {
   rows: Cell[][];
 }
 
+/** A table as `listRefTables()` returns it: the versions only where the caller may read them, and the flows that use it. */
+export type RefTableView = RefTableRecord & {
+  /** The names of the live flows that the caller may view and that read this table, in any version. At most one name per flow. */
+  usedBy: string[];
+};
+
 export interface RefTableRecord {
   id: string;
   name: string;
@@ -204,7 +210,11 @@ export interface DataStore {
   /** Publishing ends the previous open-ended version the day before (SPEC section 4, rule 6). */
   publishFlowVersion(flowId: string, versionNo: number): Promise<FlowRecord>;
 
-  listRefTables(): Promise<RefTableRecord[]>;
+  /**
+   * Every table with its name and description. The versions (columns and rows) come only for the admin and for a table that a
+   * flow of the caller reads (SPEC 12.1); `usedBy` names those flows. For a table nobody may read the versions are empty.
+   */
+  listRefTables(): Promise<RefTableView[]>;
   createRefTable(input: { name: string; description: string; columns: Column[] }): Promise<RefTableRecord>;
   saveRefTableVersion(tableId: string, versionNo: number, patch: RefVersionPatch): Promise<RefTableRecord>;
   createRefTableVersion(tableId: string, input: { validFrom: string; copyFrom?: number }): Promise<RefTableRecord>;

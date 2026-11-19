@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Column } from '../../engine/types';
 import { seedSnapshot } from '../../store/seed';
 import { MAX_REF_ROWS } from '../../store/types';
-import { columnsProblem, newTableFromPaste, planOf, reshapeGrid, pageRange, pastedCells, pasteAt, parseCell, pasteIntoGrid, rowsToText, tableSummary, textToRows, tooManyRows, usedBy, versionInEffect, versionToShow } from './reftable-logic';
+import { usedByParts, columnsProblem, newTableFromPaste, planOf, reshapeGrid, pageRange, pastedCells, pasteAt, parseCell, pasteIntoGrid, rowsToText, tableSummary, textToRows, tooManyRows, usedBy, versionInEffect, versionToShow } from './reftable-logic';
 
 const snap = seedSnapshot();
 const attendance = snap.refTables.find((t) => t.name === 'Attendance codes')!;
@@ -146,5 +146,14 @@ describe('columns of a draft', () => {
     expect(columnsProblem([{ from: 0, name: ' ', type: 'text' }])).toEqual({ key: 'refTables.cols.problem.empty', params: { n: 1 } });
     expect(columnsProblem([{ from: 0, name: 'Code', type: 'text' }, { from: null, name: ' code', type: 'text' }])).toEqual({ key: 'refTables.cols.problem.repeated', params: { name: 'code', first: 1, second: 2 } });
     expect(columnsProblem(planOf(cols))).toBeUndefined();
+  });
+});
+
+describe('usedByParts', () => {
+  it('shows three names at most, then how many more', () => {
+    expect(usedByParts(['A', 'B'])).toEqual({ shown: 'A, B', more: 0 });
+    expect(usedByParts(['A', 'B', 'C'])).toEqual({ shown: 'A, B, C', more: 0 });
+    expect(usedByParts(['A', 'B', 'C', 'D', 'E'])).toEqual({ shown: 'A, B, C', more: 2 });
+    expect(usedByParts([])).toEqual({ shown: '', more: 0 });
   });
 });

@@ -107,6 +107,8 @@ function Builder() {
     try {
       await store.saveFlowVersion(id, version.versionNo, { definition });
       flow.reload();
+      // A saved flow that reads a table lets its owner read the table (SPEC 12.1): load the tables again.
+      refs.reload();
       return true;
     } catch (e) {
       setError({ what: t('builder.saveFailed'), next: errorText(e) });

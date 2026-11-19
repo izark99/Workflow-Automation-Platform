@@ -364,3 +364,68 @@ describe('updateRefTable', () => {
     expect(await code(store.updateRefTable('ref-ot-limits', { description: 'Hacked' }))).toBe('forbidden');
   });
 });
+
+describe('listRefTables: rows only where a flow reads the table (SPEC 12.1)', () => {
+  const reads = (table: string) => ({ schemaVersion: 1, nodes: [{ id: 'l1', type: 'lookup_join', settings: { source: { kind: 'reference', table } } }], edges: [] });
+  const rowsOf = async (name: string) => (await store.listRefTables()).find((t) => t.name === name)!;
+
+  it('the admin reads every version of every table', async () => {
+    for (const t of await store.listRefTables()) expect(t.versions.length, t.name).toBeGreaterThan(0);
+  });
+  it('a user with no flow that reads a table sees its name and description, but no version', async () => {
+    await as('user-lan');
+    const all = await store.listRefTables();
+    expect(all.map((t) => t.name)).toEqual(['Attendance codes', 'OT types', 'OT limits']);
+    for (const t of all) {
+      expect(t.versions, t.name).toEqual([]);
+      expect(t.usedBy.length, t.name).toBe(0);
+    }
+  });
+  it('a personal flow gives its owner the rows of the table it reads, a draft version counts, and the usedBy names it', async () => {
+    await as('user-lan');
+    const flow = await store.createFlow({ name: 'Lan flow', scope: 'personal' });
+    await store.saveFlowVersion(flow.id, 1, { definition: reads('OT types') });
+    const t = await rowsOf('OT types');
+    expect(t.usedBy).toEqual(['Lan flow']);
+    expect(t.versions.length).toBeGreaterThan(0);
+    expect((await rowsOf('OT limits')).versions).toEqual([]);
+    await as('user-minh');
+    expect((await rowsOf('OT types')).versions).toEqual([]); // another person's personal flow gives nothing
+    expect((await rowsOf('OT types')).usedBy).toEqual([]);
+  });
+  it('a shared flow gives the rows to the members of its groups only', async () => {
+    const flow = await store.createFlow({ name: 'Shared reader', scope: 'shared' });
+    await store.saveFlowVersion(flow.id, 1, { definition: reads('OT limits') });
+    await store.setFlowGroups(flow.id, ['group-payroll']);
+    await as('user-lan'); // in HR Payroll
+    expect((await rowsOf('OT limits')).usedBy).toEqual(['Shared reader']);
+    expect((await rowsOf('OT limits')).versions.length).toBeGreaterThan(0);
+    await as('user-minh'); // in HR Analytics only
+    expect((await rowsOf('OT limits')).versions).toEqual([]);
+  });
+  it('a deleted flow gives no access, and restoring it gives it back', async () => {
+    await as('user-lan');
+    const flow = await store.createFlow({ name: 'Short lived', scope: 'personal' });
+    await store.saveFlowVersion(flow.id, 1, { definition: reads('Attendance codes') });
+    expect((await rowsOf('Attendance codes')).versions.length).toBeGreaterThan(0);
+    await store.deleteFlow(flow.id);
+    expect((await rowsOf('Attendance codes')).versions).toEqual([]);
+    await as('user-harold');
+    expect((await rowsOf('Attendance codes')).usedBy).not.toContain('Short lived');
+    await store.restoreFlow(flow.id);
+    await as('user-lan');
+    expect((await rowsOf('Attendance codes')).versions.length).toBeGreaterThan(0);
+  });
+  it('editing the definition so that it no longer reads the table takes the access away', async () => {
+    await as('user-lan');
+    const flow = await store.createFlow({ name: 'Changing', scope: 'personal' });
+    await store.saveFlowVersion(flow.id, 1, { definition: reads('OT types') });
+    await store.saveFlowVersion(flow.id, 1, { definition: { schemaVersion: 1, nodes: [], edges: [] } });
+    expect((await rowsOf('OT types')).versions).toEqual([]);
+  });
+  it('lists each flow once per table even when several of its versions read the table', async () => {
+    const flow = await store.createFlow({ name: 'Two versions', scope: 'personal' });
+    await store.saveFlowVersion(flow.id, 1, { definition: reads('OT types') });
+    expect((await rowsOf('OT types')).usedBy.filter((n) => n === 'Two versions')).toHaveLength(1);
+  });
+});

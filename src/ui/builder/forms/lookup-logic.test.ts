@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { RefTable } from '../../../engine/versions';
-import { groupByFromSettings, groupByMissing, groupByToSettings, lookupFromSettings, lookupMissing, lookupToSettings, refTableColumns } from './lookup-logic';
+import { groupByFromSettings, groupByMissing, groupByToSettings, lookupFromSettings, lookupMissing, lookupToSettings, refTableColumns, refTableUnreadable } from './lookup-logic';
 
 describe('Lookup settings', () => {
   const saved = { source: { kind: 'reference', table: 'OT limits' }, keys: [{ left: 'kind', right: 'period' }], bring: [{ column: 'limit_hours', as: 'limit' }, { column: 'note' }], onNoMatch: 'drop' };
@@ -47,5 +47,15 @@ describe('Group by settings', () => {
   it('asks for a group column or an aggregation when both are empty', () => {
     expect(groupByMissing({ groupBy: [], aggregations: [] })).toEqual(['Add a group column or an aggregation.']);
     expect(groupByMissing({ groupBy: ['a'], aggregations: [] })).toEqual([]);
+  });
+});
+
+describe('refTableUnreadable', () => {
+  const v = { versionNo: 1, validFrom: '2026-01-01', validTo: null, columns: [{ name: 'a', type: 'text' as const }], rows: [] };
+  const tables: RefTable[] = [{ name: 'Open', versions: [v] }, { name: 'Closed', versions: [] }];
+  it('is true only for a table that exists with no readable version', () => {
+    expect(refTableUnreadable(tables, 'Closed')).toBe(true);
+    expect(refTableUnreadable(tables, 'Open')).toBe(false);
+    expect(refTableUnreadable(tables, 'Nope')).toBe(false);
   });
 });

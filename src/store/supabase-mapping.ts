@@ -204,3 +204,18 @@ export function appSettingsFromRows(rows: AppSettingRow[]): AppSettings {
   const row = rows.find((r) => r.key === 'idle_timeout_hours');
   return { idleTimeoutHours: isValidIdleHours(row?.value) ? row.value : DEFAULT_IDLE_TIMEOUT_HOURS };
 }
+
+/**
+ * The names of the flows that read each table, from the rows of `flow_ref_tables` and the live flows that the caller can see.
+ * A flow that is not in `flows` (deleted, or not visible) is not counted. Each name is listed once per table, in order.
+ */
+export function usedByFromRows(refRows: { flow_id: string; ref_table_name: string }[], flows: { id: string; name: string }[]): Map<string, string[]> {
+  const nameOf = new Map(flows.map((f) => [f.id, f.name]));
+  const seen = new Map<string, Set<string>>();
+  for (const r of refRows) {
+    const name = nameOf.get(r.flow_id);
+    if (name === undefined) continue;
+    (seen.get(r.ref_table_name) ?? seen.set(r.ref_table_name, new Set()).get(r.ref_table_name)!).add(name);
+  }
+  return new Map([...seen].map(([table, names]) => [table, [...names].sort((a, b) => a.localeCompare(b))]));
+}

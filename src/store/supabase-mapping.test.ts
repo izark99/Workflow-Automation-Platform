@@ -8,6 +8,7 @@ import {
   refPatchToRow,
   runLogFromRow,
   runLogToRow,
+  usedByFromRows,
   userFromRows,
   versionPatchToRow,
   type FlowRow,
@@ -220,5 +221,20 @@ describe('appSettingsFromRows', () => {
   });
   it('ignores other keys', () => {
     expect(appSettingsFromRows([{ key: 'other', value: 3 }])).toEqual({ idleTimeoutHours: 8 });
+  });
+});
+
+describe('usedByFromRows', () => {
+  const flows = [{ id: 'f1', name: 'Zeta' }, { id: 'f2', name: 'Alpha' }];
+  it('names the flows of each table once, in order, and skips a flow that is not in the list (deleted or not visible)', () => {
+    const rows = [
+      { flow_id: 'f1', ref_table_name: 'T' },
+      { flow_id: 'f1', ref_table_name: 'T' },
+      { flow_id: 'f2', ref_table_name: 'T' },
+      { flow_id: 'gone', ref_table_name: 'T' },
+      { flow_id: 'f2', ref_table_name: 'U' },
+    ];
+    expect(usedByFromRows(rows, flows)).toEqual(new Map([['T', ['Alpha', 'Zeta']], ['U', ['Alpha']]]));
+    expect(usedByFromRows([], flows).size).toBe(0);
   });
 });

@@ -26,6 +26,11 @@ export function tableSummary(t: RefTableRecord, today: string): string {
   return translate(key, { rows, n: v.versionNo });
 }
 
+/** The names for a "Used by" line: three at most, and how many more there are (SPEC 12.1, DESIGN "Reference table import"). */
+export function usedByParts(names: string[]): { shown: string; more: number } {
+  return { shown: names.slice(0, 3).join(', '), more: Math.max(0, names.length - 3) };
+}
+
 /** The flows that read the table, by name (any of their versions). */
 export function usedBy(flows: FlowRecord[], tableName: string): string[] {
   return flows.filter((f) => f.versions.some((v) => referencedTables(v.definition).includes(tableName))).map((f) => f.name);

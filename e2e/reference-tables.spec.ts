@@ -220,10 +220,15 @@ test('a table says which flows read it', async ({ page }) => {
   await expect(page.getByText('No flow reads this table yet.')).toBeVisible();
 });
 
-test('a user who is not the admin can read every table but cannot create or change one', async ({ page }) => {
-  await seed(page, (s) => (s.currentUserId = 'user-lan'));
+test('a user who is not the admin can read the tables that their flows read but cannot create or change one', async ({ page }) => {
+  // Since SPEC 12.1 the rows are read through a flow: this user has one personal flow that reads "Attendance codes".
+  await seed(page, (s) => {
+    s.currentUserId = 'user-lan';
+    const definition = { schemaVersion: 1, nodes: [{ id: 'L', type: 'lookup_join', label: 'L', position: { x: 0, y: 0 }, settings: { source: { kind: 'reference', table: 'Attendance codes' }, keys: [], bring: [], onNoMatch: 'blank' } }], edges: [] };
+    s.flows.push({ id: 'flow-lan-codes', name: 'Lan codes', ownerId: 'user-lan', scope: 'personal', deletedAt: null, groupIds: [], versions: [{ versionNo: 1, validFrom: '2026-01-01', validTo: null, status: 'published', changeNote: '', definition }] });
+  });
   await page.goto(URL);
-  await expect(list(page).getByRole('link')).toHaveCount(3);
+  await expect(list(page).getByRole('link')).toHaveCount(1);
   await expect(gridRows(page, 'Attendance codes')).toHaveCount(8);
   await expect(page.getByRole('button', { name: 'New table' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'New version', exact: true })).toHaveCount(0);

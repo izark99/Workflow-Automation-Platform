@@ -5,14 +5,14 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import type { Column as TableColumn } from '../components';
 import { Badge, Button, Card, Chip, Dialog, Dropdown, EmptyState, ErrorState, Field, Icon, ScreenFrame, SkeletonTable, Table, TextAreaField, useDelayedLoading, useToast } from '../components';
 import type { Cell, Column, ColumnType } from '../../engine/types';
-import type { RefTableRecord, RefTableVersionRecord } from '../../store/types';
+import type { RefTableVersionRecord } from '../../store/types';
 import { NewVersionDialog, PublishDialog } from '../builder/builder-dialogs';
 import { publishSummaryFor, versionOptionLabel } from '../builder/version-logic';
 import { useT, errorText } from '../i18n';
 import type { MessageKey } from '../i18n';
 import { useLoad, useStore } from '../store-context';
 import { todayIso } from './flows-logic';
-import { columnsProblem, planOf, reshapeGrid, looksLikeGrid, newTableFromPaste, pageRange, pasteAt, pasteIntoGrid, pastedCells, rowsToText, textToRows, tooManyRows, usedBy, versionToShow, tableSummary } from './reftable-logic';
+import { columnsProblem, planOf, reshapeGrid, looksLikeGrid, newTableFromPaste, pageRange, pasteAt, pasteIntoGrid, pastedCells, rowsToText, textToRows, tooManyRows, usedByParts, versionToShow, tableSummary } from './reftable-logic';
 import type { ColumnPlan, RowErrors } from './reftable-logic';
 import { newVersionProblem, suggestStart } from './versions-logic';
 import { usePanel } from '../panels/use-panel';
@@ -33,13 +33,14 @@ export function ReferenceTablesScreen() {
   const [params] = useSearchParams();
   const data = useLoad(async (s) => {
     const me = await s.currentUser();
-    return { me, tables: await s.listRefTables(), flows: await s.listFlows() };
+    return { me, tables: await s.listRefTables() };
   });
   const showSkeleton = useDelayedLoading(data.loading);
   const today = todayIso();
 
-  const tables = data.data?.tables ?? [];
   const isAdmin = data.data?.me.role === 'admin';
+  // A user sees the tables that a flow of theirs reads, with their rows; the admin sees every table (SPEC 12.1).
+  const tables = (data.data?.tables ?? []).filter((x) => isAdmin || x.usedBy.length > 0);
   const table = tables.find((x) => x.id === params.get('table')) ?? tables[0];
   const version: RefTableVersionRecord | undefined = table ? (table.versions.find((v) => v.versionNo === Number(params.get('v'))) ?? versionToShow(table, today)) : undefined;
   const editable = isAdmin && version?.status === 'draft';
@@ -126,7 +127,10 @@ export function ReferenceTablesScreen() {
     }
   };
 
-  const usedByNames = table ? usedBy(data.data?.flows ?? [], table.name) : [];
+  const usedByLine = (names: string[]): string => {
+    const p = usedByParts(names);
+    return p.more > 0 ? t('refTables.usedByMore', { names: p.shown, n: p.more }) : t('refTables.usedBy', { names: p.shown });
+  };
 
   const firstError = (row: number, col: string): boolean => errors.some((e) => e.row === row && e.column === col);
   const range = pageRange(grid.length, page);
@@ -242,11 +246,16 @@ export function ReferenceTablesScreen() {
           <PanelToggle panel="refList" collapsed={listCollapsed} onToggle={toggleList} controls="ref-list-panel" />
         </div>
         <ul className={styles.list} aria-label={t('refTables.list')} hidden={listCollapsed}>
-          {tables.map((x: RefTableRecord) => (
+          {tables.map((x) => (
             <li key={x.id}>
               <Link to={url(x.id)} className={styles.item} aria-current={x.id === table.id ? 'true' : undefined} onClick={guard(url(x.id))}>
                 <span data-user-content>{x.name}</span>
                 <span className={styles.itemSub}>{tableSummary(x, today)}</span>
+                {!isAdmin ? (
+                  <span className={styles.itemSub} data-user-content>
+                    {usedByLine(x.usedBy)}
+                  </span>
+                ) : null}
               </Link>
             </li>
           ))}
@@ -336,7 +345,7 @@ export function ReferenceTablesScreen() {
             ) : null}
             <div className={styles.notes}>
               {!isAdmin ? <p className={styles.note}>{t('refTables.readOnlyUser')}</p> : version.status === 'published' ? <p className={styles.note}>{t('refTables.readOnlyPublished')}</p> : null}
-              <p className={styles.note}>{usedByNames.length > 0 ? t('refTables.usedBy', { names: usedByNames.join(', ') }) : t('refTables.notUsed')}</p>
+              <p className={styles.note} data-user-content={table.usedBy.length > 0 ? '' : undefined}>{table.usedBy.length > 0 ? usedByLine(table.usedBy) : t('refTables.notUsed')}</p>
             </div>
           </Card>
         </section>

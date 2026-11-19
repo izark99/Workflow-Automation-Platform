@@ -113,3 +113,12 @@ export function groupByMissing(v: GroupByValues): string[] {
   for (const a of v.aggregations) if (!aggComplete(a)) missing.push(translate('builder.group.missing.aggregationColumn', { fn: a.fn }));
   return missing;
 }
+
+/**
+ * True when the table exists but its rows are not readable by this person yet: a table is readable through a saved flow that
+ * reads it (SPEC 12.1), so the columns cannot be listed until the flow is saved.
+ */
+export function refTableUnreadable(tables: RefTable[], name: string): boolean {
+  const t = tables.find((x) => x.name === name);
+  return t !== undefined && t.versions.length === 0;
+}

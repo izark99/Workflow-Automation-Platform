@@ -12,6 +12,7 @@ import {
   namesFromRows,
   refPatchToRow,
   refTableFromRow,
+  usedByFromRows,
   runLogFromRow,
   runLogToRow,
   userFromRows,
@@ -36,6 +37,7 @@ import {
   type RefImportInput,
   type RefImportResult,
   type RefTableRecord,
+  type RefTableView,
   type RefVersionPatch,
   type RunLogEntry,
   type Scope,
@@ -205,9 +207,18 @@ export class SupabaseStore implements DataStore {
     return this.ok<FlowRow[]>(flows, 'load the deleted flows').map((r) => flowFromRow(r, names));
   }
 
-  async listRefTables(): Promise<RefTableRecord[]> {
-    const result = await this.client.from('ref_tables').select('*, ref_table_versions(*)').order('name');
-    return this.ok<RefTableRow[]>(result, 'load the reference tables').map(refTableFromRow);
+  async listRefTables(): Promise<RefTableView[]> {
+    const [tables, refs, flows] = await Promise.all([
+      this.client.from('ref_tables').select('*, ref_table_versions(*)').order('name'),
+      this.client.from('flow_ref_tables').select('flow_id, ref_table_name'),
+      this.client.from('flows').select('id, name').is('deleted_at', null),
+    ]);
+    const used = usedByFromRows(
+      this.ok<{ flow_id: string; ref_table_name: string }[]>(refs, 'load the flows that use the reference tables'),
+      this.ok<{ id: string; name: string }[]>(flows, 'load the flows'),
+    );
+    // The database returns no versions for a table that the caller may not read, so `versions` is empty then.
+    return this.ok<RefTableRow[]>(tables, 'load the reference tables').map((row) => ({ ...refTableFromRow(row), usedBy: used.get(row.name) ?? [] }));
   }
 
   async listRunLog(flowId: string): Promise<RunLogEntry[]> {

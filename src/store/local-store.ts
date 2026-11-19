@@ -1,4 +1,4 @@
-import { planPublish } from '../engine/versions';
+import { planPublish, referencedTables } from '../engine/versions';
 import type { VersionRange } from '../engine/versions';
 import { checkRange, checkRowCap } from './checks';
 import { importRefTable as importRefTableVia } from './ref-import';
@@ -13,6 +13,7 @@ import type {
   RefImportResult,
   RefTableRecord,
   RefTableVersionRecord,
+  RefTableView,
   RefVersionPatch,
   RunLogEntry,
   Scope,
@@ -408,10 +409,17 @@ export class LocalStore implements DataStore {
     return structuredClone(f);
   }
 
-  async listRefTables(): Promise<RefTableRecord[]> {
+  async listRefTables(): Promise<RefTableView[]> {
     const s = await this.open();
-    this.who(s);
-    return structuredClone(s.refTables);
+    const u = this.who(s);
+    // The same rule as the database (migration 17): the rows are for the admin and for a table that a live flow of the person reads.
+    const flows = s.flows.filter((f) => !f.deletedAt && this.canSee(u, f));
+    return s.refTables.map((table) => {
+      const usedBy = flows.filter((f) => f.versions.some((v) => referencedTables(v.definition).includes(table.name))).map((f) => f.name);
+      const readable = u.role === 'admin' || usedBy.length > 0;
+      const names = [...new Set(usedBy)].sort((a, b) => a.localeCompare(b));
+      return structuredClone({ ...table, versions: readable ? table.versions : [], usedBy: names });
+    });
   }
 
   private tableFor(s: Snapshot, id: string): RefTableRecord {

@@ -564,6 +564,38 @@ export const ROUTES: RuleRoute[] = [
   },
   {
     path: '/reference-tables',
+    name: '/reference-tables (as a user, tables of own flows)',
+    sidebar: true,
+    table: true,
+    // A user: no admin buttons, the list with a Used by line in each item, and the Used by line above the grid.
+    before: async (page) => {
+      const s = seedSnapshot();
+      s.currentUserId = 'user-lan';
+      const node = (id: string, type: string, settings: Record<string, unknown>, y: number) => ({ id, type, label: id, position: { x: 0, y }, settings });
+      const def = (table: string) => ({ schemaVersion: 1, nodes: [node('L', 'lookup_join', { source: { kind: 'reference', table }, keys: [], bring: [], onNoMatch: 'blank' }, 0)], edges: [] });
+      const version = (definition: unknown) => [{ versionNo: 1, validFrom: '2026-01-01', validTo: null, status: 'published' as const, changeNote: '', definition }];
+      s.flows.push(
+        { id: 'f-a', name: 'Flow A', ownerId: 'user-lan', scope: 'personal', deletedAt: null, groupIds: [], versions: version(def('OT limits')) },
+        { id: 'f-b', name: 'Flow B', ownerId: 'user-lan', scope: 'personal', deletedAt: null, groupIds: [], versions: version(def('OT limits')) },
+        { id: 'f-c', name: 'Flow C', ownerId: 'user-lan', scope: 'personal', deletedAt: null, groupIds: [], versions: version(def('OT limits')) },
+        { id: 'f-d', name: 'Flow D', ownerId: 'user-lan', scope: 'personal', deletedAt: null, groupIds: [], versions: version(def('OT limits')) },
+      );
+      await page.addInitScript((json) => localStorage.setItem('dfw.seed', json), JSON.stringify(s));
+    },
+  },
+  {
+    path: '/reference-tables',
+    name: '/reference-tables (as a user, no table is read)',
+    sidebar: true,
+    // The empty state of a user whose flows read no table.
+    before: async (page) => {
+      const s = seedSnapshot();
+      s.currentUserId = 'user-minh';
+      await page.addInitScript((json) => localStorage.setItem('dfw.seed', json), JSON.stringify(s));
+    },
+  },
+  {
+    path: '/reference-tables',
     name: '/reference-tables (new table dialog)',
     sidebar: true,
     prepare: async (page) => {
