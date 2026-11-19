@@ -305,3 +305,51 @@ describe('app settings', () => {
     for (const ok of [1, 72]) expect(await store.saveAppSetting('idle_timeout_hours', ok)).toEqual({ idleTimeoutHours: ok });
   });
 });
+
+describe('importRefTable', () => {
+  const columns = [{ name: 'code', type: 'text' as const }, { name: 'limit', type: 'number' as const }];
+  const rows = [['A', 1], ['B', 2]];
+  it('a new table gets a draft with the columns and rows, and is not published', async () => {
+    const { table, versionNo } = await store.importRefTable({ target: { kind: 'newTable', name: 'Imported', description: 'From a file' }, columns, rows });
+    expect(versionNo).toBe(1);
+    expect(table).toMatchObject({ name: 'Imported', description: 'From a file' });
+    expect(table.versions[0]).toMatchObject({ status: 'draft', columns, rows });
+    expect((await store.listRefTables()).find((t) => t.id === table.id)?.versions[0]?.status).toBe('draft');
+  });
+  it('a new version of a table is a draft that starts on the date given, and the old versions stay as they were', async () => {
+    const before = (await store.listRefTables()).find((t) => t.id === 'ref-ot-limits')!;
+    const { table, versionNo } = await store.importRefTable({ target: { kind: 'newVersion', tableId: 'ref-ot-limits', validFrom: '2027-01-01' }, columns, rows });
+    expect(versionNo).toBe(before.versions.length + 1);
+    expect(table.versions.find((v) => v.versionNo === versionNo)).toMatchObject({ status: 'draft', validFrom: '2027-01-01', columns, rows });
+    expect(table.versions.filter((v) => v.versionNo !== versionNo)).toEqual(before.versions);
+  });
+  it('replaces the columns and rows of an existing draft, and keeps its dates', async () => {
+    await store.createRefTableVersion('ref-ot-limits', { validFrom: '2027-01-01', copyFrom: 1 });
+    const { table, versionNo } = await store.importRefTable({ target: { kind: 'replaceDraft', tableId: 'ref-ot-limits', versionNo: 2 }, columns, rows });
+    expect(versionNo).toBe(2);
+    expect(table.versions[1]).toMatchObject({ validFrom: '2027-01-01', status: 'draft', columns, rows });
+  });
+  it('refuses a published version, a missing table, a name that is taken, and a date that overlaps, and creates nothing', async () => {
+    const count = async () => (await store.listRefTables()).reduce((n, t) => n + 1 + t.versions.length, 0);
+    const n = await count();
+    expect(await code(store.importRefTable({ target: { kind: 'replaceDraft', tableId: 'ref-ot-limits', versionNo: 1 }, columns, rows }))).toBe('conflict');
+    expect(await code(store.importRefTable({ target: { kind: 'replaceDraft', tableId: 'nope', versionNo: 1 }, columns, rows }))).toBe('not_found');
+    expect(await code(store.importRefTable({ target: { kind: 'newTable', name: 'ot limits', description: '' }, columns, rows }))).toBe('conflict');
+    expect(await code(store.importRefTable({ target: { kind: 'newTable', name: '  ', description: '' }, columns, rows }))).toBe('invalid');
+    expect(await code(store.importRefTable({ target: { kind: 'newVersion', tableId: 'ref-ot-limits', validFrom: 'not a date' }, columns, rows }))).toBe('invalid');
+    expect(await count()).toBe(n);
+  });
+  it('refuses more than 50,000 rows and a shape that does not fit, before any write', async () => {
+    const n = (await store.listRefTables()).length;
+    const big = Array.from({ length: 50_001 }, (_, i) => ['k', i]);
+    await expect(store.importRefTable({ target: { kind: 'newTable', name: 'Big', description: '' }, columns, rows: big })).rejects.toThrow(/at most 50,000 rows/);
+    expect(await code(store.importRefTable({ target: { kind: 'newTable', name: 'Shape', description: '' }, columns, rows: [['only one']] }))).toBe('invalid');
+    expect(await code(store.importRefTable({ target: { kind: 'newTable', name: 'Cols', description: '' }, columns: [{ name: ' ', type: 'text' }], rows: [['x']] }))).toBe('invalid');
+    expect((await store.listRefTables()).length).toBe(n);
+  });
+  it('only the admin imports', async () => {
+    await as('user-lan');
+    expect(await code(store.importRefTable({ target: { kind: 'newTable', name: 'Nope', description: '' }, columns, rows }))).toBe('forbidden');
+    expect(await code(store.importRefTable({ target: { kind: 'replaceDraft', tableId: 'ref-ot-limits', versionNo: 1 }, columns, rows }))).toBe('forbidden');
+  });
+});

@@ -294,3 +294,21 @@ describe('app settings', () => {
     expect((await visitor.from('app_settings').select('key')).error?.code).toBe('42501');
   });
 });
+
+describe('importRefTable', () => {
+  const columns = [{ name: 'code', type: 'text' as const }, { name: 'limit', type: 'number' as const }];
+  it('the admin makes a draft in a new table and a new version; a user is refused', async () => {
+    const rows = [['A', 1], ['B', 2]];
+    const made = await stores.admin.importRefTable({ target: { kind: 'newTable', name: 'Imported from a file', description: 'test' }, columns, rows });
+    expect(made.versionNo).toBe(1);
+    expect(made.table.versions[0]).toMatchObject({ status: 'draft', columns, rows });
+    const again = await stores.admin.importRefTable({ target: { kind: 'replaceDraft', tableId: made.table.id, versionNo: 1 }, columns, rows: [['C', 3]] });
+    expect(again.table.versions[0]?.rows).toEqual([['C', 3]]);
+    await stores.admin.publishRefTableVersion(made.table.id, 1);
+    expect((await refused(stores.admin.importRefTable({ target: { kind: 'replaceDraft', tableId: made.table.id, versionNo: 1 }, columns, rows }))).code).toBe('conflict');
+    const next = await stores.admin.importRefTable({ target: { kind: 'newVersion', tableId: made.table.id, validFrom: '2099-01-01' }, columns, rows });
+    expect(next.versionNo).toBe(2);
+    expect(next.table.versions[1]).toMatchObject({ status: 'draft', validFrom: '2099-01-01', rows });
+    expect((await refused(stores.owner.importRefTable({ target: { kind: 'newTable', name: 'Not allowed', description: '' }, columns, rows }))).code).toBe('forbidden');
+  });
+});

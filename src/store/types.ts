@@ -89,6 +89,24 @@ export interface RefVersionPatch {
   rows?: Cell[][];
 }
 
+/** Where an imported file goes (SPEC 12.1 item 2). */
+export type RefImportTarget =
+  | { kind: 'newTable'; name: string; description: string }
+  | { kind: 'newVersion'; tableId: string; validFrom: string }
+  | { kind: 'replaceDraft'; tableId: string; versionNo: number };
+
+export interface RefImportInput {
+  target: RefImportTarget;
+  columns: Column[];
+  rows: Cell[][];
+}
+
+export interface RefImportResult {
+  table: RefTableRecord;
+  /** The draft that the import made or filled. */
+  versionNo: number;
+}
+
 export const MAX_REF_ROWS = 50_000;
 /** A deleted flow is kept this many days. */
 export const KEEP_DELETED_DAYS = 30;
@@ -191,6 +209,8 @@ export interface DataStore {
   saveRefTableVersion(tableId: string, versionNo: number, patch: RefVersionPatch): Promise<RefTableRecord>;
   createRefTableVersion(tableId: string, input: { validFrom: string; copyFrom?: number }): Promise<RefTableRecord>;
   publishRefTableVersion(tableId: string, versionNo: number): Promise<RefTableRecord>;
+  /** Admin only. Makes or fills a draft from a read file; never publishes. */
+  importRefTable(input: RefImportInput): Promise<RefImportResult>;
 
   addRunLog(entry: Omit<RunLogEntry, 'id' | 'userId' | 'runAt'>): Promise<RunLogEntry>;
   listRunLog(flowId: string): Promise<RunLogEntry[]>;

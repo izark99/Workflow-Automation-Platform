@@ -4,6 +4,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { planPublish } from '../engine/versions';
 import { checkRange, checkRowCap } from './checks';
+import { importRefTable as importRefTableVia } from './ref-import';
 import {
   appSettingsFromRows,
   flowFromRow,
@@ -32,6 +33,8 @@ import {
   type DataStore,
   type FlowRecord,
   type Group,
+  type RefImportInput,
+  type RefImportResult,
   type RefTableRecord,
   type RefVersionPatch,
   type RunLogEntry,
@@ -390,6 +393,11 @@ export class SupabaseStore implements DataStore {
       'create the version',
     );
     return this.refTable(tableId);
+  }
+
+  async importRefTable(input: RefImportInput): Promise<RefImportResult> {
+    await this.mustBeAdmin('import reference tables');
+    return importRefTableVia(this, input);
   }
 
   async publishRefTableVersion(tableId: string, versionNo: number): Promise<RefTableRecord> {

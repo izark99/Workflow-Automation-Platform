@@ -943,6 +943,7 @@ export const vi: Record<MessageKey, string> = {
   'errors.noUser': 'Chưa có người dùng nào đăng nhập. Hãy đăng nhập rồi thử lại.',
   'errors.textEmpty': 'Văn bản không được để trống. Hãy nhập văn bản, hoặc dùng Đặt lại để về mặc định.',
   'errors.textInvalid': 'Văn bản này có ngôn ngữ hoặc khóa mà ứng dụng không biết. Hãy tải lại trang và thử lại.',
+  'errors.importColumns': 'Các cột nhập vào không hợp lệ: mỗi cột cần có tên, và mỗi dòng cần đúng một giá trị cho mỗi cột. Hãy kiểm tra tệp rồi nhập lại.',
   'errors.idleHoursInvalid': 'Số giờ không hoạt động phải là số nguyên từ 1 đến 72. Hãy nhập một số trong khoảng đó.',
   'errors.accountLocked': 'Tài khoản này đã bị khóa. Hãy hỏi quản trị viên.',
   'errors.auth.locked': 'Tài khoản này đã bị khóa. Hãy hỏi quản trị viên.',

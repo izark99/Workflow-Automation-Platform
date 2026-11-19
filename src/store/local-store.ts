@@ -1,6 +1,7 @@
 import { planPublish } from '../engine/versions';
 import type { VersionRange } from '../engine/versions';
 import { checkRange, checkRowCap } from './checks';
+import { importRefTable as importRefTableVia } from './ref-import';
 import { DEFAULT_IDLE_TIMEOUT_HOURS, KEEP_DELETED_DAYS, StoreError, isValidIdleHours, storeError, type StoreErrorCode } from './types';
 import type { StoreMessageId } from './messages';
 import type {
@@ -8,6 +9,8 @@ import type {
   FlowRecord,
   FlowVersionRecord,
   Group,
+  RefImportInput,
+  RefImportResult,
   RefTableRecord,
   RefTableVersionRecord,
   RefVersionPatch,
@@ -452,6 +455,11 @@ export class LocalStore implements DataStore {
     t.versions.push({ versionNo: no, validFrom: input.validFrom, validTo: null, status: 'draft', columns: structuredClone(src?.columns ?? []), rows: structuredClone(src?.rows ?? []) });
     await this.commit(s);
     return structuredClone(t);
+  }
+
+  async importRefTable(input: RefImportInput): Promise<RefImportResult> {
+    this.mustBeAdmin(await this.open(), 'import reference tables');
+    return importRefTableVia(this, input);
   }
 
   async publishRefTableVersion(tableId: string, versionNo: number): Promise<RefTableRecord> {
