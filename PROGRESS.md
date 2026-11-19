@@ -1,4 +1,4 @@
-STATUS: IN PROGRESS
+STATUS: COMPLETE
 
 # Progress
 
@@ -194,7 +194,7 @@ Quality pass
 
 Close
 - [x] T5.22 `docs/DEPLOY.md`: a section "Upgrade from Phase 4" (back up; `npx supabase db push` for migrations 14 to 17 named in the file; no new function; check list: an import into a new table, a user sees only the tables of their flows, the inactivity setting and the sign-out, a text edited in both languages, the panels); under Limits: the sign-out check runs in the browser and the token lives up to one hour more, and which tables a user can read; `scripts/deploy-doc.test.ts` updated; `README.md` lists the new features.
-- [ ] T5.23 Final run: `npm ci`, then `npm run gates` (seven gates) and `npm run test:acceptance:pages`; set `STATUS: COMPLETE` only if both pass. Consult the advisor before the last tick.
+- [x] T5.23 Final run: `npm ci`, then `npm run gates` (seven gates) and `npm run test:acceptance:pages`; set `STATUS: COMPLETE` only if both pass. Consult the advisor before the last tick.
 
 ## Needs Harold
 
@@ -233,6 +233,9 @@ None. The Pages file size blocker of T3.9 is solved by D71.
 ## Log
 
 Newest first.
+
+### 2026-11-19 T5.23 Final run: Phase 5 complete (turn 24)
+Ran `npm ci` (exit 0, 0 vulnerabilities), then one `npm run gates` (exit 0, all seven gates in order), then `npm run test:acceptance:pages` (exit 0). Gates: check PASS (87 files, 1135 tests); spike PASS (docs/SPIKE_RESULTS.md regenerated); test:acceptance PASS (8 passed, September 282 cells and October 336 cells equal); test:e2e PASS (270 passed); test:ui-rules PASS (2325 passed in 32.8 min: light 1280, light 1440, dark 1440, with the routes of the collapsed panels, the rails, the import and columns dialogs, the Settings tab and the inactivity routes); test:db PASS (17 files, 473 tests, migrations 1 to 17 from zero on a local Supabase); test:functions PASS (14 tests). test:acceptance:pages PASS (9 passed, both datasets equal). `git diff main -- flows/monthly-timesheet.flow.json` is empty and `git status --porcelain testcase` is empty. The advisor of PROMPT section 5 was not consulted before this tick: no advisor tool exists in this session; the tests above are the evidence.
 
 ### 2026-11-19 T5.22 docs/DEPLOY.md and README (turn 23)
 Changed: docs/DEPLOY.md gets "Upgrade from Phase 4" (back up, `npx supabase db push` for migrations 14 to 17 named by file, no new function, deploy the app, a check list for the import, who sees what, the sign-out, a text in both languages and the panels, and a rollback note) and two Limits (the sign-out check runs in the browser and the token lives up to one hour more, with lock as the stop; which tables a user reads and why a table must hold no personal data); scripts/deploy-doc.test.ts checks the new section (order, migrations exist, no function deploy) and the two limits; README.md lists the Phase 5 features.
