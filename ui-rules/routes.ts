@@ -216,6 +216,46 @@ export const ROUTES: RuleRoute[] = [
       await page.getByRole('complementary', { name: 'Step settings' }).getByRole('heading').waitFor();
     },
   },
+  {
+    path: '/reference-tables',
+    name: '/reference-tables (import dialog)',
+    sidebar: true,
+    table: true,
+    // The empty dialog: the file button, the target chips, the reason that Import is off.
+    prepare: async (page) => {
+      await page.getByRole('button', { name: /Import file|^\W*Nhập tệp/ }).click();
+      await page.getByRole('dialog').waitFor();
+    },
+  },
+  {
+    path: '/reference-tables',
+    name: '/reference-tables (import dialog with a file)',
+    sidebar: true,
+    table: true,
+    // A file with the preview, the columns with their types, and a new table target.
+    prepare: async (page) => {
+      await page.getByRole('button', { name: /Import file|^\W*Nhập tệp/ }).click();
+      const text = ['Code,Limit,Valid from,Active', ...Array.from({ length: 30 }, (_, i) => `A${i},${i + 0.5},2026-09-30,true`)].join('\n');
+      await page.locator('input[type=file]').setInputFiles({ name: 'limits.csv', mimeType: 'text/csv', buffer: Buffer.from(text) });
+      await page.getByRole('table').last().waitFor();
+    },
+  },
+  {
+    path: '/reference-tables',
+    name: '/reference-tables (import dialog with problems)',
+    sidebar: true,
+    table: true,
+    // Cell problems under the columns: five of them and "and n more".
+    pseudo: false,
+    prepare: async (page) => {
+      await page.getByRole('button', { name: 'Import file' }).click();
+      const text = ['n,d', '1,2026-09-30', '2,2026-09-30', '3,2026-09-30', ...Array.from({ length: 9 }, (_, i) => `bad${i},not a date`)].join('\n');
+      await page.locator('input[type=file]').setInputFiles({ name: 'bad.csv', mimeType: 'text/csv', buffer: Buffer.from(text) });
+      await page.getByRole('button', { name: /^Type of column 1/ }).click();
+      await page.getByRole('option', { name: 'Number' }).click();
+      await page.getByRole('alert').filter({ hasText: 'Row ' }).waitFor();
+    },
+  },
   { path: '/dev/components', sidebar: true, nav: false },
   { path: '/reference-tables', name: '/reference-tables (list collapsed)', sidebar: true, table: true, before: collapsePanels('refList') },
   // The builder with each panel collapsed (SPEC 12.4, T5.4); T5.6 adds the width rule for them.

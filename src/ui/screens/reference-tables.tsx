@@ -16,9 +16,10 @@ import type { RowErrors } from './reftable-logic';
 import { newVersionProblem, suggestStart } from './versions-logic';
 import { usePanel } from '../panels/use-panel';
 import { PanelToggle } from '../panels/panel-toggle';
+import { ImportDialog } from './ref-import-dialog';
 import styles from './reference-tables.module.css';
 
-type Dialogs = 'paste' | 'newVersion' | 'publish' | 'newTable' | null;
+type Dialogs = 'paste' | 'newVersion' | 'publish' | 'newTable' | 'import' | null;
 
 /** The shared reference tables: the list, the versions of one table, and its rows (editable while a version is a draft). */
 const pastedText = (t: ReturnType<typeof useT>, n: number): string => t('refTables.pasted', { n, nText: n.toLocaleString('en-US') });
@@ -53,11 +54,14 @@ export function ReferenceTablesScreen() {
   const [page, setPage] = useState(0);
   const [errors, setErrors] = useState<RowErrors[]>([]);
   const loadedKey = useRef('');
+  // The rows that the grid was made from: a version that was loaded again (an import replaced its rows) fills the grid again.
+  const loadedRows = useRef<unknown>(null);
   useEffect(() => {
     if (!table || !version) return;
     const key = `${table.id}:${version.versionNo}`;
-    if (loadedKey.current === key) return;
+    if (loadedKey.current === key && loadedRows.current === version.rows) return;
     loadedKey.current = key;
+    loadedRows.current = version.rows;
     setGrid(rowsToText(version.rows, version.columns));
     setTouched(false);
     setPage(0);
@@ -372,10 +376,31 @@ export function ReferenceTablesScreen() {
         breadcrumb={<span>{t('refTables.screen.crumb')}</span>}
         title={t('refTables.screen.title')}
         subtitle={t('refTables.screen.subtitle')}
-        action={isAdmin ? <Button variant="primary" onClick={() => { setDialogError(null); setDialog('newTable'); }}>{t('refTables.newTable')}</Button> : undefined}
+        action={
+          isAdmin ? (
+            <div className={styles.headerActions}>
+              <Button onClick={() => setDialog('import')}>{t('refTables.importFile')}</Button>
+              <Button variant="primary" onClick={() => { setDialogError(null); setDialog('newTable'); }}>{t('refTables.newTable')}</Button>
+            </div>
+          ) : undefined
+        }
       >
         {body}
       </ScreenFrame>
+      {dialog === 'import' ? (
+        <ImportDialog
+          tables={tables}
+          today={today}
+          onClose={() => setDialog(null)}
+          onImported={(result, rows) => {
+            setDialog(null);
+            loadedKey.current = '';
+            data.reload();
+            toast(t('refTables.import.done', { rows }));
+            void navigate(url(result.table.id, result.versionNo));
+          }}
+        />
+      ) : null}
       {dialog === 'newTable' ? <NewTableDialog busy={busy === 'table'} error={dialogError} onCreate={(n, d, x) => void createTable(n, d, x)} onCancel={() => setDialog(null)} /> : null}
       {pendingNav ? (
         <Dialog
