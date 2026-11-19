@@ -33,7 +33,7 @@ test('the Parameters card sits above the files; Run stays off until the values a
   await expect(page.getByRole('status').filter({ hasText: 'Enter a value for Cut-off date to run the flow.' })).toBeVisible();
   await page.getByRole('button', { name: 'Choose a date for Cut-off date' }).focus();
   await page.getByRole('button', { name: 'Choose a date for Cut-off date' }).blur();
-  await expect(page.getByRole('alert')).toContainText('cutoff');
+  await expect(page.getByRole('alert')).toContainText('"Cut-off date" needs a value');
   await expect(runButton(page)).toBeDisabled();
   await page.getByRole('button', { name: 'Choose a date for Cut-off date' }).click();
   await expect(page.getByRole('alert')).toHaveCount(0);

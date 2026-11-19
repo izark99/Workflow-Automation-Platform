@@ -99,8 +99,8 @@ describe('resolveParameterValues', () => {
       }
     })();
     expect(e?.messageId).toBe('engine.paramMissing');
-    expect(e?.message).toMatch(/cutoff/);
-    expect(e?.params).toEqual({ key: 'cutoff' });
+    expect(e?.message).toMatch(/cutoff/); // the label of DATE is its key in this test
+    expect(e?.params).toEqual({ key: 'cutoff', label: 'cutoff' });
   });
 
   it('treats null and empty text as missing', () => {
@@ -123,7 +123,7 @@ describe('resolveParameterValues', () => {
         resolveParameterValues([param], { [param.key]: value });
       } catch (e) {
         expect((e as EngineError).messageId).toBe('engine.paramWrongType');
-        expect((e as EngineError).message).toContain(param.key);
+        expect((e as EngineError).message).toContain(param.label);
       }
     }
   });
@@ -290,5 +290,14 @@ describe('the params table of the SQL step', () => {
   it('still refuses what the SQL step refused before', async () => {
     const e = await failure(() => run(sqlFlow([DATE], 'SELECT * FROM read_csv(\'x\'), params'), { cutoff: '2026-09-15' }));
     expect(e.message).toMatch(/read_csv/);
+  });
+});
+
+describe('messages name the label that the user sees, not the key', () => {
+  const labelled = p({ key: 'cutoff', type: 'date', label: 'Cut-off date' });
+  it('for a missing value, a wrong type and a list value that is not an option', () => {
+    expect(() => resolveParameterValues([labelled], {})).toThrow(/"Cut-off date" needs a value/);
+    expect(() => resolveParameterValues([labelled], { cutoff: 'soon' })).toThrow(/"Cut-off date" is not a valid date/);
+    expect(() => resolveParameterValues([p({ key: 'team', type: 'list', label: 'Team', options: ['A'] })], { team: 'Z' })).toThrow(/"Team" is not one of its options \(A\)/);
   });
 });

@@ -1143,9 +1143,9 @@ export const en = {
   'engine.paramDefaultList': 'The default of parameter "{key}" is not one of its options. Choose one of the options, or remove the default.',
   'engine.paramOptions': 'Parameter "{key}" is a list and needs at least one option. Add "options" with one or more texts.',
   'engine.paramOptionBad': 'Parameter "{key}" has an empty or repeated option. Every option must be a different text that is not empty.',
-  'engine.paramMissing': 'Parameter "{key}" needs a value. Enter a value for it.',
-  'engine.paramWrongType': 'The value of parameter "{key}" is not a valid {type}. Enter a value of that type.',
-  'engine.paramNotOption': 'The value of parameter "{key}" is not one of its options ({options}). Choose one of the options.',
+  'engine.paramMissing': '"{label}" needs a value. Enter a value for it.',
+  'engine.paramWrongType': 'The value of "{label}" is not a valid {type}. Enter a value of that type.',
+  'engine.paramNotOption': 'The value of "{label}" is not one of its options ({options}). Choose one of the options.',
 } as const;
 
 export type MessageKey = keyof typeof en;

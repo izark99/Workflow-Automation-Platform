@@ -142,7 +142,7 @@ Close
 - [x] T4.10b (U1) Parameters panel: the Type and the default dropdowns fit inside the card.
 - [x] T4.10c (U2) Formula editor: an empty formula is a neutral note until the field was touched, not a red error on arrival.
 - [x] T4.10d (U3) Run Parameters card and Test tab: a required value shows its error after the field was touched or Run was pressed; Run stays disabled with a note.
-- [ ] T4.10e (U4) The three parameter value messages name the label of the parameter, not its key.
+- [x] T4.10e (U4) The three parameter value messages name the label of the parameter, not its key.
 - [ ] T4.10f (U5) A boolean parameter has no "(optional)" suffix.
 - [ ] T4.10g (U6) Admin: the sentences under "Access to shared flows" and "Deleted flows" move into an info button.
 - [ ] T4.10h (U7) Builder canvas: no step card sits under the control bar after fit-to-screen.
@@ -183,6 +183,12 @@ None. The Pages file size blocker of T3.9 is solved by D71.
 ## Log
 
 Newest first.
+
+### 2026-11-19 T4.10e Parameter value messages name the label (turn 36)
+Advisor not consulted: a wording change.
+Changed: `engine.paramMissing`, `engine.paramWrongType` and `engine.paramNotOption` (engine, en, vi) say `"{label}"` instead of `parameter "{key}"`; the errors carry both `key` and `label` as parameters. Unit tests (the new test checks the three messages with a label that differs from the key), the preview and parameter-logic tests, and two e2e checks follow the new text.
+Gates run: `npm run check` exit 0 (986 tests); `npm run test:acceptance` exit 0 (7 passed, 1 skipped); `npm run test:acceptance:pages` exit 0 (9 passed); e2e run-parameters and parameters-panel 8 passed; `test:ui-rules` on the parameter routes, all three projects: 105 passed (targeted). Flow file diff and `testcase` status empty.
+Next: T4.10f.
 
 ### 2026-11-19 T4.10d Parameter values: errors after the field was touched, a note says what is missing (turn 35)
 Advisor not consulted: a small behaviour change that follows checklist item 6.

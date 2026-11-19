@@ -129,6 +129,6 @@ describe('runPreview on the Node engine', () => {
     const base = { definition: t.definition, nodeId: t.nodeId, handle: t.handle, files: { 'input_file-1': csv('name,age\nAnn,31\nBob,42\n') }, refTables: [], effectiveDate: '2026-09-30', runner };
     const data = await runPreview({ ...base, parameterValues: { min_age: 35 } });
     expect(data.rows).toEqual([['Bob', 42]]);
-    await expect(runPreview(base)).rejects.toThrow(/min_age/);
+    await expect(runPreview(base)).rejects.toThrow(/"Min age" needs a value/);
   });
 });

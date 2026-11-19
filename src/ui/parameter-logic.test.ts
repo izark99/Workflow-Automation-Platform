@@ -15,7 +15,7 @@ describe('parameter-logic', () => {
   it('gives one error per invalid parameter and none for a valid one', () => {
     const e = parameterValueErrors([date, team, note], { cutoff: '2026-09-30', team: undefined });
     expect(Object.keys(e)).toEqual(['team']);
-    expect(e.team).toMatch(/team/);
+    expect(e.team).toMatch(/Team/); // the label, not the key
     expect(parameterValueErrors([team], { team: 'C' }).team).toMatch(/A, B/);
     expect(parameterValueErrors([date, team, note], { cutoff: '2026-09-30', team: 'A' })).toEqual({});
   });

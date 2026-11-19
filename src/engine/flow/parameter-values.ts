@@ -29,15 +29,15 @@ export function resolveParameterValues(parameters: readonly FlowParameter[], val
   for (const p of parameters) {
     const given = values[p.key];
     if (isBlank(given)) {
-      if (p.required) throw coded('invalid_settings', 'engine.paramMissing', { key: p.key });
+      if (p.required) throw coded('invalid_settings', 'engine.paramMissing', { key: p.key, label: p.label });
       out[p.key] = { type: p.type, value: null };
       continue;
     }
     if (!fitsParameterType(p, given)) {
       if (p.type === 'list' && typeof given === 'string') {
-        throw coded('invalid_settings', 'engine.paramNotOption', { key: p.key, options: (p.options ?? []).join(', ') });
+        throw coded('invalid_settings', 'engine.paramNotOption', { key: p.key, label: p.label, options: (p.options ?? []).join(', ') });
       }
-      throw coded('invalid_settings', 'engine.paramWrongType', { key: p.key, type: p.type });
+      throw coded('invalid_settings', 'engine.paramWrongType', { key: p.key, label: p.label, type: p.type });
     }
     out[p.key] = { type: p.type, value: given as ParameterValue };
   }

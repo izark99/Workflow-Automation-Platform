@@ -1092,7 +1092,7 @@ export const vi: Record<MessageKey, string> = {
   'engine.paramDefaultList': 'Giá trị mặc định của tham số "{key}" không nằm trong các lựa chọn. Hãy chọn một trong các lựa chọn, hoặc xóa giá trị mặc định.',
   'engine.paramOptions': 'Tham số "{key}" là danh sách và cần ít nhất một lựa chọn. Hãy thêm "options" với một hoặc nhiều văn bản.',
   'engine.paramOptionBad': 'Tham số "{key}" có một lựa chọn trống hoặc bị lặp. Mỗi lựa chọn phải là một văn bản khác nhau và không để trống.',
-  'engine.paramMissing': 'Tham số "{key}" cần có giá trị. Hãy nhập một giá trị cho tham số đó.',
-  'engine.paramWrongType': 'Giá trị của tham số "{key}" không phải là {type} hợp lệ. Hãy nhập giá trị đúng kiểu đó.',
-  'engine.paramNotOption': 'Giá trị của tham số "{key}" không nằm trong các lựa chọn ({options}). Hãy chọn một trong các lựa chọn.',
+  'engine.paramMissing': '"{label}" cần có giá trị. Hãy nhập một giá trị.',
+  'engine.paramWrongType': 'Giá trị của "{label}" không phải là {type} hợp lệ. Hãy nhập giá trị đúng kiểu đó.',
+  'engine.paramNotOption': 'Giá trị của "{label}" không nằm trong các lựa chọn ({options}). Hãy chọn một trong các lựa chọn.',
 };
