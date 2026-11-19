@@ -59,8 +59,8 @@ function SettingsForm({ saved, onSaved }: { saved: number; onSaved: () => void }
         />
       </div>
       {failure ? <ErrorState what={t('admin.settings.saveFailed')} next={failure} /> : null}
-      <div>
-        <Button variant="primary" type="submit" busy={busy} disabled={!canSaveHours(text, saved)}>
+      <div className={styles.settingsField}>
+        <Button variant="primary" type="submit" block busy={busy} disabled={!canSaveHours(text, saved)}>
           {t('admin.settings.save')}
         </Button>
       </div>

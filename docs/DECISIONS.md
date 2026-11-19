@@ -929,3 +929,11 @@ blank or mixed column in one month cannot change the types of another month.
 - `importRefTable` is one shared function (`src/store/ref-import.ts`) over `createRefTable`, `createRefTableVersion` and `saveRefTableVersion`, so the rules of both stores (admin only, no overlap, a published version is read-only, 50,000 rows) live in one place. Both stores check the admin first, because the local `saveRefTableVersion` does not.
 - PROGRESS T5.15 asked the Supabase store to send the rows in batches. The rows of a version are one `jsonb` value in `ref_table_versions`, so a batch would need a new append function and would make the save partial. The grid of the screen already saves 50,000 rows in one update (tested in `test:store`), so the import does the same.
 - Everything that can be checked is checked before the first write (row cap, date range, name, column names, row width). A failure after the draft was created (the network, for example) leaves an empty draft that the admin can see and delete from the grid; this is the one case where "nothing is saved" does not hold, and it needs a failing server.
+
+## D86 What the Phase 5 audit still lists, and what it fixed (T5.20)
+
+`ui-audit` was run on every route of the UI rules in both themes. On the new screens it found, and T5.20 fixed: the "Edited only" chip of the Texts toolbar was 36 px next to 40 px controls (now 40), and the Save button of the Settings tab was 67 px wide under a 240 px field (now as wide as the field).
+What it still lists is intentional:
+- The panel toggle is a 36 px icon button (DESIGN, Collapsible panels) next to or above 40 px or full-width controls: in the sidebar (above "Create flow", in the rail above the 40 px icon buttons), in the settings panel (above "Add parameter"). The toggle sits in the corner of its panel by design.
+- Off-grid values that are `margin-top: auto` results (the user block and the rail user button are pushed to the bottom of the sidebar), the 1 px offsets of the visually hidden live region, and the values of earlier phases (the 3 px of the title row, the 2 px focus offsets, React Flow's own styles and its 10 px attribution text).
+- The Run screen rows (date picker next to Run or Download) and the step forms (a field above "Delete step") are the earlier phases' choices of D83.

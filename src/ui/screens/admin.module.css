@@ -55,6 +55,11 @@
   gap: 12px;
 }
 
+/* The search field and the dropdown are 40 px, so the chip next to them is 40 px too (checklist item 3: one height in a row). */
+.textsToolbar [aria-pressed] {
+  height: var(--size-button);
+}
+
 .textsSearch {
   flex: 1;
   max-width: 320px;
