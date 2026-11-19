@@ -1,4 +1,4 @@
-STATUS: IN PROGRESS
+STATUS: COMPLETE
 
 # Progress
 
@@ -150,7 +150,7 @@ Close
 - [x] T4.10j (U9) Builder settings panel with no step: the Parameters heading comes first, the "Select a step" sentence below it.
 - [x] T4.10k (U10) Spacing: 6, 9, 10, 13 and 14 px in shared components move to the 4 px grid without changing a height or y that a rule checks.
 - [x] T4.11 `docs/DEPLOY.md`: a section "Upgrade an existing deployment" (back up, `npx supabase db push` for the new migrations, `npx supabase functions deploy admin-users`, check list for accounts, themes, texts and parameters); remove the limits that Phase 4 lifted; `scripts/deploy-doc.test.ts` updated. `README.md` mentions the new features.
-- [ ] T4.12 Final run: `npm ci`, then `npm run gates` (seven gates) and `npm run test:acceptance:pages`; set `STATUS: COMPLETE` only if both pass.
+- [x] T4.12 Final run: `npm ci`, then `npm run gates` (seven gates) and `npm run test:acceptance:pages`; set `STATUS: COMPLETE` only if both pass.
 
 ## Needs Harold
 
@@ -183,6 +183,12 @@ None. The Pages file size blocker of T3.9 is solved by D71.
 ## Log
 
 Newest first.
+
+### 2026-11-19 T4.12 Final run: Phase 4 complete (turn 44)
+Advisor consulted before the final tick: it asked for an empty-diff check that cannot pass by accident, a scan of the whole Phase 4 section for open boxes, a look at the regenerated spike files, and an Evidence block built from `/tmp/gates.log` only. All four were done.
+Run: Docker daemon started, then one detached run of `npm ci` followed by `npm run gates` (`/tmp/gates.log`): `NPM_CI_EXIT 0`, `GATES_EXIT 0`. Gates: check (typecheck, lint, 989 unit tests); spike (exit 0, rewrote `docs/SPIKE_RESULTS.md` and `docs/spike-raw.json`; the chosen strategies are unchanged, `xlsx-stream` and `duckdb-csv`, only the timings moved); test:acceptance 8 passed, 1 skipped; test:e2e 207 passed; test:ui-rules 1620 passed (light theme 1280 px: 540; light theme 1440 px: 540; dark theme 1440 px: 540); test:db 13 files, `Result: PASS`; test:functions 14 passed. Then `npm run test:acceptance:pages`: 9 passed, exit 0. No generated benchmark file is left (the only files over 20 MB are the ignored build outputs `dist-*`).
+Checks: `git rev-parse --verify main` resolves and `git diff --exit-code main -- flows/monthly-timesheet.flow.json` is empty; `git status --porcelain testcase` is empty; no unticked box is left in the Phase 4 section after this tick.
+Phase 4 summary: accounts managed in the app (admin-users Edge Function, lock, forced password change), light and dark themes, a message catalog in English and Vietnamese with admin-editable texts, flow parameters (format, engine, builder panel, test values, Run screen), a UI audit with ten fixes, and the deployment guide. Decisions D72 to D81.
 
 ### 2026-11-19 T4.11 Deployment guide and README (turn 43)
 Advisor not consulted: documentation; every claim was checked against the migrations, the function and the config.
