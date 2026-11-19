@@ -224,8 +224,10 @@
 
 .handleLabel {
   position: absolute;
-  font-size: 11px;
-  line-height: 14px;
+  font-size: 12px;
+  line-height: 16px;
+  padding: 0 2px;
+  background: var(--color-card);
   color: var(--color-muted);
   white-space: nowrap;
   pointer-events: none;

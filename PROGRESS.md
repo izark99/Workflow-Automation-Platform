@@ -146,7 +146,7 @@ Close
 - [x] T4.10f (U5) A boolean parameter has no "(optional)" suffix.
 - [x] T4.10g (U6) Admin: the sentences under "Access to shared flows" and "Deleted flows" move into an info button.
 - [x] T4.10h (U7) Builder canvas: no step card sits under the control bar after fit-to-screen.
-- [ ] T4.10i (U8) Filter output labels "match" and "no match" are 12 px and not crossed by the line.
+- [x] T4.10i (U8) Filter output labels "match" and "no match" are 12 px and not crossed by the line.
 - [ ] T4.10j (U9) Builder settings panel with no step: the Parameters heading comes first, the "Select a step" sentence below it.
 - [ ] T4.10k (U10) Spacing: 6, 9, 10, 13 and 14 px in shared components move to the 4 px grid without changing a height or y that a rule checks.
 - [ ] T4.11 `docs/DEPLOY.md`: a section "Upgrade an existing deployment" (back up, `npx supabase db push` for the new migrations, `npx supabase functions deploy admin-users`, check list for accounts, themes, texts and parameters); remove the limits that Phase 4 lifted; `scripts/deploy-doc.test.ts` updated. `README.md` mentions the new features.
@@ -183,6 +183,12 @@ None. The Pages file size blocker of T3.9 is solved by D71.
 ## Log
 
 Newest first.
+
+### 2026-11-19 T4.10i Filter output labels: 12 px, beside the line (turn 40)
+Advisor not consulted: a style fix.
+Changed: the "match" and "no match" labels under a Filter card are 12 px (line height 16), start 8 px to the right of their connection point instead of being centred on it, and have the card colour as background. The 10 px React Flow attribution link stays (U8 says so). e2e: on the Filter card of the parameter flow both labels are at least 12 px and no connection point lies inside a label.
+Gates run: `npm run check` exit 0 (986 tests); e2e canvas-theme spec 4 passed; `test:ui-rules` on every builder route, all three projects: 633 passed (targeted). Flow file diff and `testcase` status empty.
+Next: T4.10j.
 
 ### 2026-11-19 T4.10h Builder canvas: no step under the control bar after fit-to-screen (turn 39)
 Advisor not consulted: a layout fix.

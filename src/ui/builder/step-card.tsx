@@ -39,7 +39,7 @@ export function StepCard({ data, selected }: NodeProps<StepCardNode>) {
       ))}
       {outputs.length > 1
         ? outputs.map((h, i) => (
-            <span key={`label-${h}`} className={styles.handleLabel} style={{ left: at(i, outputs.length), bottom: -22, transform: 'translateX(-50%)' }} aria-hidden="true">
+            <span key={`label-${h}`} className={styles.handleLabel} style={{ left: at(i, outputs.length), bottom: -24, transform: 'translateX(8px)' }} aria-hidden="true">
               {handleName(h)}
             </span>
           ))

@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
+import { seedParameterFlow } from './parameter-flow';
 
 // The canvas follows the app theme, never the operating system on its own (SPEC 11.4).
 /** A new flow with two connected steps, so the canvas shows a node, an edge and the dots. */
@@ -78,4 +79,27 @@ test('after fit to screen no step card sits under the control bar, on load and a
   await page.getByRole('button', { name: 'Fit to screen' }).click();
   await page.waitForTimeout(500);
   expect(await overlaps()).toEqual([]);
+});
+
+test('the output labels of a Filter card are 12 px and sit beside the connection line, not on it', async ({ page }) => {
+  await seedParameterFlow(page);
+  await page.goto('/flows/flow-param/versions/2');
+  await expect(page.locator('.react-flow__node').first()).toBeVisible();
+  const found = await page.evaluate(() => {
+    const card = Array.from(document.querySelectorAll('.react-flow__node')).find((n) => (n.textContent ?? '').includes('Keep'))!;
+    const handles = Array.from(card.querySelectorAll('.react-flow__handle.source')).map((h) => {
+      const r = h.getBoundingClientRect();
+      return r.left + r.width / 2;
+    });
+    const labels = Array.from(card.querySelectorAll('[aria-hidden="true"]')).filter((l) => /match/i.test(l.textContent ?? ''));
+    return labels.map((l) => {
+      const r = l.getBoundingClientRect();
+      return { text: l.textContent, size: parseFloat(getComputedStyle(l).fontSize), left: r.left, right: r.right, crossed: handles.filter((x) => x > r.left && x < r.right).length };
+    });
+  });
+  expect(found.map((f) => f.text)).toEqual(['match', 'no match']);
+  for (const f of found) {
+    expect(f.size).toBeGreaterThanOrEqual(12);
+    expect(f.crossed, `${f.text} is crossed by a connection line`).toBe(0);
+  }
 });
