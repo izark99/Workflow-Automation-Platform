@@ -16,11 +16,13 @@ If this file and `testcase/TEST_RULES.md` disagree, `TEST_RULES.md` wins.
 | Builder | Drag-and-drop node canvas |
 | Execution | Manual run in the user's browser. Input files never leave the user's device |
 | Versioning | Flows and reference tables both have versions. One effective date per run |
-| Reference data | Shared rule tables live on the server. Files with personal data (timesheet, employee list) are uploaded for each run and stay local |
+| Reference data | Shared rule tables live on the server. Files with personal data (timesheet, employee list) are uploaded for each run and stay local. From Phase 5 the admin imports, views and edits the tables, and a user sees the tables that their flows use (section 12.1) |
 | File size | Up to the Excel sheet limit per uploaded sheet, subject to the spike result |
 | Hosting | Cloudflare Pages (static files) and Supabase (Auth and Postgres), free tier |
 | UI language | English is the built-in default. From Phase 4, every UI text is a key in one catalog; Vietnamese is a second language, and the admin can edit any text in the app (section 11.3) |
 | Theme | Light, Dark and System, chosen by each user (section 11.4) |
+| Session | From Phase 5 a signed-in user is signed out after a number of hours without activity, set by the admin (section 12.2) |
+| Layout | From Phase 5 every side panel can be collapsed (section 12.4) |
 
 ## 2. Scope
 
@@ -34,6 +36,7 @@ If this file and `testcase/TEST_RULES.md` disagree, `TEST_RULES.md` wins.
 - Personal flows, shared flows, and user groups
 - Soft delete of flows with restore within 30 days
 - Phase 4: admin account management, help text behind info buttons, editable texts in two languages, light and dark themes, flow parameters, UI quality pass (section 11)
+- Phase 5: import of reference tables from xlsx and csv, reference tables visible to users by use, sign-out after inactivity, texts edited in both languages at once, collapsible panels (section 12)
 
 **Out of scope for the MVP**
 
@@ -98,6 +101,8 @@ effective date per run, and the app selects the versions valid on that date.
 | `run_log` | flow_version_id, user_id, effective_date, run_at, row counts, status | Run history. Metadata only, no input data, no parameter values |
 | `profiles` (Phase 4 columns) | locked_at, must_change_password | Account lock and forced password change (section 11.1) |
 | `ui_texts` (Phase 4) | locale, key, value, updated_by, updated_at | Admin edits of UI texts. No personal data (section 11.3) |
+| `app_settings` (Phase 5) | key, value (JSON), updated_by, updated_at | Settings that the admin sets for everyone. The first one is `idle_timeout_hours` (section 12.2) |
+| `flow_ref_tables` (Phase 5) | flow_id, version_no, ref_table_name | Which reference tables a flow version uses (Lookup and Pivot steps). Kept by a trigger from the definition; it decides which tables a user may open (section 12.1) |
 
 The `definition` JSON is the single source of truth for a flow. The canvas reads
 and writes it, and the engine runs it.
@@ -143,15 +148,17 @@ translated to DuckDB SQL and has unit tests with the result Excel gives.
 | --- | --- | --- | --- | --- |
 | Personal flow | Full rights | Full rights | No access | No access |
 | Shared flow | Full rights | Not applicable. Only the admin creates shared flows | View and run | No access |
-| Reference table | Full rights | Read | Read | Read |
+| Reference table: name and description | Full rights | Read | Read | Read |
+| Reference table: versions and rows | Full rights (import, edit a draft, publish) | Read, only the tables that a flow they can view or run uses | Same | No access |
 | Users and groups | Full rights | No access | No access | No access |
 | User accounts (create, reset password, lock, unlock) | Full rights, except locking themselves or the last active admin | Change own password | Change own password | Change own password |
 | UI texts | Edit | Read | Read | Read (also before sign-in) |
+| App settings (idle sign-out) | Edit | Read | Read | Read |
 
 - The admin can delete any flow. A user can delete a personal flow.
 - A deleted flow is hidden, kept for 30 days, and can be restored by the admin.
 - A user can copy a shared flow into a personal flow, then edit the copy.
-- Every signed-in user can read every reference table.
+- Every signed-in user can read the name and the description of every reference table, so the Lookup and Pivot steps can offer it. The versions and rows of a table are read only by the admin and by a user for whom a flow uses that table (section 12.1).
 - Row-level security in Postgres enforces all of this. The client is never trusted.
 
 ## 8. Limits and performance
@@ -203,6 +210,7 @@ fixed values in the flow.
 | 2. Canvas and screens | Seven screens from `docs/DESIGN.md`, working on a local data store | A user can build and run the timesheet flow in the browser |
 | 3. Server | Supabase schema, row-level security, sign-in, versions, groups | Permission tests pass on a local Supabase |
 | 4. Accounts, themes, texts, parameters | Section 11 | All gates of PROMPT section 2, including G6, pass in one clean run |
+| 5. Reference tables, idle sign-out, texts, panels | Section 12 | The same gates pass in one clean run |
 
 ## 11. Phase 4 additions
 
@@ -251,7 +259,7 @@ closes it; it is announced to screen readers; it never hides an error. Details a
    engine message without a key falls back to its English text.
 2. Texts may hold named placeholders such as `{name}` or `{count}`. Plural forms use the form `{count, plural, one {# row} other {# rows}}`. An edited text must keep the same placeholders as the default; the editor refuses the change otherwise and says which placeholder is missing.
 3. Built-in languages: English (`en`, the default and the fallback) and Vietnamese (`vi`). Each user picks a language in the sidebar; the choice is kept in the browser. A text that has no Vietnamese value falls back to English.
-4. The admin edits texts on a new Admin tab, Texts: search by key or by text, filter by screen, pick the language, see the default next to the current value, edit, and reset to the default. Edits are stored in `ui_texts` and reach other users the next time they load the app, with no new deployment.
+4. The admin edits texts on a new Admin tab, Texts: search by key or by text, filter by screen, see the default next to the current value, edit, and reset to the default. (Phase 5, section 12.3, changes this: both languages are shown and edited together, with no language to pick.) Edits are stored in `ui_texts` and reach other users the next time they load the app, with no new deployment.
 5. User data is never translated: flow names, column names, reference table content and file content are shown as they are.
 6. Dates in the UI keep the form `30 Sep 2026`; month names come from the catalog, so Vietnamese shows them in Vietnamese.
 
@@ -287,3 +295,74 @@ change the behaviour of a gate need a note in `docs/DECISIONS.md` first.
 - G5 covers `locked_at`, `must_change_password`, `ui_texts` and their row-level security.
 - G6 is new: `npm run test:functions` runs the `admin-users` Edge Function on a local Supabase.
 - G1 must still pass with the unchanged acceptance flow.
+
+## 12. Phase 5 additions
+
+Phase 5 adds four things to the finished Phase 4 app. Everything in sections 1 to 11 still holds unless this section
+changes it, and the acceptance flow `flows/monthly-timesheet.flow.json` must still pass unchanged.
+
+### 12.1 Reference tables: import, view, adjust, and who sees what
+
+**The admin** can, on the Reference tables screen:
+
+1. **Import a file** into a table. The file is `.xlsx` or `.csv` and is read in the browser. The dialog has these steps: choose the file; for xlsx, choose the sheet; give the header row (default 1); see the first 20 rows; check the columns (the name comes from the header, the type is guessed from the first 1,000 filled cells as boolean, number, date or text, and the admin can change it); choose the target; Import.
+2. The target is one of: **a new table** (name and description); **a new version of a table** (valid from, as for any new version); **the draft of a table**, which replaces the rows and columns of its existing draft (offered only when the table has a draft, and it asks first).
+3. An import always makes a draft. It never publishes. The admin looks at the draft, adjusts it, and publishes it as today.
+4. An import is refused, and nothing is saved, when: the file has more than 50,000 rows or more than 100 columns; a column name is empty or repeated (names are compared without regard to case); a cell does not fit the type of its column. The message names the first problems with row and column (for example "Row 14, column Limit: "abc" is not a number") and says what to do. Blank cells stay blank. Date cells of Excel and text such as `2026-09-30` are dates; other date text is an error that says to fix the file or to choose the type text.
+5. **View**: any version, as a read-only grid with paging.
+6. **Adjust a draft**: edit cells, add and remove rows, and add, rename, change the type of and remove columns. A published version stays read-only; a change is a new version (section 4, rule 5). The admin can change the description of a table. The name of a table cannot change, because flows point to it by name; to rename, create a new table.
+7. The dialog says, behind an info button, that a reference table is shared with every user who has a flow that uses it, and so must not hold personal data.
+
+**A user** sees, on the Reference tables screen, the tables that a flow uses for which the user may view or run that flow: their own personal flows, and shared flows of their groups. A table counts as used when any version of such a flow, draft or published, has a Lookup or Pivot step that points to it. The user opens its versions and rows read-only, and sees "Used by" with the names of those flows. A user sees no button that changes a table. When no flow of the user uses a table, the screen says so in its empty state. A deleted flow no longer counts.
+
+The name and the description of every table are visible to every signed-in user, so the Lookup and Pivot steps can offer every table. A user who picks a table that no saved flow of theirs uses yet cannot open its rows until the flow is saved; the step says so.
+
+Rules for the server: row-level security enforces all of this (section 7). `flow_ref_tables` is kept by a trigger on `flow_versions` and is filled once for the flows that exist.
+
+### 12.2 Sign-out after inactivity
+
+1. The admin sets "Sign out after (hours of no activity)" on a new Admin tab, Settings: a whole number from 1 to 72, default 8. It is stored in `app_settings` as `idle_timeout_hours`. Everyone signed in can read it; only an active admin can change it.
+2. Activity is a pointer move or press, a key press, a scroll or wheel, a touch, and the window getting focus. The time of the last activity is kept in the browser (`localStorage`), written at most once every 5 seconds, so several tabs of the same browser share it. A flow run in progress counts as activity for as long as it runs.
+3. 2 minutes before the limit a dialog says "You will be signed out in mm:ss because there was no activity", with "Stay signed in" (which counts as activity) and "Sign out now". When the builder or a reference table has unsaved changes, the dialog also says that they will be lost.
+4. At the limit the app signs the user out in the browser and shows the sign-in screen with the quiet message "You were signed out after {hours} hours without activity." This is not an error. When the app is opened after the limit has already passed, the user is signed out at once with the same message.
+5. The app reads the limit after sign-in and again every 15 minutes, so a new value reaches open sessions without a new sign-in.
+6. The check runs in the browser. The sign-out removes the session from the browser; the access token that Supabase issued stays valid until it expires, at most one hour later, which `docs/DEPLOY.md` states under Limits.
+7. On the local store (no Supabase) the same logic runs against the in-memory account service, so the e2e tests cover it. A development hook shortens the limit for tests.
+
+### 12.3 Texts: both languages at once
+
+The Admin tab Texts no longer asks for a language.
+
+1. The table has the columns Key, English, Vietnamese and Actions. Each language cell shows the current text (two lines at most; the full text is read by screen readers and shown in the edit dialog) and a badge "Edited" when it differs from the default.
+2. Filters: search (a key, or a text in either language), screen (the first part of the key), and "Edited only".
+3. Edit opens one dialog with the key and two text areas side by side, English and Vietnamese, each with its default below it and a "Reset" for that language. One Save saves both; Ctrl+Enter also saves; Tab goes English, Vietnamese, Save.
+4. Both texts are checked against the placeholders of their own default (section 11.3). If either text fails, nothing is saved, and the error sits under the text that failed. A text that equals its default is not stored.
+5. The save is one action on the server: either both changes are stored or neither is.
+6. "Reset both" in the dialog and in the row removes the edits of the key in both languages.
+
+### 12.4 Collapsible panels
+
+Every panel at the side of a screen can be collapsed to a narrow rail and opened again:
+
+| Panel | Where | Open | Collapsed |
+| --- | --- | --- | --- |
+| Sidebar | Every screen except the builder | 232 px | 64 px rail |
+| Step list | Builder, left | 184 px | 48 px rail |
+| Settings panel | Builder, right | 380 px | 48 px rail |
+| Table list | Reference tables, left | its width today | 48 px rail |
+
+1. Each panel has a toggle button at its top (36 px, an icon, `aria-expanded`, an accessible name such as "Collapse sidebar" or "Expand settings panel"). The rail keeps the toggle.
+2. The state of each panel is kept per user in the browser and applied before the first paint, so a reload does not flash the other state. Every panel starts open.
+3. The sidebar rail shows the navigation as icons with the same accessible names, a "Create flow" button as an icon, and one user button that opens the same four controls as the open footer (language, theme, change password, sign out). Nothing that the open sidebar offers becomes unreachable.
+4. The step list rail shows only the toggle: steps are added from the open list. The settings panel rail shows the toggle and, written upright, the name of the selected step. Clicking a step card on the canvas opens a collapsed settings panel, because it shows the intent to configure that step.
+5. The content next to a collapsed panel takes the space. The canvas keeps the position of its steps, and "Fit to screen" uses the new size. The title and the first block of a screen keep their y (DESIGN, Layout).
+6. A transition is at most 200 ms and does not run with `prefers-reduced-motion`.
+7. The window is still at least 1280 px wide; collapsing is for room, not for a smaller window.
+
+### 12.5 Gates for Phase 5
+
+- G3 has the journeys of this section: an admin imports a csv and an xlsx file into a new table, a new version and a draft, and publishes; a user sees only the tables of their flows; a user is signed out after the limit (with a fake clock) and keeps the session when active; the admin changes the limit and it reaches an open session; the admin edits one text in both languages with one Save; every panel collapses, survives a reload and opens again.
+- G4 checks every route in both themes with panels open, and the routes with each kind of panel collapsed (light at 1280 and 1440 px, dark at 1440 px), the new dialogs and the new tabs, with the pseudo-locale check on all of them.
+- G5 covers `app_settings`, `flow_ref_tables` and the new row-level security on `ref_table_versions` (every cell of the permission table in section 7), and the function that saves two texts in one transaction.
+- G6 and G1 are unchanged: `admin-users` still passes `npm run test:functions`, and the acceptance flow still passes untouched.
+

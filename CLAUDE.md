@@ -22,6 +22,8 @@ date range. All data processing runs in the browser.
 | `src/store/` | `DataStore` interface, `LocalStore`, `SupabaseStore` |
 | `supabase/` | Migrations, database tests, and from Phase 4 the `admin-users` Edge Function in `supabase/functions/` |
 | `src/ui/i18n/` | From Phase 4: the message catalog, `en` defaults and `vi` translations |
+| `src/ui/panels/`, `src/ui/session/` | From Phase 5: the state and toggle of the collapsible panels; the inactivity sign-out (activity tracker, gate, dialog) |
+| `src/engine/refimport/` | From Phase 5: reading an xlsx or csv file into a reference table (no React, no Supabase) |
 
 ## Commands
 
