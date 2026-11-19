@@ -1,7 +1,7 @@
 import { planPublish } from '../engine/versions';
 import type { VersionRange } from '../engine/versions';
 import { checkRange, checkRowCap } from './checks';
-import { KEEP_DELETED_DAYS, StoreError, storeError, type StoreErrorCode } from './types';
+import { DEFAULT_IDLE_TIMEOUT_HOURS, KEEP_DELETED_DAYS, StoreError, isValidIdleHours, storeError, type StoreErrorCode } from './types';
 import type { StoreMessageId } from './messages';
 import type {
   DataStore,
@@ -13,6 +13,8 @@ import type {
   RefVersionPatch,
   RunLogEntry,
   Scope,
+  AppSettingKey,
+  AppSettings,
   UiText,
   UiTextChanges,
   User,
@@ -29,6 +31,8 @@ export interface Snapshot {
   runLog: RunLogEntry[];
   /** Edited UI texts. Missing in a snapshot saved before Phase 4. */
   uiTexts?: UiText[];
+  /** App settings by key. Missing in a snapshot saved before Phase 5. */
+  appSettings?: Partial<Record<AppSettingKey, number>>;
 }
 
 /** Where the snapshot lives between page loads. The browser uses IndexedDB (decision D37); the tests use memory. */
@@ -221,6 +225,20 @@ export class LocalStore implements DataStore {
     const s = await this.open();
     this.who(s).mustChangePassword = false;
     await this.commit(s);
+  }
+
+  async getAppSettings(): Promise<AppSettings> {
+    const s = await this.open();
+    return { idleTimeoutHours: s.appSettings?.idle_timeout_hours ?? DEFAULT_IDLE_TIMEOUT_HOURS };
+  }
+
+  async saveAppSetting(key: AppSettingKey, value: number): Promise<AppSettings> {
+    const s = await this.open();
+    this.mustBeAdmin(s, 'change the settings');
+    if (key !== 'idle_timeout_hours' || !isValidIdleHours(value)) fail('invalid', 'errors.idleHoursInvalid');
+    s.appSettings = { ...s.appSettings, idle_timeout_hours: value };
+    await this.commit(s);
+    return { idleTimeoutHours: value };
   }
 
   async listUiTexts(): Promise<UiText[]> {

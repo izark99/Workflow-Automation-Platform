@@ -105,6 +105,16 @@ export interface UiTextChanges {
 }
 
 /** An edited text: the value replaces the default of the catalog for that locale. */
+/** Settings that the admin sets for everyone (SPEC 12.2). */
+export interface AppSettings {
+  /** Hours without activity before a user is signed out: a whole number from 1 to 72. */
+  idleTimeoutHours: number;
+}
+export type AppSettingKey = 'idle_timeout_hours';
+export const DEFAULT_IDLE_TIMEOUT_HOURS = 8;
+export const IDLE_TIMEOUT_RANGE = { min: 1, max: 72 } as const;
+export const isValidIdleHours = (v: unknown): v is number => typeof v === 'number' && Number.isInteger(v) && v >= IDLE_TIMEOUT_RANGE.min && v <= IDLE_TIMEOUT_RANGE.max;
+
 export interface UiText {
   locale: UiTextLocale;
   key: string;
@@ -162,6 +172,10 @@ export interface DataStore {
   /** After the user chose a new password. */
   clearMustChangePassword(): Promise<void>;
   /** The edited UI texts (SPEC 11.3). Everyone reads them, also before signing in; only an admin changes them. */
+  /** Readable by every signed-in user. A missing row gives the default. */
+  getAppSettings(): Promise<AppSettings>;
+  /** Admin only. The value is checked here and by the database. */
+  saveAppSetting(key: AppSettingKey, value: number): Promise<AppSettings>;
   listUiTexts(): Promise<UiText[]>;
   /** Saves and resets texts of both languages in one action: every change is stored, or none (SPEC 12.3). */
   saveUiTexts(input: UiTextChanges): Promise<void>;

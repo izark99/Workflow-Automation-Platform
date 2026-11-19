@@ -274,3 +274,23 @@ describe('saveUiTexts (both languages in one transaction)', () => {
     expect(await read()).toEqual([]);
   });
 });
+
+describe('app settings', () => {
+  it('every user reads the limit; the admin changes it; the database refuses a bad value and a user', async () => {
+    expect(await stores.other.getAppSettings()).toEqual({ idleTimeoutHours: 8 });
+    expect(await stores.admin.saveAppSetting('idle_timeout_hours', 12)).toEqual({ idleTimeoutHours: 12 });
+    expect(await stores.member.getAppSettings()).toEqual({ idleTimeoutHours: 12 });
+    expect((await refused(stores.owner.saveAppSetting('idle_timeout_hours', 5))).code).toBe('forbidden');
+    // The database checks the value too: call it directly with values that the store would refuse first.
+    const direct = await service.from('app_settings').update({ value: 73 }).eq('key', 'idle_timeout_hours');
+    expect(direct.error?.code).toBe('23514');
+    const text = await service.from('app_settings').update({ value: '8' }).eq('key', 'idle_timeout_hours');
+    expect(text.error?.code).toBe('23514');
+    await stores.admin.saveAppSetting('idle_timeout_hours', 8);
+    expect(await stores.other.getAppSettings()).toEqual({ idleTimeoutHours: 8 });
+  });
+  it('a signed-out visitor reads nothing', async () => {
+    const visitor = createClient(URL, ANON, options);
+    expect((await visitor.from('app_settings').select('key')).error?.code).toBe('42501');
+  });
+});

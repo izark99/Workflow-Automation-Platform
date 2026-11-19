@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  appSettingsFromRows,
   groupFromRow,
   flowFromRow,
   namesFromRows,
@@ -206,5 +207,18 @@ describe('namesFromRows', () => {
     const names = namesFromRows([]);
     expect(names.users.size).toBe(0);
     expect(names.groups.size).toBe(0);
+  });
+});
+
+describe('appSettingsFromRows', () => {
+  it('reads the idle limit', () => {
+    expect(appSettingsFromRows([{ key: 'idle_timeout_hours', value: 12 }])).toEqual({ idleTimeoutHours: 12 });
+  });
+  it('gives the default of 8 hours for a missing row or a value that is not a whole number from 1 to 72', () => {
+    expect(appSettingsFromRows([])).toEqual({ idleTimeoutHours: 8 });
+    for (const value of [0, 73, 1.5, '8', null, {}]) expect(appSettingsFromRows([{ key: 'idle_timeout_hours', value }])).toEqual({ idleTimeoutHours: 8 });
+  });
+  it('ignores other keys', () => {
+    expect(appSettingsFromRows([{ key: 'other', value: 3 }])).toEqual({ idleTimeoutHours: 8 });
   });
 });

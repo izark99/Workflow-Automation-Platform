@@ -289,3 +289,19 @@ describe('saveUiTexts (both languages in one action)', () => {
     expect(await code(store.saveUiTexts({ entries: [], resets: [{ locale: 'en', key: 'nav.flows' }] }))).toBe('forbidden');
   });
 });
+
+describe('app settings', () => {
+  it('has the default of 8 hours, and an admin changes it for everyone', async () => {
+    expect(await store.getAppSettings()).toEqual({ idleTimeoutHours: 8 });
+    expect(await store.saveAppSetting('idle_timeout_hours', 12)).toEqual({ idleTimeoutHours: 12 });
+    await as('user-lan');
+    expect(await store.getAppSettings()).toEqual({ idleTimeoutHours: 12 });
+  });
+  it('refuses a user, and a value that is not a whole number from 1 to 72', async () => {
+    await as('user-lan');
+    expect(await code(store.saveAppSetting('idle_timeout_hours', 5))).toBe('forbidden');
+    await as('user-harold');
+    for (const bad of [0, 73, 1.5, Number.NaN, -3]) await expect(store.saveAppSetting('idle_timeout_hours', bad)).rejects.toMatchObject({ messageId: 'errors.idleHoursInvalid' });
+    for (const ok of [1, 72]) expect(await store.saveAppSetting('idle_timeout_hours', ok)).toEqual({ idleTimeoutHours: ok });
+  });
+});

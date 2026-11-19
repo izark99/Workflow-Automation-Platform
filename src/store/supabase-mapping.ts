@@ -1,5 +1,7 @@
 // Rows of the database (snake_case, as PostgREST returns them) to the records of the DataStore (camelCase).
 // Pure functions, no client: the unit tests cover them, the integration test of T3.6c covers the queries.
+import { DEFAULT_IDLE_TIMEOUT_HOURS, isValidIdleHours } from './types';
+import type { AppSettings } from './types';
 import type { Cell, Column } from '../engine/types';
 import type {
   FlowRecord,
@@ -191,3 +193,14 @@ export const runLogToRow = (entry: Omit<RunLogEntry, 'id' | 'userId' | 'runAt'>,
   output_rows: entry.outputRows,
   status: entry.status,
 });
+
+export interface AppSettingRow {
+  key: string;
+  value: unknown;
+}
+
+/** The settings of the app from the rows of `app_settings`. A missing or invalid row gives the default (the database checks the value too). */
+export function appSettingsFromRows(rows: AppSettingRow[]): AppSettings {
+  const row = rows.find((r) => r.key === 'idle_timeout_hours');
+  return { idleTimeoutHours: isValidIdleHours(row?.value) ? row.value : DEFAULT_IDLE_TIMEOUT_HOURS };
+}

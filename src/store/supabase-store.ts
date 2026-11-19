@@ -5,6 +5,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { planPublish } from '../engine/versions';
 import { checkRange, checkRowCap } from './checks';
 import {
+  appSettingsFromRows,
   flowFromRow,
   groupFromRow,
   namesFromRows,
@@ -25,6 +26,9 @@ import {
 import {
   StoreError,
   storeError,
+  isValidIdleHours,
+  type AppSettingKey,
+  type AppSettings,
   type DataStore,
   type FlowRecord,
   type Group,
@@ -147,6 +151,20 @@ export class SupabaseStore implements DataStore {
 
   async clearMustChangePassword(): Promise<void> {
     await this.rpc<unknown>('clear_must_change_password', {}, 'save your password choice');
+  }
+
+  async getAppSettings(): Promise<AppSettings> {
+    const result = await this.client.from('app_settings').select('key, value');
+    return appSettingsFromRows(this.ok<{ key: string; value: unknown }[]>(result, 'read the settings'));
+  }
+
+  async saveAppSetting(key: AppSettingKey, value: number): Promise<AppSettings> {
+    await this.mustBeAdmin('change the settings');
+    if (key !== 'idle_timeout_hours' || !isValidIdleHours(value)) throw storeError('invalid', 'errors.idleHoursInvalid');
+    const result = await this.client.from('app_settings').upsert({ key, value }, { onConflict: 'key' }).select('key, value');
+    const rows = this.ok<{ key: string; value: unknown }[]>(result, 'save the setting');
+    if (rows.length === 0) throw storeError('forbidden', 'errors.cannotChange', { what: 'the setting' });
+    return appSettingsFromRows(rows);
   }
 
   async listUiTexts(): Promise<UiText[]> {
