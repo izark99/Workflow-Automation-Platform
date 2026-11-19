@@ -244,3 +244,33 @@ describe('what a signed-out visitor sees', () => {
     expect((await refused(new SupabaseStore(visitor).listFlows())).code).toBe('forbidden');
   });
 });
+
+describe('saveUiTexts (both languages in one transaction)', () => {
+  const read = async () => (await stores.other.listUiTexts()).filter((t) => t.key.startsWith('nav.')).map((t) => `${t.locale}:${t.key}=${t.value}`).sort();
+  it('the admin saves two languages and resets one in one call; every user reads them', async () => {
+    await stores.admin.saveUiTexts({ entries: [{ locale: 'vi', key: 'nav.admin', value: 'Điều khiển' }], resets: [] });
+    await stores.admin.saveUiTexts({
+      entries: [
+        { locale: 'en', key: 'nav.flows', value: 'Pipelines' },
+        { locale: 'vi', key: 'nav.flows', value: 'Quy trình' },
+      ],
+      resets: [{ locale: 'vi', key: 'nav.admin' }],
+    });
+    expect(await read()).toEqual(['en:nav.flows=Pipelines', 'vi:nav.flows=Quy trình']);
+  });
+  it('a user is refused, and a bad entry stores nothing of the call', async () => {
+    expect((await refused(stores.owner.saveUiTexts({ entries: [{ locale: 'en', key: 'nav.admin', value: 'X' }], resets: [] }))).code).toBe('forbidden');
+    await refused(
+      stores.admin.saveUiTexts({
+        entries: [
+          { locale: 'en', key: 'nav.admin', value: 'Control' },
+          { locale: 'fr' as 'en', key: 'nav.admin', value: 'Oops' },
+        ],
+        resets: [{ locale: 'en', key: 'nav.flows' }],
+      }),
+    );
+    expect(await read()).toEqual(['en:nav.flows=Pipelines', 'vi:nav.flows=Quy trình']);
+    await stores.admin.saveUiTexts({ entries: [], resets: [{ locale: 'en', key: 'nav.flows' }, { locale: 'vi', key: 'nav.flows' }] });
+    expect(await read()).toEqual([]);
+  });
+});

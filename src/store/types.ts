@@ -98,6 +98,12 @@ export type StoreErrorCode = 'not_found' | 'forbidden' | 'invalid' | 'conflict';
 /** Every message says what failed and what to do next. */
 export type UiTextLocale = 'en' | 'vi';
 
+/** What one Save of the Texts tab sends: texts to store, and texts to take back to their default. */
+export interface UiTextChanges {
+  entries: { locale: UiTextLocale; key: string; value: string }[];
+  resets: { locale: UiTextLocale; key: string }[];
+}
+
 /** An edited text: the value replaces the default of the catalog for that locale. */
 export interface UiText {
   locale: UiTextLocale;
@@ -159,6 +165,8 @@ export interface DataStore {
   listUiTexts(): Promise<UiText[]>;
   saveUiText(input: { locale: UiTextLocale; key: string; value: string }): Promise<UiText>;
   resetUiText(locale: UiTextLocale, key: string): Promise<void>;
+  /** Saves and resets texts of both languages in one action: every change is stored, or none (SPEC 12.3). */
+  saveUiTexts(input: UiTextChanges): Promise<void>;
 
   saveFlowVersion(flowId: string, versionNo: number, patch: VersionPatch): Promise<FlowRecord>;
   /** A new draft, copied from `copyFrom` when given. */

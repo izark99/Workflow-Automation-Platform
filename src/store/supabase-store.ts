@@ -34,6 +34,7 @@ import {
   type Scope,
   type StoreErrorCode,
   type UiText,
+  type UiTextChanges,
   type UiTextLocale,
   type User,
   type VersionPatch,
@@ -167,6 +168,11 @@ export class SupabaseStore implements DataStore {
     await this.mustBeAdmin('edit texts');
     const result = await this.client.from('ui_texts').delete().eq('locale', locale).eq('key', key).select('key');
     this.ok<unknown[]>(result, 'reset the text');
+  }
+
+  async saveUiTexts(input: UiTextChanges): Promise<void> {
+    for (const e of input.entries) if (e.value.trim() === '') throw storeError('invalid', 'errors.textEmpty');
+    await this.rpc<unknown>('save_ui_texts', { p_entries: input.entries, p_resets: input.resets }, 'save the texts');
   }
 
   async listFlows(): Promise<FlowRecord[]> {

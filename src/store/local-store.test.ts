@@ -261,3 +261,31 @@ describe('edited UI texts', () => {
     expect(await store.listUiTexts()).toEqual([]);
   });
 });
+
+describe('saveUiTexts (both languages in one action)', () => {
+  it('stores two languages and resets one in one call', async () => {
+    await store.saveUiTexts({ entries: [{ locale: 'vi', key: 'nav.admin', value: 'Điều khiển' }], resets: [] });
+    await store.saveUiTexts({
+      entries: [
+        { locale: 'en', key: 'nav.flows', value: 'Pipelines' },
+        { locale: 'vi', key: 'nav.flows', value: 'Quy trình' },
+      ],
+      resets: [{ locale: 'vi', key: 'nav.admin' }],
+    });
+    const rows = await store.listUiTexts();
+    expect(rows.map((t) => `${t.locale}:${t.key}=${t.value}`).sort()).toEqual(['en:nav.flows=Pipelines', 'vi:nav.flows=Quy trình']);
+  });
+  it('a bad entry changes nothing', async () => {
+    await store.saveUiTexts({ entries: [{ locale: 'en', key: 'nav.flows', value: 'Pipelines' }], resets: [] });
+    const bad = (entries: { locale: 'en' | 'vi'; key: string; value: string }[]) => store.saveUiTexts({ entries: [{ locale: 'en', key: 'nav.admin', value: 'Control' }, ...entries], resets: [{ locale: 'en', key: 'nav.flows' }] });
+    await expect(bad([{ locale: 'vi', key: 'nav.flows', value: '  ' }])).rejects.toMatchObject({ messageId: 'errors.textEmpty' });
+    await expect(bad([{ locale: 'fr' as 'en', key: 'nav.flows', value: 'X' }])).rejects.toMatchObject({ messageId: 'errors.textInvalid' });
+    await expect(bad([{ locale: 'en', key: 'no key shape', value: 'X' }])).rejects.toMatchObject({ messageId: 'errors.textInvalid' });
+    expect((await store.listUiTexts()).map((t) => `${t.key}=${t.value}`)).toEqual(['nav.flows=Pipelines']);
+  });
+  it('a user is refused', async () => {
+    await as('user-lan');
+    expect(await code(store.saveUiTexts({ entries: [{ locale: 'en', key: 'nav.flows', value: 'X' }], resets: [] }))).toBe('forbidden');
+    expect(await code(store.saveUiTexts({ entries: [], resets: [{ locale: 'en', key: 'nav.flows' }] }))).toBe('forbidden');
+  });
+});

@@ -170,7 +170,7 @@ Collapsible panels (SPEC 12.4)
 
 Texts in both languages (SPEC 12.3)
 - [x] T5.7 Logic in `src/ui/screens/admin-texts-logic.ts`: one row for each key with the cells `en` and `vi` (default, current, edited); filters: search in the key and in both languages, screen (first part of the key), edited only; `validateTextPair` checks each text against the placeholders of its own default and returns the error of the text that fails; a text equal to its default is not stored. Unit tests for every function, including a placeholder missing in one language only.
-- [ ] T5.8 Migration `20261118000014_save_ui_texts.sql`: `public.save_ui_texts(p_entries jsonb, p_resets jsonb)` runs as the caller (security invoker, so the policies of `ui_texts` decide), upserts the entries and deletes the resets in one transaction; EXECUTE for `authenticated` only (D82). pgTAP: the admin saves two languages and resets one in one call; a user is refused; a bad locale or key rolls back every change of the call. Store: `saveUiTexts({ entries, resets })` in `DataStore`, `LocalStore` and `SupabaseStore` (an RPC), mapping tests, and `test:store` integration tests; the old `saveUiText` and `resetUiText` stay until T5.9 removes their last use.
+- [x] T5.8 Migration `20261118000014_save_ui_texts.sql`: `public.save_ui_texts(p_entries jsonb, p_resets jsonb)` runs as the caller (security invoker, so the policies of `ui_texts` decide), upserts the entries and deletes the resets in one transaction; EXECUTE for `authenticated` only (D82). pgTAP: the admin saves two languages and resets one in one call; a user is refused; a bad locale or key rolls back every change of the call. Store: `saveUiTexts({ entries, resets })` in `DataStore`, `LocalStore` and `SupabaseStore` (an RPC), mapping tests, and `test:store` integration tests; the old `saveUiText` and `resetUiText` stay until T5.9 removes their last use.
 - [ ] T5.9 The Texts tab as in DESIGN "Texts tab": the table with Key, English, Vietnamese and Actions, the filters and the edit dialog with two text areas, the default under each, Reset per language, "Reset both", one atomic Save, Ctrl+Enter. No language control. Remove `saveUiText` and `resetUiText` when nothing uses them. e2e: edit both languages with one Save and see both in the table and after a reload; one invalid text saves nothing and the error sits under it; Reset both; the edited-only filter; keyboard order. Update the routes of the UI rules (the edit dialog). Catalog `en` and `vi`.
 
 Settings and sign-out after inactivity (SPEC 12.2)
@@ -232,6 +232,11 @@ None. The Pages file size blocker of T3.9 is solved by D71.
 ## Log
 
 Newest first.
+
+### 2026-11-19 T5.8 save_ui_texts (migration 14) and store (turn 8)
+Changed: supabase/migrations/20261118000014_save_ui_texts.sql (`save_ui_texts(p_entries, p_resets)`, security invoker, admin check with 42501, EXECUTE for `authenticated` only), supabase/tests/database/130-save-ui-texts.test.sql (visitor refused, user refused, admin saves two languages and resets one in one call, empty and null arrays, bad locale, bad key and empty text roll back every change of the call), `UiTextChanges` and `saveUiTexts` in DataStore, LocalStore (checks first, then applies), SupabaseStore (RPC), `errors.textInvalid` (en, vi), unit tests (3) and integration tests (2). `saveUiText` and `resetUiText` stay until T5.9.
+Gates run: check PASS (1013 tests); test:db PASS (14 files, 375 tests, migrations 1 to 14 from zero); test:store PASS (4 files, 26 tests).
+Next: T5.9 (Texts tab).
 
 ### 2026-11-19 T5.7 Texts logic for both languages (turn 7)
 Changed: src/ui/screens/admin-texts-logic.ts (`textPairRows`, `filterPairRows`, `validateTextPair`, `pairChanges`; the one-language functions stay until T5.9 replaces the tab), admin-texts-logic.test.ts (10 new tests, including a placeholder missing in one language only and a text that goes back to its default).

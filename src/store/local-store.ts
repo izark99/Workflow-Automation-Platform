@@ -14,6 +14,7 @@ import type {
   RunLogEntry,
   Scope,
   UiText,
+  UiTextChanges,
   UiTextLocale,
   User,
   VersionPatch,
@@ -63,6 +64,9 @@ const fail = (code: StoreErrorCode, id: StoreMessageId, params?: Record<string, 
 };
 
 /** The data store of the browser. It enforces the permission table of SPEC section 7 in code, as row-level security does on the server. */
+/** The key shape that the `ui_texts` table accepts (migration 10). */
+const UI_TEXT_KEY = /^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z0-9_]+)+$/;
+
 export class LocalStore implements DataStore {
   private state: Snapshot | null = null;
   private loading: Promise<Snapshot> | null = null;
@@ -243,6 +247,28 @@ export class LocalStore implements DataStore {
     const s = await this.open();
     this.mustBeAdmin(s, 'edit texts');
     s.uiTexts = (s.uiTexts ?? []).filter((t) => !(t.locale === locale && t.key === key));
+    await this.commit(s);
+  }
+
+  async saveUiTexts({ entries, resets }: UiTextChanges): Promise<void> {
+    const s = await this.open();
+    this.mustBeAdmin(s, 'edit texts');
+    // Check everything first, so a bad entry changes nothing (the server does the same in one transaction).
+    for (const e of [...entries, ...resets]) {
+      if ((e.locale as string) !== 'en' && (e.locale as string) !== 'vi') fail('invalid', 'errors.textInvalid');
+      if (!UI_TEXT_KEY.test(e.key) || e.key.length > 120) fail('invalid', 'errors.textInvalid');
+    }
+    for (const e of entries) if (e.value.trim() === '' || e.value.length > 2000) fail('invalid', 'errors.textEmpty');
+    const stamp = this.now().toISOString();
+    let list = s.uiTexts ?? [];
+    for (const e of entries) {
+      const saved: UiText = { locale: e.locale, key: e.key, value: e.value, updatedAt: stamp };
+      const at = list.findIndex((t) => t.locale === e.locale && t.key === e.key);
+      if (at >= 0) list[at] = saved;
+      else list.push(saved);
+    }
+    list = list.filter((t) => !resets.some((r) => r.locale === t.locale && r.key === t.key));
+    s.uiTexts = list;
     await this.commit(s);
   }
 

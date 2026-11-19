@@ -934,6 +934,7 @@ export const vi: Record<MessageKey, string> = {
   'engine.noVersionValid': 'Không có phiên bản nào của {what} có hiệu lực vào {date}. Các phiên bản đã phát hành bao phủ: {periods}. Hãy chọn ngày hiệu lực nằm trong một trong các khoảng này, hoặc thêm một phiên bản bao phủ nó.',
   'errors.noUser': 'Chưa có người dùng nào đăng nhập. Hãy đăng nhập rồi thử lại.',
   'errors.textEmpty': 'Văn bản không được để trống. Hãy nhập văn bản, hoặc dùng Đặt lại để về mặc định.',
+  'errors.textInvalid': 'Văn bản này có ngôn ngữ hoặc khóa mà ứng dụng không biết. Hãy tải lại trang và thử lại.',
   'errors.accountLocked': 'Tài khoản này đã bị khóa. Hãy hỏi quản trị viên.',
   'errors.auth.locked': 'Tài khoản này đã bị khóa. Hãy hỏi quản trị viên.',
   'errors.account.signedOut': 'Bạn chưa đăng nhập. Hãy đăng nhập rồi thử lại.',
