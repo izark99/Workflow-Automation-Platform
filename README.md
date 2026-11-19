@@ -27,9 +27,16 @@ phase at a time.
   password at the first sign-in.
 - A light and a dark theme, and every text in a catalog with English and Vietnamese. The admin can edit any text in
   the app.
+- Reference tables: import a csv or xlsx file into a new table, a new version or a draft; adjust a draft (cells, rows,
+  columns, description). A user reads the tables that their own flows read, read-only, with the flows that use them.
+- Sign-out after inactivity, with the hours set by the admin (Admin, Settings), a warning two minutes before, and a note on
+  the sign-in screen.
+- The admin edits a text in English and Vietnamese together, with one Save.
+- Panels that collapse to a rail: the sidebar, the step list and the settings panel of the builder, and the list of
+  reference tables. The choice is kept in the browser.
 - Flow parameters: values that the user fills in on the Run screen (date, text, number, list, yes or no), read in
   formulas with `PARAM("key")`.
 
-To put the app online, see `docs/DEPLOY.md` (a first deployment, and "Upgrade an existing deployment").
+To put the app online, see `docs/DEPLOY.md` (a first deployment, "Upgrade an existing deployment" and "Upgrade from Phase 4").
 
 All data in `testcase/` and `design/` is sample data made for testing.

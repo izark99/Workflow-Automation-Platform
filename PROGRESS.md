@@ -193,7 +193,7 @@ Quality pass
 - [x] T5.21 UI review of the new and changed screens in both themes, with each panel open and collapsed: Flows, Admin (three tabs and the edit text dialog), Reference tables (admin and user, import dialog in each step), the builder (rails), Run, the sign-in screen with the inactivity note, the inactivity dialog; against the DESIGN checklist; `docs/UI_AUDIT_P5.md` with numbered findings (screen, item, severity, fix); fix every finding that is a few lines in this task, add one task for each other finding below (T5.21a, T5.21b, ...), at most 8, and list the rest as later. Run the full `npm run test:ui-rules`.
 
 Close
-- [ ] T5.22 `docs/DEPLOY.md`: a section "Upgrade from Phase 4" (back up; `npx supabase db push` for migrations 14 to 17 named in the file; no new function; check list: an import into a new table, a user sees only the tables of their flows, the inactivity setting and the sign-out, a text edited in both languages, the panels); under Limits: the sign-out check runs in the browser and the token lives up to one hour more, and which tables a user can read; `scripts/deploy-doc.test.ts` updated; `README.md` lists the new features.
+- [x] T5.22 `docs/DEPLOY.md`: a section "Upgrade from Phase 4" (back up; `npx supabase db push` for migrations 14 to 17 named in the file; no new function; check list: an import into a new table, a user sees only the tables of their flows, the inactivity setting and the sign-out, a text edited in both languages, the panels); under Limits: the sign-out check runs in the browser and the token lives up to one hour more, and which tables a user can read; `scripts/deploy-doc.test.ts` updated; `README.md` lists the new features.
 - [ ] T5.23 Final run: `npm ci`, then `npm run gates` (seven gates) and `npm run test:acceptance:pages`; set `STATUS: COMPLETE` only if both pass. Consult the advisor before the last tick.
 
 ## Needs Harold
@@ -233,6 +233,11 @@ None. The Pages file size blocker of T3.9 is solved by D71.
 ## Log
 
 Newest first.
+
+### 2026-11-19 T5.22 docs/DEPLOY.md and README (turn 23)
+Changed: docs/DEPLOY.md gets "Upgrade from Phase 4" (back up, `npx supabase db push` for migrations 14 to 17 named by file, no new function, deploy the app, a check list for the import, who sees what, the sign-out, a text in both languages and the panels, and a rollback note) and two Limits (the sign-out check runs in the browser and the token lives up to one hour more, with lock as the stop; which tables a user reads and why a table must hold no personal data); scripts/deploy-doc.test.ts checks the new section (order, migrations exist, no function deploy) and the two limits; README.md lists the Phase 5 features.
+Gates run: check PASS (1135 tests, exit 0).
+Next: T5.23 (final run: npm ci, npm run gates, test:acceptance:pages; advisor before COMPLETE if one exists).
 
 ### 2026-11-19 T5.21 UI review of the Phase 5 screens (turn 22)
 Changed: docs/UI_AUDIT_P5.md (8 numbered findings with screen, checklist item, severity, fix and status; screenshots of every new or changed route in both themes were read). Fixed in this task: a long key ran into the English column of the Texts tab (ellipsis and `title`); the inactivity dialog gave the focus to "Sign out now" (now "Stay signed in", through `data-autofocus` in `Dialog`); the reason that Import is off and the first problem of the import dialog were below the fold of its scroll region (the reason is outside it, the first problem is scrolled into view); the "Used by" line of the list for a user wrapped (one line, ellipsis). Fixed in T5.20: the "Edited only" chip height and the Save width. Left as later, both low: the "Published" badge baseline next to the version chip (earlier phase) and the wrapping of the Settings error at 240 px. No finding needed its own task, so no T5.21a is added. e2e assertions added for the key, the focus and the reason.
