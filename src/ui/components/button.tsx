@@ -12,11 +12,13 @@ export interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement
   busy?: boolean;
   /** Full width of its container, label at the start (the step list). */
   block?: boolean;
+  /** A button that holds only an icon: as wide as it is high (40 or 36 px), so it lines up with the controls next to it. */
+  icon?: boolean;
   children: ReactNode;
 }
 
-export function Button({ variant = 'secondary', compact = false, busy = false, block = false, children, onClick, type = 'button', ...rest }: ButtonProps) {
-  const classes = [styles.button, styles[variant], compact ? styles.compact : '', block ? styles.block : ''].filter(Boolean).join(' ');
+export function Button({ variant = 'secondary', compact = false, busy = false, block = false, icon = false, children, onClick, type = 'button', ...rest }: ButtonProps) {
+  const classes = [styles.button, styles[variant], compact ? styles.compact : '', block ? styles.block : '', icon ? styles.icon : ''].filter(Boolean).join(' ');
   return (
     <button
       {...rest}

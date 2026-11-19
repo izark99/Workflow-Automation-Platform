@@ -79,14 +79,14 @@ function ParameterInput({ p, value, error, disabled, width, onChange }: { p: Flo
             <div className={styles.inline}>
               <DatePicker label={p.label} value={value} disabled={disabled} width={width - (p.required ? 0 : 96)} onChange={onChange} />
               {p.required ? null : (
-                <Button compact disabled={disabled} aria-label={t('run.params.clearLabel', { label: p.label })} onClick={() => onChange(undefined)}>
+                <Button disabled={disabled} aria-label={t('run.params.clearLabel', { label: p.label })} onClick={() => onChange(undefined)}>
                   {t('run.params.clear')}
                 </Button>
               )}
             </div>
           ) : (
             <div>
-              <Button compact disabled={disabled} aria-label={t('run.params.chooseDateLabel', { label: p.label })} onClick={() => onChange(todayIso())}>
+              <Button disabled={disabled} aria-label={t('run.params.chooseDateLabel', { label: p.label })} onClick={() => onChange(todayIso())}>
                 {t('run.params.chooseDate')}
               </Button>
             </div>
@@ -103,7 +103,7 @@ function ParameterInput({ p, value, error, disabled, width, onChange }: { p: Flo
             options={[{ value: '', label: t('run.params.chooseOption') }, ...(p.options ?? []).map((o) => ({ value: o, label: o }))]}
             value={typeof value === 'string' ? value : ''}
             disabled={disabled}
-            width={width}
+            width="100%"
             userContent
             onChange={(v) => onChange(v === '' ? undefined : v)}
           />

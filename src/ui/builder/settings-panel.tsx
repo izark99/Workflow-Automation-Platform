@@ -123,7 +123,7 @@ function SetupTab({ definition, step, onChange, readOnly, error, setError }: { d
             options={options}
             value={currentSource(definition, step.id, h)}
             disabled={readOnly}
-            width={338}
+            width="100%"
             onChange={(value) => {
               const r = setInput(definition, step.id, h, value);
               if (r.ok) {

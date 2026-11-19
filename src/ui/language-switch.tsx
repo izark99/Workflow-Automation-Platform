@@ -5,7 +5,7 @@ import type { Locale } from './i18n';
 const LANGUAGES = ['en', 'vi'] as const;
 
 /** Language switch for the sidebar footer and the sign-in screen. The choice is kept in the browser (SPEC 11.3). */
-export function LanguageSwitch({ width = 184 }: { width?: number }) {
+export function LanguageSwitch({ width = 184 }: { width?: number | '100%' }) {
   const t = useT();
   const current: Locale = getLocale();
   return (

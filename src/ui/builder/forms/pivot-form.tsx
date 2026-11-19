@@ -33,11 +33,11 @@ export function PivotForm(props: FormProps) {
     <div className={styles.rowCard} style={{ gap: 16, borderBottom: 0, padding: 0 }}>
       <LoadColumnsBar source={source} />
       <ColumnList label={t('builder.reshape.rowKeys')} values={v.rowKeys} columns={names} disabled={readOnly} onChange={(rowKeys) => apply({ ...v, rowKeys })} />
-      <ColumnSelect label={t('builder.reshape.columnSource')} hint={t('builder.reshape.pivotHint')} value={v.columnSource} columns={names} disabled={readOnly} width={338} onChange={(columnSource) => apply({ ...v, columnSource })} />
-      <ColumnSelect label={t('builder.reshape.value')} value={v.value} columns={names} disabled={readOnly} width={338} onChange={(value) => apply({ ...v, value })} />
+      <ColumnSelect label={t('builder.reshape.columnSource')} hint={t('builder.reshape.pivotHint')} value={v.columnSource} columns={names} disabled={readOnly} width="100%" onChange={(columnSource) => apply({ ...v, columnSource })} />
+      <ColumnSelect label={t('builder.reshape.value')} value={v.value} columns={names} disabled={readOnly} width="100%" onChange={(value) => apply({ ...v, value })} />
       <div>
         <span className={styles.label}>{t('builder.reshape.aggregation')}</span>
-        <Dropdown label={t('builder.reshape.aggregation')} options={PIVOT_FNS.map((f) => ({ value: f, label: t(`builder.reshape.fnLabels.${f}` as MessageKey) }))} value={v.aggregation} disabled={readOnly} width={338} onChange={(aggregation) => apply({ ...v, aggregation: aggregation as PivotFn })} />
+        <Dropdown label={t('builder.reshape.aggregation')} options={PIVOT_FNS.map((f) => ({ value: f, label: t(`builder.reshape.fnLabels.${f}` as MessageKey) }))} value={v.aggregation} disabled={readOnly} width="100%" onChange={(aggregation) => apply({ ...v, aggregation: aggregation as PivotFn })} />
       </div>
       <div>
         <span className={styles.label}>{t('builder.reshape.newColumnsFrom')}</span>
@@ -46,7 +46,7 @@ export function PivotForm(props: FormProps) {
           options={[{ value: 'data', label: t('builder.reshape.fromData') }, { value: 'reference', label: t('builder.reshape.fromReference') }]}
           value={v.from}
           disabled={readOnly}
-          width={338}
+          width="100%"
           onChange={(from) => apply({ ...v, from: from as PivotValues['from'] })}
         />
       </div>
@@ -54,9 +54,9 @@ export function PivotForm(props: FormProps) {
         <>
           <div>
             <span className={styles.label}>{t('builder.reshape.refTable')}</span>
-            <Dropdown label={t('builder.reshape.refTable')} options={[{ value: '', label: t('builder.reshape.chooseTable') }, ...tableOptions]} value={v.table} disabled={readOnly} width={338} onChange={(table) => apply({ ...v, table, column: '' })} />
+            <Dropdown label={t('builder.reshape.refTable')} options={[{ value: '', label: t('builder.reshape.chooseTable') }, ...tableOptions]} value={v.table} disabled={readOnly} width="100%" onChange={(table) => apply({ ...v, table, column: '' })} />
           </div>
-          <ColumnSelect label={t('builder.reshape.refColumn')} value={v.column} columns={refNames} disabled={readOnly} width={338} onChange={(column) => apply({ ...v, column })} />
+          <ColumnSelect label={t('builder.reshape.refColumn')} value={v.column} columns={refNames} disabled={readOnly} width="100%" onChange={(column) => apply({ ...v, column })} />
         </>
       ) : null}
       <Field label={t('builder.reshape.fill')} hint={t('builder.reshape.fillHint')} value={v.fill} disabled={readOnly} error={fill.ok ? undefined : fill.message} onChange={(e) => apply({ ...v, fill: e.target.value })} />
@@ -64,7 +64,7 @@ export function PivotForm(props: FormProps) {
       <Field label={t('builder.reshape.suffix')} value={v.nameSuffix} disabled={readOnly} onChange={(e) => apply({ ...v, nameSuffix: e.target.value })} />
       <div>
         <SectionLabel label={t('builder.reshape.nameCase')} hint={t('builder.reshape.nameCaseHint')} />
-        <Dropdown label={t('builder.reshape.nameCase')} options={NAME_CASES.map((c) => ({ value: c, label: t(`builder.reshape.cases.${c}` as MessageKey) }))} value={v.nameCase} disabled={readOnly} width={338} onChange={(nameCase) => apply({ ...v, nameCase: nameCase as NameCase })} />
+        <Dropdown label={t('builder.reshape.nameCase')} options={NAME_CASES.map((c) => ({ value: c, label: t(`builder.reshape.cases.${c}` as MessageKey) }))} value={v.nameCase} disabled={readOnly} width="100%" onChange={(nameCase) => apply({ ...v, nameCase: nameCase as NameCase })} />
       </div>
       <p className={styles.note} role="status">
         {missing.length === 0 ? t('builder.reshape.completePivot') : t('common.numbered', { label: t('builder.reshape.stillMissing'), n: missing.join(' ') })}

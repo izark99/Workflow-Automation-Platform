@@ -39,12 +39,12 @@ export function LookupForm(props: FormProps) {
           options={[{ value: 'node', label: t('builder.join.sourceNode') }, ...tableOptions]}
           value={sourceValue}
           disabled={readOnly}
-          width={338}
+          width="100%"
           onChange={(value) => apply({ ...v, source: value === 'node' ? { kind: 'node' } : { kind: 'reference', table: value.slice(4) } })}
         />
       </div>
 
-      <div className={styles.toolbar}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>
         <LoadColumnsBar source={left} label={t('builder.join.loadLeft')} />
         {v.source.kind === 'node' ? <LoadColumnsBar source={right} label={t('builder.join.loadRight')} /> : null}
       </div>
@@ -56,7 +56,7 @@ export function LookupForm(props: FormProps) {
             <div className={styles.line}>
               <ColumnSelect label={t('builder.join.keyLeft')} value={k.left} columns={leftNames} disabled={readOnly} width={132} onChange={(x) => apply({ ...v, keys: v.keys.map((y, j) => (j === i ? { ...y, left: x } : y)) })} />
               <ColumnSelect label={t('builder.join.keyRight')} value={k.right} columns={rightNames} disabled={readOnly} width={132} onChange={(x) => apply({ ...v, keys: v.keys.map((y, j) => (j === i ? { ...y, right: x } : y)) })} />
-              <Button compact disabled={readOnly} aria-label={t('builder.join.removeKey', { n: i + 1 })} onClick={() => apply({ ...v, keys: v.keys.filter((_, j) => j !== i) })}>
+              <Button icon disabled={readOnly} aria-label={t('builder.join.removeKey', { n: i + 1 })} onClick={() => apply({ ...v, keys: v.keys.filter((_, j) => j !== i) })}>
                 <Icon name="close" />
               </Button>
             </div>
@@ -78,7 +78,7 @@ export function LookupForm(props: FormProps) {
               <div className={styles.grow}>
                 <Field label={t('builder.join.bringAs')} value={b.as} placeholder={b.column} disabled={readOnly} onChange={(e) => apply({ ...v, bring: v.bring.map((y, j) => (j === i ? { ...y, as: e.target.value } : y)) })} />
               </div>
-              <Button compact disabled={readOnly} aria-label={t('builder.join.removeBring', { n: i + 1 })} onClick={() => apply({ ...v, bring: v.bring.filter((_, j) => j !== i) })}>
+              <Button icon disabled={readOnly} aria-label={t('builder.join.removeBring', { n: i + 1 })} onClick={() => apply({ ...v, bring: v.bring.filter((_, j) => j !== i) })}>
                 <Icon name="close" />
               </Button>
             </div>
@@ -98,7 +98,7 @@ export function LookupForm(props: FormProps) {
           options={NO_MATCH.map((n) => ({ value: n, label: t(`builder.join.noMatchOptions.${n}` as MessageKey) }))}
           value={v.onNoMatch}
           disabled={readOnly}
-          width={338}
+          width="100%"
           onChange={(n) => apply({ ...v, onNoMatch: n as NoMatch })}
         />
       </div>

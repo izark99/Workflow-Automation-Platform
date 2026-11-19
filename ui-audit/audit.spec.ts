@@ -65,6 +65,47 @@ async function measure(page: import('@playwright/test').Page): Promise<Finding[]
       const s = getComputedStyle(el);
       if (s.textOverflow === 'ellipsis' && el.scrollWidth > el.clientWidth && !el.getAttribute('title') && !el.getAttribute('aria-label')) out.push({ item: 3, what: `truncated text without a title: ${name(el)} "${(el.textContent ?? '').slice(0, 30)}"` });
     }
+    // 3 Alignment: controls that sit together look like one set. In a row they have one height; in a column they have one
+    // width and one left edge. The units are the children of one parent that each hold a control (a button, a link that
+    // looks like one, a dropdown trigger or a text field); table cells, tab lists and the canvas are left out.
+    // The 24 px info button is not part of a set of controls, and the input inside a search field is drawn by its label.
+    const isControl = (el: Element): boolean =>
+      el.matches('button:not([role="tab"]):not([role="checkbox"]):not([role="option"]):not([role="switch"]):not([data-infotip]), a[class*="button"], label[class*="search"], input:not([type="hidden"]):not([type="checkbox"]):not([type="file"]):not([class*="searchInput"]), textarea, select');
+    const controlOf = (unit: Element): Element | null => {
+      if (isControl(unit)) return unit;
+      const inside = Array.from(unit.querySelectorAll('button, a[class*="button"], label[class*="search"], input, textarea, select')).filter(isControl).filter(visible);
+      return inside.length === 1 ? inside[0]! : null;
+    };
+    const skipParent = (p: Element): boolean => !!p.closest('table, [role="tablist"], .react-flow, [role="toolbar"], [role="listbox"], [role="group"][aria-label*="Insert"]') || p.matches('tr');
+    const seenParents = new Set<Element>();
+    for (const unitEl of Array.from(document.querySelectorAll('button, a[class*="button"], label[class*="search"], input, textarea, select')).filter(isControl).filter(visible)) {
+      let unit: Element = unitEl;
+      // climb while the parent holds only this control (a wrapper of a dropdown, a field)
+      while (unit.parentElement && unit.parentElement !== document.body && controlOfSingle(unit.parentElement, unitEl)) unit = unit.parentElement;
+      const parent = unit.parentElement;
+      if (!parent || seenParents.has(parent) || skipParent(parent)) continue;
+      seenParents.add(parent);
+      const units = Array.from(parent.children).filter(visible).map((u) => ({ u, c: controlOf(u) })).filter((x): x is { u: Element; c: Element } => !!x.c);
+      if (units.length < 2) continue;
+      const rects = units.map((x) => x.c.getBoundingClientRect());
+      const sameRow = rects.every((r) => Math.abs(r.top + r.height / 2 - (rects[0]!.top + rects[0]!.height / 2)) < 8);
+      const sameColumn = rects.every((r, i) => i === 0 || (r.top >= rects[i - 1]!.bottom - 2 && r.left < rects[0]!.right && r.right > rects[0]!.left));
+      const names = units.map((x) => `${(x.c.getAttribute('aria-label') ?? x.c.textContent ?? '').trim().slice(0, 18)}`).join(' | ');
+      const where = `${name(parent)} [${names}]`;
+      if (sameRow) {
+        const hs = new Set(rects.map((r) => Math.round(r.height)));
+        if (hs.size > 1) out.push({ item: 3, what: `controls in a row have different heights (${[...hs].join(', ')} px): ${where}` });
+      } else if (sameColumn) {
+        const ws = new Set(rects.map((r) => Math.round(r.width)));
+        const ls = new Set(rects.map((r) => Math.round(r.left)));
+        if (ws.size > 1) out.push({ item: 3, what: `controls in a column have different widths (${[...ws].join(', ')} px): ${where}` });
+        else if (ls.size > 1) out.push({ item: 3, what: `controls in a column do not share a left edge: ${where}` });
+      }
+    }
+    function controlOfSingle(parent: Element, control: Element): boolean {
+      const all = Array.from(parent.querySelectorAll('button, a[class*="button"], label[class*="search"], input, textarea, select')).filter(isControl).filter(visible);
+      return all.length === 1 && all[0] === control;
+    }
     // 10 Motion: transitions at most 200 ms.
     const slow = new Map<string, number>();
     for (const el of Array.from(document.querySelectorAll('body *'))) {

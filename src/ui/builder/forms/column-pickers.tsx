@@ -18,7 +18,7 @@ export function SectionLabel({ label, hint, flush = false }: { label: string; hi
  * One column name. With the columns loaded it is a dropdown of them (a name that is not among them stays selectable, so
  * a saved flow shows what it holds); without them it is a text field, so the form works before any file is chosen.
  */
-export function ColumnSelect({ label, hint, value, onChange, columns, disabled, width = 150 }: { label: string; hint?: string; value: string; onChange: (v: string) => void; columns: string[] | null; disabled: boolean; width?: number }) {
+export function ColumnSelect({ label, hint, value, onChange, columns, disabled, width = 150 }: { label: string; hint?: string; value: string; onChange: (v: string) => void; columns: string[] | null; disabled: boolean; width?: number | '100%' }) {
   const t = useT();
   if (columns === null) {
     return <Field label={label} hint={hint} value={value} disabled={disabled} onChange={(e) => onChange(e.target.value)} />;
@@ -49,7 +49,7 @@ export function ColumnList({ label, hint, values, onChange, columns, disabled }:
         {values.map((v) => (
           <span key={v} className={styles.chip}>
             <span data-user-content>{v}</span>
-            <Button compact disabled={disabled} aria-label={t('builder.picker.remove', { name: v, label })} onClick={() => onChange(values.filter((x) => x !== v))}>
+            <Button compact icon disabled={disabled} aria-label={t('builder.picker.remove', { name: v, label })} onClick={() => onChange(values.filter((x) => x !== v))}>
               <Icon name="close" />
             </Button>
           </span>
@@ -61,7 +61,7 @@ export function ColumnList({ label, hint, values, onChange, columns, disabled }:
           options={[{ value: '', label: t('builder.picker.addColumn') }, ...columns.filter((c) => !values.includes(c)).map((c) => ({ value: c, label: c }))]}
           value=""
           disabled={disabled}
-          width={338}
+          width="100%"
           onChange={(v) => v && add(v)}
         />
       ) : (
@@ -75,7 +75,7 @@ export function ColumnList({ label, hint, values, onChange, columns, disabled }:
           <div className={styles.grow}>
             <Field label={t('builder.picker.columnName')} value={text} disabled={disabled} onChange={(e) => setText(e.target.value)} />
           </div>
-          <Button compact type="submit" disabled={disabled || text.trim() === ''}>
+          <Button type="submit" disabled={disabled || text.trim() === ''}>
             {t('builder.picker.add')}
           </Button>
         </form>
@@ -88,9 +88,9 @@ export function ColumnList({ label, hint, values, onChange, columns, disabled }:
 export function LoadColumnsBar({ source, label }: { source: SourceColumns; label?: string }) {
   const t = useT();
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>
       <div className={styles.toolbar}>
-        <Button compact busy={source.loading} onClick={() => void source.load()}>
+        <Button block busy={source.loading} onClick={() => void source.load()}>
           {source.columns ? t('builder.picker.reload') : label ?? t('builder.picker.load')}
         </Button>
       </div>

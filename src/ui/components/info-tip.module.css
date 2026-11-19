@@ -27,10 +27,9 @@
 }
 
 .popover {
-  position: absolute;
-  left: 0;
-  top: 28px;
-  z-index: 5;
+  /* Drawn in a layer on document.body: `useFloating` sets position, top and left (see floating.ts). */
+  position: fixed;
+  z-index: 30; /* above a dialog (20) */
   box-sizing: border-box;
   width: max-content;
   max-width: 320px;
@@ -54,21 +53,6 @@
   right: 0;
   top: -5px;
   height: 5px;
-}
-
-.up {
-  top: auto;
-  bottom: 28px;
-}
-
-.up::before {
-  top: auto;
-  bottom: -5px;
-}
-
-.end {
-  left: auto;
-  right: 0;
 }
 
 .hidden {

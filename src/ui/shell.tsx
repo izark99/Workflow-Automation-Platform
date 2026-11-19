@@ -97,7 +97,7 @@ function CreateFlowDialog({ admin, onClose }: { admin: boolean; onClose: () => v
             ]}
             value={scope}
             onChange={(v) => setScope(v as 'personal' | 'shared')}
-            width={200}
+            width="100%"
           />
         ) : null}
         {error ? <ErrorState what={error.what} next={error.next} /> : null}
@@ -144,16 +144,16 @@ export function Shell() {
             <span className={styles.userName} data-user-content>{me.name}</span>
             <span className={styles.userRole}>{t(me.role === 'admin' ? 'nav.role.admin' : 'nav.role.user')}</span>
             <div className={styles.prefs}>
-              <LanguageSwitch />
-              <ThemeSwitch />
+              <LanguageSwitch width="100%" />
+              <ThemeSwitch width="100%" />
             </div>
             {auth ? (
               <div className={styles.signOut}>
-                <Button compact onClick={() => setChangingPassword(true)}>
+                <Button block onClick={() => setChangingPassword(true)}>
                   {t('nav.changePassword')}
                 </Button>
                 <Button
-                  compact
+                  block
                   onClick={() => {
                     setSignOutProblem(false);
                     auth.signOut().catch(() => setSignOutProblem(true));
