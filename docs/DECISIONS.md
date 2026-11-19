@@ -905,3 +905,9 @@ blank or mixed column in one month cannot change the types of another month.
 - Three new ui-rules routes show the parameter UI (Run card, builder panel, Test tab). They found three existing literal texts, now in the catalog: the chips "Match" and "No match" of the Test tab, the React Flow edge labels ("Connection from X to Y"), and in the new code a few user texts that must be marked `data-user-content` (parameter labels, options). `Field`, `TextAreaField` and `Dropdown` got a prop for that (`userLabel`, `userContent`).
 - Buttons whose visible text is shorter than their accessible name must start with the visible text (axe `label-content-name-mismatch`): "Move up, parameter 2".
 
+## D82 The stamping trigger function is not callable (migration 13)
+
+- After the live upgrade the Supabase security advisor named `public.stamp_ui_text()`: migration 10 created it as a security definer trigger function and left the default EXECUTE grant, so `anon` and `authenticated` could name it in `/rest/v1/rpc`. PostgREST cannot run a trigger function, so nothing was exposed, but it is not meant to be callable. Migration 13 revokes EXECUTE from `public`, `anon` and `authenticated`, as migration 11 already did for `guard_account_columns()`. A trigger needs no EXECUTE for the role that writes the row; the existing tests (the row says who changed it, a forged `updated_by` is replaced) prove the stamping still runs, and two new checks prove the function is closed.
+- Migration 13 was applied to the live project with the Supabase tools and its history row carries the repo version `20261118000013`, like migrations 10 to 12.
+- The other advisor warnings stay: `keep_alive()` is meant for `anon` (the keep-alive workflow), `is_admin()`, `can_view_flow()` and the like are the policy helpers of earlier phases, and "leaked password protection" is a dashboard setting of the Supabase plan, not code.
+

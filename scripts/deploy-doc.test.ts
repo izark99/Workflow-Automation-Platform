@@ -53,7 +53,7 @@ describe('docs/DEPLOY.md', () => {
     for (const o of order) expect(at(o), o).toBeGreaterThan(-1);
     expect(order.map(at)).toEqual([...order.map(at)].sort((a, b) => a - b));
     // Every migration that Phase 4 added is named, and each one exists.
-    for (const m of ['20261118000010_ui_texts.sql', '20261118000011_account_lock.sql', '20261118000012_end_sessions.sql']) {
+    for (const m of ['20261118000010_ui_texts.sql', '20261118000011_account_lock.sql', '20261118000012_end_sessions.sql', '20261118000013_ui_text_stamp_revoke.sql']) {
       expect(section, m).toContain(m);
       expect(existsSync(`supabase/migrations/${m}`), m).toBe(true);
     }

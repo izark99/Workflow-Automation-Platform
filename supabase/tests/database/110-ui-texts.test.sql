@@ -53,5 +53,9 @@ select throws_ok($$insert into public.ui_texts (locale, key, value) values ('en'
 select throws_ok($$insert into public.ui_texts (locale, key, value) values ('en', 'nav.flows', '')$$, '23514', null, 'a text cannot be empty');
 reset role;
 
+-- the stamping function is for the trigger only (migration 13); the tests above prove the trigger still works without it
+select ok(not has_function_privilege('anon', 'public.stamp_ui_text()', 'execute'), 'a visitor cannot call the stamping function');
+select ok(not has_function_privilege('authenticated', 'public.stamp_ui_text()', 'execute'), 'a signed-in user cannot call it either');
+
 select * from finish();
 rollback;
