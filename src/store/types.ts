@@ -163,8 +163,6 @@ export interface DataStore {
   clearMustChangePassword(): Promise<void>;
   /** The edited UI texts (SPEC 11.3). Everyone reads them, also before signing in; only an admin changes them. */
   listUiTexts(): Promise<UiText[]>;
-  saveUiText(input: { locale: UiTextLocale; key: string; value: string }): Promise<UiText>;
-  resetUiText(locale: UiTextLocale, key: string): Promise<void>;
   /** Saves and resets texts of both languages in one action: every change is stored, or none (SPEC 12.3). */
   saveUiTexts(input: UiTextChanges): Promise<void>;
 

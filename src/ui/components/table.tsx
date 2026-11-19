@@ -9,6 +9,8 @@ export interface Column<T> {
   render: (row: T) => ReactNode;
   /** The header and the cells hold user data (column names, file content): the pseudo-locale rule does not expect catalog text. */
   userContent?: boolean;
+  /** A fixed width in px. When any column has one, the table uses a fixed layout and the other columns share the rest. */
+  width?: number;
 }
 
 export interface TableProps<T> {
@@ -23,11 +25,11 @@ export function Table<T>({ label, columns, rows, rowKey }: TableProps<T>) {
   const cls = (base: string, align?: string) => (align === 'right' ? `${base} ${styles.right}` : base);
   return (
     <div className={styles.wrap}>
-      <table className={styles.table} aria-label={label}>
+      <table className={styles.table} aria-label={label} style={columns.some((c) => c.width !== undefined) ? { tableLayout: 'fixed' } : undefined}>
         <thead>
           <tr>
             {columns.map((c) => (
-              <th key={c.key} scope="col" className={cls(styles.th ?? '', c.align)} data-user-content={c.userContent ? '' : undefined}>
+              <th key={c.key} scope="col" style={c.width !== undefined ? { width: c.width } : undefined} className={cls(styles.th ?? '', c.align)} data-user-content={c.userContent ? '' : undefined}>
                 {c.header}
               </th>
             ))}
