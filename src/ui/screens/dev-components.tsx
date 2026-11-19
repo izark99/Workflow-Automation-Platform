@@ -1,8 +1,20 @@
 import { useState } from 'react';
 import { Badge, Button, Card, Checkbox, DatePicker, Dialog, Dropdown, EmptyState, ErrorState, Field, InfoTip, PageHeader, ProgressBar, SearchField, SkeletonTable, Tabs, ToastProvider, useToast } from '../components';
 import { useT } from '../i18n';
+import { PanelToggle } from '../panels/panel-toggle';
+import panelStyles from '../panels/panel.module.css';
 import styles from './dev-components.module.css';
 
+
+function RailDemo({ id, initiallyCollapsed, label }: { id: string; initiallyCollapsed: boolean; label: string }) {
+  const [collapsed, setCollapsed] = useState(initiallyCollapsed);
+  return (
+    <div className={`${panelStyles.panel} ${panelStyles.rail} ${panelStyles.left}`} id={id} data-demo-rail={id} style={{ width: collapsed ? 48 : 184, minHeight: 120 }}>
+      <PanelToggle panel="steps" collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} controls={id} />
+      {collapsed ? null : <span className={styles.note}>{label}</span>}
+    </div>
+  );
+}
 
 function Content() {
   const t = useT();
@@ -99,6 +111,12 @@ function Content() {
         </Card>
         <Card title={t('dev.empty')}>
           <EmptyState title={t('dev.demo.noFlowsYet')} text={t('dev.demo.createYourFirstFlow')} action={<Button variant="primary">{t('dev.demo.createFlow')}</Button>} />
+        </Card>
+        <Card title={t('dev.panels')}>
+          <div className={styles.row} style={{ alignItems: 'flex-start', gap: 24 }}>
+            <RailDemo id="demo-rail-open" initiallyCollapsed={false} label={t('dev.demo.panelOpen')} />
+            <RailDemo id="demo-rail-collapsed" initiallyCollapsed label={t('dev.demo.panelCollapsed')} />
+          </div>
         </Card>
         <Card title={t('dev.progress')}>
           <ProgressBar value={7} max={12} label={t('dev.demo.runProgress')} />

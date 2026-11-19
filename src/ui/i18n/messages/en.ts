@@ -612,6 +612,16 @@ export const en = {
   'errors.loadFailedNext': 'Reload the page. If it happens again, allow site data for this page in the browser settings.',
 
   // dev
+  'panels.collapse': 'Collapse {panel}',
+  'panels.expand': 'Expand {panel}',
+  'panels.name.sidebar': 'sidebar',
+  'panels.name.steps': 'step list',
+  'panels.name.settings': 'settings panel',
+  'panels.name.refList': 'table list',
+  'dev.panels': 'Collapsible panels',
+  'dev.demo.panelOpen': 'Open',
+  'dev.demo.panelCollapsed': 'Collapsed',
+
   'dev.crumb': 'Design reference',
   'dev.title': 'Components and states',
   'dev.subtitle': 'Every control is built for this app. No browser-default dropdown, date picker, or checkbox is used.',
