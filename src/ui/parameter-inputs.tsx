@@ -57,7 +57,8 @@ export function PendingParametersNote({ parameters, errors, action }: { paramete
 
 function ParameterInput({ p, value, error, disabled, width, onChange }: { p: FlowParameter; value: ParameterValue | undefined; error: string | undefined; disabled: boolean; width: number; onChange: (v: ParameterValue | undefined) => void }) {
   const t = useT();
-  const label = p.required ? p.label : t('run.params.optional', { label: p.label });
+  // A switch is never required, so it carries no "(optional)" suffix.
+  const label = p.required || p.type === 'boolean' ? p.label : t('run.params.optional', { label: p.label });
   const errorLine = error ? <p className={styles.error} role="alert">{error}</p> : null;
   const heading = (
     <span className={styles.labelRow}>

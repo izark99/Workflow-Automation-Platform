@@ -70,3 +70,10 @@ test('a flow without parameters has no Parameters card and keeps its three steps
   const headings = await page.getByRole('heading', { level: 2 }).allTextContents();
   expect(headings.slice(0, 2)).toEqual(['1. Choose the effective date', '2. Add the input files']);
 });
+
+test('a switch has no "(optional)" suffix, an optional text field has', async ({ page }) => {
+  await seed(page);
+  await expect(page.getByRole('checkbox', { name: 'Strict mode' })).toBeVisible();
+  await expect(page.getByText('Strict mode (optional)')).toHaveCount(0);
+  await expect(page.getByText('Note (optional)')).toBeVisible();
+});
