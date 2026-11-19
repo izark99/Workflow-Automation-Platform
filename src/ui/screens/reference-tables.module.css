@@ -175,3 +175,32 @@
   align-items: center;
   gap: 12px;
 }
+
+.colsBody {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  color: var(--color-ink);
+}
+
+.colsList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.colsRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.colsName {
+  flex: 1;
+  min-width: 0;
+}

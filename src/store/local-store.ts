@@ -457,6 +457,15 @@ export class LocalStore implements DataStore {
     return structuredClone(t);
   }
 
+  async updateRefTable(tableId: string, patch: { description: string }): Promise<RefTableRecord> {
+    const s = await this.open();
+    this.mustBeAdmin(s, 'change reference tables');
+    const t = this.tableFor(s, tableId);
+    t.description = patch.description;
+    await this.commit(s);
+    return structuredClone(t);
+  }
+
   async importRefTable(input: RefImportInput): Promise<RefImportResult> {
     this.mustBeAdmin(await this.open(), 'import reference tables');
     return importRefTableVia(this, input);

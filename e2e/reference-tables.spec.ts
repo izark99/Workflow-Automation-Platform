@@ -274,3 +274,129 @@ test.describe('table list rail', () => {
     await expect(page.getByRole('dialog', { name: 'Discard unsaved changes?' })).toBeVisible();
   });
 });
+
+test.describe('adjust a draft', () => {
+  const small = (s: ReturnType<typeof seedSnapshot>) => {
+    s.refTables.push({
+      id: 'ref-small',
+      name: 'Small draft',
+      description: 'Before',
+      versions: [{ versionNo: 1, validFrom: '2026-01-01', validTo: null, status: 'draft', columns: [{ name: 'code', type: 'text' }, { name: 'limit', type: 'number' }], rows: [['A', 1], ['B', 2]] }],
+    });
+  };
+  const SMALL = `${URL}?table=ref-small&v=1`;
+  const dialogOf = (page: Page) => page.getByRole('dialog', { name: 'Columns of the draft' });
+
+  test('edit a cell, add a row and remove a row, then save', async ({ page }) => {
+    await seed(page, small);
+    await page.goto(SMALL);
+    await page.getByRole('textbox', { name: 'Row 1, code' }).fill('A2');
+    await page.getByRole('button', { name: 'Add row' }).click();
+    await page.getByRole('textbox', { name: 'Row 3, code' }).fill('C');
+    await page.getByRole('textbox', { name: 'Row 3, limit' }).fill('3');
+    await page.getByRole('button', { name: 'Remove row 2' }).click();
+    await page.getByRole('button', { name: 'Save changes' }).click();
+    await expect(toastWith(page, 'Changes saved.')).toBeVisible();
+    await page.reload();
+    await expect(page.getByRole('textbox', { name: 'Row 1, code' })).toHaveValue('A2');
+    await expect(page.getByRole('textbox', { name: 'Row 2, code' })).toHaveValue('C');
+    await expect(gridRows(page, 'Small draft')).toHaveCount(2);
+  });
+
+  test('add, rename, change the type of and remove columns; the grid follows, and Save keeps them', async ({ page }) => {
+    await seed(page, small);
+    await page.goto(SMALL);
+    await page.getByRole('button', { name: 'Columns', exact: true }).click();
+    const d = dialogOf(page);
+    expect(Math.round((await d.boundingBox())!.width)).toBe(640);
+    await d.getByRole('textbox', { name: 'Name of column 1' }).fill('Code of day');
+    await d.getByRole('button', { name: /^Type of column 2/ }).click();
+    await page.getByRole('option', { name: 'Text' }).click();
+    await d.getByRole('button', { name: 'Add column' }).click();
+    await d.getByRole('textbox', { name: 'Name of column 3' }).fill('When');
+    await d.getByRole('button', { name: /^Type of column 3/ }).click();
+    await page.getByRole('option', { name: 'Date' }).click();
+    await d.getByRole('button', { name: 'Apply' }).click();
+    await expect(grid(page, 'Small draft').getByRole('columnheader')).toHaveText(['Code of day', 'limit', 'When', '']);
+    await expect(page.getByRole('textbox', { name: 'Row 1, Code of day' })).toHaveValue('A');
+    await expect(page.getByRole('textbox', { name: 'Row 1, When' })).toHaveValue('');
+    await expect(page.getByRole('status').filter({ hasText: 'Unsaved changes' })).toBeVisible();
+    await page.getByRole('textbox', { name: 'Row 1, When' }).fill('2026-09-30');
+    // Remove the second column.
+    await page.getByRole('button', { name: 'Columns', exact: true }).click();
+    await dialogOf(page).getByRole('button', { name: 'Remove column 2' }).click();
+    await dialogOf(page).getByRole('button', { name: 'Apply' }).click();
+    await expect(grid(page, 'Small draft').getByRole('columnheader')).toHaveText(['Code of day', 'When', '']);
+    await page.getByRole('button', { name: 'Save changes' }).click();
+    await expect(toastWith(page, 'Changes saved.')).toBeVisible();
+    await page.reload();
+    await expect(grid(page, 'Small draft').getByRole('columnheader')).toHaveText(['Code of day', 'When', '']);
+    await expect(page.getByRole('textbox', { name: 'Row 1, When' })).toHaveValue('2026-09-30');
+    await expect(page.getByRole('textbox', { name: 'Row 2, Code of day' })).toHaveValue('B');
+  });
+
+  test('a repeated or empty column name and a table with no columns keep Apply off and say what to do', async ({ page }) => {
+    await seed(page, small);
+    await page.goto(SMALL);
+    await page.getByRole('button', { name: 'Columns', exact: true }).click();
+    const d = dialogOf(page);
+    await d.getByRole('textbox', { name: 'Name of column 2' }).fill('CODE');
+    await expect(d.getByRole('alert')).toContainText('The name "CODE" is used by columns 1 and 2');
+    await expect(d.getByRole('button', { name: 'Apply' })).toBeDisabled();
+    await d.getByRole('textbox', { name: 'Name of column 2' }).fill('');
+    await expect(d.getByRole('alert')).toContainText('Column 2 has no name.');
+    await d.getByRole('button', { name: 'Remove column 2' }).click();
+    await d.getByRole('button', { name: 'Remove column 1' }).click();
+    await expect(d.getByRole('alert')).toContainText('at least one column');
+    await expect(d.getByRole('button', { name: 'Apply' })).toBeDisabled();
+  });
+
+  test('a changed type checks the cells when the draft is saved, and nothing is saved on an error', async ({ page }) => {
+    await seed(page, small);
+    await page.goto(SMALL);
+    await page.getByRole('button', { name: 'Columns', exact: true }).click();
+    await dialogOf(page).getByRole('button', { name: /^Type of column 1/ }).click();
+    await page.getByRole('option', { name: 'Number' }).click();
+    await dialogOf(page).getByRole('button', { name: 'Apply' }).click();
+    await page.getByRole('button', { name: 'Save changes' }).click();
+    await expect(page.getByText(/cells are not valid|cell is not valid/)).toBeVisible();
+    await page.reload();
+    await expect(grid(page, 'Small draft').getByRole('columnheader').first()).toHaveText('code');
+  });
+
+  test('the admin changes the description of a table; the name stays; also on a published table', async ({ page }) => {
+    await page.goto(URL);
+    await page.getByRole('button', { name: 'Edit description' }).click();
+    const d = page.getByRole('dialog', { name: 'Description of the table' });
+    await d.getByRole('textbox', { name: 'What the table holds' }).fill('Codes of the day');
+    await d.getByRole('button', { name: 'Save description' }).click();
+    await expect(toastWith(page, 'Description saved.')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Attendance codes', level: 2 })).toBeVisible();
+    await expect(page.getByText('Codes of the day')).toBeVisible();
+    await page.reload();
+    await expect(page.getByText('Codes of the day')).toBeVisible();
+  });
+
+  test('a published version stays read-only: no Columns button, no inputs; a user has no description button', async ({ page }) => {
+    await page.goto(URL);
+    await expect(page.getByRole('button', { name: 'Columns', exact: true })).toHaveCount(0);
+    await expect(grid(page, 'Attendance codes').getByRole('textbox')).toHaveCount(0);
+    const s = { ...seedSnapshot(), currentUserId: 'user-lan' };
+    await page.addInitScript((j) => localStorage.setItem('dfw.seed', j), JSON.stringify(s));
+    await page.reload();
+    await expect(page.getByRole('button', { name: 'Edit description' })).toHaveCount(0);
+  });
+
+  test('changed columns count as unsaved changes: leaving the table asks first', async ({ page }) => {
+    await seed(page, small);
+    await page.goto(SMALL);
+    await page.getByRole('button', { name: 'Columns', exact: true }).click();
+    await dialogOf(page).getByRole('button', { name: 'Add column' }).click();
+    await dialogOf(page).getByRole('textbox', { name: 'Name of column 3' }).fill('extra');
+    await dialogOf(page).getByRole('button', { name: 'Apply' }).click();
+    await list(page).getByRole('link', { name: /Attendance codes/ }).click();
+    await expect(page.getByRole('dialog', { name: 'Discard unsaved changes?' })).toBeVisible();
+    await page.getByRole('button', { name: 'Keep editing' }).click();
+    await expect(grid(page, 'Small draft').getByRole('columnheader')).toHaveText(['code', 'limit', 'extra', '']);
+  });
+});

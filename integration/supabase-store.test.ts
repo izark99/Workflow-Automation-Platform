@@ -312,3 +312,13 @@ describe('importRefTable', () => {
     expect((await refused(stores.owner.importRefTable({ target: { kind: 'newTable', name: 'Not allowed', description: '' }, columns, rows }))).code).toBe('forbidden');
   });
 });
+
+describe('updateRefTable', () => {
+  it('the admin changes the description and the name stays; a user is refused', async () => {
+    const made = await stores.admin.createRefTable({ name: 'Described table', description: 'before', columns: [{ name: 'k', type: 'text' }] });
+    const after = await stores.admin.updateRefTable(made.id, { description: 'after' });
+    expect(after).toMatchObject({ name: 'Described table', description: 'after' });
+    expect((await refused(stores.owner.updateRefTable(made.id, { description: 'Hacked' }))).code).toBe('forbidden');
+    expect((await stores.other.listRefTables()).find((t) => t.id === made.id)?.description).toBe('after');
+  });
+});

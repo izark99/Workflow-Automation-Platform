@@ -353,3 +353,14 @@ describe('importRefTable', () => {
     expect(await code(store.importRefTable({ target: { kind: 'replaceDraft', tableId: 'ref-ot-limits', versionNo: 1 }, columns, rows }))).toBe('forbidden');
   });
 });
+
+describe('updateRefTable', () => {
+  it('the admin changes the description, the name stays, and a user is refused', async () => {
+    const t = await store.updateRefTable('ref-ot-limits', { description: 'Hours per period' });
+    expect(t).toMatchObject({ id: 'ref-ot-limits', name: 'OT limits', description: 'Hours per period' });
+    expect((await store.listRefTables()).find((x) => x.id === 'ref-ot-limits')?.description).toBe('Hours per period');
+    expect(await code(store.updateRefTable('nope', { description: 'x' }))).toBe('not_found');
+    await as('user-lan');
+    expect(await code(store.updateRefTable('ref-ot-limits', { description: 'Hacked' }))).toBe('forbidden');
+  });
+});

@@ -539,6 +539,30 @@ export const ROUTES: RuleRoute[] = [
     },
   },
   {
+    path: '/reference-tables?table=ref-big&v=1',
+    name: '/reference-tables (columns dialog with a problem)',
+    sidebar: true,
+    pseudo: false, // its steps need the English texts
+    before: seedBigDraft,
+    // One row per column: name, type, remove; Add column; the message that keeps Apply off.
+    prepare: async (page) => {
+      await page.getByRole('button', { name: 'Columns', exact: true }).click();
+      const dialog = page.getByRole('dialog', { name: 'Columns of the draft' });
+      await dialog.getByRole('textbox', { name: 'Name of column 2' }).fill('ID');
+      await dialog.getByRole('alert').waitFor();
+    },
+  },
+  {
+    path: '/reference-tables?table=ref-big&v=1',
+    name: '/reference-tables (description dialog)',
+    sidebar: true,
+    before: seedBigDraft,
+    prepare: async (page) => {
+      await page.getByRole('button', { name: 'Edit description' }).click();
+      await page.getByRole('dialog', { name: 'Description of the table' }).waitFor();
+    },
+  },
+  {
     path: '/reference-tables',
     name: '/reference-tables (new table dialog)',
     sidebar: true,

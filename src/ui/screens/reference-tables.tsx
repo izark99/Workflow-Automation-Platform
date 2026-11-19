@@ -3,23 +3,24 @@ import { useEffect, useRef, useState } from 'react';
 import type { ClipboardEvent, MouseEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import type { Column as TableColumn } from '../components';
-import { Badge, Button, Card, Chip, Dialog, EmptyState, ErrorState, Field, Icon, ScreenFrame, SkeletonTable, Table, TextAreaField, useDelayedLoading, useToast } from '../components';
-import type { Cell } from '../../engine/types';
+import { Badge, Button, Card, Chip, Dialog, Dropdown, EmptyState, ErrorState, Field, Icon, ScreenFrame, SkeletonTable, Table, TextAreaField, useDelayedLoading, useToast } from '../components';
+import type { Cell, Column, ColumnType } from '../../engine/types';
 import type { RefTableRecord, RefTableVersionRecord } from '../../store/types';
 import { NewVersionDialog, PublishDialog } from '../builder/builder-dialogs';
 import { publishSummaryFor, versionOptionLabel } from '../builder/version-logic';
 import { useT, errorText } from '../i18n';
+import type { MessageKey } from '../i18n';
 import { useLoad, useStore } from '../store-context';
 import { todayIso } from './flows-logic';
-import { looksLikeGrid, newTableFromPaste, pageRange, pasteAt, pasteIntoGrid, pastedCells, rowsToText, textToRows, tooManyRows, usedBy, versionToShow, tableSummary } from './reftable-logic';
-import type { RowErrors } from './reftable-logic';
+import { columnsProblem, planOf, reshapeGrid, looksLikeGrid, newTableFromPaste, pageRange, pasteAt, pasteIntoGrid, pastedCells, rowsToText, textToRows, tooManyRows, usedBy, versionToShow, tableSummary } from './reftable-logic';
+import type { ColumnPlan, RowErrors } from './reftable-logic';
 import { newVersionProblem, suggestStart } from './versions-logic';
 import { usePanel } from '../panels/use-panel';
 import { PanelToggle } from '../panels/panel-toggle';
 import { ImportDialog } from './ref-import-dialog';
 import styles from './reference-tables.module.css';
 
-type Dialogs = 'paste' | 'newVersion' | 'publish' | 'newTable' | 'import' | null;
+type Dialogs = 'paste' | 'newVersion' | 'publish' | 'newTable' | 'import' | 'columns' | 'description' | null;
 
 /** The shared reference tables: the list, the versions of one table, and its rows (editable while a version is a draft). */
 const pastedText = (t: ReturnType<typeof useT>, n: number): string => t('refTables.pasted', { n, nText: n.toLocaleString('en-US') });
@@ -56,6 +57,8 @@ export function ReferenceTablesScreen() {
   const loadedKey = useRef('');
   // The rows that the grid was made from: a version that was loaded again (an import replaced its rows) fills the grid again.
   const loadedRows = useRef<unknown>(null);
+  // The columns being edited (a draft only). Null means the columns of the saved version.
+  const [colsEdit, setColsEdit] = useState<Column[] | null>(null);
   useEffect(() => {
     if (!table || !version) return;
     const key = `${table.id}:${version.versionNo}`;
@@ -63,11 +66,13 @@ export function ReferenceTablesScreen() {
     loadedKey.current = key;
     loadedRows.current = version.rows;
     setGrid(rowsToText(version.rows, version.columns));
+    setColsEdit(null);
     setTouched(false);
     setPage(0);
     setErrors([]);
   }, [table, version]);
 
+  const cols: Column[] = colsEdit ?? version?.columns ?? [];
   const dirty = editable && touched;
   useReportUnsaved(dirty);
   const { collapsed: listCollapsed, toggle: toggleList } = usePanel('refList');
@@ -100,7 +105,7 @@ export function ReferenceTablesScreen() {
   const save = async (): Promise<void> => {
     if (!table || !version) return;
     setSaveError(null);
-    const parsed = textToRows(grid, version.columns);
+    const parsed = textToRows(grid, cols);
     setErrors(parsed.errors);
     if (parsed.errors.length > 0) return;
     const tooMany = tooManyRows(parsed.rows.length);
@@ -110,7 +115,7 @@ export function ReferenceTablesScreen() {
     }
     setBusy('save');
     try {
-      await store.saveRefTableVersion(table.id, version.versionNo, { rows: parsed.rows });
+      await store.saveRefTableVersion(table.id, version.versionNo, colsEdit ? { columns: cols, rows: parsed.rows } : { rows: parsed.rows });
       data.reload();
       loadedKey.current = ''; // reload the text from what was saved (typed numbers come back as numbers)
       toast(t('refTables.saved'));
@@ -128,7 +133,7 @@ export function ReferenceTablesScreen() {
   const pageRows = grid.slice(range.from, range.to).map((cells, i) => ({ index: range.from + i, cells }));
   const columns: TableColumn<{ index: number; cells: string[] }>[] = version
     ? [
-        ...version.columns.map((c, ci) => ({
+        ...cols.map((c, ci) => ({
           key: `${ci}-${c.name}`,
           header: c.name,
           userContent: true,
@@ -164,7 +169,7 @@ export function ReferenceTablesScreen() {
     const target = e.target as HTMLElement;
     if (!editable || !version || !looksLikeGrid(text) || target.dataset.row === undefined) return; // a single value pastes into its own cell
     e.preventDefault();
-    const next = pasteAt(grid, version.columns.length, Number(target.dataset.row), Number(target.dataset.col), pastedCells(text));
+    const next = pasteAt(grid, cols.length, Number(target.dataset.row), Number(target.dataset.col), pastedCells(text));
     edit(next);
     setInfo(pastedText(t, pastedCells(text).length));
   };
@@ -253,6 +258,11 @@ export function ReferenceTablesScreen() {
               <div className={styles.headText}>
                 <h2 data-user-content>{table.name}</h2>
                 {table.description ? <span className={styles.note} data-user-content>{table.description}</span> : null}
+                {isAdmin ? (
+                  <span>
+                    <Button compact onClick={() => { setDialogError(null); setDialog('description'); }}>{t('refTables.desc.button')}</Button>
+                  </span>
+                ) : null}
               </div>
               <div className={styles.headActions}>
                 {dirty ? (
@@ -262,6 +272,7 @@ export function ReferenceTablesScreen() {
                 ) : null}
                 {editable ? (
                   <>
+                    <Button onClick={() => setDialog('columns')}>{t('refTables.cols.button')}</Button>
                     <Button onClick={() => { setPasteText(''); setDialogError(null); setDialog('paste'); }}>{t('refTables.paste')}</Button>
                     <Button variant="primary" busy={busy === 'save'} disabled={!dirty} onClick={() => void save()}>
                       {busy === 'save' ? t('refTables.saving') : t('refTables.save')}
@@ -306,7 +317,7 @@ export function ReferenceTablesScreen() {
             {editable || range.pages > 1 ? (
               <div className={styles.pager}>
                 {editable ? (
-                  <Button compact onClick={() => { edit((g) => [...g, version.columns.map(() => '')]); setPage(pageRange(grid.length + 1, 999).page); }}>
+                  <Button compact onClick={() => { edit((g) => [...g, cols.map(() => '')]); setPage(pageRange(grid.length + 1, 999).page); }}>
                     {t('refTables.addRow')}
                   </Button>
                 ) : null}
@@ -339,7 +350,7 @@ export function ReferenceTablesScreen() {
                 <Button
                   variant="primary"
                   onClick={() => {
-                    const r = pasteIntoGrid(pasteText, version.columns);
+                    const r = pasteIntoGrid(pasteText, cols);
                     if (!r.ok) {
                       setDialogError(r.message);
                       return;
@@ -387,6 +398,43 @@ export function ReferenceTablesScreen() {
       >
         {body}
       </ScreenFrame>
+      {dialog === 'columns' && editable ? (
+        <ColumnsDialog
+          initial={cols}
+          onCancel={() => setDialog(null)}
+          onApply={(plan) => {
+            const shaped = reshapeGrid(grid, plan);
+            setColsEdit(shaped.columns);
+            edit(shaped.grid);
+            setErrors([]);
+            setDialog(null);
+          }}
+        />
+      ) : null}
+      {dialog === 'description' && table ? (
+        <DescriptionDialog
+          initial={table.description}
+          busy={busy === 'table'}
+          error={dialogError}
+          onCancel={() => setDialog(null)}
+          onSave={(description) => {
+            setBusy('table');
+            setDialogError(null);
+            store.updateRefTable(table.id, { description }).then(
+              () => {
+                setDialog(null);
+                setBusy(null);
+                toast(t('refTables.desc.saved'));
+                data.reload();
+              },
+              (e: unknown) => {
+                setDialogError(errorText(e, t('refTables.desc.failed')));
+                setBusy(null);
+              },
+            );
+          }}
+        />
+      ) : null}
       {dialog === 'import' ? (
         <ImportDialog
           tables={tables}
@@ -427,6 +475,81 @@ export function ReferenceTablesScreen() {
         </Dialog>
       ) : null}
     </>
+  );
+}
+
+const typeLabel = (t: ReturnType<typeof useT>, type: ColumnType): string => t(`refTables.import.type.${type}` as MessageKey);
+
+/** The columns of a draft: add, rename, change the type of and remove. Applying changes the grid; Save stores it. */
+function ColumnsDialog({ initial, onApply, onCancel }: { initial: Column[]; onApply: (plan: ColumnPlan[]) => void; onCancel: () => void }) {
+  const t = useT();
+  const [plan, setPlan] = useState<ColumnPlan[]>(() => planOf(initial));
+  const problem = columnsProblem(plan);
+  const set = (i: number, patch: Partial<ColumnPlan>): void => setPlan((p) => p.map((c, ci) => (ci === i ? { ...c, ...patch } : c)));
+  return (
+    <Dialog
+      title={t('refTables.cols.title')}
+      width={640}
+      onClose={onCancel}
+      actions={
+        <>
+          <Button onClick={onCancel}>{t('refTables.cancel')}</Button>
+          <Button variant="primary" disabled={problem !== undefined} onClick={() => onApply(plan)}>
+            {t('refTables.cols.apply')}
+          </Button>
+        </>
+      }
+    >
+      <div className={styles.colsBody}>
+        <ul className={styles.colsList} tabIndex={0} aria-label={t('refTables.cols.title')} data-dialog-scroll>
+          {plan.map((c, i) => (
+            <li key={i} className={styles.colsRow}>
+              <div className={styles.colsName}>
+                <Field label={t('refTables.cols.name', { n: i + 1 })} userLabel={false} value={c.name} onChange={(e) => set(i, { name: e.target.value })} />
+              </div>
+              <Dropdown
+                label={t('refTables.cols.type', { n: i + 1 })}
+                options={(['text', 'number', 'date', 'boolean'] as const).map((x) => ({ value: x, label: typeLabel(t, x) }))}
+                value={c.type}
+                width={150}
+                onChange={(v) => set(i, { type: v as ColumnType })}
+              />
+              <Button aria-label={t('refTables.cols.remove', { n: i + 1 })} onClick={() => setPlan((p) => p.filter((_, ci) => ci !== i))}>
+                <Icon name="close" />
+              </Button>
+            </li>
+          ))}
+        </ul>
+        <div>
+          <Button onClick={() => setPlan((p) => [...p, { from: null, name: '', type: 'text' }])}>{t('refTables.cols.add')}</Button>
+        </div>
+        {problem ? <ErrorState what={t('refTables.cols.problemTitle')} next={t(problem.key, problem.params)} /> : null}
+      </div>
+    </Dialog>
+  );
+}
+
+function DescriptionDialog({ initial, busy, error, onSave, onCancel }: { initial: string; busy: boolean; error: string | null; onSave: (description: string) => void; onCancel: () => void }) {
+  const t = useT();
+  const [text, setText] = useState(initial);
+  return (
+    <Dialog
+      title={t('refTables.desc.title')}
+      onClose={onCancel}
+      actions={
+        <>
+          <Button onClick={onCancel}>{t('refTables.cancel')}</Button>
+          <Button variant="primary" busy={busy} onClick={() => onSave(text)}>
+            {t('refTables.desc.save')}
+          </Button>
+        </>
+      }
+    >
+      <div className={styles.colsBody}>
+        <TextAreaField label={t('refTables.tableDescription')} rows={3} userContent value={text} onChange={(e) => setText(e.target.value)} />
+        {error ? <ErrorState what={t('refTables.desc.failed')} next={error} /> : null}
+      </div>
+    </Dialog>
   );
 }
 

@@ -395,6 +395,12 @@ export class SupabaseStore implements DataStore {
     return this.refTable(tableId);
   }
 
+  async updateRefTable(tableId: string, patch: { description: string }): Promise<RefTableRecord> {
+    await this.mustBeAdmin('change reference tables');
+    await this.updateRow('ref_tables', { id: tableId }, { description: patch.description }, 'save the description', 'the table');
+    return this.refTable(tableId);
+  }
+
   async importRefTable(input: RefImportInput): Promise<RefImportResult> {
     await this.mustBeAdmin('import reference tables');
     return importRefTableVia(this, input);

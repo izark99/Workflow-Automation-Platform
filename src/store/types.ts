@@ -209,6 +209,8 @@ export interface DataStore {
   saveRefTableVersion(tableId: string, versionNo: number, patch: RefVersionPatch): Promise<RefTableRecord>;
   createRefTableVersion(tableId: string, input: { validFrom: string; copyFrom?: number }): Promise<RefTableRecord>;
   publishRefTableVersion(tableId: string, versionNo: number): Promise<RefTableRecord>;
+  /** Admin only. Changes the description of a table. The name does not change: flows point to a table by its name. */
+  updateRefTable(tableId: string, patch: { description: string }): Promise<RefTableRecord>;
   /** Admin only. Makes or fills a draft from a read file; never publishes. */
   importRefTable(input: RefImportInput): Promise<RefImportResult>;
 
