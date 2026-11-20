@@ -1,5 +1,6 @@
 import type { FlowDefinition } from '../../engine/flow/types';
-import type { PreparedRun, RefTable } from '../../engine/versions';
+import { dateCheck, resolveVersion } from '../../engine/versions';
+import type { FlowVersion, PreparedRun, RefTable, TableGap } from '../../engine/versions';
 import type { FlowVersionRecord } from '../../store/types';
 import { translate, formatDate } from '../i18n';
 
@@ -54,3 +55,18 @@ export function versionRows(prepared: PreparedRun, flowName: string, flowVersion
 }
 
 export const sheetLabel = (sheet: string, rows: number): string => translate('run.sheetLabel', { sheet, rows, rowsText: rows.toLocaleString('en-US') });
+
+/**
+ * The date check of the Run screen (SPEC 13.3 item 7): the days of the flow version that the effective date uses for which a
+ * table that the flow reads has no published version. It is the check of the publish dialog, over the range of this version.
+ * When the date itself is in a gap the run stops with its own message, and the gap is still listed here. A table with no
+ * version at all is left out for a person who may not read it yet (the database hides its versions), and counts for the admin.
+ */
+export function runDateCheck(flowVersions: FlowVersion[], date: string, tables: RefTable[], isAdmin: boolean): TableGap[] {
+  try {
+    const v = resolveVersion(flowVersions, date, { what: 'flow' });
+    return dateCheck(v.definition, { validFrom: v.validFrom, validTo: v.validTo }, tables, { skipEmpty: !isAdmin });
+  } catch {
+    return []; // no usable flow version: the screen already says so
+  }
+}

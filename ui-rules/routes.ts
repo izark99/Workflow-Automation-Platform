@@ -302,6 +302,17 @@ export const ROUTES: RuleRoute[] = [
     },
   },
   {
+    path: '/flows/flow-refstep/run',
+    name: '/flows/flow-refstep/run (date check warning)',
+    sidebar: true,
+    busy: true,
+    // A published flow that reads a table which ends in 2026: the warning above the list of versions.
+    before: (page) => seedReferenceStep(page, { status: 'published', nodes: [{ id: 'ref', type: 'reference_table', label: 'Reference table', position: { x: 0, y: 0 }, settings: { table: 'Ends 2026' } }] }),
+    prepare: async (page) => {
+      await page.getByRole('status').first().waitFor();
+    },
+  },
+  {
     path: '/reference-tables',
     name: '/reference-tables (import dialog)',
     sidebar: true,

@@ -69,3 +69,40 @@ test('adding the missing version of the table removes the warning', async ({ pag
   await expect(publishDialog(page)).toBeVisible();
   await expect(publishDialog(page).getByRole('status')).toHaveCount(0);
 });
+
+// T6.10b: the Run screen. The flow version is open ended from 2026 and the table ends on 31 Dec 2026.
+const RUN_GAP = 'Ends 2026 has no published version from 1 Jan 2027: a run for these dates will stop.';
+const publishedWith = (page: Page, table: string) => seedReferenceStep(page, { status: 'published', nodes: step(table) });
+
+test('the Run screen shows the warning above the list of versions and the Run button is not blocked by it', async ({ page }) => {
+  await publishedWith(page, 'Ends 2026');
+  await page.goto('/flows/flow-refstep/run');
+  const versions = page.getByRole('group', { name: 'Versions used for this date' });
+  await expect(versions).toBeVisible();
+  const warning = page.getByRole('status').filter({ hasText: 'no published version' });
+  await expect(warning).toHaveText(RUN_GAP);
+  // Above the list.
+  const [w, l] = [await warning.boundingBox(), await versions.boundingBox()];
+  expect(w!.y + w!.height).toBeLessThanOrEqual(l!.y);
+  await expect(versions).toContainText('Ends 2026 v1');
+  await expect(page.getByRole('button', { name: /^Run flow$/ })).toBeEnabled();
+});
+
+test('a table with no gap shows no warning on the Run screen', async ({ page }) => {
+  // "Closed range" is valid to 2099: a flow version that is open ended would outrun it, so this one ends in 2027.
+  await seedReferenceStep(page, { status: 'published', nodes: step('Closed range'), validTo: '2027-12-31' });
+  await page.goto('/flows/flow-refstep/run');
+  await expect(page.getByRole('group', { name: 'Versions used for this date' })).toBeVisible();
+  await expect(page.getByRole('status').filter({ hasText: 'no published version' })).toHaveCount(0);
+});
+
+test('when the effective date is in the gap the run stops with its own message, and the warning still lists the gap', async ({ page }) => {
+  await publishedWith(page, 'Ends 2026');
+  await page.goto('/flows/flow-refstep/run');
+  await page.getByRole('button', { name: /^Effective date:/ }).click();
+  for (let i = 0; i < 2; i++) await page.keyboard.press('PageDown'); // 17 Nov 2026 -> 17 Jan 2027
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('alert')).toContainText('No version can be used for this date.');
+  await expect(page.getByRole('status').filter({ hasText: 'no published version' })).toHaveText(RUN_GAP);
+  await expect(page.getByRole('button', { name: /^Run flow$/ })).toBeDisabled();
+});

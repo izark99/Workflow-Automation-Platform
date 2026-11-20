@@ -3,7 +3,7 @@ import { prepareRun } from '../../engine/versions';
 import type { RefTable } from '../../engine/versions';
 import { seedSnapshot } from '../../store/seed';
 import { addStep, emptyDefinition } from '../builder/graph';
-import { inputsOf, progressText, sheetLabel, sizeLabel, versionRows } from './run-logic';
+import { inputsOf, progressText, runDateCheck, sheetLabel, sizeLabel, versionRows } from './run-logic';
 
 describe('inputs of a flow', () => {
   it('one file for each Input file step key, in step order, and a key used twice is asked once', () => {
@@ -53,5 +53,30 @@ describe('versions used for a date', () => {
       'Monthly timesheet summary v2: 01 Apr 2026 to 30 Jun 2026',
       'Attendance codes v1: 01 Jan 2026 to 30 Jun 2026',
     ]);
+  });
+});
+
+describe('runDateCheck (T6.10b)', () => {
+  const col = [{ name: 'a', type: 'text' as const }];
+  const table = (name: string, validTo: string | null): RefTable => ({ name, versions: [{ versionNo: 1, validFrom: '2026-01-01', validTo, columns: col, rows: [] }] });
+  const flowVersion = (versionNo: number, validFrom: string, validTo: string | null) => ({ versionNo, validFrom, validTo, status: 'published' as const, definition: { schemaVersion: 1, nodes: [{ id: 'r', type: 'reference_table', settings: { table: 'Limits' } }], edges: [] } });
+  const versions = [flowVersion(1, '2026-01-01', '2026-12-31'), flowVersion(2, '2027-01-01', null)];
+
+  it('checks the range of the flow version that the date uses, not the other versions', () => {
+    const tables = [table('Limits', '2026-12-31')];
+    expect(runDateCheck(versions, '2026-06-01', tables, true)).toEqual([]);
+    expect(runDateCheck(versions, '2027-03-01', tables, true)).toEqual([{ table: 'Limits', from: '2027-01-01', to: null }]);
+  });
+  it('shows the gap also when the date itself is in it (the run stops with its own message)', () => {
+    expect(runDateCheck(versions, '2027-03-01', [table('Limits', '2026-12-31')], true)).toHaveLength(1);
+  });
+  it('has nothing to check when no flow version covers the date', () => {
+    expect(runDateCheck(versions, '2025-01-01', [table('Limits', null)], true)).toEqual([]);
+    expect(runDateCheck([], '2026-06-01', [], true)).toEqual([]);
+  });
+  it('leaves out a table with no versions for a person who may not read it yet, and counts it for the admin', () => {
+    const empty: RefTable[] = [{ name: 'Limits', versions: [] }];
+    expect(runDateCheck(versions, '2026-06-01', empty, false)).toEqual([]);
+    expect(runDateCheck(versions, '2026-06-01', empty, true)).toEqual([{ table: 'Limits', from: '2026-01-01', to: '2026-12-31' }]);
   });
 });
