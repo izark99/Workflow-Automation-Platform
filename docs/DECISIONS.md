@@ -957,3 +957,7 @@ Measured with `npm run perf:canvas` (numbers in `docs/CANVAS_PERF.md`, a product
 ## D89 The Reference table card keeps the number badge (T6.8a)
 
 DESIGN says the card of the Reference table step has "the table icon". Every other card of the canvas shows the step number in its badge, and the number is what the "Input from" lists and the step aria labels refer to (T2.10a). The card of this step keeps the number badge too, so the cards of a flow read alike and the numbering stays complete. The first line is the step name; the second line is the name of the chosen table (`data-user-content`), or "Choose a table" before one is chosen, in place of the type name. If Harold wants the icon, it replaces the number for this one type in `step-card.tsx`; the e2e text checks do not depend on it.
+
+## D90 The parameter button is 40 px, as high as the box beside it (T6.11)
+
+DESIGN says "a 36 px icon button ... one height with the box beside it". The input boxes of the forms are 40 px, and D83 says compact (36 px) buttons next to 40 px controls are 40 px. The link button of the parameter control is therefore 40 px (`Dropdown` with `iconTrigger`, square, the height of the control), and it stays in the allowed set of button sizes (40 and 36). The "Use a fixed value" button of a bound field is compact (36 px) and sits in the 40 px row of the chip. A test measures the button against the box. The options of the list show the label and, in muted text, the key (`DropdownOption.hint`).

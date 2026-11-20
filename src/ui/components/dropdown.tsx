@@ -2,6 +2,7 @@ import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { popoverLayer, useFloating } from './floating';
 import { Icon } from './icons';
+import type { IconName } from './icons';
 import { isTypeAheadKey, moveIndex, typeAhead } from './list-keys';
 import type { ListKey } from './list-keys';
 import { useOutsideClose } from './popover';
@@ -10,6 +11,8 @@ import styles from './popover.module.css';
 export interface DropdownOption {
   value: string;
   label: string;
+  /** Muted text after the label, for example a key. */
+  hint?: string;
 }
 
 export interface DropdownProps {
@@ -29,10 +32,12 @@ export interface DropdownProps {
   compact?: boolean;
   /** The options are the user's own texts (names they typed), which are never translated. */
   userContent?: boolean;
+  /** The button holds only this icon (as wide as it is high) and `label` names it; the list opens as usual. */
+  iconTrigger?: IconName;
 }
 
 /** Button with a chevron and a popover list. Arrow keys, Home, End, Enter, Space, Escape and type-ahead. */
-export function Dropdown({ label, options, value, onChange, width = 260, disabled = false, defaultOpen = false, buttonLabel, compact = false, userContent = false }: DropdownProps) {
+export function Dropdown({ label, options, value, onChange, width = 260, disabled = false, defaultOpen = false, buttonLabel, compact = false, userContent = false, iconTrigger }: DropdownProps) {
   const [open, setOpen] = useState(defaultOpen);
   const [active, setActive] = useState(() => (defaultOpen ? Math.max(0, options.findIndex((o) => o.value === value)) : -1));
   const skipFocus = useRef(defaultOpen);
@@ -104,19 +109,18 @@ export function Dropdown({ label, options, value, onChange, width = 260, disable
       <button
         ref={triggerRef}
         type="button"
-        className={`${styles.trigger} ${styles.between} ${compact ? styles.compactTrigger : ''}`}
-        style={{ width }}
+        className={`${styles.trigger} ${iconTrigger ? styles.iconTrigger : styles.between} ${compact ? styles.compactTrigger : ''}`}
+        style={iconTrigger ? undefined : { width }}
         data-user-content={userContent ? '' : undefined}
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-controls={open ? listId : undefined}
-        aria-label={buttonLabel === undefined ? `${label}: ${current}` : label}
+        aria-label={buttonLabel === undefined && !iconTrigger ? `${label}: ${current}` : label}
         disabled={disabled}
         onClick={() => (open ? close(false) : openList())}
         onKeyDown={onTriggerKey}
       >
-        {buttonLabel ?? current}
-        <Icon name="chevronDown" />
+        {iconTrigger ? <Icon name={iconTrigger} /> : <>{buttonLabel ?? current}<Icon name="chevronDown" /></>}
       </button>
       {open && popoverLayer()
         ? createPortal(
@@ -147,6 +151,7 @@ export function Dropdown({ label, options, value, onChange, width = 260, disable
               {/* A menu of actions (a button label that stays the same) has no selected item, so it has no check column. */}
               {buttonLabel !== undefined ? null : i === selected ? <Icon name="check" /> : <span className={styles.check} />}
               {o.label}
+              {o.hint ? <span className={styles.optionHint}>{o.hint}</span> : null}
             </button>
           ))}
         </div>,
