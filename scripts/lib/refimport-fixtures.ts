@@ -7,6 +7,8 @@ export type FixtureCell = string | number | boolean | Date | null;
 export interface FixtureSheet {
   name: string;
   rows: FixtureCell[][];
+  /** Merged cells (0-based rows and columns, both ends included). The value stays in the first cell, as Excel writes it. */
+  merges?: { s: { r: number; c: number }; e: { r: number; c: number } }[];
 }
 
 /** An .xlsx file as bytes. A Date is written as an Excel date cell, a blank (null) is left out. */
@@ -27,6 +29,7 @@ export function xlsxBytes(sheets: FixtureSheet[]): Uint8Array {
       });
     });
     ws['!ref'] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: Math.max(0, s.rows.length - 1), c: maxC } });
+    if (s.merges) ws['!merges'] = s.merges;
     XLSX.utils.book_append_sheet(wb, ws, s.name);
   }
   return XLSX.write(wb, { type: 'array', bookType: 'xlsx', cellDates: true }) as Uint8Array;
