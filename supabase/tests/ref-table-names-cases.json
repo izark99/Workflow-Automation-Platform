@@ -1,0 +1,326 @@
+[
+ {
+  "name": "a Lookup step with a reference source reads its table",
+  "definition": {
+   "nodes": [
+    {
+     "type": "lookup_join",
+     "settings": {
+      "source": {
+       "kind": "reference",
+       "table": "Limits"
+      }
+     }
+    }
+   ]
+  },
+  "expected": [
+   "Limits"
+  ]
+ },
+ {
+  "name": "a Pivot step with a reference column list reads its table",
+  "definition": {
+   "nodes": [
+    {
+     "type": "pivot",
+     "settings": {
+      "columns": {
+       "from": "reference",
+       "table": "Codes"
+      }
+     }
+    }
+   ]
+  },
+  "expected": [
+   "Codes"
+  ]
+ },
+ {
+  "name": "a Lookup step with another step as source reads none",
+  "definition": {
+   "nodes": [
+    {
+     "type": "lookup_join",
+     "settings": {
+      "source": {
+       "kind": "node"
+      }
+     }
+    }
+   ]
+  },
+  "expected": []
+ },
+ {
+  "name": "a Pivot step with a column list from the data reads none",
+  "definition": {
+   "nodes": [
+    {
+     "type": "pivot",
+     "settings": {
+      "columns": {
+       "from": "data"
+      }
+     }
+    }
+   ]
+  },
+  "expected": []
+ },
+ {
+  "name": "another step type with a reference source reads none",
+  "definition": {
+   "nodes": [
+    {
+     "type": "filter",
+     "settings": {
+      "source": {
+       "kind": "reference",
+       "table": "Limits"
+      }
+     }
+    }
+   ]
+  },
+  "expected": []
+ },
+ {
+  "name": "a definition with no nodes reads none",
+  "definition": {},
+  "expected": []
+ },
+ {
+  "name": "nodes that are not a list read none",
+  "definition": {
+   "nodes": "x"
+  },
+  "expected": []
+ },
+ {
+  "name": "a definition that is not an object reads none",
+  "definition": [
+   1,
+   2
+  ],
+  "expected": []
+ },
+ {
+  "name": "odd nodes and a table name that is not text read none",
+  "definition": {
+   "nodes": [
+    1,
+    "a",
+    null,
+    {
+     "type": "lookup_join"
+    },
+    {
+     "type": "lookup_join",
+     "settings": {
+      "source": {
+       "kind": "reference",
+       "table": 5
+      }
+     }
+    }
+   ]
+  },
+  "expected": []
+ },
+ {
+  "name": "each table once, in order",
+  "definition": {
+   "nodes": [
+    {
+     "type": "lookup_join",
+     "settings": {
+      "source": {
+       "kind": "reference",
+       "table": "B"
+      }
+     }
+    },
+    {
+     "type": "pivot",
+     "settings": {
+      "columns": {
+       "from": "reference",
+       "table": "A"
+      }
+     }
+    },
+    {
+     "type": "lookup_join",
+     "settings": {
+      "source": {
+       "kind": "reference",
+       "table": "B"
+      }
+     }
+    }
+   ]
+  },
+  "expected": [
+   "A",
+   "B"
+  ]
+ },
+ {
+  "name": "a Reference table step reads its table",
+  "definition": {
+   "nodes": [
+    {
+     "type": "reference_table",
+     "settings": {
+      "table": "Limits"
+     }
+    }
+   ]
+  },
+  "expected": [
+   "Limits"
+  ]
+ },
+ {
+  "name": "two Reference table steps with one table read it once",
+  "definition": {
+   "nodes": [
+    {
+     "type": "reference_table",
+     "settings": {
+      "table": "Limits"
+     }
+    },
+    {
+     "type": "reference_table",
+     "settings": {
+      "table": "Limits"
+     }
+    }
+   ]
+  },
+  "expected": [
+   "Limits"
+  ]
+ },
+ {
+  "name": "a Reference table step and a Lookup with the same table read it once",
+  "definition": {
+   "nodes": [
+    {
+     "type": "reference_table",
+     "settings": {
+      "table": "Limits"
+     }
+    },
+    {
+     "type": "lookup_join",
+     "settings": {
+      "source": {
+       "kind": "reference",
+       "table": "Limits"
+      }
+     }
+    }
+   ]
+  },
+  "expected": [
+   "Limits"
+  ]
+ },
+ {
+  "name": "a Reference table step, a Lookup and a Pivot, each table once, in order",
+  "definition": {
+   "nodes": [
+    {
+     "type": "reference_table",
+     "settings": {
+      "table": "C"
+     }
+    },
+    {
+     "type": "lookup_join",
+     "settings": {
+      "source": {
+       "kind": "reference",
+       "table": "B"
+      }
+     }
+    },
+    {
+     "type": "pivot",
+     "settings": {
+      "columns": {
+       "from": "reference",
+       "table": "A"
+      }
+     }
+    }
+   ]
+  },
+  "expected": [
+   "A",
+   "B",
+   "C"
+  ]
+ },
+ {
+  "name": "a Reference table step with no table reads none",
+  "definition": {
+   "nodes": [
+    {
+     "type": "reference_table",
+     "settings": {}
+    }
+   ]
+  },
+  "expected": []
+ },
+ {
+  "name": "a Reference table step with no settings reads none",
+  "definition": {
+   "nodes": [
+    {
+     "type": "reference_table"
+    }
+   ]
+  },
+  "expected": []
+ },
+ {
+  "name": "a Reference table step whose table is not text reads none",
+  "definition": {
+   "nodes": [
+    {
+     "type": "reference_table",
+     "settings": {
+      "table": 5
+     }
+    },
+    {
+     "type": "reference_table",
+     "settings": {
+      "table": null
+     }
+    }
+   ]
+  },
+  "expected": []
+ },
+ {
+  "name": "another step type with a table setting reads none",
+  "definition": {
+   "nodes": [
+    {
+     "type": "filter",
+     "settings": {
+      "table": "Limits"
+     }
+    }
+   ]
+  },
+  "expected": []
+ }
+]
