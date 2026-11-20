@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Dropdown } from '../../components';
 import { useT } from '../../i18n';
+import { Bind } from '../parameter-control/bind';
 import { appendFromSettings } from './output-logic';
 import type { AppendMatch } from './output-logic';
 import type { FormProps } from './types';
@@ -13,6 +14,7 @@ export function AppendForm({ step, onSettings, readOnly }: FormProps) {
   const [match, setMatch] = useState<AppendMatch>(() => appendFromSettings(step.settings));
   return (
     <div className={styles.rowCard} style={{ gap: 12, borderBottom: 0, padding: 0 }}>
+      <Bind name="match" label={t('builder.append.match')}>
       <div>
         <SectionLabel label={t('builder.append.match')} hint={t('builder.append.hint')} />
         <Dropdown
@@ -27,6 +29,7 @@ export function AppendForm({ step, onSettings, readOnly }: FormProps) {
           }}
         />
       </div>
+      </Bind>
     </div>
   );
 }

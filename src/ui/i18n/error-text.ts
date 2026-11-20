@@ -13,3 +13,8 @@ export function errorText(e: unknown, fallback = ''): string {
   if (e instanceof Error && e.message) return e.message;
   return fallback || String(e);
 }
+
+/** The text of a warning of the engine (a message id with parameters) in the language of the user; its English text if the catalog has no such id. */
+export function warningText(w: { messageId: string; params: Record<string, string | number>; message: string }): string {
+  return hasKey(w.messageId) ? translate(w.messageId, w.params) : w.message;
+}

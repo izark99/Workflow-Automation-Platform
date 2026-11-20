@@ -7,6 +7,7 @@ import { InputFileForm } from './input-file-form';
 import { LookupForm } from './lookup-form';
 import { OutputForm } from './output-form';
 import { PivotForm } from './pivot-form';
+import { ReferenceTableForm } from './reference-table-form';
 import { SqlForm } from './sql-form';
 import { UnpivotForm } from './unpivot-form';
 import type { FormRegistry } from './types';
@@ -14,6 +15,7 @@ import type { FormRegistry } from './types';
 /** The settings form of each step type. */
 export const FORMS: FormRegistry = {
   input_file: InputFileForm,
+  reference_table: ReferenceTableForm,
   column_mapping: ColumnMappingForm,
   filter: FilterForm,
   formula_column: FormulaColumnForm,

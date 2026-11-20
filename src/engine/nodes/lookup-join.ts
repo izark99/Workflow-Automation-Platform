@@ -12,7 +12,7 @@ interface Settings {
   onNoMatch: NoMatch;
 }
 
-const NO_MATCH: readonly NoMatch[] = ['blank', 'drop', 'fail'];
+export const NO_MATCH: readonly NoMatch[] = ['blank', 'drop', 'fail'];
 
 function parse(raw: Record<string, unknown>, nodeId: string): Settings {
   const bad = (rule: string): never => {

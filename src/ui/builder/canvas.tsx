@@ -1,7 +1,7 @@
 import { Background, BackgroundVariant, ReactFlow, ReactFlowProvider, useReactFlow } from '@xyflow/react';
 import type { Edge, EdgeChangeset, NodeChangeset } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { usePanel } from '../panels/use-panel';
 import type { FlowDefinition, NodeType } from '../../engine/flow/types';
 import { NODE_TYPES } from '../../engine/flow/types';
@@ -38,22 +38,29 @@ export interface CanvasProps {
 function Inner({ definition, onChange, selection, onSelect, message, onMessage, readOnly, addRequest }: CanvasProps) {
   // A click on a step card opens a collapsed settings panel.
   const { expand: expandSettings } = usePanel('settings');
-  const { screenToFlowPosition } = useReactFlow();
+  const { screenToFlowPosition, getInternalNode } = useReactFlow();
+  // Positions of the cards that are held. A drag moves the card here and writes the definition once, on the drop (SPEC 13.1).
+  const [held, setHeld] = useState<Record<string, { x: number; y: number }>>({});
   // @xyflow/react 13 has no colorMode prop: its stylesheet reads a `light` or `dark` class on an ancestor of .react-flow.
   const { theme } = useAppTheme();
   const t = useT();
 
-  const nodes: StepCardNode[] = useMemo(() => {
+  const base: StepCardNode[] = useMemo(() => {
     const numbers = stepNumbers(definition);
     return definition.nodes.map((n, i) => ({
       id: n.id,
       type: 'step' as const,
       position: n.position ?? { x: 0, y: i * (CARD_HEIGHT + 40) },
+      // Keep the measured size: a card without one stays hidden until React Flow measures it again (D87).
+      measured: getInternalNode(n.id)?.measured,
       selected: selection.nodes.includes(n.id),
       ariaLabel: t('builder.stepAria', { number: numbers.get(n.id) ?? i + 1, name: n.label ?? n.id, type: STEP_CATALOG[n.type].label }),
       data: { step: n, number: numbers.get(n.id) ?? i + 1, inputs: inputHandlesOf(definition, n), outputs: outputHandlesOf(n.type) },
     }));
-  }, [definition, selection.nodes, t]);
+  }, [definition, selection.nodes, t, getInternalNode]);
+
+  // Cards that are not held keep their object, so that they do not render again for each move of the pointer.
+  const nodes: StepCardNode[] = useMemo(() => (Object.keys(held).length === 0 ? base : base.map((n) => (held[n.id] ? { ...n, position: held[n.id]!, dragging: true, measured: getInternalNode(n.id)?.measured ?? n.measured } : n))), [base, held, getInternalNode]);
 
   const edges: Edge[] = useMemo(
     () => {
@@ -67,9 +74,19 @@ function Inner({ definition, onChange, selection, onSelect, message, onMessage, 
     let next = definition;
     const sel = new Set(selection.nodes);
     let selChanged = false;
+    let heldNext = held;
     for (const c of changes) {
-      if (c.type === 'position' && c.position && !readOnly) next = moveStep(next, c.id, c.position);
-      else if (c.type === 'select') {
+      if (c.type === 'position' && c.position && !readOnly) {
+        // While the pointer holds the card only the canvas moves it; the drop (or a key press) writes the definition.
+        if (c.dragging) heldNext = { ...heldNext, [c.id]: c.position };
+        else {
+          next = moveStep(next, c.id, c.position);
+          if (heldNext[c.id]) {
+            heldNext = { ...heldNext };
+            delete heldNext[c.id];
+          }
+        }
+      } else if (c.type === 'select') {
         selChanged = true;
         if (c.selected) sel.add(c.id);
         else sel.delete(c.id);
@@ -79,6 +96,7 @@ function Inner({ definition, onChange, selection, onSelect, message, onMessage, 
         selChanged = true;
       }
     }
+    if (heldNext !== held) setHeld(heldNext);
     if (next !== definition) onChange(next);
     if (selChanged) onSelect({ nodes: [...sel], edges: selection.edges });
   };

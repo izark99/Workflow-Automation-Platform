@@ -1,4 +1,6 @@
+import { warningText } from '../i18n';
 import { parseOutputSettings } from '../../engine/nodes/output';
+import { resolveFlow } from '../../engine/run';
 import { buildOutputFiles } from '../../engine/output/export';
 import type { OutputFile } from '../../engine/output/export';
 import { runFlow } from '../../engine/run';
@@ -21,6 +23,8 @@ export interface RunOutcome {
   sheets: SheetPreview[];
   inputRows: number;
   outputRows: number;
+  /** What the load of the input files did that the person should know, in the current language. */
+  warnings: string[];
 }
 
 export interface RunRequest {
@@ -41,11 +45,13 @@ export interface RunRequest {
  */
 export async function executeRun(req: RunRequest): Promise<RunOutcome> {
   const runner = await previewRunner();
-  const labels = new Map(req.definition.nodes.map((n) => [n.id, n.label ?? n.id]));
-  const total = req.definition.nodes.length;
+  // The settings after the parameters are put in: the names of the files and sheets may come from a parameter.
+  const definition = resolveFlow(req.definition, req.parameterValues).flow;
+  const labels = new Map(definition.nodes.map((n) => [n.id, n.label ?? n.id]));
+  const total = definition.nodes.length;
   let started = 0;
   const result = await runFlow(runner, {
-    flow: req.definition,
+    flow: req.definition, // runFlow puts the values in itself; the resolved copy is only for reading the settings below
     effectiveDate: req.effectiveDate,
     parameterValues: req.parameterValues,
     files: Object.fromEntries(Object.entries(req.files).map(([k, f]) => [k, { name: f.name, size: f.size, blob: f }])),
@@ -57,14 +63,14 @@ export async function executeRun(req: RunRequest): Promise<RunOutcome> {
   });
   try {
     const sheets: SheetPreview[] = [];
-    for (const node of req.definition.nodes.filter((n) => n.type === 'output')) {
+    for (const node of definition.nodes.filter((n) => n.type === 'output')) {
       const s = parseOutputSettings(node.settings, node.id);
       const table = result.tables.get(`${node.id}/result`);
       sheets.push({ file: s.file, sheet: s.sheet ?? s.file, rowCount: table?.rowCount ?? 0, table: await result.preview(node.id, 'result') });
     }
-    const files = await buildOutputFiles(result, req.definition);
-    const inputRows = req.definition.nodes.filter((n) => n.type === 'input_file').reduce((n, node) => n + (result.tables.get(`${node.id}/out`)?.rowCount ?? 0), 0);
-    return { files, sheets, inputRows, outputRows: sheets.reduce((n, s) => n + s.rowCount, 0) };
+    const files = await buildOutputFiles(result, definition);
+    const inputRows = definition.nodes.filter((n) => n.type === 'input_file').reduce((n, node) => n + (result.tables.get(`${node.id}/out`)?.rowCount ?? 0), 0);
+    return { files, sheets, inputRows, outputRows: sheets.reduce((n, s) => n + s.rowCount, 0), warnings: result.warnings.map(warningText) };
   } finally {
     await result.dispose();
   }

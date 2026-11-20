@@ -18,13 +18,15 @@ export interface TableProps<T> {
   columns: Column<T>[];
   rows: T[];
   rowKey: (row: T) => string;
+  /** A long table that scrolls inside a box of this height (px). The box can take the focus, so the keyboard can scroll it. */
+  maxHeight?: number;
 }
 
 /** Header cells 10/16 px, body rows 56 px plus a 1 px divider (57 px), cells do not wrap. */
-export function Table<T>({ label, columns, rows, rowKey }: TableProps<T>) {
+export function Table<T>({ label, columns, rows, rowKey, maxHeight }: TableProps<T>) {
   const cls = (base: string, align?: string) => (align === 'right' ? `${base} ${styles.right}` : base);
   return (
-    <div className={styles.wrap}>
+    <div className={styles.wrap} {...(maxHeight === undefined ? {} : { style: { maxHeight, overflowY: 'auto' as const }, tabIndex: 0, role: 'region', 'aria-label': label })}>
       <table className={styles.table} aria-label={label} style={columns.some((c) => c.width !== undefined) ? { tableLayout: 'fixed' } : undefined}>
         <thead>
           <tr>

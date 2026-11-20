@@ -32,10 +32,10 @@ test('the layout follows the design: header bar 64 px, step list 184 px, grouped
   const list = page.getByRole('complementary', { name: 'Step types' });
   expect(Math.round((await list.boundingBox())!.width)).toBe(184);
   for (const group of ['Files', 'Shape', 'Combine', 'Advanced']) await expect(list.getByRole('group', { name: group })).toHaveCount(1);
-  // Eleven step buttons of 36 px, plus the 24 px info button after the title and the panel toggle (T5.4).
+  // Twelve step buttons of 36 px, plus the 24 px info button after the title and the panel toggle (T5.4).
   const stepButtons = list.getByRole('button', { name: /^Add step / });
-  await expect(stepButtons).toHaveCount(11);
-  await expect(list.getByRole('button')).toHaveCount(13);
+  await expect(stepButtons).toHaveCount(12);
+  await expect(list.getByRole('button')).toHaveCount(14);
   expect(Math.round((await stepButtons.first().boundingBox())!.height)).toBe(36);
   // The seed flow of this test has only a draft, so Run is off until a version is published (T2.15).
   await expect(page.getByRole('button', { name: 'Run' })).toBeDisabled();
@@ -138,4 +138,23 @@ test('a flow that does not exist shows what failed and a way back', async ({ pag
   await page.goto('/flows/flow-unknown/versions/1');
   await expect(page.getByRole('alert')).toContainText('This flow could not be opened.');
   await expect(page.getByRole('link', { name: 'Flows' })).toBeVisible();
+});
+
+test('the Reference table step: a button, the keyboard or a drag adds it; its card says to choose a table and has one output and no input', async ({ page }) => {
+  await newFlow(page);
+  const files = page.getByRole('group', { name: 'Files' });
+  await expect(files.getByRole('button')).toHaveText(['Input file', 'Reference table', 'Output']);
+  const button = page.getByRole('button', { name: 'Add step Reference table' });
+  expect(Math.round((await button.boundingBox())!.height)).toBe(36);
+  await button.focus();
+  await page.keyboard.press('Enter');
+  await expect(cards(page)).toHaveCount(1);
+  const c = card(page, 'Reference table');
+  await expect(c).toContainText('Choose a table');
+  await expect(c.locator('.react-flow__handle.source')).toHaveCount(1);
+  await expect(c.locator('.react-flow__handle.target')).toHaveCount(0);
+  const box = (await page.locator('.react-flow__pane').boundingBox())!;
+  await button.dragTo(page.locator('.react-flow__pane'), { targetPosition: { x: box.width / 2, y: box.height - 150 } });
+  await expect(cards(page)).toHaveCount(2);
+  await expect(cards(page).nth(1)).toContainText('Reference table 2');
 });

@@ -1,12 +1,14 @@
-import { resolveParameterValues, type ParameterValues } from './flow/parameter-values';
+import { resolveParameterValues, type ParameterValues, type ResolvedParameters } from './flow/parameter-values';
+import type { FlowDefinition } from './flow/types';
 import { parametersOf } from './flow/parameters';
+import { resolveBindings } from './flow/resolve-bindings';
 import { resolveEdgeHandles, topologicalOrder, validateFlow } from './flow/validate';
 import { loadInputFile, parseInputSettings, type FileSource } from './input/load';
 import { checkOutputNodes } from './nodes/output';
 import { defaultRegistry } from './nodes/registry';
 import type { NodeRegistry } from './nodes/types';
 import { boundarySelectList, createTableStatements, quoteIdent } from './sql';
-import { coded, type Column, type LoadedTable, type SqlRunner, type TableData } from './types';
+import { coded, type Column, type EngineWarning, type LoadedTable, type SqlRunner, type TableData } from './types';
 
 export const PREVIEW_ROWS = 100;
 
@@ -35,6 +37,8 @@ export interface ResultTable extends LoadedTable {
 }
 
 export interface RunResult {
+  /** What the load of the input files did that the person should know, such as a stop text that was never found. */
+  warnings: EngineWarning[];
   /** Every output of every node, keyed `nodeId/handle`. */
   tables: Map<string, ResultTable>;
   /** First rows of an output as boundary cells: numbers, ISO date text, text, booleans. */
@@ -47,14 +51,26 @@ export interface RunResult {
 
 let runCounter = 0;
 
-export async function runFlow(runner: SqlRunner, options: RunOptions): Promise<RunResult> {
-  const validation = validateFlow(options.flow);
+/**
+ * Validates a definition and puts the values of the parameters in the place of every binding (SPEC 13.3), so that code that
+ * reads settings from the definition (the names of the output files, for example) sees plain values. Throws an `EngineError`
+ * for a definition that is not valid, a value that is not valid, or a binding that cannot be filled. The result is for reading
+ * settings: it is the validated definition, which carries `parameters: []` even for a version 1 definition, so it is not passed
+ * to `runFlow` again (the validation would refuse it); `runFlow` takes the original definition and resolves it itself.
+ */
+export function resolveFlow(definition: unknown, parameterValues?: ParameterValues): { flow: FlowDefinition; parameters: ResolvedParameters } {
+  const validation = validateFlow(definition);
   if (!validation.ok) {
     throw coded('invalid_flow', 'engine.invalidFlow', { problems: validation.errors.map((e) => e.message).join(' ') }, validation.errors[0]?.nodeId);
   }
-  const flow = validation.flow;
+  const parameters = resolveParameterValues(parametersOf(validation.flow), parameterValues);
+  return { flow: resolveBindings(validation.flow, parameters), parameters };
+}
+
+export async function runFlow(runner: SqlRunner, options: RunOptions): Promise<RunResult> {
+  // Every binding becomes its value before any step is read, so the step modules see plain settings (SPEC 13.3).
+  const { flow, parameters } = resolveFlow(options.flow, options.parameterValues);
   checkOutputNodes(flow);
-  const parameters = resolveParameterValues(parametersOf(flow), options.parameterValues);
   const registry = options.registry ?? defaultRegistry;
   const prefix = `r${++runCounter}_`;
   const created: string[] = [];
@@ -71,6 +87,7 @@ export async function runFlow(runner: SqlRunner, options: RunOptions): Promise<R
   };
   const onAbort = () => void runner.cancel();
   options.signal?.addEventListener('abort', onAbort);
+  const warnings: EngineWarning[] = [];
   const checkCancelled = () => {
     if (options.signal?.aborted) {
       throw coded('cancelled', 'engine.cancelled');
@@ -93,7 +110,7 @@ export async function runFlow(runner: SqlRunner, options: RunOptions): Promise<R
       if (file) {
         options.onNode?.({ nodeId: node.id, status: 'start' });
         const relation = `${prefix}file${seenKeys.size}`;
-        inputTables[settings.key] = await loadInputFile(runner, file, settings, relation, node.id);
+        inputTables[settings.key] = await loadInputFile(runner, file, settings, relation, node.id, { rowsRead: 0, warnings });
         created.push(relation);
         options.onNode?.({ nodeId: node.id, status: 'done' });
       }
@@ -173,6 +190,7 @@ export async function runFlow(runner: SqlRunner, options: RunOptions): Promise<R
 
   return {
     tables,
+    warnings,
     dispose,
     preview: (nodeId, handle, limit = PREVIEW_ROWS) => read(nodeId, handle, limit),
     rows: (nodeId, handle) => read(nodeId, handle, undefined),

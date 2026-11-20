@@ -26,7 +26,7 @@ export const STEP_CATALOG = Object.fromEntries(
 
 /** The groups of the step list, in the order of the design. */
 export const STEP_GROUPS: { label: string; types: NodeType[] }[] = [
-  { id: 'files', types: ['input_file', 'output'] },
+  { id: 'files', types: ['input_file', 'reference_table', 'output'] },
   { id: 'shape', types: ['column_mapping', 'filter', 'formula_column', 'unpivot', 'pivot', 'group_by'] },
   { id: 'combine', types: ['lookup_join', 'append'] },
   { id: 'advanced', types: ['sql'] },

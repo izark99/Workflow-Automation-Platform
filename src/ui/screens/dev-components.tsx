@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { Badge, Button, Card, Checkbox, DatePicker, Dialog, Dropdown, EmptyState, ErrorState, Field, InfoTip, PageHeader, ProgressBar, SearchField, SkeletonTable, Tabs, ToastProvider, useToast } from '../components';
 import { useT } from '../i18n';
+import { ParameterControl } from '../builder/parameter-control/parameter-control';
+import type { FlowParameter } from '../../engine/flow/parameters';
+import type { BindableSetting } from '../../engine/flow/bindable';
 import { PanelToggle } from '../panels/panel-toggle';
 import panelStyles from '../panels/panel.module.css';
 import styles from './dev-components.module.css';
@@ -12,6 +15,53 @@ function RailDemo({ id, initiallyCollapsed, label }: { id: string; initiallyColl
     <div className={`${panelStyles.panel} ${panelStyles.rail} ${panelStyles.left}`} id={id} data-demo-rail={id} style={{ width: collapsed ? 48 : 184, minHeight: 120 }}>
       <PanelToggle panel="steps" collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} controls={id} />
       {collapsed ? null : <span className={styles.note}>{label}</span>}
+    </div>
+  );
+}
+
+/** Every state of the parameter control (T6.11): a fixed value, no fitting parameter, bound, an error, a deleted parameter. */
+function ParameterControlDemos() {
+  const t = useT();
+  const text: BindableSetting = { name: 'sheet', type: 'text', optional: true, placeholder: t('dev.demo.pcSheet') };
+  const params: FlowParameter[] = [{ key: 'period', label: t('dev.demo.pcPeriod'), type: 'text', required: true }, { key: 'header', label: t('dev.demo.pcHeader'), type: 'number', required: false }];
+  const [fixed, setFixed] = useState('Sheet1');
+  const field = (value: string, readOnly = false) => <Field label={t('dev.demo.pcSheet')} value={value} disabled={readOnly} onChange={(e) => setFixed(e.target.value)} />;
+  const base = { field: t('dev.demo.pcSheet'), setting: text, parameters: params, onBind: () => undefined, onUnbind: () => undefined };
+  const bound = { $param: 'period' };
+  return (
+    <div className={styles.pcGrid}>
+      <div data-demo="pcFixed">
+        <span className={styles.rowLabel}>{t('dev.demo.pcFixed')}</span>
+        <ParameterControl {...base} value={fixed} readOnly={false}>{field(fixed)}</ParameterControl>
+      </div>
+      <div data-demo="pcNoFit">
+        <span className={styles.rowLabel}>{t('dev.demo.pcNoFit')}</span>
+        <ParameterControl {...base} parameters={[params[1]!]} value="Sheet1" readOnly={false}>{field('Sheet1')}</ParameterControl>
+      </div>
+      <div data-demo="pcReadOnly">
+        <span className={styles.rowLabel}>{t('dev.demo.pcReadOnly')}</span>
+        <ParameterControl {...base} value="Sheet1" readOnly>{field('Sheet1', true)}</ParameterControl>
+      </div>
+      <div data-demo="pcBound">
+        <span className={styles.rowLabel}>{t('dev.demo.pcBound')}</span>
+        <ParameterControl {...base} value={bound} readOnly={false} now={{ type: 'text', value: 'July' }}>{field('')}</ParameterControl>
+      </div>
+      <div data-demo="pcError">
+        <span className={styles.rowLabel}>{t('dev.demo.pcError')}</span>
+        <ParameterControl {...base} value={bound} readOnly={false} error={t('dev.demo.pcErrorText')}>{field('')}</ParameterControl>
+      </div>
+      <div data-demo="pcGone">
+        <span className={styles.rowLabel}>{t('dev.demo.pcGone')}</span>
+        <ParameterControl {...base} value={{ $param: 'old_period' }} readOnly={false}>{field('')}</ParameterControl>
+      </div>
+      <div data-demo="pcBoundReadOnly">
+        <span className={styles.rowLabel}>{t('dev.demo.pcBoundReadOnly')}</span>
+        <ParameterControl {...base} value={bound} readOnly now={{ type: 'text', value: 'July' }}>{field('', true)}</ParameterControl>
+      </div>
+      <div style={{ minHeight: 140 }} data-demo="pcOpen">
+        <span className={styles.rowLabel}>{t('dev.demo.pcOpen')}</span>
+        <ParameterControl {...base} value="Sheet1" readOnly={false} defaultOpen>{field('Sheet1')}</ParameterControl>
+      </div>
     </div>
   );
 }
@@ -117,6 +167,9 @@ function Content() {
             <RailDemo id="demo-rail-open" initiallyCollapsed={false} label={t('dev.demo.panelOpen')} />
             <RailDemo id="demo-rail-collapsed" initiallyCollapsed label={t('dev.demo.panelCollapsed')} />
           </div>
+        </Card>
+        <Card title={t('dev.parameterControl')}>
+          <ParameterControlDemos />
         </Card>
         <Card title={t('dev.progress')}>
           <ProgressBar value={7} max={12} label={t('dev.demo.runProgress')} />

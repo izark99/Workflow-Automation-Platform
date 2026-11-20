@@ -7,18 +7,28 @@ import { checkFileSize } from '../../engine/size-guard';
 import { EngineError } from '../../engine/types';
 import type { Cell } from '../../engine/types';
 import type { RefTable } from '../../engine/versions';
-import { Button, Chip, ChipGroup, DatePicker, EmptyState, ErrorState, InfoTip, SkeletonTable, Table } from '../components';
+import { Button, Chip, ChipGroup, DatePicker, EmptyState, ErrorState, InfoTip, QuietWarning, SkeletonTable, Table } from '../components';
 import type { Column } from '../components';
+import { bindableSetting } from '../../engine/flow/bindable';
+import { parametersOf } from '../../engine/flow/parameters';
+import { AnalysisPanel } from './analyze/analysis-panel';
+import { ParameterControl } from './parameter-control/parameter-control';
+import { stepBindingResults } from './parameter-control/parameter-control-logic';
+import { settingLabel } from './parameter-control/setting-labels';
 import { useT, errorText } from '../i18n';
 import { ParameterInputs, PendingParametersNote } from '../parameter-inputs';
 import { initialValues, parameterValueErrors } from '../parameter-logic';
-import { todayIso } from '../screens/flows-logic';
 import { formatCell, neededFiles, previewKey, previewTarget } from './preview-logic';
 import { runPreview } from './preview-runner';
 import type { PreviewData } from './preview-runner';
 import styles from './step-preview.module.css';
 
 export interface StepPreviewProps {
+  /** The test date (ISO), kept by the builder so the forms can show what it selects. */
+  date: string;
+  onDate: (date: string) => void;
+  /** For an Input step: saves the settings that "Analyze file" proposed and shows the Configure tab. */
+  onApplySettings?: (settings: Record<string, unknown>) => void;
   definition: FlowDefinition;
   step: FlowNode;
   /** Test files by input key. Held by the builder screen, so they stay while another step is selected. */
@@ -35,9 +45,8 @@ type State = { status: 'idle' } | { status: 'loading' } | { status: 'ready'; dat
 const asSource = (f: File): FileSource => ({ name: f.name, size: f.size, blob: f });
 
 /** The Test tab: effective date, test files, and the first rows of the step, run in this browser. */
-export function StepPreview({ definition, step, files, onFile, refTables, parameterValues, onParameterValue }: StepPreviewProps) {
+export function StepPreview({ definition, step, files, onFile, refTables, parameterValues, onParameterValue, date, onDate, onApplySettings }: StepPreviewProps) {
   const t = useT();
-  const [date, setDate] = useState(todayIso());
   const [handle, setHandle] = useState<string | undefined>(undefined);
   const [state, setState] = useState<State>({ status: 'idle' });
   const abort = useRef<AbortController | null>(null);
@@ -55,6 +64,8 @@ export function StepPreview({ definition, step, files, onFile, refTables, parame
   const values = initialValues(used, parameterValues);
   const valueErrors = parameterValueErrors(used, values);
   const invalid = Object.keys(valueErrors).length > 0;
+  // What each setting of this step that uses a parameter gets from the test values: the value, or the reason it cannot be used.
+  const bound = stepBindingResults(step, parametersOf(definition), values);
   const key = previewKey(target.definition, target.nodeId, target.handle, date) + JSON.stringify(values);
 
   const run = async (): Promise<void> => {
@@ -85,7 +96,7 @@ export function StepPreview({ definition, step, files, onFile, refTables, parame
     <div className={styles.block} style={{ gap: 16 }}>
       <div className={styles.block}>
         <span className={styles.label}>{t('builder.preview.date')}</span>
-        <DatePicker label={t('builder.preview.date')} value={date} onChange={setDate} width="100%" />
+        <DatePicker label={t('builder.preview.date')} value={date} onChange={onDate} width="100%" />
       </div>
       {used.length > 0 ? (
         <div className={styles.block}>
@@ -96,6 +107,31 @@ export function StepPreview({ definition, step, files, onFile, refTables, parame
           <ParameterInputs parameters={used} values={values} errors={valueErrors} onChange={onParameterValue} />
           <PendingParametersNote parameters={used} errors={valueErrors} action="preview" />
         </div>
+      ) : null}
+      {bound.length > 0 ? (
+        <div className={styles.block} role="group" aria-label={t('builder.preview.boundTitle')}>
+          <span className={styles.label}>{t('builder.preview.boundTitle')}</span>
+          {bound.map((b) => (
+            <ParameterControl
+              key={b.setting}
+              field={settingLabel(step.type, b.setting)}
+              setting={bindableSetting(step.type, b.setting)!}
+              parameters={parametersOf(definition)}
+              value={step.settings[b.setting]}
+              readOnly
+              viewOnly
+              onBind={() => undefined}
+              onUnbind={() => undefined}
+              now={b.outcome.ok && b.param ? { type: b.param.type, value: b.outcome.value } : undefined}
+              error={b.outcome.ok ? undefined : b.outcome.error}
+            >
+              {null}
+            </ParameterControl>
+          ))}
+        </div>
+      ) : null}
+      {step.type === 'input_file' && onApplySettings ? (
+        <AnalysisPanel key={(() => { const f = typeof step.settings.key === 'string' ? files[step.settings.key] : undefined; return f ? `${f.name}:${f.size}:${f.lastModified}` : 'none'; })()} file={typeof step.settings.key === 'string' ? files[step.settings.key] : undefined} settings={step.settings} onApply={onApplySettings} />
       ) : null}
       {needed.length > 0 ? (
         <div className={styles.block}>
@@ -131,6 +167,7 @@ export function StepPreview({ definition, step, files, onFile, refTables, parame
       {state.status === 'ready' ? (
         <div className={styles.block}>
           {state.key !== key ? <p className={styles.muted} role="status">{t('builder.preview.stale')}</p> : null}
+          <QuietWarning lines={state.data.warnings} />
           <span className={styles.muted}>{state.data.totalRows === 0 ? t('builder.preview.noRows') : (state.data.totalRows > state.data.rows.length ? t('builder.preview.showing', { shown: state.data.rows.length.toLocaleString('en-US'), total: state.data.totalRows.toLocaleString('en-US') }) : t('builder.preview.rowCount', { total: state.data.totalRows, totalText: state.data.totalRows.toLocaleString('en-US') }))}</span>
           {state.data.rows.length > 0 ? (
             <div className={styles.result}>
@@ -154,6 +191,8 @@ function previewColumns(data: PreviewData): Column<PreviewRow>[] {
   return data.columns.map((c, i) => ({
     key: `${i}-${c.name}`,
     header: c.name,
+    // The column names and the cells are the user's data, not texts of the app.
+    userContent: true,
     align: c.type === 'number' ? ('right' as const) : ('left' as const),
     render: (row: PreviewRow) => formatCell(row.cells[i] ?? null, c.type),
   }));

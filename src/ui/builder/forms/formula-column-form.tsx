@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Field } from '../../components';
 import { useT } from '../../i18n';
+import { Bind } from '../parameter-control/bind';
 import { parametersOf } from '../../../engine/flow/parameters';
 import { FormulaEditor } from './formula-editor';
 import type { FormProps } from './types';
@@ -18,6 +19,7 @@ export function FormulaColumnForm(props: FormProps) {
 
   return (
     <div className={styles.stack} style={{ paddingTop: 0 }}>
+      <Bind name="name" label={t('builder.formula.name')}>
       <Field
         label={t('builder.formula.name')}
         hint={t('builder.formula.nameHint')}
@@ -31,6 +33,7 @@ export function FormulaColumnForm(props: FormProps) {
           if (clean !== '') onSettings({ ...step.settings, name: clean });
         }}
       />
+      </Bind>
       <FormulaEditor
         label={t('builder.formula.formula')}
         hint={t('builder.formula.formulaHint')}

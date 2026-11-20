@@ -11,12 +11,20 @@ import type { FlowParameter } from './parameters';
 
 /** The first format. A new flow and every flow without parameters stay in it. */
 export const BASE_SCHEMA_VERSION = 1;
-/** The latest format: it may carry `parameters`. Older definitions load with an empty list, and are never rewritten. */
-export const FLOW_SCHEMA_VERSION = 2;
-export const SUPPORTED_SCHEMA_VERSIONS = [1, 2] as const;
+/** Version 2 may carry `parameters`. Older definitions load with an empty list, and are never rewritten. */
+export const PARAMETERS_SCHEMA_VERSION = 2;
+/** The latest format: a single-value setting may be a binding `{"$param": "key"}` (SPEC 13.3). */
+export const FLOW_SCHEMA_VERSION = 3;
+export const SUPPORTED_SCHEMA_VERSIONS = [1, 2, 3] as const;
+
+/** A setting that takes its value from a parameter of the flow. */
+export interface ParamBinding {
+  $param: string;
+}
 
 export const NODE_TYPES = [
   'input_file',
+  'reference_table',
   'column_mapping',
   'filter',
   'formula_column',
@@ -57,7 +65,7 @@ export interface FlowDefinition {
   name?: string;
   nodes: FlowNode[];
   edges: FlowEdge[];
-  /** From schemaVersion 2. Missing in a version 1 definition, which means no parameters. */
+  /** From schemaVersion 2. Missing in a version 1 definition, which means no parameters. Version 3 settings may hold bindings. */
   parameters?: FlowParameter[];
 }
 
@@ -87,6 +95,7 @@ export interface NodePorts {
 
 export const NODE_PORTS: Readonly<Record<NodeType, NodePorts>> = {
   input_file: { inputs: { kind: 'fixed', handles: [] }, outputs: ['out'] },
+  reference_table: { inputs: { kind: 'fixed', handles: [] }, outputs: ['out'] },
   column_mapping: { inputs: { kind: 'fixed', handles: [{ name: 'in', required: true }] }, outputs: ['out'] },
   filter: { inputs: { kind: 'fixed', handles: [{ name: 'in', required: true }] }, outputs: ['match', 'nomatch'] },
   formula_column: { inputs: { kind: 'fixed', handles: [{ name: 'in', required: true }] }, outputs: ['out'] },
@@ -116,6 +125,15 @@ export const flowJsonSchema = {
   $schema: 'http://json-schema.org/draft-07/schema#',
   title: 'Data flow definition',
   type: 'object',
+  definitions: {
+    paramBinding: {
+      description: 'From schemaVersion 3: replaces the value of a single-value setting. The key names a parameter of the flow.',
+      type: 'object',
+      required: ['$param'],
+      properties: { $param: { type: 'string', minLength: 1 } },
+      additionalProperties: false,
+    },
+  },
   required: ['schemaVersion', 'nodes', 'edges'],
   properties: {
     schemaVersion: { enum: [...SUPPORTED_SCHEMA_VERSIONS] },
@@ -151,7 +169,7 @@ export const flowJsonSchema = {
             required: ['x', 'y'],
             properties: { x: { type: 'number' }, y: { type: 'number' } },
           },
-          settings: { type: 'object' },
+          settings: { type: 'object', description: 'A single-value setting may be a paramBinding (schemaVersion 3).' },
         },
       },
     },

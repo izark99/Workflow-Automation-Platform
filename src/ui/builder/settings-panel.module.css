@@ -103,3 +103,35 @@
 .titleRow h2 {
   margin: 0;
 }
+
+.listTitle {
+  margin: 0 0 8px;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+}
+
+.columnList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-control);
+}
+
+.columnList li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.columnList li + li {
+  border-top: 1px solid var(--color-line);
+}
+
+.columnType {
+  color: var(--color-muted);
+}

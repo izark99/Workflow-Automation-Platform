@@ -4,12 +4,14 @@ import { STEP_CATALOG, STEP_GROUPS } from './graph';
 import { useT } from '../i18n';
 import { usePanel } from '../panels/use-panel';
 import { PanelToggle } from '../panels/panel-toggle';
+import { countRender } from './render-counter';
 import styles from './builder.module.css';
 
 /** The drag payload type. Dragging is the mouse path; the buttons are the keyboard path (Enter or Space adds the step). */
 export const DRAG_TYPE = 'application/x-dfw-step';
 
 export function StepList({ onAdd, disabled }: { onAdd: (type: NodeType) => void; disabled: boolean }) {
+  countRender('StepList');
   const t = useT();
   const { collapsed, toggle } = usePanel('steps');
   return (

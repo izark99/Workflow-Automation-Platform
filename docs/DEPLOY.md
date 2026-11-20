@@ -254,6 +254,47 @@ thirteen migrations and the `admin-users` function) needs these steps, in this o
    Rollback). The database changes stay; the Phase 4 app ignores the new tables, but it can no longer read the rows
    of a table that none of the user's flows reads (migration 17). Do not undo a migration by hand.
 
+## Upgrade from Phase 5
+
+Phase 6 added steady dragging of steps on the canvas, a Reference table step, parameters in the input boxes of every step,
+and the reading of a table that sits inside a larger sheet (a title above, a footer below), with "Analyze file" to propose
+the settings. A deployment that is on Phase 5 (the seventeen migrations and the `admin-users` function) needs these steps, in
+this order. A fresh deployment does not: "Apply the migrations" already applies all of them.
+
+1. **Back up first.** In the Supabase dashboard, Database, Backups: take a backup if your plan has one, and write down
+   the time. Migration 18 changes which tables a flow is said to read, and so who can read the rows of a table. The app has
+   no export of flows or reference tables.
+2. **Apply the new migration** from your computer (`npx supabase link --project-ref <ref>` once, if you have not):
+
+   ```bash
+   npx supabase db push
+   ```
+
+   It lists one file, `20261118000018_ref_table_names_reference_step.sql`, and asks you to confirm. It makes a Reference table
+   step count as reading its table, and fills the list of which flows read which tables again from the flows that exist.
+   Nobody has to do anything for a user to keep reading the tables of their own flows. If the push fails, stop and read the
+   first error; do not edit tables by hand.
+3. **There is no new function.** `admin-users` stays as it is; do not deploy it again.
+4. **Deploy the app.** Pushing to the branch that Cloudflare Pages builds starts the build (`npm run build:pages`).
+   Wait for it to finish. Do step 2 before this one, so the new app finds the new database.
+5. **Check it**, in this order:
+   - Reference table step: sign in as a user who is not the admin, open a draft flow, drag "Reference table" onto the
+     canvas and choose a table. Before the flow is saved the step says "You cannot read this table yet. Save the flow to
+     read this table."; after Save draft it lists the columns, and Reference tables shows the table with the flow under
+     "Used by".
+   - Date check: publish a flow version that starts after the last version of a table that it reads. The dialog shows a
+     quiet warning with the table and the days, and Publish stays enabled.
+   - Parameters in input boxes: add a parameter in the Parameters panel, press the link button beside "Sheet name" of an
+     Input step and choose it. The field becomes "Parameter: ...". On the Test tab "Now: ..." shows the value, and the Run
+     screen lists the setting under "Settings that use a parameter".
+   - Analyze file: on the Test tab of an Input step choose a test file that has a title above its table, press "Analyze
+     file", look at the proposal and its reasons, and press "Apply to the step". Nothing is applied until you do.
+   - Dragging: drag a step across the canvas. No step disappears, and the flow shows "Unsaved changes" once.
+6. **If something is wrong,** think before you roll back the app in Cloudflare Pages. The database change stays and is
+   harmless, but the Phase 5 app cannot run a flow that has a Reference table step (it does not know the step) or open a
+   flow version that uses a parameter in an input box (it reads definition versions 1 and 2, and this is version 3). Roll back
+   only while nobody has saved such a flow. Do not undo a migration by hand.
+
 ## Limits
 
 - There is no sign-up and no email invitation. The admin creates accounts in the app (Admin, Users, Add user) with a
@@ -274,4 +315,12 @@ thirteen migrations and the `admin-users` function) needs these steps, in this o
   and shared flows of their groups, in any version). A deleted flow does not count. Everyone signed in sees the name and the
   description of every table, so a step can offer it; the rows appear after the flow that reads the table is saved. A
   reference table is shared with every user who has such a flow, so it must not hold personal data.
+- "Analyze file" reads the sample file in the browser and keeps nothing: the file is never uploaded or stored, and only the
+  settings that you apply are saved with the flow. The analysis is a proposal. It can be wrong, in particular for a sheet
+  with several tables or with nothing that marks the end of a table, and it says so with a low confidence; look at the
+  preview before you apply it.
+- A csv file whose cells hold a line break inside quotes is read in order of its rows, not by the line of the file, so
+  "header row" and "rows to skip" count rows for such a file.
+- A parameter in an input box is filled with the value that the person gives on the Run screen; the resolved values stay in
+  the browser and the run history keeps counts only.
 - Choices made during the build, and why, are in `docs/DECISIONS.md` (the server part starts at D55; accounts, texts and parameters start at D72).

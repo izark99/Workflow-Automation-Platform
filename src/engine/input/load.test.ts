@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import * as XLSX from 'xlsx';
 import { runFlow } from '../run';
@@ -46,6 +47,11 @@ describe('parseInputSettings', () => {
       skipRows: 0,
       fillDown: [],
       rowNumberColumn: undefined,
+      firstColumn: 1,
+      lastColumn: undefined,
+      stopAt: { kind: 'end' },
+      ignoreRows: [],
+      expect: [],
     });
   });
   it('rejects bad settings with a message that names the setting', () => {
@@ -60,6 +66,61 @@ describe('parseInputSettings', () => {
       expect(() => parseInputSettings(bad, 'n')).toThrow(EngineError);
     }
     expect(() => parseInputSettings({ key: 'k', headerRow: 0 }, 'n')).toThrow(/headerRow/);
+  });
+});
+
+describe('parseInputSettings: the region (SPEC 13.2)', () => {
+  const parse = (extra: Record<string, unknown>) => parseInputSettings({ key: 'k', ...extra }, 'n');
+  it('reads the first and last column as a letter or a number, in any case', () => {
+    expect(parse({ firstColumn: 'c', lastColumn: 'F' })).toMatchObject({ firstColumn: 3, lastColumn: 6 });
+    expect(parse({ firstColumn: 2, lastColumn: 2 })).toMatchObject({ firstColumn: 2, lastColumn: 2 });
+    expect(parse({ lastColumn: 'AA' })).toMatchObject({ firstColumn: 1, lastColumn: 27 });
+  });
+  it('refuses a column that is not one, and a last column before the first, and names the setting', () => {
+    for (const bad of [{ firstColumn: 'A1' }, { firstColumn: 0 }, { lastColumn: '' }, { lastColumn: 99999 }, { firstColumn: 'D', lastColumn: 'B' }]) {
+      expect(() => parse(bad), JSON.stringify(bad)).toThrow(EngineError);
+    }
+    expect(() => parse({ firstColumn: 'A1' })).toThrow(/firstColumn.*column letter/);
+    expect(() => parse({ firstColumn: 'D', lastColumn: 'B' })).toThrow(/lastColumn.*before the first column/);
+  });
+  it('reads each way to stop, with the defaults of its own settings', () => {
+    expect(parse({ stopAt: { kind: 'end' } }).stopAt).toEqual({ kind: 'end' });
+    expect(parse({ stopAt: { kind: 'blank_rows' } }).stopAt).toEqual({ kind: 'blank_rows', count: 1 });
+    expect(parse({ stopAt: { kind: 'blank_rows', count: 10 } }).stopAt).toEqual({ kind: 'blank_rows', count: 10 });
+    expect(parse({ stopAt: { kind: 'marker', text: 'Prepared by' } }).stopAt).toEqual({ kind: 'marker', text: 'Prepared by', match: 'contains' });
+    expect(parse({ stopAt: { kind: 'marker', text: 'Sign', match: 'starts_with', column: 'Label' } }).stopAt).toEqual({ kind: 'marker', text: 'Sign', match: 'starts_with', column: 'Label' });
+    expect(parse({ stopAt: { kind: 'row', row: 40 } }).stopAt).toEqual({ kind: 'row', row: 40 });
+  });
+  it('refuses a stop rule that is not valid, and says which part', () => {
+    const bad: [Record<string, unknown>, RegExp][] = [
+      [{ stopAt: 'end' }, /stopAt.*must say where to stop/],
+      [{ stopAt: { kind: 'sometime' } }, /stopAt.kind/],
+      [{ stopAt: { kind: 'blank_rows', count: 0 } }, /stopAt.count.*1 to 10/],
+      [{ stopAt: { kind: 'blank_rows', count: 11 } }, /stopAt.count/],
+      [{ stopAt: { kind: 'blank_rows', count: 1.5 } }, /stopAt.count/],
+      [{ stopAt: { kind: 'marker' } }, /stopAt.text/],
+      [{ stopAt: { kind: 'marker', text: '  ' } }, /stopAt.text/],
+      [{ stopAt: { kind: 'marker', text: 'x', match: 'like' } }, /stopAt.match/],
+      [{ stopAt: { kind: 'marker', text: 'x', column: '' } }, /stopAt.column/],
+      [{ stopAt: { kind: 'row', row: 0 } }, /stopAt.row/],
+      [{ stopAt: { kind: 'row' } }, /stopAt.row/],
+    ];
+    for (const [settings, message] of bad) expect(() => parse(settings), JSON.stringify(settings)).toThrow(message);
+  });
+  it('reads the rows to ignore and the columns the file must have', () => {
+    expect(parse({ ignoreRows: [{ column: 'Label', text: 'Subtotal' }], expect: ['Code', 'Amount'] })).toMatchObject({ ignoreRows: [{ column: 'Label', text: 'Subtotal' }], expect: ['Code', 'Amount'] });
+    for (const bad of [{ ignoreRows: 'x' }, { ignoreRows: [{ column: 'A' }] }, { ignoreRows: [{ column: '', text: 'x' }] }, { ignoreRows: [1] }, { expect: 'Code' }, { expect: [''] }, { expect: [3] }]) {
+      expect(() => parse(bad), JSON.stringify(bad)).toThrow(EngineError);
+    }
+  });
+  it('an Input step made before Phase 6 reads the same table as before: the steps of the acceptance flow parse with the defaults', () => {
+    const flow = JSON.parse(readFileSync(new URL('../../../flows/monthly-timesheet.flow.json', import.meta.url), 'utf8')) as { nodes: { id: string; type: string; settings: Record<string, unknown> }[] };
+    const inputs = flow.nodes.filter((n) => n.type === 'input_file');
+    expect(inputs.length).toBeGreaterThan(0);
+    for (const n of inputs) {
+      expect(parseInputSettings(n.settings, n.id)).toMatchObject({ firstColumn: 1, lastColumn: undefined, stopAt: { kind: 'end' }, ignoreRows: [], expect: [] });
+      expect(Object.keys(n.settings).some((k) => ['firstColumn', 'lastColumn', 'stopAt', 'ignoreRows', 'expect'].includes(k))).toBe(false);
+    }
   });
 });
 

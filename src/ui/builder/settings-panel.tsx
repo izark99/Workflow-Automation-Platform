@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { FlowDefinition, FlowNode } from '../../engine/flow/types';
 import { NODE_PORTS } from '../../engine/flow/types';
+import { withBindingsVersion } from '../../engine/flow/bindings';
+import { parametersOf } from '../../engine/flow/parameters';
 import type { ParameterValue } from '../../engine/flow/parameters';
 import type { RefTable } from '../../engine/versions';
 import { Button, Dropdown, ErrorState, Field, InfoTip, Tabs } from '../components';
@@ -9,10 +11,13 @@ import { useT } from '../i18n';
 import { currentSource, deleteSteps, updateSettings, inputHandlesOf, inputTitle, renameStep, setInput, sourceOptions, STEP_CATALOG, stepNumbers } from './graph';
 import { FORMS } from './forms';
 import type { FormContext } from './forms/types';
+import { BindingScopeProvider } from './parameter-control/bind';
+import { boundNames, hiddenFromForm, putBindingsBack } from './parameter-control/bindings-edit';
 import { ParametersPanel } from './parameters-panel';
 import { StepPreview } from './step-preview';
 import { usePanel } from '../panels/use-panel';
 import { PanelToggle } from '../panels/panel-toggle';
+import { countRender } from './render-counter';
 import styles from './settings-panel.module.css';
 
 /** The settings panel frame: 380 px open, a 48 px rail when collapsed (toggle and, for a selected step, its name upright). */
@@ -52,10 +57,16 @@ export interface SettingsPanelProps {
   /** Test values of the parameters, by key. */
   parameterValues: Record<string, ParameterValue | undefined>;
   onParameterValue: (key: string, value: ParameterValue | undefined) => void;
+  /** The test date, shared by the Test tab and the forms that show what a table version is used on that day. */
+  testDate: string;
+  onTestDate: (date: string) => void;
+  /** The range of the open version and whether tables with no version are left out of the date check. */
+  coverage?: FormContext['coverage'];
 }
 
 /** The 380 px panel at the right: the selected step with the tabs Setup, Configure and Test. */
-export function SettingsPanel({ definition, step, onChange, onDeleted, readOnly, testFiles, onTestFile, refTables, parameterValues, onParameterValue }: SettingsPanelProps) {
+export function SettingsPanel({ definition, step, onChange, onDeleted, readOnly, testFiles, onTestFile, refTables, parameterValues, onParameterValue, testDate, onTestDate, coverage }: SettingsPanelProps) {
+  countRender('SettingsPanel');
   const t = useT();
   const [tab, setTab] = useState<SettingsTab>('setup');
   const [error, setError] = useState<string | null>(null);
@@ -95,8 +106,8 @@ export function SettingsPanel({ definition, step, onChange, onDeleted, readOnly,
           {tab === 'setup' ? (
             <SetupTab key={step.id} definition={definition} step={step} onChange={onChange} readOnly={readOnly} error={error} setError={setError} />
           ) : null}
-          {tab === 'configure' ? <ConfigureTab step={step} definition={definition} onChange={onChange} readOnly={readOnly} context={{ testFiles, refTables, parameterValues }} /> : null}
-          {tab === 'test' ? <StepPreview key={step.id} definition={definition} step={step} files={testFiles} onFile={onTestFile} refTables={refTables} parameterValues={parameterValues} onParameterValue={onParameterValue} /> : null}
+          {tab === 'configure' ? <ConfigureTab step={step} definition={definition} onChange={onChange} readOnly={readOnly} context={{ testFiles, refTables, parameterValues, testDate, coverage }} /> : null}
+          {tab === 'test' ? <StepPreview key={step.id} definition={definition} step={step} files={testFiles} onFile={onTestFile} refTables={refTables} parameterValues={parameterValues} onParameterValue={onParameterValue} date={testDate} onDate={onTestDate} onApplySettings={(next) => { onChange(withBindingsVersion(updateSettings(definition, step.id, next))); setTab('configure'); }} /> : null}
         </div>
       </Tabs>
       <div className={styles.footer}>
@@ -165,5 +176,15 @@ function SetupTab({ definition, step, onChange, readOnly, error, setError }: { d
 
 function ConfigureTab({ step, definition, onChange, readOnly, context }: { step: FlowNode; definition: FlowDefinition; onChange: (d: FlowDefinition) => void; readOnly: boolean; context: FormContext }) {
   const Form = FORMS[step.type];
-  return <Form key={step.id} step={step} definition={definition} readOnly={readOnly} context={context} onSettings={(settings) => onChange(updateSettings(definition, step.id, settings))} />;
+  const lastFixed = useRef<Record<string, unknown>>({});
+  // The form knows plain values only: it is shown a placeholder where a setting is bound, and the bindings are put back when
+  // it saves. The first binding makes the definition schemaVersion 3 (SPEC 13.3).
+  const apply = (settings: Record<string, unknown>): void => onChange(withBindingsVersion(updateSettings(definition, step.id, settings)));
+  const shown = { ...step, settings: hiddenFromForm(step.type, step.settings) };
+  const bound = boundNames(step.settings).join(',');
+  return (
+    <BindingScopeProvider value={{ step, parameters: parametersOf(definition), readOnly, apply, remember: (memory, value) => { lastFixed.current[memory] = value; }, recall: (memory) => lastFixed.current[memory] }}>
+      <Form key={`${step.id}|${bound}`} step={shown} definition={definition} readOnly={readOnly} context={context} onSettings={(settings) => apply(putBindingsBack(settings, step.settings))} />
+    </BindingScopeProvider>
+  );
 }

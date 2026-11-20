@@ -117,6 +117,14 @@ describe('runPreview on the Node engine', () => {
     const def = chain(['input_file']);
     await expect(runPreview({ definition: def, nodeId: 'input_file-1', handle: 'out', files: {}, refTables: [], effectiveDate: '2026-09-30', runner })).rejects.toThrow(/No file was provided|Choose a file/);
   });
+  it('a Reference table step previews the version of the date, and a draft counts in a test run', async () => {
+    const def = { schemaVersion: 1, nodes: [{ id: 'ref', type: 'reference_table', settings: { table: 'limits' } }], edges: [] } as unknown as Parameters<typeof runPreview>[0]['definition'];
+    const columns = [{ name: 'code', type: 'text' as const }];
+    const refTables = [{ name: 'limits', versions: [{ versionNo: 1, validFrom: '2026-01-01', validTo: '2026-09-30', columns, rows: [['A']] }, { versionNo: 2, validFrom: '2026-10-01', validTo: null, status: 'draft' as const, columns, rows: [['B'], ['C']] }] }];
+    const on = (effectiveDate: string) => runPreview({ definition: def, nodeId: 'ref', handle: 'out', files: {}, refTables, effectiveDate, runner });
+    expect((await on('2026-09-30')).rows).toEqual([['A']]);
+    expect((await on('2026-10-31')).rows).toEqual([['B'], ['C']]);
+  });
   it('a preview asks only for the parameters that its steps read, and uses defaults for values not given', async () => {
     let def = chain(['input_file', 'filter']);
     def = { ...def, schemaVersion: 2, parameters: [

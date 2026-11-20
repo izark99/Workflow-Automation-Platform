@@ -14,8 +14,11 @@ import type { Selection } from './canvas';
 import { emptyDefinition } from './graph';
 import { SettingsPanel } from './settings-panel';
 import { StepList } from './step-list';
+import { dateCheck } from '../../engine/versions';
+import { gapLine } from '../date-check';
 import { newVersionProblem, suggestStart } from '../screens/versions-logic';
 import { canEditFlow, isDirty, publishBlockers, publishSummary, versionOptionLabel } from './version-logic';
+import { countRender } from './render-counter';
 import styles from './builder.module.css';
 
 
@@ -33,6 +36,7 @@ export function BuilderScreen() {
 }
 
 function Builder() {
+  countRender('BuilderScreen');
   const t = useT();
   const { id = '', versionNo = '1' } = useParams();
   const store = useStore();
@@ -43,6 +47,7 @@ function Builder() {
   const refs = useLoad((s) => s.listRefTables());
   const [testFiles, setTestFiles] = useState<Record<string, File>>({});
   // Test values of the parameters. They stay in the browser, like the test files, and are not saved with the flow.
+  const [testDate, setTestDate] = useState(todayIso());
   const [testValues, setTestValues] = useState<Record<string, ParameterValue | undefined>>({});
   const version = flow.data?.versions.find((v) => v.versionNo === Number(versionNo));
   const [definition, setDefinition] = useState<FlowDefinition>(emptyDefinition());
@@ -175,6 +180,10 @@ function Builder() {
 
   const versions = [...(flow.data?.versions ?? [])].sort((a, b) => b.versionNo - a.versionNo);
   const summary = flow.data && version ? publishSummary(flow.data, version.versionNo) : undefined;
+  // The date check (SPEC 13.3 item 7): the days of this version that a table it reads has no published version for.
+  // A person who may not read a table yet sees it with no versions: that says nothing, so those tables are skipped.
+  const coverage = version ? { range: { validFrom: version.validFrom, validTo: version.validTo }, skipEmpty: me.data?.role !== 'admin' } : undefined;
+  const gaps = coverage ? dateCheck(definition, coverage.range, refs.data ?? [], { skipEmpty: coverage.skipEmpty }) : [];
 
   return (
     <div className={styles.page}>
@@ -269,6 +278,9 @@ function Builder() {
           onTestFile={(key, file) => setTestFiles((f) => ({ ...f, [key]: file }))}
           refTables={refs.data ?? []}
           parameterValues={testValues}
+          testDate={testDate}
+          coverage={coverage}
+          onTestDate={setTestDate}
           onParameterValue={(key, value) => setTestValues((v) => ({ ...v, [key]: value }))}
         />
       </main>
@@ -279,6 +291,7 @@ function Builder() {
           dirty={dirty}
           busy={busy === 'publish'}
           error={dialogError}
+          warnings={gaps.map(gapLine)}
           onConfirm={() => void publish()}
           onCancel={() => setDialog(null)}
         />

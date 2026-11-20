@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { resolvedEdges } from '../graph';
 import { Button, Dropdown, Field, Icon } from '../../components';
 import { useT } from '../../i18n';
+import { Bind } from '../parameter-control/bind';
 import type { MessageKey } from '../../i18n';
 import { ColumnSelect, LoadColumnsBar, SectionLabel } from './column-pickers';
 import { NO_MATCH, lookupFromSettings, lookupMissing, lookupToSettings, refTableColumns, refTableUnreadable } from './lookup-logic';
@@ -96,6 +97,7 @@ export function LookupForm(props: FormProps) {
         </div>
       </div>
 
+      <Bind name="onNoMatch" label={t('builder.join.onNoMatch')}>
       <div>
         <span className={styles.label}>{t('builder.join.onNoMatch')}</span>
         <Dropdown
@@ -107,6 +109,7 @@ export function LookupForm(props: FormProps) {
           onChange={(n) => apply({ ...v, onNoMatch: n as NoMatch })}
         />
       </div>
+      </Bind>
 
       <p className={styles.note} role="status">
         {missing.length === 0 ? t('builder.join.complete') : t('common.numbered', { label: t('builder.join.stillMissing'), n: missing.join(' ') })}

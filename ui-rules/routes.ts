@@ -1,6 +1,8 @@
 // Every route that the UI rules run on. A route added to the app is added here in the same task, so it is checked at once.
 import type { Page } from '@playwright/test';
 import { seedParameterFlow } from '../e2e/parameter-flow';
+import { REF_FLOW, seedReferenceStep } from '../e2e/reference-step-flow';
+import { ambiguousLayouts, clearLayouts } from '../scripts/lib/layout-fixtures';
 import { seedRunnableFlow } from '../e2e/runnable-flow';
 import { seedSnapshot } from '../src/store/seed';
 
@@ -216,6 +218,254 @@ export const ROUTES: RuleRoute[] = [
       await page.getByRole('complementary', { name: 'Step settings' }).getByRole('heading').waitFor();
     },
   },
+  {
+    path: REF_FLOW,
+    name: `${REF_FLOW} (Reference table cards)`,
+    sidebar: false,
+    // A card with a table and a card that says to choose one.
+    before: (page) =>
+      seedReferenceStep(page, {
+        nodes: [
+          { id: 'limits', type: 'reference_table', label: 'Reference table', position: { x: 0, y: 0 }, settings: { table: 'OT types' } },
+          { id: 'empty', type: 'reference_table', label: 'Reference table 2', position: { x: 280, y: 0 }, settings: {} },
+        ],
+      }),
+    prepare: async (page) => {
+      await page.locator('.react-flow__node').nth(1).waitFor();
+    },
+  },
+  ...(
+    [
+      ['no table chosen', {}, undefined],
+      ['table chosen: version and columns', {}, 'Closed range'],
+      ['no version for the test date', {}, 'Old limits'],
+      ['table not in the list', { settings: { table: 'Gone' } }, undefined],
+      ['table not readable yet', { user: 'user-lan' as const, nodes: [] }, 'Closed range'],
+    ] as const
+  ).map(
+    ([state, opts, table]): RuleRoute => ({
+      path: REF_FLOW,
+      name: `${REF_FLOW} (Reference table, Configure: ${state})`,
+      sidebar: false,
+      before: (page) =>
+        seedReferenceStep(page, 'settings' in opts ? { nodes: [{ id: 'ref', type: 'reference_table', label: 'Reference table', position: { x: 0, y: 0 }, settings: opts.settings }] } : opts),
+      // Without names that depend on the language, so the pseudo-locale check can run these states too.
+      prepare: async (page) => {
+        const settings = page.locator('#builder-settings');
+        if ('nodes' in opts) await page.locator('#builder-steps [role=group]').first().getByRole('button').nth(1).click();
+        else await page.locator('.react-flow__node').first().click();
+        await settings.getByRole('tab').nth(1).click();
+        const dropdown = settings.getByRole('tabpanel').getByRole('button').first();
+        if (table) {
+          await dropdown.click();
+          await page.getByRole('option', { name: table, exact: true }).click();
+        }
+        await dropdown.waitFor();
+      },
+    }),
+  ),
+  {
+    path: REF_FLOW,
+    name: `${REF_FLOW} (Reference table, Test tab with rows)`,
+    sidebar: false,
+    before: (page) => seedReferenceStep(page, { nodes: [{ id: 'ref', type: 'reference_table', label: 'Reference table', position: { x: 0, y: 0 }, settings: { table: 'OT limits' } }] }),
+    // The preview of the table: no file is needed, so the rows appear. No language-dependent names.
+    prepare: async (page) => {
+      const settings = page.locator('#builder-settings');
+      await page.locator('.react-flow__node').first().click();
+      await settings.getByRole('tab').nth(2).click();
+      await settings.getByRole('tabpanel').getByRole('button').filter({ hasNotText: /\d{4}/ }).first().click();
+      await settings.getByRole('table').locator('tbody tr').first().waitFor({ timeout: 30_000 });
+    },
+  },
+  {
+    path: REF_FLOW,
+    name: `${REF_FLOW} (date check, Configure tab)`,
+    sidebar: false,
+    // A flow version of 2027 and a table whose last version ends in 2026: the warning under the dropdown.
+    before: (page) => seedReferenceStep(page, { nodes: [{ id: 'ref', type: 'reference_table', label: 'Reference table', position: { x: 0, y: 0 }, settings: { table: 'Ends 2026' } }], validFrom: '2027-01-01', validTo: '2027-12-31' }),
+    prepare: async (page) => {
+      const settings = page.locator('#builder-settings');
+      await page.locator('.react-flow__node').first().click();
+      await settings.getByRole('tab').nth(1).click();
+      await settings.getByRole('tabpanel').getByRole('status').first().waitFor();
+    },
+  },
+  {
+    path: REF_FLOW,
+    name: `${REF_FLOW} (date check, publish dialog)`,
+    sidebar: false,
+    pseudo: false, // the Publish button is found by its English name
+    before: (page) => seedReferenceStep(page, { nodes: [{ id: 'ref', type: 'reference_table', label: 'Reference table', position: { x: 0, y: 0 }, settings: { table: 'Ends 2026' } }], validFrom: '2027-01-01', validTo: '2027-12-31' }),
+    prepare: async (page) => {
+      await page.getByRole('button', { name: 'Publish', exact: true }).click();
+      await page.getByRole('dialog').getByRole('status').waitFor();
+    },
+  },
+  {
+    path: '/flows/flow-refstep/run',
+    name: '/flows/flow-refstep/run (date check warning)',
+    sidebar: true,
+    busy: true,
+    // A published flow that reads a table which ends in 2026: the warning above the list of versions.
+    before: (page) => seedReferenceStep(page, { status: 'published', nodes: [{ id: 'ref', type: 'reference_table', label: 'Reference table', position: { x: 0, y: 0 }, settings: { table: 'Ends 2026' } }] }),
+    prepare: async (page) => {
+      await page.getByRole('status').first().waitFor();
+    },
+  },
+  ...(
+    [
+      ['Configure: a bound field', 1, [{ key: 'sheet', label: 'Sheet to read', type: 'text', required: true, default: 'July' }], { key: 'people', sheet: { $param: 'sheet' }, headerRow: 1 }],
+      ['Configure: a deleted parameter', 1, [{ key: 'other', label: 'Other', type: 'text', required: false }], { key: 'people', sheet: { $param: 'gone' }, headerRow: 1 }],
+      ['Test: the value now', 2, [{ key: 'sheet', label: 'Sheet to read', type: 'text', required: true, default: 'July' }], { key: 'people', sheet: { $param: 'sheet' }, headerRow: 1 }],
+      ['Test: a value that cannot be used', 2, [{ key: 'row', label: 'Header row number', type: 'number', required: true, default: 0 }], { key: 'people', headerRow: { $param: 'row' } }],
+    ] as const
+  ).map(
+    ([state, tab, parameters, inputSettings]): RuleRoute => ({
+      path: REF_FLOW,
+      name: `${REF_FLOW} (parameter control, ${state})`,
+      sidebar: false,
+      before: (page) => seedReferenceStep(page, { parameters: [...parameters], nodes: [{ id: 'in', type: 'input_file', label: 'People', position: { x: 0, y: 0 }, settings: { ...inputSettings } }] }),
+      // Without names that depend on the language, so the pseudo-locale check runs on these states too.
+      prepare: async (page) => {
+        await page.locator('.react-flow__node').first().click();
+        const settings = page.locator('#builder-settings');
+        await settings.getByRole('tab').nth(tab).click();
+        await settings.getByRole('tabpanel').getByText(/\S/).first().waitFor();
+      },
+    }),
+  ),
+  ...(
+    [
+      ['with the group and a value', { key: 'sheet', label: 'Sheet to read', type: 'text', required: true, default: 'July' }],
+      ['with the group and an error', { key: 'sheet', label: 'Sheet to read', type: 'text', required: true }],
+    ] as const
+  ).map(
+    ([state, parameter]): RuleRoute => ({
+      path: '/flows/flow-refstep/run',
+      name: `/flows/flow-refstep/run (settings that use a parameter, ${state})`,
+      sidebar: true,
+      busy: true,
+      before: (page) =>
+        seedReferenceStep(page, {
+          status: 'published',
+          parameters: [{ ...parameter }],
+          nodes: [
+            { id: 'in', type: 'input_file', label: 'People', position: { x: 0, y: 0 }, settings: { key: 'people', sheet: { $param: 'sheet' }, headerRow: 1 } },
+            { id: 'ref', type: 'reference_table', label: 'Limits table', position: { x: 0, y: 120 }, settings: { table: 'Closed range' } },
+          ],
+        }),
+      // Three groups: the versions, the settings that use a parameter, and the files. No language-dependent names.
+      prepare: async (page) => {
+        await page.locator('[role=group]').nth(2).waitFor();
+      },
+    }),
+  ),
+  ...(
+    [
+      ['defaults', { key: 'people', headerRow: 1 }, 'draft', undefined],
+      ['a marker row, a row to ignore, required columns', { key: 'people', headerRow: 2, firstColumn: 'C', lastColumn: 'H', stopAt: { kind: 'marker', text: 'Prepared by', match: 'starts_with', column: 'Label' }, ignoreRows: [{ column: 'Label', text: 'Subtotal' }], expect: ['Code', 'Amount'] }, 'draft', undefined],
+      ['an empty-rows stop and a fixed row', { key: 'people', headerRow: 1, stopAt: { kind: 'blank_rows', count: 2 } }, 'draft', undefined],
+      ['errors', { key: 'people', headerRow: 1 }, 'draft', 'A1'],
+      ['read-only', { key: 'people', headerRow: 1, firstColumn: 'B', stopAt: { kind: 'row', row: 9 } }, 'published', undefined],
+    ] as const
+  ).map(
+    ([state, inputSettings, status, typed]): RuleRoute => ({
+      path: REF_FLOW,
+      name: `${REF_FLOW} (region settings, ${state})`,
+      sidebar: false,
+      before: (page) => seedReferenceStep(page, { status, nodes: [{ id: 'in', type: 'input_file', label: 'People', position: { x: 0, y: 0 }, settings: { ...inputSettings } }] }),
+      // Without names that depend on the language, so the pseudo-locale check runs on these states too.
+      prepare: async (page) => {
+        await page.locator('.react-flow__node').first().click();
+        const settings = page.locator('#builder-settings');
+        await settings.getByRole('tab').nth(1).click();
+        const boxes = settings.getByRole('tabpanel').getByRole('textbox');
+        // The boxes in order: name, sheet, header row, rows to skip, first column, last column.
+        if (typed) await boxes.nth(4).fill(typed);
+        await boxes.nth(4).waitFor();
+      },
+    }),
+  ),
+  ...(
+    [
+      ['no file', undefined, false],
+      ['reading', 'title-and-footer (xlsx)', true],
+      ['a clear result', 'title-and-footer (xlsx)', false],
+      ['an ambiguous result', 'two-tables (xlsx)', false],
+      ['no table found', 'text-only (csv)', false],
+      ['an error', 'broken', false],
+    ] as const
+  ).map(
+    ([state, layoutName, slow]): RuleRoute => ({
+      path: REF_FLOW,
+      name: `${REF_FLOW} (analyze file, ${state})`,
+      sidebar: false,
+      before: async (page) => {
+        await seedReferenceStep(page, { nodes: [{ id: 'in', type: 'input_file', label: 'People', position: { x: 0, y: 0 }, settings: { key: 'people', headerRow: 1 } }] });
+        if (slow) await page.addInitScript(() => localStorage.setItem('dfw.analyzeDelayMs', '600000'));
+      },
+      // Without names that depend on the language, so the pseudo-locale check runs on these states too.
+      prepare: async (page) => {
+        await page.locator('.react-flow__node').first().click();
+        const settings = page.locator('#builder-settings');
+        await settings.getByRole('tab').nth(2).click();
+        if (layoutName === undefined) {
+          await page.locator('[data-analyze=run]').waitFor();
+          return;
+        }
+        const layout = [...clearLayouts(), ...ambiguousLayouts()].find((l) => l.name === layoutName);
+        const file = layout
+          ? { name: layout.file.name, mimeType: layout.format === 'csv' ? 'text/csv' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', buffer: Buffer.from(layout.file.bytes) }
+          : { name: 'broken.docx', mimeType: 'application/octet-stream', buffer: Buffer.from('not a table') };
+        await settings.locator('input[type=file]').setInputFiles(file);
+        await page.locator('[data-analyze=run]').click();
+        if (slow) await settings.getByRole('progressbar').waitFor();
+        else await settings.locator('[role=group] , [role=alert], [role=status]').first().waitFor();
+        await page.waitForTimeout(300);
+      },
+    }),
+  ),
+  ...(
+    [
+      ['Test tab, a stop text that was not found', 'test'],
+      ['Run screen, a stop text that was not found', 'run'],
+    ] as const
+  ).map(
+    ([state, where]): RuleRoute => ({
+      path: where === 'run' ? '/flows/flow-refstep/run' : REF_FLOW,
+      name: `${where === 'run' ? '/flows/flow-refstep/run' : REF_FLOW} (${state})`,
+      sidebar: where === 'run',
+      busy: where === 'run' ? true : undefined,
+      before: (page) =>
+        seedReferenceStep(page, {
+          status: where === 'run' ? 'published' : 'draft',
+          nodes: [
+            { id: 'in', type: 'input_file', label: 'People', position: { x: 0, y: 0 }, settings: { key: 'people', headerRow: 1, stopAt: { kind: 'marker', text: 'No such footer', match: 'contains' } } },
+            { id: 'out', type: 'output', label: 'Result', position: { x: 0, y: 160 }, settings: { file: 'Result', format: 'xlsx', sheet: 'Rows' } },
+          ],
+          edges: [{ source: 'in', target: 'out' }],
+        }),
+      // The file is a small csv; the page waits for the result. No language-dependent names.
+      prepare: async (page) => {
+        const file = { name: 'people.csv', mimeType: 'text/csv', buffer: Buffer.from('Code,Amount\nK1,5\nK2,6\nK3,7\n') };
+        if (where === 'run') {
+          await page.locator('input[type=file]').setInputFiles(file);
+          // The Run button is the first button after the group of files.
+          await page.locator('[role=group]').last().locator('xpath=following::button[1]').click();
+          await page.getByRole('status').filter({ has: page.locator('li') }).first().waitFor({ timeout: 60_000 });
+        } else {
+          await page.locator('.react-flow__node').first().click();
+          const settings = page.locator('#builder-settings');
+          await settings.getByRole('tab').nth(2).click();
+          await settings.locator('input[type=file]').setInputFiles(file);
+          await settings.getByRole('tabpanel').getByRole('button').last().click();
+          await settings.getByRole('status').first().waitFor({ timeout: 30_000 });
+        }
+        await page.waitForTimeout(500);
+      },
+    }),
+  ),
   {
     path: '/reference-tables',
     name: '/reference-tables (import dialog)',

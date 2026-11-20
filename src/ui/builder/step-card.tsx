@@ -1,9 +1,11 @@
+import { memo } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import type { Node, NodeProps } from '@xyflow/react';
 import type { FlowNode } from '../../engine/flow/types';
 import { translate } from '../i18n';
 import type { MessageKey } from '../i18n';
 import { STEP_CATALOG } from './graph';
+import { countRender } from './render-counter';
 import styles from './builder.module.css';
 
 export interface StepCardData extends Record<string, unknown> {
@@ -20,7 +22,8 @@ const handleName = (h: string): string => (HANDLE_NAMES[h] === undefined ? h : H
 const at = (i: number, n: number): string => `${((i + 1) / (n + 1)) * 100}%`;
 
 /** A step as a 240 x 56 px card: number, name and type. Inputs sit on top, outputs at the bottom. */
-export function StepCard({ data, selected }: NodeProps<StepCardNode>) {
+function StepCardView({ data, selected }: NodeProps<StepCardNode>) {
+  countRender('StepCard');
   const { step, number, inputs, outputs } = data;
   return (
     <div className={`${styles.card} ${selected ? styles.cardSelected : ''}`}>
@@ -32,7 +35,16 @@ export function StepCard({ data, selected }: NodeProps<StepCardNode>) {
       </span>
       <span className={styles.cardText}>
         <span className={styles.cardTitle} data-user-content>{step.label ?? step.id}</span>
-        <span className={styles.cardSub}>{STEP_CATALOG[step.type].label}</span>
+        {step.type === 'reference_table' ? (
+          // The table that the step reads, in place of the type name (the type is already in the title of a new step).
+          typeof step.settings.table === 'string' && step.settings.table !== '' ? (
+            <span className={styles.cardSub} data-user-content>{step.settings.table}</span>
+          ) : (
+            <span className={styles.cardSub}>{translate('builder.card.chooseTable')}</span>
+          )
+        ) : (
+          <span className={styles.cardSub}>{STEP_CATALOG[step.type].label}</span>
+        )}
       </span>
       {outputs.map((h, i) => (
         <Handle key={`out-${h}`} id={h} type="source" position={Position.Bottom} style={{ left: at(i, outputs.length) }} />
@@ -47,3 +59,5 @@ export function StepCard({ data, selected }: NodeProps<StepCardNode>) {
     </div>
   );
 }
+
+export const StepCard = memo(StepCardView);

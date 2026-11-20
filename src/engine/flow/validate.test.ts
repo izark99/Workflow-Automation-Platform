@@ -253,6 +253,7 @@ describe('port registry and JSON schema', () => {
         'lookup_join',
         'output',
         'pivot',
+        'reference_table',
         'sql',
         'unpivot',
       ].sort(),

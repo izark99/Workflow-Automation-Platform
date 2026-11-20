@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { withBindingPlaceholders } from '../../../engine/flow/bindable';
 import { checkOutputNodes } from '../../../engine/nodes/output';
 import { Button, Checkbox, Dropdown, ErrorState, Field, Icon } from '../../components';
 import { useT, errorText } from '../../i18n';
 import type { MessageKey } from '../../i18n';
+import { Bind } from '../parameter-control/bind';
 import { ColumnList, ColumnSelect, LoadColumnsBar, SectionLabel } from './column-pickers';
 import { outputFromSettings, outputMissing, outputToSettings } from './output-logic';
 import type { OutputErrors, OutputFormat, OutputValues, SortRow } from './output-logic';
@@ -30,7 +32,7 @@ export function OutputForm(props: FormProps) {
   // The engine checks all Output steps together (sheet names, formats, csv files). Show its message when it is about this step.
   let clash: string | null = null;
   try {
-    checkOutputNodes(definition);
+    checkOutputNodes(withBindingPlaceholders(definition));
   } catch (e) {
     const message = errorText(e);
     if (message.includes(`"${step.id}"`)) clash = message;
@@ -39,12 +41,20 @@ export function OutputForm(props: FormProps) {
 
   return (
     <div className={styles.rowCard} style={{ gap: 16, borderBottom: 0, padding: 0 }}>
-      <Field label={t('builder.output.file')} hint={t('builder.output.fileHint')} value={v.file} disabled={readOnly} error={errors.file} onChange={(e) => apply({ ...v, file: e.target.value })} />
+      <Bind name="file" label={t('builder.output.file')}>
+        <Field label={t('builder.output.file')} hint={t('builder.output.fileHint')} value={v.file} disabled={readOnly} error={errors.file} onChange={(e) => apply({ ...v, file: e.target.value })} />
+      </Bind>
+      <Bind name="format" label={t('builder.output.format')}>
       <div>
         <span className={styles.label}>{t('builder.output.format')}</span>
         <Dropdown label={t('builder.output.format')} options={(['xlsx', 'csv'] as const).map((f) => ({ value: f, label: t(`builder.output.formats.${f}` as MessageKey) }))} value={v.format} disabled={readOnly} width="100%" onChange={(format) => apply({ ...v, format: format as OutputFormat })} />
       </div>
-      {v.format === 'xlsx' ? <Field label={t('builder.output.sheet')} hint={t('builder.output.sheetHint')} value={v.sheet} disabled={readOnly} error={errors.sheet} onChange={(e) => apply({ ...v, sheet: e.target.value })} /> : null}
+      </Bind>
+      {v.format === 'xlsx' ? (
+        <Bind name="sheet" label={t('builder.output.sheet')}>
+          <Field label={t('builder.output.sheet')} hint={t('builder.output.sheetHint')} value={v.sheet} disabled={readOnly} error={errors.sheet} onChange={(e) => apply({ ...v, sheet: e.target.value })} />
+        </Bind>
+      ) : null}
       {clash ? <ErrorState what={t('builder.output.clash')} next={clash} /> : null}
 
       <LoadColumnsBar source={source} />

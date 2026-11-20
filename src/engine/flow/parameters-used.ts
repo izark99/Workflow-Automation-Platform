@@ -1,6 +1,7 @@
 import type { FlowDefinition } from './types';
 import { parametersOf } from './parameters';
 import type { FlowParameter } from './parameters';
+import { bindingsOf } from './bindings';
 
 const PARAM_CALL = /\bPARAM\s*\(\s*"([^"]*)"/gi;
 
@@ -12,7 +13,8 @@ function* texts(value: unknown): Generator<string> {
 }
 
 /**
- * The parameters that the steps of a definition read: those named in a `PARAM("key")` of any setting, and all of them when
+ * The parameters that the steps of a definition read: those named in a `PARAM("key")` of any setting, those that a setting is
+ * bound to (`{"$param": "key"}`), and all of them when
  * a SQL step reads `params`. Used by the Test tab, which runs only the steps before the selected one and so asks only for the
  * values that these steps need. In the order of the parameter list.
  */
@@ -21,6 +23,7 @@ export function parametersUsedBy(definition: FlowDefinition): FlowParameter[] {
   if (all.length === 0) return [];
   const wanted = new Set<string>();
   let everything = false;
+  for (const b of bindingsOf(definition)) wanted.add(b.key.toLowerCase());
   for (const node of definition.nodes) {
     for (const text of texts(node.settings)) {
       for (const m of text.matchAll(PARAM_CALL)) wanted.add((m[1] ?? '').toLowerCase());

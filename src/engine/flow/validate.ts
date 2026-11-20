@@ -2,6 +2,8 @@ import { engineText } from '../messages';
 import type { EngineMessageId, MessageParams } from '../messages';
 import { MAX_PARAMETER_KEY_LENGTH, PARAMETER_KEY, PARAMETER_TYPES, fitsParameterType } from './parameters';
 import type { FlowParameter, ParameterType } from './parameters';
+import { isBindable } from './bindable';
+import { containsBindingKey, isParamBinding } from './bindings';
 import {
   FLOW_SCHEMA_VERSION,
   SUPPORTED_SCHEMA_VERSIONS,
@@ -71,7 +73,7 @@ export function validateFlow(input: unknown): FlowValidation {
   if (!(SUPPORTED_SCHEMA_VERSIONS as readonly unknown[]).includes(input.schemaVersion)) {
     errors.push({
       code: 'unsupported_schema_version',
-      message: `The flow has schemaVersion ${JSON.stringify(input.schemaVersion)}, but this app reads versions ${SUPPORTED_SCHEMA_VERSIONS.join(' and ')}. Change schemaVersion to ${FLOW_SCHEMA_VERSION} or open the flow in a matching app version.`,
+      message: `The flow has schemaVersion ${JSON.stringify(input.schemaVersion)}, but this app reads versions ${SUPPORTED_SCHEMA_VERSIONS.slice(0, -1).join(', ')} and ${SUPPORTED_SCHEMA_VERSIONS[SUPPORTED_SCHEMA_VERSIONS.length - 1]}. Change schemaVersion to ${FLOW_SCHEMA_VERSION} or open the flow in a matching app version.`,
     });
   }
   const parameters = parametersFrom(input, errors);
@@ -122,6 +124,7 @@ export function validateFlow(input: unknown): FlowValidation {
     byId.set(id, node);
     nodes.push(node);
   });
+  checkBindings(input.schemaVersion, nodes, parameters, errors);
 
   const validEdges: FlowEdge[] = [];
   input.edges.forEach((raw: unknown, index: number) => {
@@ -318,6 +321,31 @@ export function topologicalOrder(flow: FlowDefinition): string[] {
     }
   }
   return order;
+}
+
+/** The bindings of the settings (SPEC 13.3): their shape, their parameter, and that they sit in a single-value setting. */
+function checkBindings(schemaVersion: unknown, nodes: FlowNode[], parameters: FlowParameter[], errors: FlowError[]): void {
+  const known = new Set(parameters.map((p) => p.key));
+  for (const node of nodes) {
+    const step = node.label ?? node.id;
+    const add = (id: EngineMessageId, params: MessageParams): void => {
+      errors.push({ ...paramError(id, { step, ...params }), nodeId: node.id });
+    };
+    for (const [setting, value] of Object.entries(node.settings)) {
+      if (isRecord(value) && '$param' in value) {
+        if (!isParamBinding(value)) {
+          add('engine.bindShape', { setting });
+          continue;
+        }
+        if (schemaVersion !== 3) add('engine.bindNeedsV3', { setting });
+        if (!isBindable(node.type, setting)) {
+          add('engine.bindNotHere', { setting });
+          continue;
+        }
+        if (!known.has(value.$param)) add('engine.bindUnknown', { setting, key: value.$param });
+      } else if (containsBindingKey(value)) add('engine.bindNotHere', { setting });
+    }
+  }
 }
 
 const paramError = (id: EngineMessageId, params: MessageParams = {}): FlowError => ({ code: 'invalid_parameters', message: engineText(id, params), messageId: id, params });

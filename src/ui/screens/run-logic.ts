@@ -1,5 +1,10 @@
 import type { FlowDefinition } from '../../engine/flow/types';
-import type { PreparedRun, RefTable } from '../../engine/versions';
+import { parametersOf } from '../../engine/flow/parameters';
+import type { ParameterValues } from '../../engine/flow/parameter-values';
+import { stepBindingResults, valueText } from '../builder/parameter-control/parameter-control-logic';
+import { settingLabel } from '../builder/parameter-control/setting-labels';
+import { dateCheck, resolveVersion } from '../../engine/versions';
+import type { FlowVersion, PreparedRun, RefTable, TableGap } from '../../engine/versions';
 import type { FlowVersionRecord } from '../../store/types';
 import { translate, formatDate } from '../i18n';
 
@@ -54,3 +59,43 @@ export function versionRows(prepared: PreparedRun, flowName: string, flowVersion
 }
 
 export const sheetLabel = (sheet: string, rows: number): string => translate('run.sheetLabel', { sheet, rows, rowsText: rows.toLocaleString('en-US') });
+
+/**
+ * The date check of the Run screen (SPEC 13.3 item 7): the days of the flow version that the effective date uses for which a
+ * table that the flow reads has no published version. It is the check of the publish dialog, over the range of this version.
+ * When the date itself is in a gap the run stops with its own message, and the gap is still listed here. A table with no
+ * version at all is left out for a person who may not read it yet (the database hides its versions), and counts for the admin.
+ */
+export function runDateCheck(flowVersions: FlowVersion[], date: string, tables: RefTable[], isAdmin: boolean): TableGap[] {
+  try {
+    const v = resolveVersion(flowVersions, date, { what: 'flow' });
+    return dateCheck(v.definition, { validFrom: v.validFrom, validTo: v.validTo }, tables, { skipEmpty: !isAdmin });
+  } catch {
+    return []; // no usable flow version: the screen already says so
+  }
+}
+
+export interface BoundRow {
+  /** "{step}, {setting}: {value}" for a value, or the setting alone when it cannot be resolved. */
+  text: string;
+  /** What failed and what to do, when the value cannot be used: the run does not start. */
+  error?: string;
+}
+
+/**
+ * One row for each setting of the flow that uses a parameter (the card "Versions used for this date" of the Run screen):
+ * the step, the setting and the value that this run will use, or the error under it. In the order of the steps.
+ */
+export function boundRows(definition: FlowDefinition, values: ParameterValues): BoundRow[] {
+  const parameters = parametersOf(definition);
+  const rows: BoundRow[] = [];
+  for (const node of definition.nodes) {
+    for (const r of stepBindingResults(node, parameters, values)) {
+      const step = node.label ?? node.id;
+      const setting = settingLabel(node.type, r.setting);
+      if (r.outcome.ok) rows.push({ text: translate('run.boundRow', { step, setting, value: valueText(r.param?.type ?? 'text', r.outcome.value) }) });
+      else rows.push({ text: translate('run.boundRowFailed', { step, setting }), error: r.outcome.error });
+    }
+  }
+  return rows;
+}

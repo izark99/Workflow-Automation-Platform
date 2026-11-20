@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Dropdown, Field } from '../../components';
 import { useT } from '../../i18n';
+import { Bind } from '../parameter-control/bind';
 import type { MessageKey } from '../../i18n';
 import { ColumnList, ColumnSelect, LoadColumnsBar, SectionLabel } from './column-pickers';
 import { refTableColumns, refTableUnreadable } from './lookup-logic';
@@ -35,10 +36,12 @@ export function PivotForm(props: FormProps) {
       <ColumnList label={t('builder.reshape.rowKeys')} values={v.rowKeys} columns={names} disabled={readOnly} onChange={(rowKeys) => apply({ ...v, rowKeys })} />
       <ColumnSelect label={t('builder.reshape.columnSource')} hint={t('builder.reshape.pivotHint')} value={v.columnSource} columns={names} disabled={readOnly} width="100%" onChange={(columnSource) => apply({ ...v, columnSource })} />
       <ColumnSelect label={t('builder.reshape.value')} value={v.value} columns={names} disabled={readOnly} width="100%" onChange={(value) => apply({ ...v, value })} />
+      <Bind name="aggregation" label={t('builder.reshape.aggregation')}>
       <div>
         <span className={styles.label}>{t('builder.reshape.aggregation')}</span>
         <Dropdown label={t('builder.reshape.aggregation')} options={PIVOT_FNS.map((f) => ({ value: f, label: t(`builder.reshape.fnLabels.${f}` as MessageKey) }))} value={v.aggregation} disabled={readOnly} width="100%" onChange={(aggregation) => apply({ ...v, aggregation: aggregation as PivotFn })} />
       </div>
+      </Bind>
       <div>
         <span className={styles.label}>{t('builder.reshape.newColumnsFrom')}</span>
         <Dropdown
@@ -64,13 +67,21 @@ export function PivotForm(props: FormProps) {
           <ColumnSelect label={t('builder.reshape.refColumn')} value={v.column} columns={refNames} disabled={readOnly} width="100%" onChange={(column) => apply({ ...v, column })} />
         </>
       ) : null}
+      <Bind name="fill" label={t('builder.reshape.fill')}>
       <Field label={t('builder.reshape.fill')} hint={t('builder.reshape.fillHint')} value={v.fill} disabled={readOnly} error={fill.ok ? undefined : fill.message} onChange={(e) => apply({ ...v, fill: e.target.value })} />
+      </Bind>
+      <Bind name="namePrefix" label={t('builder.reshape.prefix')}>
       <Field label={t('builder.reshape.prefix')} value={v.namePrefix} disabled={readOnly} onChange={(e) => apply({ ...v, namePrefix: e.target.value })} />
+      </Bind>
+      <Bind name="nameSuffix" label={t('builder.reshape.suffix')}>
       <Field label={t('builder.reshape.suffix')} value={v.nameSuffix} disabled={readOnly} onChange={(e) => apply({ ...v, nameSuffix: e.target.value })} />
+      </Bind>
+      <Bind name="nameCase" label={t('builder.reshape.nameCase')}>
       <div>
         <SectionLabel label={t('builder.reshape.nameCase')} hint={t('builder.reshape.nameCaseHint')} />
         <Dropdown label={t('builder.reshape.nameCase')} options={NAME_CASES.map((c) => ({ value: c, label: t(`builder.reshape.cases.${c}` as MessageKey) }))} value={v.nameCase} disabled={readOnly} width="100%" onChange={(nameCase) => apply({ ...v, nameCase: nameCase as NameCase })} />
       </div>
+      </Bind>
       <p className={styles.note} role="status">
         {missing.length === 0 ? t('builder.reshape.completePivot') : t('common.numbered', { label: t('builder.reshape.stillMissing'), n: missing.join(' ') })}
       </p>

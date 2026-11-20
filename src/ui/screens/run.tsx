@@ -10,15 +10,16 @@ import type { Cell } from '../../engine/types';
 import { checkFileSize } from '../../engine/size-guard';
 import { prepareRun } from '../../engine/versions';
 import type { FlowDefinition } from '../../engine/flow/types';
-import { Badge, Button, ButtonLink, Card, CrumbLink, DatePicker, EmptyState, ErrorState, ProgressBar, ScreenFrame, SkeletonTable, Table, Tabs, useDelayedLoading } from '../components';
+import { Badge, Button, ButtonLink, Card, CrumbLink, DatePicker, EmptyState, ErrorState, ProgressBar, QuietWarning, ScreenFrame, SkeletonTable, Table, Tabs, useDelayedLoading } from '../components';
 import type { Column } from '../components';
 import { formatCell } from '../builder/preview-logic';
 import { useLoad, useStore } from '../store-context';
 import { useT, errorText } from '../i18n';
+import { gapLine } from '../date-check';
 import { todayIso } from './flows-logic';
 import { executeRun } from './run-engine';
 import type { RunOutcome } from './run-engine';
-import { inputsOf, progressText, sheetLabel, sizeLabel, versionRows } from './run-logic';
+import { inputsOf, progressText, sheetLabel, sizeLabel, boundRows, runDateCheck, versionRows } from './run-logic';
 import styles from './run.module.css';
 
 type RunState = { status: 'idle' } | { status: 'running'; started: number; total: number; label: string } | { status: 'done'; outcome: RunOutcome } | { status: 'cancelled' } | { status: 'error'; message: string };
@@ -41,7 +42,7 @@ export function RunScreen() {
   const t = useT();
   const { id = '' } = useParams();
   const store = useStore();
-  const flow = useLoad(async (s) => ({ flow: await s.getFlow(id), refs: await s.listRefTables() }));
+  const flow = useLoad(async (s) => ({ flow: await s.getFlow(id), refs: await s.listRefTables(), me: await s.currentUser() }));
   const showSkeleton = useDelayedLoading(flow.loading);
   const [date, setDate] = useState(todayIso());
   const [files, setFiles] = useState<Record<string, File>>({});
@@ -63,12 +64,16 @@ export function RunScreen() {
     }
   }, [record, refs, date]);
 
+  const gaps = useMemo(() => (record ? runDateCheck(record.versions, date, refs, flow.data?.me.role === 'admin') : []), [record, date, refs, flow.data]);
   const definition = prepared?.ok ? (prepared.run.definition as FlowDefinition) : undefined;
   const inputs = definition ? inputsOf(definition) : [];
   const parameters = definition ? parametersOf(definition) : [];
   const values = initialValues(parameters, typed);
   const valueErrors = parameterValueErrors(parameters, values);
   const hasParameters = parameters.length > 0;
+  // The settings that use a parameter, with the value of this run; a value that cannot be used stops the run (SPEC 13.3 item 4).
+  const bound = definition ? boundRows(definition, values) : [];
+  const bindingProblem = bound.some((r) => r.error !== undefined);
   const missing = inputs.filter((i) => !files[i.key]);
   const running = state.status === 'running';
   // A run in progress counts as activity, so a long run is not cut off by the inactivity limit (SPEC 12.2 item 2).
@@ -140,6 +145,7 @@ export function RunScreen() {
       <>
         <Card title={t('run.step1')}>
           <DatePicker label={t('run.date')} value={date} onChange={(d) => { setDate(d); setState({ status: 'idle' }); }} disabled={running} />
+          <QuietWarning lines={gaps.map(gapLine)} />
           <div role="group" aria-label={t('run.versionsTitle')} className={styles.list}>
             <span className={styles.name}>{t('run.versionsTitle')}</span>
             {prepared?.ok
@@ -151,6 +157,19 @@ export function RunScreen() {
                 ))
               : null}
           </div>
+          {bound.length > 0 ? (
+            <div role="group" aria-label={t('run.boundTitle')} className={styles.list}>
+              <span className={styles.name}>{t('run.boundTitle')}</span>
+              {bound.map((r, i) => (
+                <div key={i}>
+                  <div className={styles.row}>
+                    <span data-user-content>{r.text}</span>
+                  </div>
+                  {r.error ? <ErrorState what={r.error} next="" /> : null}
+                </div>
+              ))}
+            </div>
+          ) : null}
           {prepared && !prepared.ok ? (
             <ErrorState
               what={prepared.noPublished ? t('run.noPublished') : t('run.versionsFailed')}
@@ -184,7 +203,7 @@ export function RunScreen() {
           </div>
           <PendingParametersNote parameters={parameters} errors={valueErrors} action="run" />
           <div className={styles.actions}>
-            <Button variant="primary" busy={running} disabled={!prepared?.ok || missing.length > 0 || Object.keys(valueErrors).length > 0} onClick={() => void run()}>
+            <Button variant="primary" busy={running} disabled={!prepared?.ok || missing.length > 0 || Object.keys(valueErrors).length > 0 || bindingProblem} onClick={() => void run()}>
               {running ? t('run.running') : state.status === 'idle' ? t('run.run') : t('run.runAgain')}
             </Button>
             {running ? (
@@ -248,6 +267,7 @@ function Result({ outcome, tab, onTab }: { outcome: RunOutcome; tab: string; onT
     : [];
   return (
     <>
+      <QuietWarning lines={outcome.warnings} />
       <div className={styles.split}>
         <div className={styles.downloads}>
           {outcome.files.map((f) => (
