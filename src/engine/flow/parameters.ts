@@ -37,7 +37,7 @@ export const parametersOf = (definition: { parameters?: FlowParameter[] }): Flow
  */
 export function withParameters(definition: FlowDefinition, parameters: FlowParameter[]): FlowDefinition {
   if (parameters.length === 0 && definition.parameters === undefined) return definition;
-  return { ...definition, schemaVersion: 2, parameters };
+  return { ...definition, schemaVersion: definition.schemaVersion === 3 ? 3 : 2, parameters };
 }
 
 /** Does this value fit the type of the parameter? A `list` value must be one of the options. */

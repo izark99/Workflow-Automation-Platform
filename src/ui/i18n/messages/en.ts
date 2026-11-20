@@ -1237,6 +1237,10 @@ export const en = {
   // Flow parameters (T4.9a)
   'engine.paramNotList': 'The "parameters" of the flow must be a list. Use an array, which may be empty.',
   'engine.paramNeedsV2': 'The flow has "parameters" but schemaVersion {version}. Set schemaVersion to 2 to use parameters.',
+  'engine.bindNeedsV3': 'Step "{step}" uses a parameter in "{setting}", which needs schemaVersion 3. Set schemaVersion to 3, or give the setting a fixed value.',
+  'engine.bindShape': 'The setting "{setting}" of step "{step}" has a "$param" that is not an object with one text key. Write it as $param with the key of a parameter, or give the setting a fixed value.',
+  'engine.bindUnknown': 'The setting "{setting}" of step "{step}" uses the parameter "{key}", which the flow does not define. Add that parameter, or choose another one.',
+  'engine.bindNotHere': 'The setting "{setting}" of step "{step}" holds a parameter inside a list or a group, where a parameter cannot be used. Use a fixed value there; formulas and SQL read parameters with PARAM("key").',
   'engine.paramShape': 'Parameter {n} is not an object with a key, a label and a type. Write each parameter as an object.',
   'engine.paramKey': 'Parameter {n} has the key "{key}". A key has letters, digits and underscores, does not start with a digit, and has at most {max} characters.',
   'engine.paramDuplicateKey': 'Two parameters use the key "{key}" (keys are compared without regard to case). Give each parameter its own key.',
