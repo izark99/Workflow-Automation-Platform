@@ -37,7 +37,7 @@ If this file and `testcase/TEST_RULES.md` disagree, `TEST_RULES.md` wins.
 - Soft delete of flows with restore within 30 days
 - Phase 4: admin account management, help text behind info buttons, editable texts in two languages, light and dark themes, flow parameters, UI quality pass (section 11)
 - Phase 5: import of reference tables from xlsx and csv, reference tables visible to users by use, sign-out after inactivity, texts edited in both languages at once, collapsible panels (section 12)
-- Phase 6: smooth dragging of steps on the canvas, input files with a table inside a larger sheet (a region, a stop rule, analysis of a sample file in the browser), and settings that take their value from a parameter or from a reference table (section 13)
+- Phase 6: smooth dragging of steps on the canvas, input files with a table inside a larger sheet (a region, a stop rule, analysis of a sample file in the browser), every input box of a step that can take a parameter, and a Reference table step that puts a shared table on the canvas (section 13)
 
 **Out of scope for the MVP**
 
@@ -53,7 +53,8 @@ If this file and `testcase/TEST_RULES.md` disagree, `TEST_RULES.md` wins.
 - Deleting a user account for good (the admin locks it instead)
 - Storing parameter values of a run anywhere (section 11.5)
 - Storing a sample file, or any input file, on the server (section 13.2): the analysis of a sample file runs in the browser and only the settings it proposes are saved
-- Formulas that read a reference table (LOOKUP, IN, and the like): a reference table is read by the Lookup and Pivot steps and, from Phase 6, by a setting (section 13.3)
+- Formulas that read a reference table (LOOKUP, IN, and the like): a reference table is read by the Lookup and Pivot steps and, from Phase 6, by the Reference table step (section 13.3)
+- Taking one value from a reference table into an input box, and a list parameter whose options come from a table (both can follow the Reference table step in a later phase)
 - Headers of two or more rows, and more than one table read from one sheet by one Input step (section 13.2 lists the other tables that it finds)
 
 ## 3. Architecture
@@ -127,6 +128,7 @@ preview of its first 100 rows.
 | Unpivot | Turns many columns into rows | Columns to keep, columns to unpivot, names for the new name and value columns |
 | Pivot | Turns row values into columns | Row keys, column source, value, aggregation |
 | Append | Stacks two or more inputs | Match columns by name or by position |
+| Reference table | From Phase 6: puts a shared reference table on the canvas, the version valid on the effective date | Table |
 | Output | Writes the result to a file | File type, sheet name. Several Output nodes can write to one workbook |
 | SQL | Runs free SQL on the nodes before it | SQL text |
 
@@ -215,7 +217,7 @@ fixed values in the flow.
 | 3. Server | Supabase schema, row-level security, sign-in, versions, groups | Permission tests pass on a local Supabase |
 | 4. Accounts, themes, texts, parameters | Section 11 | All gates of PROMPT section 2, including G6, pass in one clean run |
 | 5. Reference tables, idle sign-out, texts, panels | Section 12 | The same gates pass in one clean run |
-| 6. Canvas drag, input regions, bindings | Section 13 | The same gates pass in one clean run |
+| 6. Canvas drag, input regions, parameters in input boxes, Reference table step | Section 13 | The same gates pass in one clean run |
 
 ## 11. Phase 4 additions
 
@@ -427,38 +429,54 @@ fill down. From Phase 6:
 7. The region applies to xlsx and csv alike. A csv file has no sheets; its columns are numbered. The result is the same table
    whichever way the file is read (the streaming xlsx reader or DuckDB `read_csv`).
 
-### 13.3 Settings that take their value from a parameter or a reference table
+### 13.3 Parameters in every input box, and the Reference table step
 
-Parameters (section 11.5) work in formulas only. From Phase 6 a setting that is a single value can also take its value
-from a parameter, or from one cell of a reference table, so that a flow can ask the user for the sheet name or take it
-from a table of rules.
+Parameters (section 11.5) are defined as today, in the Parameters panel on the right of the builder; nothing about that panel
+changes. They work in formulas only. From Phase 6 they also work in the input boxes of every step, and a shared reference table
+can be put on the canvas like any other step.
 
-1. **A binding** replaces the literal value of a setting in the flow definition:
-   `{"$param": "period"}` takes the value of the parameter with that key; `{"$ref": {"table": "Input layouts",
-   "where": [{"column": "system", "equals": "HRM"}], "column": "sheet"}}` takes one cell of a reference table. In `where`,
-   `equals` is a literal or `{"$param": "key"}`. The definition format gets `schemaVersion` 3 (also for a list parameter with options from a table, item 6);
-   older definitions load unchanged.
-2. **Which settings.** Only settings that hold one text, number, date or yes/no value, listed in one registry (a module with a
-   test): the Input step (sheet, header row, rows to skip, first column, last column, the text of the stop rule, the name of
-   the row number column), the Output step (file name, sheet name) and the Pivot step (fill value, name prefix and suffix).
-   Formulas already read parameters with `PARAM("key")`; the SQL step reads `params`. The registry says the type of each setting.
-3. **Types.** A parameter fits a setting when the types are the same; a `list` parameter fits a text setting. A cell of a
-   reference table is converted to the type of the setting; a cell that does not fit is an error that names the step, the
-   setting, the table, the row and the column.
-4. **Reference table values.** The table version is the one that is valid on the effective date of the run, exactly as for the
-   Lookup step. The `where` list must select exactly one row; no row and more than one row are errors that say which. A blank
-   cell is an error, unless the setting is optional, where it means "not set".
-5. **Resolved before the run.** The engine replaces every binding by its value before the step is compiled, so the step
-   modules see plain values and do not change. The Test tab (with its test parameter values and test effective date) and the
-   Run screen show each resolved value next to its setting ("Now: Sheet1") so the person sees what will be used.
-6. **A parameter of type list can take its options from a reference table column** (and a label column) instead of a fixed
-   list written in the parameter: `options` is then `{"from": "reference", "table": "Departments", "column": "code"}`. The Run
-   screen and the Test tab load the options from the table version valid on the effective date, and a value must be one of them.
-7. **Who reads which table (section 12.1) follows.** A table that a binding or a list parameter reads counts as read by the flow:
-   `flow_ref_tables` lists it, so a person who may run the flow can read that table's rows. The database function that fills
-   `flow_ref_tables` and the function `referencedTables()` of the engine give the same answer for the same definition; a test
-   keeps them together (migration 18).
-8. A flow without bindings works as before, and the acceptance flow is unchanged.
+**Parameters in the input boxes**
+
+1. A single-value setting can take a parameter. In the flow definition `{"$param": "period"}` replaces the literal value. The
+   definition format gets `schemaVersion` 3; older definitions load unchanged and the acceptance flow is not edited.
+2. **Which settings.** Every single-value setting of every step: a text, a number, a date, a yes/no switch, and a dropdown of
+   fixed choices (for example the Input step's sheet and header row, the Output step's file name, the Pivot step's fill value,
+   the Unpivot step's new column names, the Lookup step's behaviour when nothing matches). Not: the choice of a column of the
+   data, the rows of a list or a grid (Column mapping rows, Group by aggregations, Lookup keys), and formulas and SQL, which read
+   parameters with `PARAM("key")` and the table `params` (section 11.5). One registry module lists the settings with their type,
+   and a test fails when a setting of a step form is neither in the registry nor in its short list of exclusions, so a new
+   setting cannot be forgotten.
+3. **Types.** A parameter fits a setting of the same type; a `list` parameter fits a text setting; for a dropdown of fixed
+   choices the value must be one of its choices (checked before the run, with the choices named). A parameter that is blank
+   and optional leaves an optional setting unset; for a required setting it is an error that names the step and the setting.
+4. **Resolved before the run.** The engine replaces every binding by the value of its parameter before a step is compiled, so
+   the step modules see plain values and do not change. The Test tab (with its test parameter values) and the Run screen show
+   the resolved value next to the setting ("Now: Sheet1"), so the person sees what will be used. Values stay in the browser
+   (section 11.5 item 6).
+
+**The Reference table step**
+
+5. A new step, "Reference table", is one entry of the step list (not one per table). It is added to the canvas like any other
+   step (dragged in, or with its button). It has no input and one output. The table is chosen afterwards, in the Configure tab,
+   from a dropdown of every table name (as the Lookup step offers them). The step loads all columns and rows of the table.
+6. **Version and date.** The step uses the version of the table that is valid on the effective date of the run, which is the same
+   effective date that selects the flow version, with the same rule and the same engine functions as the Lookup step (section 4).
+   The Run screen lists the table and its version with the other versions used; the Test tab shows the version used for its test
+   date ("v2, from 01 Jul 2026 to 31 Dec 2026"). When no version covers the date, or versions overlap, the run stops with the
+   existing message that says which table and which date.
+7. **The date check.** Before a flow version is published, and on the Reference table step, the app checks the whole range of the
+   flow version (its start and end dates) against the published versions of each table that the flow reads. A day with no version
+   of a table is shown as a warning that names the table and the days ("OT limits has no published version from 01 Jan 2027 to
+   30 Jun 2027: a run for these dates will stop"). The warning does not block the publish, because the admin may add the table
+   version next. The same function serves the step, the publish dialog and the Run screen.
+8. **Connecting it.** Its output connects to any step that takes a table: the right input of Lookup and Join, Append, Pivot,
+   SQL. The "Reference table" source that the Lookup step already offers stays, so flows made before Phase 6 run unchanged.
+9. **Who reads which table (section 12.1) follows.** A Reference table step counts as reading its table: `flow_ref_tables`
+   lists it, so a person who may run the flow can read the rows. The database function that fills `flow_ref_tables` and
+   `referencedTables()` of the engine give the same answer for the same definition, with this step included; a test keeps them
+   together (migration 18). Until the flow is saved the table is not readable for a person who does not yet have a flow that
+   reads it, and the step says "Save the flow to read this table", as the Lookup step does.
+10. A flow without parameters in input boxes and without the step works as before.
 
 ### 13.4 Gates for Phase 6
 
@@ -466,16 +484,20 @@ from a table of rules.
   more than one table in a sheet, a header on a later row, and the same as csv, each run through the real engine in Chromium
   with the settings of its region and compared to the expected rows cell by cell. The generator is a script of the repository
   (never `testcase/`); a second set runs the analysis and expects it to find the region of each clear layout and to report low
-  confidence on the ambiguous ones. A flow whose sheet name comes from a reference table runs with the table version of the
-  effective date. The two acceptance datasets still pass with the same flow file.
-- G2 has unit tests for the region and the stop rules, the columns the file must have, the analysis, the bindings, the registry
-  of bindable settings, and the new list parameter.
+  confidence on the ambiguous ones. A flow with a Reference table step runs with the table version of the effective date (two
+  versions, two dates), and a flow whose Input step takes its sheet and header row from parameters runs. The two acceptance
+  datasets still pass with the same flow file.
+- G2 has unit tests for the region and the stop rules, the columns the file must have, the analysis, the parameter bindings, the
+  registry of settings that take a parameter, the Reference table step and the date check.
 - G3 has the journeys of this section: dragging steps (the budgets of 13.1, no step disappears, one drag is one change); an
-  Input step is set up from a sample file with Analyze file and runs; a setting is bound to a parameter and to a table value
-  and the Test tab and the Run screen show the resolved values; a list parameter with options from a table; a file that lacks a
-  required column stops with the message; the analysis sends no request with file content.
-- G4 checks every new route in both themes (light at 1280 and 1440 px, dark at 1440 px) with the pseudo-locale check: the binding
-  control and its popover, a bound field, the analysis panel in each state, the region preview, the run messages.
-- G5 covers migration 18 (the function that lists the tables a definition reads, the trigger, the backfill) with the parity cases
-  of the engine, and `ref_table_versions` access for a table that is read only through a binding or a list parameter.
+  Input step is set up from a sample file with Analyze file and runs; settings of several steps take a parameter and the Test tab and
+  the Run screen show the resolved values; a Reference table step is dragged in, a table is chosen, and it feeds a Lookup and an
+  Append; the date check warns about a gap; a file that lacks a required column stops with the message; the analysis sends no
+  request with file content.
+- G4 checks every new route in both themes (light at 1280 and 1440 px, dark at 1440 px) with the pseudo-locale check: the parameter
+  control and a field that uses a parameter, the Reference table step and its states, the date check warning, the analysis
+  panel in each state, the region preview, the run messages.
+- G5 covers migration 18 (the function that lists the tables a definition reads, now with the Reference table step, the trigger,
+  the backfill) with the parity cases of the engine, and `ref_table_versions` access for a table that a flow reads only through
+  the Reference table step.
 - G6 (`admin-users`) and G0 (the spike) are unchanged.
