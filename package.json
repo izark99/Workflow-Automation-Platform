@@ -18,6 +18,7 @@
     "test:acceptance:pages": "VITE_DUCKDB_SOURCE=cdn playwright test -c playwright.acceptance.config.ts",
     "test:e2e": "playwright test -c playwright.e2e.config.ts",
     "test:ui-rules": "playwright test -c playwright.ui-rules.config.ts",
+    "perf:canvas": "node scripts/perf-canvas.ts",
     "test:db": "node scripts/test-db.mjs",
     "test:store": "node scripts/test-store.mjs",
     "test:functions": "node scripts/test-functions.mjs",

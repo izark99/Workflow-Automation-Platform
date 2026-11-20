@@ -16,6 +16,7 @@ import { SettingsPanel } from './settings-panel';
 import { StepList } from './step-list';
 import { newVersionProblem, suggestStart } from '../screens/versions-logic';
 import { canEditFlow, isDirty, publishBlockers, publishSummary, versionOptionLabel } from './version-logic';
+import { countRender } from './render-counter';
 import styles from './builder.module.css';
 
 
@@ -33,6 +34,7 @@ export function BuilderScreen() {
 }
 
 function Builder() {
+  countRender('BuilderScreen');
   const t = useT();
   const { id = '', versionNo = '1' } = useParams();
   const store = useStore();

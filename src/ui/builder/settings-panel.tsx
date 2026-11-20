@@ -13,6 +13,7 @@ import { ParametersPanel } from './parameters-panel';
 import { StepPreview } from './step-preview';
 import { usePanel } from '../panels/use-panel';
 import { PanelToggle } from '../panels/panel-toggle';
+import { countRender } from './render-counter';
 import styles from './settings-panel.module.css';
 
 /** The settings panel frame: 380 px open, a 48 px rail when collapsed (toggle and, for a selected step, its name upright). */
@@ -56,6 +57,7 @@ export interface SettingsPanelProps {
 
 /** The 380 px panel at the right: the selected step with the tabs Setup, Configure and Test. */
 export function SettingsPanel({ definition, step, onChange, onDeleted, readOnly, testFiles, onTestFile, refTables, parameterValues, onParameterValue }: SettingsPanelProps) {
+  countRender('SettingsPanel');
   const t = useT();
   const [tab, setTab] = useState<SettingsTab>('setup');
   const [error, setError] = useState<string | null>(null);

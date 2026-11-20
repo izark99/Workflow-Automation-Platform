@@ -4,6 +4,7 @@ import type { FlowNode } from '../../engine/flow/types';
 import { translate } from '../i18n';
 import type { MessageKey } from '../i18n';
 import { STEP_CATALOG } from './graph';
+import { countRender } from './render-counter';
 import styles from './builder.module.css';
 
 export interface StepCardData extends Record<string, unknown> {
@@ -21,6 +22,7 @@ const at = (i: number, n: number): string => `${((i + 1) / (n + 1)) * 100}%`;
 
 /** A step as a 240 x 56 px card: number, name and type. Inputs sit on top, outputs at the bottom. */
 export function StepCard({ data, selected }: NodeProps<StepCardNode>) {
+  countRender('StepCard');
   const { step, number, inputs, outputs } = data;
   return (
     <div className={`${styles.card} ${selected ? styles.cardSelected : ''}`}>
