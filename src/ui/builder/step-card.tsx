@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import type { Node, NodeProps } from '@xyflow/react';
 import type { FlowNode } from '../../engine/flow/types';
@@ -21,7 +22,7 @@ const handleName = (h: string): string => (HANDLE_NAMES[h] === undefined ? h : H
 const at = (i: number, n: number): string => `${((i + 1) / (n + 1)) * 100}%`;
 
 /** A step as a 240 x 56 px card: number, name and type. Inputs sit on top, outputs at the bottom. */
-export function StepCard({ data, selected }: NodeProps<StepCardNode>) {
+function StepCardView({ data, selected }: NodeProps<StepCardNode>) {
   countRender('StepCard');
   const { step, number, inputs, outputs } = data;
   return (
@@ -49,3 +50,5 @@ export function StepCard({ data, selected }: NodeProps<StepCardNode>) {
     </div>
   );
 }
+
+export const StepCard = memo(StepCardView);

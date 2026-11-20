@@ -8,7 +8,7 @@ export default defineConfig({
   timeout: 60_000,
   use: { baseURL: 'http://localhost:4178', viewport: { width: 1440, height: 900 }, timezoneId: 'Asia/Ho_Chi_Minh' },
   webServer: {
-    command: 'VITE_SUPABASE_URL= VITE_SUPABASE_ANON_KEY= VITE_DEV_ROUTES=true npx vite build --outDir dist-e2e --emptyOutDir && npx vite preview --outDir dist-e2e --port 4178 --strictPort',
+    command: 'VITE_SUPABASE_URL= VITE_SUPABASE_ANON_KEY= VITE_DEV_ROUTES=true VITE_PERF_COUNTERS=true npx vite build --outDir dist-e2e --emptyOutDir && npx vite preview --outDir dist-e2e --port 4178 --strictPort',
     url: 'http://localhost:4178/',
     timeout: 240_000,
     reuseExistingServer: false,
