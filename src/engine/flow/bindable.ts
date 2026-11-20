@@ -32,7 +32,7 @@ const whole = (name: string, min: number, placeholder: number): BindableSetting 
 const choice = (name: string, choices: readonly string[], optional: boolean): BindableSetting => ({ name, type: 'choice', choices, optional, placeholder: choices[0] as string });
 
 export const BINDABLE_SETTINGS: Readonly<Record<NodeType, readonly BindableSetting[]>> = {
-  input_file: [text('sheet', true, 'Sheet1'), whole('headerRow', 1, 1), whole('skipRows', 0, 0), text('rowNumberColumn', true, 'row_number'), text('firstColumn', true, 'A'), text('lastColumn', true, 'Z')],
+  input_file: [text('sheet', true, 'Sheet1'), whole('headerRow', 1, 1), whole('skipRows', 0, 0), text('rowNumberColumn', true, 'row_number'), text('firstColumn', true, 'A'), text('lastColumn', true, 'XFD')],
   reference_table: [],
   column_mapping: [],
   filter: [],

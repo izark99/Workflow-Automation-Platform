@@ -360,6 +360,32 @@ export const ROUTES: RuleRoute[] = [
       },
     }),
   ),
+  ...(
+    [
+      ['defaults', { key: 'people', headerRow: 1 }, 'draft', undefined],
+      ['a marker row, a row to ignore, required columns', { key: 'people', headerRow: 2, firstColumn: 'C', lastColumn: 'H', stopAt: { kind: 'marker', text: 'Prepared by', match: 'starts_with', column: 'Label' }, ignoreRows: [{ column: 'Label', text: 'Subtotal' }], expect: ['Code', 'Amount'] }, 'draft', undefined],
+      ['an empty-rows stop and a fixed row', { key: 'people', headerRow: 1, stopAt: { kind: 'blank_rows', count: 2 } }, 'draft', undefined],
+      ['errors', { key: 'people', headerRow: 1 }, 'draft', 'A1'],
+      ['read-only', { key: 'people', headerRow: 1, firstColumn: 'B', stopAt: { kind: 'row', row: 9 } }, 'published', undefined],
+    ] as const
+  ).map(
+    ([state, inputSettings, status, typed]): RuleRoute => ({
+      path: REF_FLOW,
+      name: `${REF_FLOW} (region settings, ${state})`,
+      sidebar: false,
+      before: (page) => seedReferenceStep(page, { status, nodes: [{ id: 'in', type: 'input_file', label: 'People', position: { x: 0, y: 0 }, settings: { ...inputSettings } }] }),
+      // Without names that depend on the language, so the pseudo-locale check runs on these states too.
+      prepare: async (page) => {
+        await page.locator('.react-flow__node').first().click();
+        const settings = page.locator('#builder-settings');
+        await settings.getByRole('tab').nth(1).click();
+        const boxes = settings.getByRole('tabpanel').getByRole('textbox');
+        // The boxes in order: name, sheet, header row, rows to skip, first column, last column.
+        if (typed) await boxes.nth(4).fill(typed);
+        await boxes.nth(4).waitFor();
+      },
+    }),
+  ),
   {
     path: '/reference-tables',
     name: '/reference-tables (import dialog)',
