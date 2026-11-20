@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { FlowDefinition, FlowNode } from '../../engine/flow/types';
 import { NODE_PORTS } from '../../engine/flow/types';
+import { withBindingsVersion } from '../../engine/flow/bindings';
+import { parametersOf } from '../../engine/flow/parameters';
 import type { ParameterValue } from '../../engine/flow/parameters';
 import type { RefTable } from '../../engine/versions';
 import { Button, Dropdown, ErrorState, Field, InfoTip, Tabs } from '../components';
@@ -9,6 +11,8 @@ import { useT } from '../i18n';
 import { currentSource, deleteSteps, updateSettings, inputHandlesOf, inputTitle, renameStep, setInput, sourceOptions, STEP_CATALOG, stepNumbers } from './graph';
 import { FORMS } from './forms';
 import type { FormContext } from './forms/types';
+import { BindingScopeProvider } from './parameter-control/bind';
+import { boundNames, hiddenFromForm, putBindingsBack } from './parameter-control/bindings-edit';
 import { ParametersPanel } from './parameters-panel';
 import { StepPreview } from './step-preview';
 import { usePanel } from '../panels/use-panel';
@@ -172,5 +176,15 @@ function SetupTab({ definition, step, onChange, readOnly, error, setError }: { d
 
 function ConfigureTab({ step, definition, onChange, readOnly, context }: { step: FlowNode; definition: FlowDefinition; onChange: (d: FlowDefinition) => void; readOnly: boolean; context: FormContext }) {
   const Form = FORMS[step.type];
-  return <Form key={step.id} step={step} definition={definition} readOnly={readOnly} context={context} onSettings={(settings) => onChange(updateSettings(definition, step.id, settings))} />;
+  const lastFixed = useRef<Record<string, unknown>>({});
+  // The form knows plain values only: it is shown a placeholder where a setting is bound, and the bindings are put back when
+  // it saves. The first binding makes the definition schemaVersion 3 (SPEC 13.3).
+  const apply = (settings: Record<string, unknown>): void => onChange(withBindingsVersion(updateSettings(definition, step.id, settings)));
+  const shown = { ...step, settings: hiddenFromForm(step.type, step.settings) };
+  const bound = boundNames(step.settings).join(',');
+  return (
+    <BindingScopeProvider value={{ step, parameters: parametersOf(definition), readOnly, apply, remember: (memory, value) => { lastFixed.current[memory] = value; }, recall: (memory) => lastFixed.current[memory] }}>
+      <Form key={`${step.id}|${bound}`} step={shown} definition={definition} readOnly={readOnly} context={context} onSettings={(settings) => apply(putBindingsBack(settings, step.settings))} />
+    </BindingScopeProvider>
+  );
 }

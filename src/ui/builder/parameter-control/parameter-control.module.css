@@ -66,3 +66,9 @@
 .tip {
   display: inline-flex;
 }
+
+.fieldLabel {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+}

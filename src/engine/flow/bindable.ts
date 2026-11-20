@@ -1,5 +1,6 @@
 import { NO_MATCH } from '../nodes/lookup-join';
 import { FUNCTIONS as PIVOT_FUNCTIONS } from '../nodes/pivot';
+import { isParamBinding } from './bindings';
 import type { NodeType } from './types';
 
 // The settings of each step that can take a parameter (SPEC 13.3 item 2), and the short list of those that cannot.
@@ -19,30 +20,35 @@ export interface BindableSetting {
   min?: number;
   /** The setting may be left unset; a blank optional parameter then leaves it unset. */
   optional: boolean;
+  /**
+   * A value that is valid for the setting. A form that holds a bound setting keeps this value in the place of the binding, so
+   * that it checks and shows itself as it does with any fixed value, and the binding is put back when it saves.
+   */
+  placeholder: string | number | boolean;
 }
 
-const text = (name: string, optional: boolean): BindableSetting => ({ name, type: 'text', optional });
-const whole = (name: string, min: number): BindableSetting => ({ name, type: 'number', integer: true, min, optional: true });
-const choice = (name: string, choices: readonly string[], optional: boolean): BindableSetting => ({ name, type: 'choice', choices, optional });
+const text = (name: string, optional: boolean, placeholder: string): BindableSetting => ({ name, type: 'text', optional, placeholder });
+const whole = (name: string, min: number, placeholder: number): BindableSetting => ({ name, type: 'number', integer: true, min, optional: true, placeholder });
+const choice = (name: string, choices: readonly string[], optional: boolean): BindableSetting => ({ name, type: 'choice', choices, optional, placeholder: choices[0] as string });
 
 export const BINDABLE_SETTINGS: Readonly<Record<NodeType, readonly BindableSetting[]>> = {
-  input_file: [text('sheet', true), whole('headerRow', 1), whole('skipRows', 0), text('rowNumberColumn', true)],
+  input_file: [text('sheet', true, 'Sheet1'), whole('headerRow', 1, 1), whole('skipRows', 0, 0), text('rowNumberColumn', true, 'row_number')],
   reference_table: [],
   column_mapping: [],
   filter: [],
-  formula_column: [text('name', false)],
+  formula_column: [text('name', false, 'New column')],
   lookup_join: [choice('onNoMatch', NO_MATCH, true)],
   group_by: [],
-  unpivot: [text('nameColumn', false), text('valueColumn', false), { name: 'skipBlank', type: 'boolean', optional: true }],
+  unpivot: [text('nameColumn', false, 'name'), text('valueColumn', false, 'value'), { name: 'skipBlank', type: 'boolean', optional: true, placeholder: false }],
   pivot: [
     choice('aggregation', PIVOT_FUNCTIONS, false),
-    { name: 'fill', type: 'number', optional: true },
-    text('namePrefix', true),
-    text('nameSuffix', true),
+    { name: 'fill', type: 'number', optional: true, placeholder: 0 },
+    text('namePrefix', true, 'p_'),
+    text('nameSuffix', true, '_s'),
     choice('nameCase', ['keep', 'lower', 'upper'], true),
   ],
   append: [choice('match', ['name', 'position'], true)],
-  output: [text('file', true), choice('format', ['xlsx', 'csv'], true), text('sheet', false)],
+  output: [text('file', true, 'Result'), choice('format', ['xlsx', 'csv'], true), text('sheet', false, 'Sheet1')],
   sql: [],
 };
 
@@ -67,3 +73,26 @@ export function bindableSetting(type: NodeType, name: string): BindableSetting |
 }
 
 export const isBindable = (type: NodeType, name: string): boolean => bindableSetting(type, name) !== undefined;
+
+/**
+ * The definition with every binding replaced by the placeholder of its setting. For checks that read the settings of steps as
+ * plain values and know nothing of parameters (the Output steps' sheet names, for example), so that a bound setting is not
+ * reported as a wrong value.
+ */
+export function withBindingPlaceholders<T extends { nodes: { type: NodeType; settings: Record<string, unknown> }[] }>(definition: T): T {
+  let changed = false;
+  const nodes = definition.nodes.map((node) => {
+    let settings: Record<string, unknown> | undefined;
+    for (const [name, value] of Object.entries(node.settings)) {
+      if (!isParamBinding(value)) continue;
+      settings ??= { ...node.settings };
+      const setting = bindableSetting(node.type, name);
+      if (setting) settings[name] = setting.placeholder;
+      else delete settings[name];
+    }
+    if (!settings) return node;
+    changed = true;
+    return { ...node, settings };
+  });
+  return changed ? { ...definition, nodes } : definition;
+}

@@ -5,7 +5,7 @@ import { bindingView, nowText, parametersThatFit } from './parameter-control-log
 
 const P = (key: string, type: FlowParameter['type'], label = key.toUpperCase()): FlowParameter => ({ key, label, type, required: false });
 const params = [P('t', 'text'), P('n', 'number'), P('d', 'date'), P('b', 'boolean'), P('l', 'list')];
-const setting = (type: BindableSetting['type']): BindableSetting => ({ name: 's', type, optional: true, ...(type === 'choice' ? { choices: ['x', 'y'] } : {}) });
+const setting = (type: BindableSetting['type']): BindableSetting => ({ name: 's', type, optional: true, placeholder: 'x', ...(type === 'choice' ? { choices: ['x', 'y'] } : {}) });
 const keys = (type: BindableSetting['type']) => parametersThatFit(params, setting(type)).map((p) => p.key);
 
 describe('parametersThatFit', () => {

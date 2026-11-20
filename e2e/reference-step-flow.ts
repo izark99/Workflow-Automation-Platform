@@ -12,6 +12,8 @@ export interface ReferenceStepSeed {
   status?: 'draft' | 'published';
   /** The steps of the saved version. Default: one Reference table step with no table. */
   nodes?: { id: string; type: string; label: string; position: { x: number; y: number }; settings: Record<string, unknown> }[];
+  /** Flow parameters. With them the definition is schemaVersion 3 (settings may be bound). */
+  parameters?: unknown[];
   /** The dates of the saved flow version. Default: from 2026-01-01, open ended. */
   validFrom?: string;
   validTo?: string | null;
@@ -49,7 +51,7 @@ export async function seedReferenceStep(page: Page, opts: ReferenceStepSeed = {}
         validTo: opts.validTo === undefined ? null : opts.validTo,
         status: opts.status ?? 'draft',
         changeNote: '',
-        definition: { schemaVersion: 1, nodes: opts.nodes ?? [{ id: 'ref', type: 'reference_table', label: 'Reference table', position: { x: 0, y: 0 }, settings: {} }], edges: [] },
+        definition: { schemaVersion: opts.parameters ? 3 : 1, ...(opts.parameters ? { parameters: opts.parameters } : {}), nodes: opts.nodes ?? [{ id: 'ref', type: 'reference_table', label: 'Reference table', position: { x: 0, y: 0 }, settings: {} }], edges: [] },
       },
     ],
   });

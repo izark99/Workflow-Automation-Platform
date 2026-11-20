@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Checkbox, Field } from '../../components';
 import { useT } from '../../i18n';
+import { Bind } from '../parameter-control/bind';
 import { toFormValues, validateInputForm } from './input-file-logic';
 import type { InputFormErrors, InputFormValues } from './input-file-logic';
 import type { FormProps } from './types';
@@ -24,14 +25,24 @@ export function InputFileForm({ step, definition, onSettings, readOnly }: FormPr
   return (
     <div className={styles.stack} style={{ paddingTop: 0 }}>
       <Field label={t('builder.form.input.key')} hint={t('builder.form.input.keyHint')} value={values.key} disabled={readOnly} error={errors.key} onChange={(e) => change({ key: e.target.value })} />
-      <Field label={t('builder.form.input.sheet')} hint={t('builder.form.input.sheetHint')} value={values.sheet} disabled={readOnly} onChange={(e) => change({ sheet: e.target.value })} />
-      <Field label={t('builder.form.input.headerRow')} hint={t('builder.form.input.headerRowHint')} inputMode="numeric" value={values.headerRow} disabled={readOnly} error={errors.headerRow} onChange={(e) => change({ headerRow: e.target.value })} />
-      <Field label={t('builder.form.input.skipRows')} hint={t('builder.form.input.skipRowsHint')} inputMode="numeric" value={values.skipRows} disabled={readOnly} error={errors.skipRows} onChange={(e) => change({ skipRows: e.target.value })} />
+      <Bind name="sheet" label={t('builder.form.input.sheet')}>
+        <Field label={t('builder.form.input.sheet')} hint={t('builder.form.input.sheetHint')} value={values.sheet} disabled={readOnly} onChange={(e) => change({ sheet: e.target.value })} />
+      </Bind>
+      <Bind name="headerRow" label={t('builder.form.input.headerRow')}>
+        <Field label={t('builder.form.input.headerRow')} hint={t('builder.form.input.headerRowHint')} inputMode="numeric" value={values.headerRow} disabled={readOnly} error={errors.headerRow} onChange={(e) => change({ headerRow: e.target.value })} />
+      </Bind>
+      <Bind name="skipRows" label={t('builder.form.input.skipRows')}>
+        <Field label={t('builder.form.input.skipRows')} hint={t('builder.form.input.skipRowsHint')} inputMode="numeric" value={values.skipRows} disabled={readOnly} error={errors.skipRows} onChange={(e) => change({ skipRows: e.target.value })} />
+      </Bind>
       <Field label={t('builder.form.input.fillDown')} hint={t('builder.form.input.fillDownHint')} value={values.fillDown} disabled={readOnly} onChange={(e) => change({ fillDown: e.target.value })} />
       <Checkbox checked={values.addRowNumber} disabled={readOnly} onChange={(checked) => change({ addRowNumber: checked })}>
         {t('builder.form.input.addRowNumber')}
       </Checkbox>
-      {values.addRowNumber ? <Field label={t('builder.form.input.rowNumberColumn')} value={values.rowNumberColumn} disabled={readOnly} error={errors.rowNumberColumn} onChange={(e) => change({ rowNumberColumn: e.target.value })} /> : null}
+      {values.addRowNumber ? (
+        <Bind name="rowNumberColumn" label={t('builder.form.input.rowNumberColumn')}>
+          <Field label={t('builder.form.input.rowNumberColumn')} value={values.rowNumberColumn} disabled={readOnly} error={errors.rowNumberColumn} onChange={(e) => change({ rowNumberColumn: e.target.value })} />
+        </Bind>
+      ) : null}
     </div>
   );
 }

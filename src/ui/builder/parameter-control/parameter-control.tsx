@@ -64,6 +64,8 @@ export function ParameterControl({ field, setting, parameters, value, readOnly, 
   const gone = view.kind === 'missing';
   return (
     <div className={styles.wrap}>
+      {/* A bound field has no input, so its name is shown here. */}
+      <span className={styles.fieldLabel} data-user-content={undefined}>{field}</span>
       <div className={styles.bound}>
         <span className={`${styles.chip} ${gone ? styles.chipError : ''}`}>
           <Icon name="link" />

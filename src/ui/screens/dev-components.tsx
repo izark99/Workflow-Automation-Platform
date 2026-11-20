@@ -22,7 +22,7 @@ function RailDemo({ id, initiallyCollapsed, label }: { id: string; initiallyColl
 /** Every state of the parameter control (T6.11): a fixed value, no fitting parameter, bound, an error, a deleted parameter. */
 function ParameterControlDemos() {
   const t = useT();
-  const text: BindableSetting = { name: 'sheet', type: 'text', optional: true };
+  const text: BindableSetting = { name: 'sheet', type: 'text', optional: true, placeholder: t('dev.demo.pcSheet') };
   const params: FlowParameter[] = [{ key: 'period', label: t('dev.demo.pcPeriod'), type: 'text', required: true }, { key: 'header', label: t('dev.demo.pcHeader'), type: 'number', required: false }];
   const [fixed, setFixed] = useState('Sheet1');
   const field = (value: string, readOnly = false) => <Field label={t('dev.demo.pcSheet')} value={value} disabled={readOnly} onChange={(e) => setFixed(e.target.value)} />;

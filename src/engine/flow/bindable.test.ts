@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { BINDABLE_SETTINGS, NOT_BINDABLE_SETTINGS, bindableSetting, isBindable } from './bindable';
+import { BINDABLE_SETTINGS, NOT_BINDABLE_SETTINGS, bindableSetting, isBindable, withBindingPlaceholders } from './bindable';
 import { NODE_TYPES, type NodeType } from './types';
 import { validateFlow } from './validate';
 
@@ -92,5 +92,32 @@ describe('validation uses the registry', () => {
   it('accepts a parameter in a setting of the registry', () => {
     expect(ids(flow('input_file', { key: 'k', sheet: { $param: 'p' } }))).toEqual([]);
     expect(ids(flow('output', { sheet: { $param: 'p' }, file: { $param: 'p' } }))).toEqual([]);
+  });
+});
+
+describe('placeholders', () => {
+  it('every setting has a placeholder of its own type that its step accepts (a choice: one of its choices; a number: its limits)', () => {
+    for (const type of NODE_TYPES) {
+      for (const s of BINDABLE_SETTINGS[type]) {
+        const label = `${type}.${s.name}`;
+        const v = s.placeholder;
+        if (s.type === 'number') {
+          expect(typeof v, label).toBe('number');
+          if (s.integer) expect(Number.isInteger(v), label).toBe(true);
+          if (s.min !== undefined) expect(v as number, label).toBeGreaterThanOrEqual(s.min);
+        } else if (s.type === 'boolean') expect(typeof v, label).toBe('boolean');
+        else if (s.type === 'choice') expect(s.choices, label).toContain(v);
+        else expect(typeof v === 'string' && v !== '', label).toBe(true);
+      }
+    }
+  });
+  it('withBindingPlaceholders puts the placeholder where a binding is, and leaves the rest and the input as they are', () => {
+    const def = { nodes: [{ type: 'output' as const, settings: { file: 'F', sheet: { $param: 'p' }, format: { $param: 'q' } } }, { type: 'filter' as const, settings: { condition: '1' } }] };
+    const r = withBindingPlaceholders(def);
+    expect(r.nodes[0]!.settings).toEqual({ file: 'F', sheet: 'Sheet1', format: 'xlsx' });
+    expect(r.nodes[1]).toBe(def.nodes[1]);
+    expect(def.nodes[0]!.settings.sheet).toEqual({ $param: 'p' });
+    const plain = { nodes: [{ type: 'filter' as const, settings: {} }] };
+    expect(withBindingPlaceholders(plain)).toBe(plain);
   });
 });

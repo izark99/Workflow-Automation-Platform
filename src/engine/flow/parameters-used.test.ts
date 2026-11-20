@@ -23,6 +23,11 @@ describe('parametersUsedBy', () => {
     expect(parametersUsedBy(def([node('s', 'sql', { sql: 'SELECT * FROM in1' })], all))).toEqual([]);
   });
 
+  it('a parameter that a setting is bound to is used, also in the steps before the selected one', () => {
+    const d = def([node('i', 'input_file', { key: 'k', sheet: { $param: 'sheet' } }), node('o', 'output', { file: 'F', sheet: { $param: 'Other' } })], [p('sheet'), p('other'), p('unused')]);
+    expect(parametersUsedBy(d).map((x) => x.key)).toEqual(['sheet', 'other']);
+  });
+
   it('is empty without parameters, and ignores a key that is not a parameter', () => {
     expect(parametersUsedBy(def([node('f', 'filter', { condition: 'PARAM("a")' })], []))).toEqual([]);
     expect(parametersUsedBy(def([node('f', 'filter', { condition: 'PARAM("zzz")' })], [p('a')]))).toEqual([]);
