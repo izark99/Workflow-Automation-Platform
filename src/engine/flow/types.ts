@@ -24,6 +24,7 @@ export interface ParamBinding {
 
 export const NODE_TYPES = [
   'input_file',
+  'reference_table',
   'column_mapping',
   'filter',
   'formula_column',
@@ -94,6 +95,7 @@ export interface NodePorts {
 
 export const NODE_PORTS: Readonly<Record<NodeType, NodePorts>> = {
   input_file: { inputs: { kind: 'fixed', handles: [] }, outputs: ['out'] },
+  reference_table: { inputs: { kind: 'fixed', handles: [] }, outputs: ['out'] },
   column_mapping: { inputs: { kind: 'fixed', handles: [{ name: 'in', required: true }] }, outputs: ['out'] },
   filter: { inputs: { kind: 'fixed', handles: [{ name: 'in', required: true }] }, outputs: ['match', 'nomatch'] },
   formula_column: { inputs: { kind: 'fixed', handles: [{ name: 'in', required: true }] }, outputs: ['out'] },

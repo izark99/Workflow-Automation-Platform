@@ -9,11 +9,13 @@ import { pivotNode } from './pivot';
 import { sqlNode } from './sql-node';
 import { unpivotNode } from './unpivot';
 import { inputFileNode } from './input-file';
+import { referenceTableNode } from './reference-table';
 import type { NodeRegistry } from './types';
 
 /** Node modules by type. Each node task adds its module here. */
 export const defaultRegistry: NodeRegistry = {
   input_file: inputFileNode,
+  reference_table: referenceTableNode,
   column_mapping: columnMappingNode,
   filter: filterNode,
   formula_column: formulaColumnNode,

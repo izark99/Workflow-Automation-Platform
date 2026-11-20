@@ -106,7 +106,7 @@ export function findOverlaps(versions: VersionRange[]): [number, number][] {
   return pairs;
 }
 
-/** Names of the reference tables that Lookup and Pivot steps of a flow definition read, once each. */
+/** Names of the reference tables that Lookup, Pivot and Reference table steps of a flow definition read, once each. */
 export function referencedTables(definition: unknown): string[] {
   const names = new Set<string>();
   const nodes = (definition as { nodes?: unknown })?.nodes;
@@ -114,6 +114,10 @@ export function referencedTables(definition: unknown): string[] {
   for (const node of nodes as ({ type?: unknown; settings?: Record<string, unknown> } | null)[]) {
     if (typeof node !== 'object' || node === null) continue; // an odd node reads no table (the database function does the same)
     const s = typeof node.settings === 'object' && node.settings !== null ? node.settings : {};
+    if (node.type === 'reference_table') {
+      if (typeof s.table === 'string') names.add(s.table);
+      continue;
+    }
     const source = (node.type === 'lookup_join' ? s.source : node.type === 'pivot' ? s.columns : undefined) as
       | { kind?: unknown; from?: unknown; table?: unknown }
       | undefined;

@@ -27,6 +27,7 @@ const choice = (name: string, choices: readonly string[], optional: boolean): Bi
 
 export const BINDABLE_SETTINGS: Readonly<Record<NodeType, readonly BindableSetting[]>> = {
   input_file: [text('sheet', true), whole('headerRow', 1), whole('skipRows', 0), text('rowNumberColumn', true)],
+  reference_table: [],
   column_mapping: [],
   filter: [],
   formula_column: [text('name', false)],
@@ -48,6 +49,7 @@ export const BINDABLE_SETTINGS: Readonly<Record<NodeType, readonly BindableSetti
 /** Settings that never take a parameter, with the reason. */
 export const NOT_BINDABLE_SETTINGS: Readonly<Record<NodeType, Readonly<Record<string, string>>>> = {
   input_file: { key: 'The name of the file slot: the Run screen asks for one file per key before any parameter has a value.', fillDown: 'A list of columns of the data.' },
+  reference_table: { table: 'The name of the table. The flow must name it when it is saved: what a person may read depends on it (SPEC 12.1).' },
   column_mapping: { columns: 'The rows of a grid.' },
   filter: { condition: 'A formula. Use PARAM("key").' },
   formula_column: { expression: 'A formula. Use PARAM("key").' },

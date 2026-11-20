@@ -9,6 +9,7 @@ const read = (path: string): string => readFileSync(new URL(`../../${path}`, imp
 /** The module (and the part of it) that reads the settings of each step type. */
 const SOURCES: Record<NodeType, { file: string; from?: string; to?: string }> = {
   input_file: { file: 'engine/input/load.ts', from: 'export function parseInputSettings', to: 'const MIDNIGHT' },
+  reference_table: { file: 'engine/nodes/reference-table.ts' },
   column_mapping: { file: 'engine/nodes/column-mapping.ts' },
   filter: { file: 'engine/nodes/filter.ts' },
   formula_column: { file: 'engine/nodes/formula-column.ts' },
