@@ -150,7 +150,7 @@ function titleAndFooter(): Build {
 /** The table starts at row 4 and column C, with a note above it and a blank row under it. */
 function laterRowAndColumn(): Build {
   const rows = body(5);
-  const sheetRows: FixtureCell[][] = [['Exported from another system'], [], [], pad(COLUMNS, 2), ...rows.map((r) => pad(r.cells, 2)), []];
+  const sheetRows: FixtureCell[][] = [['Exported from another system'], [], [], pad(COLUMNS, 2), ...rows.map((r) => pad(r.cells, 2)), [], ['Page 1 of 1']];
   return {
     name: 'later-row-and-column',
     sheetRows,
@@ -165,7 +165,7 @@ function laterRowAndColumn(): Build {
       dateColumns: ['Day'],
       fillDown: [],
       ignoreRows: [],
-      leftOut: { title: [1, 3] },
+      leftOut: { title: [1, 1], footer: [10, 11] },
     },
   };
 }
@@ -190,7 +190,7 @@ function totalsRow(): Build {
       dateColumns: ['Day'],
       fillDown: [],
       ignoreRows: [{ column: 'Label', text: 'Subtotal' }],
-      leftOut: { title: [1, 2], footer: [11, 12] },
+      leftOut: { title: [1, 1], footer: [11, 12] },
     },
   };
 }
@@ -212,7 +212,7 @@ function vietnameseFooter(): Build {
       dateColumns: ['Day'],
       fillDown: [],
       ignoreRows: [],
-      leftOut: { title: [1, 2], footer: [8, 10] },
+      leftOut: { title: [1, 1], footer: [8, 10] },
     },
   };
 }
@@ -238,7 +238,7 @@ function mergedCells(): Build {
       dateColumns: ['Day'],
       fillDown: ['Group'],
       ignoreRows: [],
-      leftOut: { title: [1, 2], footer: [10, 11] },
+      leftOut: { title: [1, 1], footer: [10, 11] },
     },
   };
 }
@@ -262,7 +262,7 @@ function emptyColumn(): Build {
       dateColumns: ['Day'],
       fillDown: [],
       ignoreRows: [],
-      leftOut: { title: [1, 2], footer: [9, 10] },
+      leftOut: { title: [1, 1], footer: [9, 10] },
     },
   };
 }
