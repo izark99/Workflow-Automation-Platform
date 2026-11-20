@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button, Checkbox, ErrorState, Field } from '../../components';
 import { useT } from '../../i18n';
+import { Bind } from '../parameter-control/bind';
 import { ColumnList, LoadColumnsBar } from './column-pickers';
 import { addColumn, unpivotFromSettings, unpivotMissing, unpivotToSettings } from './reshape-logic';
 import type { UnpivotValues } from './reshape-logic';
@@ -51,11 +52,17 @@ export function UnpivotForm(props: FormProps) {
         </div>
       ) : null}
       {clash ? <ErrorState what={t('builder.reshape.clash')} next={clash} /> : null}
+      <Bind name="nameColumn" label={t('builder.reshape.nameColumn')}>
       <Field label={t('builder.reshape.nameColumn')} hint={t('builder.reshape.nameColumnHint')} value={v.nameColumn} disabled={readOnly} onChange={(e) => apply({ ...v, nameColumn: e.target.value })} />
+      </Bind>
+      <Bind name="valueColumn" label={t('builder.reshape.valueColumn')}>
       <Field label={t('builder.reshape.valueColumn')} hint={t('builder.reshape.valueColumnHint')} value={v.valueColumn} disabled={readOnly} onChange={(e) => apply({ ...v, valueColumn: e.target.value })} />
+      </Bind>
+      <Bind name="skipBlank" label={t('builder.reshape.skipBlank')}>
       <Checkbox checked={v.skipBlank} disabled={readOnly} onChange={(skipBlank) => apply({ ...v, skipBlank })}>
         {t('builder.reshape.skipBlank')}
       </Checkbox>
+      </Bind>
       <p className={styles.note} role="status">
         {missing.length === 0 ? t('builder.reshape.completeUnpivot') : t('common.numbered', { label: t('builder.reshape.stillMissing'), n: missing.join(' ') })}
       </p>
