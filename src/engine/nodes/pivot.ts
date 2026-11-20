@@ -5,7 +5,7 @@ import { requireColumn } from './columns';
 import type { CompileContext, NodeModule } from './types';
 
 type Fn = 'sum' | 'count' | 'min' | 'max' | 'average';
-const FUNCTIONS: readonly Fn[] = ['sum', 'count', 'min', 'max', 'average'];
+export const FUNCTIONS: readonly Fn[] = ['sum', 'count', 'min', 'max', 'average'];
 const MAX_COLUMNS = 500;
 
 interface Settings {

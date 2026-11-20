@@ -2,6 +2,7 @@ import { engineText } from '../messages';
 import type { EngineMessageId, MessageParams } from '../messages';
 import { MAX_PARAMETER_KEY_LENGTH, PARAMETER_KEY, PARAMETER_TYPES, fitsParameterType } from './parameters';
 import type { FlowParameter, ParameterType } from './parameters';
+import { isBindable } from './bindable';
 import { containsBindingKey, isParamBinding } from './bindings';
 import {
   FLOW_SCHEMA_VERSION,
@@ -337,6 +338,10 @@ function checkBindings(schemaVersion: unknown, nodes: FlowNode[], parameters: Fl
           continue;
         }
         if (schemaVersion !== 3) add('engine.bindNeedsV3', { setting });
+        if (!isBindable(node.type, setting)) {
+          add('engine.bindNotHere', { setting });
+          continue;
+        }
         if (!known.has(value.$param)) add('engine.bindUnknown', { setting, key: value.$param });
       } else if (containsBindingKey(value)) add('engine.bindNotHere', { setting });
     }
