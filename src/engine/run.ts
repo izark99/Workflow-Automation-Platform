@@ -1,5 +1,6 @@
 import { resolveParameterValues, type ParameterValues } from './flow/parameter-values';
 import { parametersOf } from './flow/parameters';
+import { resolveBindings } from './flow/resolve-bindings';
 import { resolveEdgeHandles, topologicalOrder, validateFlow } from './flow/validate';
 import { loadInputFile, parseInputSettings, type FileSource } from './input/load';
 import { checkOutputNodes } from './nodes/output';
@@ -52,9 +53,10 @@ export async function runFlow(runner: SqlRunner, options: RunOptions): Promise<R
   if (!validation.ok) {
     throw coded('invalid_flow', 'engine.invalidFlow', { problems: validation.errors.map((e) => e.message).join(' ') }, validation.errors[0]?.nodeId);
   }
-  const flow = validation.flow;
+  const parameters = resolveParameterValues(parametersOf(validation.flow), options.parameterValues);
+  // Every binding becomes its value before any step is read, so the step modules see plain settings (SPEC 13.3).
+  const flow = resolveBindings(validation.flow, parameters);
   checkOutputNodes(flow);
-  const parameters = resolveParameterValues(parametersOf(flow), options.parameterValues);
   const registry = options.registry ?? defaultRegistry;
   const prefix = `r${++runCounter}_`;
   const created: string[] = [];
