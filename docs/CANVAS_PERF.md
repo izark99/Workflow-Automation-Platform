@@ -6,8 +6,8 @@ One card is dragged with the mouse in 60 moves in headless Chromium at 1440 x 90
 
 | Flow | Steps | Frames | p95 frame (ms) | Slowest frame (ms) | BuilderScreen | SettingsPanel | StepList | StepCard (all cards) | Every card visible (before / during / after) |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 12 steps (generated) | 12 | 67 | 17 | 17 | 2 | 2 | 2 | 85 | yes |
-| 70 steps (monthly-timesheet.flow.json) | 70 | 67 | 17 | 17 | 2 | 2 | 2 | 201 | yes |
-| 60 steps (generated) | 60 | 68 | 17 | 17 | 2 | 2 | 2 | 181 | yes |
+| 12 steps (generated) | 12 | 74 | 17 | 33 | 2 | 2 | 2 | 85 | yes |
+| 70 steps (monthly-timesheet.flow.json) | 70 | 75 | 17 | 17 | 2 | 2 | 2 | 201 | yes |
+| 60 steps (generated) | 60 | 77 | 17 | 17 | 2 | 2 | 2 | 181 | yes |
 
 Screenshots at the middle of each drag are in `docs/canvas-perf/`.

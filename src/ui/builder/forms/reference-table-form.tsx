@@ -5,6 +5,7 @@ import { gapLine } from '../../date-check';
 import { referenceTableInfo } from './reference-table-logic';
 import type { FormProps } from './types';
 import styles from '../settings-panel.module.css';
+import pickers from './column-pickers.module.css';
 
 /**
  * Settings of a Reference table step: the table, the columns of the version used and the version used on the test date.
@@ -26,6 +27,7 @@ export function ReferenceTableForm({ step, context, onSettings, readOnly }: Form
   const columns = info.kind === 'ready' || info.kind === 'no_version' ? info.columns : [];
   return (
     <div className={styles.stack} style={{ paddingTop: 0 }}>
+      <span className={pickers.label}>{t('builder.referenceTable.table')}</span>
       <Dropdown
         label={t('builder.referenceTable.table')}
         options={options}
@@ -41,7 +43,7 @@ export function ReferenceTableForm({ step, context, onSettings, readOnly }: Form
           {t('builder.referenceTable.unreadable')}
         </p>
       ) : null}
-      {info.kind === 'no_version' ? <ErrorState what={info.message} next={t('builder.referenceTable.noVersionNext')} /> : null}
+      {info.kind === 'no_version' ? <ErrorState what={info.message} next="" /> : null}
       {info.kind === 'ready' ? (
         <p className={styles.note} role="status">
           {t('builder.referenceTable.version', { date: formatDate(date), n: info.versionNo, range: info.range })}

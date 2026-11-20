@@ -820,7 +820,6 @@ export const en = {
   'builder.referenceTable.unreadable': 'You cannot read this table yet. Save the flow to read this table.',
   'builder.referenceTable.missing': 'The table "{name}" is not in the list of tables.',
   'builder.referenceTable.missingNext': 'Choose another table, or ask an admin to create it.',
-  'builder.referenceTable.noVersionNext': 'Add a version that covers this date on the Reference tables screen, or change the test date on the Test tab.',
   'builder.card.chooseTable': 'Choose a table',
   'builder.param.use': 'Use a parameter for {field}',
   'builder.param.none': 'The flow has no parameter of this type. Add one in the Parameters panel.',

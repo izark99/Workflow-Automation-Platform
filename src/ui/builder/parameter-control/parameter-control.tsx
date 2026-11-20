@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import type { BindableSetting } from '../../../engine/flow/bindable';
 import type { FlowParameter, ParameterValue } from '../../../engine/flow/parameters';
 import { Button, Dropdown, Icon } from '../../components';
@@ -38,14 +38,23 @@ export interface ParameterControlProps {
 export function ParameterControl({ field, setting, parameters, value, readOnly, onBind, onUnbind, now, error, children, defaultOpen, viewOnly = false }: ParameterControlProps) {
   const t = useT();
   const view = bindingView(value, parameters);
+  const growRef = useRef<HTMLDivElement>(null);
+  const [drop, setDrop] = useState(0);
+  // The children may start with a label; the link button sits level with the input box, not with the label (audit P6 F3).
+  useLayoutEffect(() => {
+    const box = growRef.current;
+    const control = box?.querySelector<HTMLElement>('input:not([type="hidden"]), select, textarea, button:not([data-infotip])');
+    const next = box && control ? Math.max(0, Math.round(control.getBoundingClientRect().top - box.getBoundingClientRect().top)) : 0;
+    setDrop((d) => (d === next ? d : next));
+  });
 
   if (view.kind === 'fixed') {
     const fits = parametersThatFit(parameters, setting);
     return (
       <div className={styles.wrap}>
         <div className={styles.row}>
-          <div className={styles.grow}>{children}</div>
-          <span className={styles.tip} title={fits.length === 0 && !readOnly ? t('builder.param.none') : undefined}>
+          <div className={styles.grow} ref={growRef}>{children}</div>
+          <span className={styles.tip} style={drop > 0 ? { marginTop: drop } : undefined} title={fits.length === 0 && !readOnly ? t('builder.param.none') : undefined}>
             <Dropdown
               label={t('builder.param.use', { field })}
               iconTrigger="link"

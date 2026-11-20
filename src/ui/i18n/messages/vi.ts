@@ -795,7 +795,6 @@ export const vi: Record<MessageKey, string> = {
   'builder.referenceTable.unreadable': 'Bạn chưa đọc được bảng này. Hãy lưu luồng để đọc bảng này.',
   'builder.referenceTable.missing': 'Bảng "{name}" không có trong danh sách bảng.',
   'builder.referenceTable.missingNext': 'Hãy chọn bảng khác, hoặc nhờ quản trị viên tạo bảng này.',
-  'builder.referenceTable.noVersionNext': 'Hãy thêm một phiên bản bao phủ ngày này ở màn hình Bảng tham chiếu, hoặc đổi ngày thử ở thẻ Thử.',
   'builder.card.chooseTable': 'Chọn một bảng',
   'builder.param.use': 'Dùng tham số cho {field}',
   'builder.param.none': 'Luồng không có tham số nào thuộc kiểu này. Hãy thêm một tham số ở bảng Tham số.',

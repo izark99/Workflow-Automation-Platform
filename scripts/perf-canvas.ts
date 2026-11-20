@@ -100,7 +100,10 @@ async function measure(page: Page, label: string, def: Def | unknown, steps: num
   for (let i = 1; i <= moves; i++) {
     await page.mouse.move(target.x + (200 * i) / moves, target.y + (100 * Math.sin((Math.PI * i) / moves)) + (60 * i) / moves);
     if (i % 6 === 0) visibleDuring = Math.min(visibleDuring, await visibleCards(page));
+    // Start, middle and end of the drag, for the UI review (docs/UI_AUDIT_P6.md).
+    if (i === 3) await page.screenshot({ path: `${SHOTS}/${slug}-start.png` });
     if (i === Math.floor(moves / 2)) await page.screenshot({ path: `${SHOTS}/${slug}-middle.png` });
+    if (i === moves) await page.screenshot({ path: `${SHOTS}/${slug}-end.png` });
   }
   await page.mouse.up();
   const frameTimes = await page.evaluate(() => {
