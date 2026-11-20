@@ -236,3 +236,52 @@ Used by the review of SPEC 11.6. Each item is checked on every route in both the
 - Item 8 (keyboard) also covers the panel toggles: every toggle is reachable by Tab in reading order, Space and Enter work, and the focus stays on the toggle when the panel changes width.
 - Item 11 (both themes) also covers the rails, the import dialog and the inactivity dialog.
 - A UI rule per panel checks the open width and the collapsed width, that the title and the first block keep their y, that nothing needs horizontal scrolling, and that every control of an open panel is reachable when the panel is collapsed (the sidebar rail) or after opening it (the others).
+
+## Dragging steps (Phase 6)
+
+- A card follows the pointer without lag: no CSS transition on its position or transform while it is dragged, no shadow or filter that is recalculated on every frame, `cursor: grabbing` on the card while it is held. The cards, the edges and the controls (zoom bar) are drawn again only when something that they show changes, never on every pointer move.
+- The position is written to the flow when the card is dropped (one change per drag). Until then the card is the only thing that moves; the settings panel, the step list and the header do not change.
+- A card that is held near the edge of the canvas makes the canvas pan (React Flow's auto pan), and it stays visible. A card is never hidden behind another layer while it is held.
+- A published version has no drag: the cursor stays `default` and the card does not move.
+
+## Parameter control (Phase 6)
+
+A single-value input box of a step (SPEC 13.3) can take a parameter. The Parameters panel itself does not change.
+
+- A 36 px icon button (a link icon) at the end of the input box row, with the accessible name "Use a parameter for {field}" and `aria-haspopup="listbox"`. It does not count as `cta`, and it is one height with the box beside it. A read-only version shows it disabled. When the flow has no parameter that fits the setting the button is disabled and its tooltip says so.
+- It opens a dropdown list (the Dropdown component) of the parameters whose type fits the setting: label first, the key in muted text after it. Choosing one binds the field.
+- A bound field is not an input any more: it is one row with the chip "Parameter: {label}" (the link icon in front, `data-user-content` on the label) and a compact "Use a fixed value" button that gives the field back with its last fixed value. Under it, 12 px muted text "Now: {value}" in the Test tab and on the Run screen (`data-user-content`); when the value cannot be resolved the line is an error under the field that says what failed and what to do. A parameter that is deleted from the flow leaves the field with the chip in the error state "Parameter {key} no longer exists".
+- Errors are shown under the field, never in the dropdown only. The dropdown closes with Escape and the focus returns to its button.
+
+## Reference table step (Phase 6)
+
+- One entry in the step list, named "Reference table", in the group Files next to Input file, with the same button size and drag behaviour as the other entries. Its card on the canvas has the table icon, the name "Reference table" and, under it in muted text, the name of the chosen table (`data-user-content`) or "Choose a table" before one is chosen. It has one output handle and no input handle.
+- Configure tab: a dropdown "Table" (every table name, `data-user-content`); under it the columns of the table as a read-only list with their types (the newest readable version), and the line "Version used on {date}: v2, from 01 Jul 2026 to 31 Dec 2026" for the test date of the builder. When the table cannot be read yet, the line is "You cannot read this table yet. Save the flow to read this table." and the columns are not listed. When no version covers the test date, an error under the dropdown names the table and the date and says to add a version or change the date.
+- The Test tab previews the first 100 rows like every step.
+- The date check (SPEC 13.3 item 7): in the publish dialog and under the dropdown, a warning block (the quiet warning style of the Versions screen, with the alert icon, not an error box) lists each gap as "{table} has no published version from {date} to {date}: a run for these dates will stop." The publish button stays enabled. A flow whose tables have no gap shows nothing.
+- The Run screen lists the table and its version in the card "Versions used for this date", like the tables of a Lookup step.
+
+## Analyze file (Phase 6)
+
+On the Test tab of an Input step, above the list of test files. The button "Analyze file" (compact, secondary) is enabled when a test file is chosen. While it works the panel shows a progress bar and "Reading the file"; Cancel works.
+
+- Result, top to bottom: one line per proposed setting (Sheet, Header row, First column, Last column, Stop at, Columns the file must have, Fill down), each with its value, a confidence badge (High: soft; Medium and Low: outline, and Low has a warning icon) and an info button that gives the reason. A setting that the analysis cannot decide shows "Not decided" in muted text.
+- "Left out": a short list of the areas that are not read ("Rows 1 to 4: title", "Rows 38 to 41: footer") and the other tables that were found ("Rows 12 to 20, columns A to D").
+- The preview: the first 30 rows of the sheet in a table with the row numbers in the first column; the header row is bold, the rows of the region are normal, the rows outside the region are dimmed (50% opacity, and "Left out" for screen readers). It scrolls inside its box (focusable, `aria-label`).
+- "Apply to the step" (primary, default size) fills the Configure tab and moves to it; "Close" leaves it as it was. A short note in an info button says that the file stays in the browser and only the settings are saved.
+- States: no file ("Choose a test file first."), reading, nothing found ("No table found. Set the header row by hand."), error (what failed and what to do).
+
+## Region settings on the Configure tab (Phase 6)
+
+First column and last column (fields that take a letter or a number), "Stop at" (a dropdown: End of the sheet, First empty row, A row that contains a text, A fixed row) with its own fields shown under it, "Rows to ignore" (a list of a column and a text, with Add and Remove), and "Columns the file must have" (a list of names, filled by Analyze file or by "Load columns" as in the other forms). Each of these settings has the parameter control.
+
+## Run screen: resolved values (Phase 6)
+
+The card "Versions used for this date" gets one more group, "Settings that use a parameter": one row per bound setting, "{step}, {setting}: {value}". It is shown only when the flow has such settings, so the numbering of the cards does not change. A binding that cannot be resolved stops the run with the error under the row, as for a missing file. The tables of Reference table steps are listed with their versions in the same card, and the date check warning of SPEC 13.3 item 7 shows above the list when a gap touches the effective date.
+
+## Phase 6 additions to the checklist
+
+- Item 3 (alignment) also covers the parameter control (one height with the field it belongs to) and the proposal lines of the analysis (labels and values line up).
+- Item 4 (states) also covers the analysis panel (no file, reading, nothing found, error), a bound field that cannot be resolved, and the Reference table step (no table chosen, unreadable table, no version for the date, a gap warning).
+- Item 8 (keyboard) also covers the parameter dropdown, the Reference table step (added with its button by keyboard, like the other steps) and the preview of the analysis.
+- Item 10 (motion): nothing moves on a drag except the card.
