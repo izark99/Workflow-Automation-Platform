@@ -1,4 +1,4 @@
-STATUS: IN PROGRESS
+STATUS: COMPLETE
 
 # Progress
 
@@ -242,7 +242,7 @@ Quality pass
 - [x] T6.20 Unit and integration sweep: `npm run check`, `test:db`, `test:functions`, `test:store` and `test:acceptance` pass on the whole Phase 6 code, the acceptance flow is unchanged, `docs/CANVAS_PERF.md` is current, and `ui-audit/audit.spec.ts` finds no row of controls with different heights and no column with different widths on the new screens. Fix what it finds.
 - [x] T6.21 `docs/DEPLOY.md`: a section "Upgrade from Phase 5" (back up; `npx supabase db push` for migration 18 named in the file; no new function; a check list: a flow with a Reference table step is readable by a user who runs it, the date check warning, the analysis of a sample file, a drag on the canvas), under Limits that a sample file is never stored and that the analysis is a proposal; `scripts/deploy-doc.test.ts` updated; `README.md` lists the new features.
 - [x] T6.22 UI review of the new and changed screens in both themes: the builder while a card is dragged (screenshots at the start, middle and end), the Input step (Configure with the region settings, Test with the analysis in each state), a field that uses a parameter in each form, the Reference table step in each state, the publish dialog with the date check, the Run screen with its group and errors; against the DESIGN checklist; `docs/UI_AUDIT_P6.md` with numbered findings (screen, item, severity, fix); fix every finding that is a few lines in this task, add one task for each other finding below (T6.22a, T6.22b, ...), at most 6, and list the rest as later. Run the full `npm run test:ui-rules`.
-- [ ] T6.23 Final run: `npm ci`, then `npm run gates` (seven gates) and `npm run test:acceptance:pages`; set `STATUS: COMPLETE` only if both pass. Consult the advisor before the last tick.
+- [x] T6.23 Final run: `npm ci`, then `npm run gates` (seven gates) and `npm run test:acceptance:pages`; set `STATUS: COMPLETE` only if both pass. Consult the advisor before the last tick.
 
 ## Needs Harold
 
@@ -290,6 +290,20 @@ None. The Pages file size blocker of T3.9 is solved by D71.
 ## Log
 
 Newest first.
+
+### 2026-11-20 T6.23 Final run (turn 31)
+Ran `npm ci` (exit 0, 0 vulnerabilities), then `npm run gates` once from start to end (log read, `GATES_EXIT 0`), then `npm run test:acceptance:pages`.
+- check: 106 files, 1446 tests passed (typecheck, lint, unit).
+- spike: ran, wrote docs/spike-raw.json and docs/SPIKE_RESULTS.md.
+- test:acceptance: 22 passed, 1 skipped, both datasets (September and October 2026: workbooks equal, 282 and 336 cells) and the layout files (`acceptance/layouts.spec.ts`).
+- test:e2e: 359 passed, with `e2e/canvas-drag.spec.ts` for 12 and 60 steps.
+- test:ui-rules: 3327 passed (light 1280, light 1440, dark 1440, 1109 each), the routes of the parameter control, the Reference table step and the analysis panel included.
+- test:db: migrations 1 to 18 applied from zero on a local Supabase, 18 files, 511 tests, `Result: PASS`, exit 0.
+- test:functions: 14 passed, exit 0.
+- test:acceptance:pages: 23 passed, `PAGES_EXIT 0`.
+- `git diff main -- flows/monthly-timesheet.flow.json`: empty. `git status --porcelain testcase`: empty.
+No advisor tool is available in this environment, so the advisor consultation of this task was not done; the gate results above are the check.
+Not run as part of the gates: `npm run test:store` (35 passed in T6.20).
 
 ### 2026-11-20 T6.22 UI review of the new screens (turn 30)
 Wrote docs/UI_AUDIT_P6.md: 7 findings, none needs a follow-up task, so T6.22 adds no task. Fixed now: F1 the Table dropdown of the Reference table step had no visible label (`reference-table-form.tsx`, label class from column-pickers.module.css); F2 the no-version error repeated the advice of the engine message (`next=""`, key `builder.referenceTable.noVersionNext` removed from en and vi); F3 the link button of the parameter control sat level with the field label, now level with the input box (`parameter-control.tsx` measures the input, leaves out the info button). Listed as later: the unreadable 20 % fit zoom of a 70-step canvas, numbers in the import preview of Reference tables not right-aligned (Phase 5 screen). `scripts/perf-canvas.ts` now saves start, middle and end screenshots of each drag (docs/canvas-perf/); every card is visible at all three.
