@@ -45,6 +45,7 @@ function Builder() {
   const refs = useLoad((s) => s.listRefTables());
   const [testFiles, setTestFiles] = useState<Record<string, File>>({});
   // Test values of the parameters. They stay in the browser, like the test files, and are not saved with the flow.
+  const [testDate, setTestDate] = useState(todayIso());
   const [testValues, setTestValues] = useState<Record<string, ParameterValue | undefined>>({});
   const version = flow.data?.versions.find((v) => v.versionNo === Number(versionNo));
   const [definition, setDefinition] = useState<FlowDefinition>(emptyDefinition());
@@ -271,6 +272,8 @@ function Builder() {
           onTestFile={(key, file) => setTestFiles((f) => ({ ...f, [key]: file }))}
           refTables={refs.data ?? []}
           parameterValues={testValues}
+          testDate={testDate}
+          onTestDate={setTestDate}
           onParameterValue={(key, value) => setTestValues((v) => ({ ...v, [key]: value }))}
         />
       </main>

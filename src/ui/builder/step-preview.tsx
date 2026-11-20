@@ -12,13 +12,15 @@ import type { Column } from '../components';
 import { useT, errorText } from '../i18n';
 import { ParameterInputs, PendingParametersNote } from '../parameter-inputs';
 import { initialValues, parameterValueErrors } from '../parameter-logic';
-import { todayIso } from '../screens/flows-logic';
 import { formatCell, neededFiles, previewKey, previewTarget } from './preview-logic';
 import { runPreview } from './preview-runner';
 import type { PreviewData } from './preview-runner';
 import styles from './step-preview.module.css';
 
 export interface StepPreviewProps {
+  /** The test date (ISO), kept by the builder so the forms can show what it selects. */
+  date: string;
+  onDate: (date: string) => void;
   definition: FlowDefinition;
   step: FlowNode;
   /** Test files by input key. Held by the builder screen, so they stay while another step is selected. */
@@ -35,9 +37,8 @@ type State = { status: 'idle' } | { status: 'loading' } | { status: 'ready'; dat
 const asSource = (f: File): FileSource => ({ name: f.name, size: f.size, blob: f });
 
 /** The Test tab: effective date, test files, and the first rows of the step, run in this browser. */
-export function StepPreview({ definition, step, files, onFile, refTables, parameterValues, onParameterValue }: StepPreviewProps) {
+export function StepPreview({ definition, step, files, onFile, refTables, parameterValues, onParameterValue, date, onDate }: StepPreviewProps) {
   const t = useT();
-  const [date, setDate] = useState(todayIso());
   const [handle, setHandle] = useState<string | undefined>(undefined);
   const [state, setState] = useState<State>({ status: 'idle' });
   const abort = useRef<AbortController | null>(null);
@@ -85,7 +86,7 @@ export function StepPreview({ definition, step, files, onFile, refTables, parame
     <div className={styles.block} style={{ gap: 16 }}>
       <div className={styles.block}>
         <span className={styles.label}>{t('builder.preview.date')}</span>
-        <DatePicker label={t('builder.preview.date')} value={date} onChange={setDate} width="100%" />
+        <DatePicker label={t('builder.preview.date')} value={date} onChange={onDate} width="100%" />
       </div>
       {used.length > 0 ? (
         <div className={styles.block}>

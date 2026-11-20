@@ -57,6 +57,8 @@ export async function runPreview(req: PreviewRequest): Promise<PreviewData> {
     flowVersions: [{ versionNo: 1, validFrom: '1900-01-01', validTo: null, definition }],
     refTables: req.refTables,
     effectiveDate: req.effectiveDate,
+    // The builder's test runs read a draft version of a table that covers the date (DECISIONS: includeDrafts is for them).
+    includeDrafts: true,
   });
   const result = await runFlow(runner, { flow: definition, parameterValues, effectiveDate: req.effectiveDate, files: req.files, refTables: prepared.refTables, signal: req.signal });
   try {

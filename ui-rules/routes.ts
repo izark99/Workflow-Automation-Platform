@@ -1,6 +1,7 @@
 // Every route that the UI rules run on. A route added to the app is added here in the same task, so it is checked at once.
 import type { Page } from '@playwright/test';
 import { seedParameterFlow } from '../e2e/parameter-flow';
+import { REF_FLOW, seedReferenceStep } from '../e2e/reference-step-flow';
 import { seedRunnableFlow } from '../e2e/runnable-flow';
 import { seedSnapshot } from '../src/store/seed';
 
@@ -12,35 +13,6 @@ const seedBigDraft = async (page: Page): Promise<void> => {
     name: 'Big list',
     description: 'A long table for paging.',
     versions: [{ versionNo: 1, validFrom: '2026-01-01', validTo: null, status: 'draft', columns: [{ name: 'id', type: 'text' }, { name: 'value', type: 'number' }], rows: Array.from({ length: 250 }, (_, i) => [`r${i + 1}`, i + 1]) }],
-  });
-  await page.addInitScript((json) => localStorage.setItem('dfw.seed', json), JSON.stringify(s));
-};
-
-/** A draft flow with two Reference table steps (one with a table, one without) and a Lookup, so the cards and the list can be checked. */
-const seedReferenceStepFlow = async (page: Page): Promise<void> => {
-  const s = seedSnapshot();
-  const node = (id: string, type: string, label: string, x: number, y: number, settings: Record<string, unknown>) => ({ id, type, label, position: { x, y }, settings });
-  s.flows.push({
-    id: 'flow-refstep',
-    name: 'Reference step flow',
-    ownerId: 'user-harold',
-    scope: 'personal',
-    deletedAt: null,
-    groupIds: [],
-    versions: [
-      {
-        versionNo: 1,
-        validFrom: '2026-01-01',
-        validTo: null,
-        status: 'draft',
-        changeNote: '',
-        definition: {
-          schemaVersion: 1,
-          nodes: [node('limits', 'reference_table', 'Reference table', 0, 0, { table: 'OT limits' }), node('empty', 'reference_table', 'Reference table 2', 280, 0, {})],
-          edges: [],
-        },
-      },
-    ],
   });
   await page.addInitScript((json) => localStorage.setItem('dfw.seed', json), JSON.stringify(s));
 };
@@ -246,15 +218,51 @@ export const ROUTES: RuleRoute[] = [
     },
   },
   {
-    path: '/flows/flow-refstep/versions/1',
-    name: '/flows/flow-refstep/versions/1 (Reference table cards)',
+    path: REF_FLOW,
+    name: `${REF_FLOW} (Reference table cards)`,
     sidebar: false,
-    before: seedReferenceStepFlow,
     // A card with a table and a card that says to choose one.
+    before: (page) =>
+      seedReferenceStep(page, {
+        nodes: [
+          { id: 'limits', type: 'reference_table', label: 'Reference table', position: { x: 0, y: 0 }, settings: { table: 'OT types' } },
+          { id: 'empty', type: 'reference_table', label: 'Reference table 2', position: { x: 280, y: 0 }, settings: {} },
+        ],
+      }),
     prepare: async (page) => {
       await page.locator('.react-flow__node').nth(1).waitFor();
     },
   },
+  ...(
+    [
+      ['no table chosen', {}, undefined],
+      ['table chosen: version and columns', {}, 'Closed range'],
+      ['no version for the test date', {}, 'Old limits'],
+      ['table not in the list', { settings: { table: 'Gone' } }, undefined],
+      ['table not readable yet', { user: 'user-lan' as const, nodes: [] }, 'Closed range'],
+    ] as const
+  ).map(
+    ([state, opts, table]): RuleRoute => ({
+      path: REF_FLOW,
+      name: `${REF_FLOW} (Reference table, Configure: ${state})`,
+      sidebar: false,
+      before: (page) =>
+        seedReferenceStep(page, 'settings' in opts ? { nodes: [{ id: 'ref', type: 'reference_table', label: 'Reference table', position: { x: 0, y: 0 }, settings: opts.settings }] } : opts),
+      // Without names that depend on the language, so the pseudo-locale check can run these states too.
+      prepare: async (page) => {
+        const settings = page.locator('#builder-settings');
+        if ('nodes' in opts) await page.locator('#builder-steps [role=group]').first().getByRole('button').nth(1).click();
+        else await page.locator('.react-flow__node').first().click();
+        await settings.getByRole('tab').nth(1).click();
+        const dropdown = settings.getByRole('tabpanel').getByRole('button').first();
+        if (table) {
+          await dropdown.click();
+          await page.getByRole('option', { name: table, exact: true }).click();
+        }
+        await dropdown.waitFor();
+      },
+    }),
+  ),
   {
     path: '/reference-tables',
     name: '/reference-tables (import dialog)',

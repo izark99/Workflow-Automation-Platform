@@ -53,10 +53,13 @@ export interface SettingsPanelProps {
   /** Test values of the parameters, by key. */
   parameterValues: Record<string, ParameterValue | undefined>;
   onParameterValue: (key: string, value: ParameterValue | undefined) => void;
+  /** The test date, shared by the Test tab and the forms that show what a table version is used on that day. */
+  testDate: string;
+  onTestDate: (date: string) => void;
 }
 
 /** The 380 px panel at the right: the selected step with the tabs Setup, Configure and Test. */
-export function SettingsPanel({ definition, step, onChange, onDeleted, readOnly, testFiles, onTestFile, refTables, parameterValues, onParameterValue }: SettingsPanelProps) {
+export function SettingsPanel({ definition, step, onChange, onDeleted, readOnly, testFiles, onTestFile, refTables, parameterValues, onParameterValue, testDate, onTestDate }: SettingsPanelProps) {
   countRender('SettingsPanel');
   const t = useT();
   const [tab, setTab] = useState<SettingsTab>('setup');
@@ -97,8 +100,8 @@ export function SettingsPanel({ definition, step, onChange, onDeleted, readOnly,
           {tab === 'setup' ? (
             <SetupTab key={step.id} definition={definition} step={step} onChange={onChange} readOnly={readOnly} error={error} setError={setError} />
           ) : null}
-          {tab === 'configure' ? <ConfigureTab step={step} definition={definition} onChange={onChange} readOnly={readOnly} context={{ testFiles, refTables, parameterValues }} /> : null}
-          {tab === 'test' ? <StepPreview key={step.id} definition={definition} step={step} files={testFiles} onFile={onTestFile} refTables={refTables} parameterValues={parameterValues} onParameterValue={onParameterValue} /> : null}
+          {tab === 'configure' ? <ConfigureTab step={step} definition={definition} onChange={onChange} readOnly={readOnly} context={{ testFiles, refTables, parameterValues, testDate }} /> : null}
+          {tab === 'test' ? <StepPreview key={step.id} definition={definition} step={step} files={testFiles} onFile={onTestFile} refTables={refTables} parameterValues={parameterValues} onParameterValue={onParameterValue} date={testDate} onDate={onTestDate} /> : null}
         </div>
       </Tabs>
       <div className={styles.footer}>

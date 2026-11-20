@@ -9,6 +9,8 @@ export interface FormContext {
   refTables: RefTable[];
   /** Test values of the parameters, by key. */
   parameterValues?: Record<string, ParameterValue | undefined>;
+  /** The test date of the builder (the date of the Test tab), an ISO date. */
+  testDate: string;
 }
 
 export interface FormProps {
