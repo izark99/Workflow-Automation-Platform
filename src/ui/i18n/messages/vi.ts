@@ -726,6 +726,7 @@ export const vi: Record<MessageKey, string> = {
   'builder.step.reference_table.hint': 'Đưa vào một bảng tham chiếu dùng chung, theo phiên bản có hiệu lực vào ngày chạy.',
   'builder.referenceTable.table': 'Bảng',
   'builder.referenceTable.choose': 'Chọn một bảng',
+  'builder.card.chooseTable': 'Chọn một bảng',
   'builder.step.sql.label': 'SQL',
   'builder.step.sql.hint': 'Chạy SQL tự do trên các bước phía trước.',
   'builder.stepGroup.files': 'Tệp',

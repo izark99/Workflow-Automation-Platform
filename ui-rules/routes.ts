@@ -16,6 +16,35 @@ const seedBigDraft = async (page: Page): Promise<void> => {
   await page.addInitScript((json) => localStorage.setItem('dfw.seed', json), JSON.stringify(s));
 };
 
+/** A draft flow with two Reference table steps (one with a table, one without) and a Lookup, so the cards and the list can be checked. */
+const seedReferenceStepFlow = async (page: Page): Promise<void> => {
+  const s = seedSnapshot();
+  const node = (id: string, type: string, label: string, x: number, y: number, settings: Record<string, unknown>) => ({ id, type, label, position: { x, y }, settings });
+  s.flows.push({
+    id: 'flow-refstep',
+    name: 'Reference step flow',
+    ownerId: 'user-harold',
+    scope: 'personal',
+    deletedAt: null,
+    groupIds: [],
+    versions: [
+      {
+        versionNo: 1,
+        validFrom: '2026-01-01',
+        validTo: null,
+        status: 'draft',
+        changeNote: '',
+        definition: {
+          schemaVersion: 1,
+          nodes: [node('limits', 'reference_table', 'Reference table', 0, 0, { table: 'OT limits' }), node('empty', 'reference_table', 'Reference table 2', 280, 0, {})],
+          edges: [],
+        },
+      },
+    ],
+  });
+  await page.addInitScript((json) => localStorage.setItem('dfw.seed', json), JSON.stringify(s));
+};
+
 export interface RuleRoute {
   path: string;
   /** Names this state of the route when the same path is listed twice. */
@@ -214,6 +243,16 @@ export const ROUTES: RuleRoute[] = [
     prepare: async (page) => {
       await page.locator('.react-flow__node').first().click();
       await page.getByRole('complementary', { name: 'Step settings' }).getByRole('heading').waitFor();
+    },
+  },
+  {
+    path: '/flows/flow-refstep/versions/1',
+    name: '/flows/flow-refstep/versions/1 (Reference table cards)',
+    sidebar: false,
+    before: seedReferenceStepFlow,
+    // A card with a table and a card that says to choose one.
+    prepare: async (page) => {
+      await page.locator('.react-flow__node').nth(1).waitFor();
     },
   },
   {

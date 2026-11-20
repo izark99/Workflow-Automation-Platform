@@ -35,7 +35,16 @@ function StepCardView({ data, selected }: NodeProps<StepCardNode>) {
       </span>
       <span className={styles.cardText}>
         <span className={styles.cardTitle} data-user-content>{step.label ?? step.id}</span>
-        <span className={styles.cardSub}>{STEP_CATALOG[step.type].label}</span>
+        {step.type === 'reference_table' ? (
+          // The table that the step reads, in place of the type name (the type is already in the title of a new step).
+          typeof step.settings.table === 'string' && step.settings.table !== '' ? (
+            <span className={styles.cardSub} data-user-content>{step.settings.table}</span>
+          ) : (
+            <span className={styles.cardSub}>{translate('builder.card.chooseTable')}</span>
+          )
+        ) : (
+          <span className={styles.cardSub}>{STEP_CATALOG[step.type].label}</span>
+        )}
       </span>
       {outputs.map((h, i) => (
         <Handle key={`out-${h}`} id={h} type="source" position={Position.Bottom} style={{ left: at(i, outputs.length) }} />

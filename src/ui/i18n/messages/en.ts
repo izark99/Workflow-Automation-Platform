@@ -751,6 +751,7 @@ export const en = {
   'builder.step.reference_table.hint': 'Brings in a shared reference table, in the version valid on the date of the run.',
   'builder.referenceTable.table': 'Table',
   'builder.referenceTable.choose': 'Choose a table',
+  'builder.card.chooseTable': 'Choose a table',
   'builder.step.sql.label': 'SQL',
   'builder.step.sql.hint': 'Runs free SQL on the steps before it.',
   'builder.stepGroup.files': 'Files',
