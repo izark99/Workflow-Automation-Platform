@@ -55,3 +55,12 @@ Before you paste it: make sure `main` has every Phase 4 change (and the follow-u
 /goal Read PROMPT.md and follow it exactly, one task per turn, Phase 5 only. The goal is met when your Evidence block in this conversation shows all of: every Phase 5 task in PROGRESS.md is ticked, including the tasks that T5.21 added from docs/UI_AUDIT_P5.md; "npm run test:functions" exited 0 on a local Supabase; "npm run test:db" exited 0 on a local Supabase with the migrations 14 to 17 applied from zero; "npm run test:ui-rules" exited 0 in the light theme at 1280 and 1440 px and in the dark theme at 1440 px, with the routes of the collapsed panels included; a full "npm run gates" started after "npm ci" exited 0 with all seven gates passing; "npm run test:acceptance:pages" exited 0; "git diff main -- flows/monthly-timesheet.flow.json" is empty; "head -1 PROGRESS.md" prints STATUS: COMPLETE; "git status --porcelain testcase" is empty. Also stop when "head -1 PROGRESS.md" prints STATUS: BLOCKED, or after 75 turns.
 ```
 
+## Phase 6: Canvas drag, input regions, bindings
+
+Before you paste it: make sure `main` has every Phase 5 change (and the follow-up pull requests), and that line 1 of
+`PROGRESS.md` says `STATUS: IN PROGRESS`. Review the "Needs Harold" rows marked Phase 6 first, above all the first one
+(the sample file is read in the browser and never stored): the build uses the default unless the list says otherwise.
+
+```
+/goal Read PROMPT.md and follow it exactly, one task per turn, Phase 6 only. The goal is met when your Evidence block in this conversation shows all of: every Phase 6 task in PROGRESS.md is ticked, including the tasks that T6.20 added from docs/UI_AUDIT_P6.md; "npm run test:e2e" exited 0 with the canvas drag spec inside it; "npm run test:functions" exited 0 on a local Supabase; "npm run test:db" exited 0 on a local Supabase with the migrations 14 to 18 applied from zero; "npm run test:acceptance" exited 0 with both datasets and the layout files; "npm run test:ui-rules" exited 0 in the light theme at 1280 and 1440 px and in the dark theme at 1440 px, with the routes of the binding control and of the analysis panel included; a full "npm run gates" started after "npm ci" exited 0 with all seven gates passing; "npm run test:acceptance:pages" exited 0; "git diff main -- flows/monthly-timesheet.flow.json" is empty; "head -1 PROGRESS.md" prints STATUS: COMPLETE; "git status --porcelain testcase" is empty. Also stop when "head -1 PROGRESS.md" prints STATUS: BLOCKED, or after 80 turns.
+```
