@@ -36,7 +36,16 @@ phase at a time.
   reference tables. The choice is kept in the browser.
 - Flow parameters: values that the user fills in on the Run screen (date, text, number, list, yes or no), read in
   formulas with `PARAM("key")`.
+- Steady dragging of steps on the canvas: a step never disappears while it is dragged, and a drag is one change.
+- A Reference table step: a shared table as a step of its own, in the version that is valid on the date of the run. A date
+  check warns when a table has no published version for some day of a flow version, in the publish dialog, under the step and
+  on the Run screen.
+- Parameters in the input boxes of every step (sheet name, header row, file name, and the like): the Test tab and the Run
+  screen show the value that a run will use.
+- Input files with a table inside a larger sheet: first and last column, where to stop (a footer word, an empty row, a fixed
+  row), rows to ignore, and the columns that the file must have. "Analyze file" on the Test tab reads a sample file in the
+  browser and proposes these settings with a confidence and a reason; nothing is applied until you press "Apply to the step".
 
-To put the app online, see `docs/DEPLOY.md` (a first deployment, "Upgrade an existing deployment" and "Upgrade from Phase 4").
+To put the app online, see `docs/DEPLOY.md` (a first deployment, "Upgrade an existing deployment", "Upgrade from Phase 4" and "Upgrade from Phase 5").
 
 All data in `testcase/` and `design/` is sample data made for testing.

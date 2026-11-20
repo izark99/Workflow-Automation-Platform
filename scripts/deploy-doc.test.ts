@@ -9,7 +9,7 @@ describe('docs/DEPLOY.md', () => {
   it('exists and has the steps in order', () => {
     expect(doc.length).toBeGreaterThan(1000);
     const headings = [...doc.matchAll(/^## (.+)$/gm)].map((m) => m[1]!);
-    const order = ['Before you start', 'Create the Supabase project', 'Apply the migrations', 'Deploy the account function', 'Close sign-ups', 'Create the first admin', 'Deploy the app on Cloudflare Pages', 'Keep the project awake', 'Check it works', 'Upgrade an existing deployment', 'Upgrade from Phase 4', 'Limits'];
+    const order = ['Before you start', 'Create the Supabase project', 'Apply the migrations', 'Deploy the account function', 'Close sign-ups', 'Create the first admin', 'Deploy the app on Cloudflare Pages', 'Keep the project awake', 'Check it works', 'Upgrade an existing deployment', 'Upgrade from Phase 4', 'Upgrade from Phase 5', 'Limits'];
     expect(headings.filter((h) => order.includes(h))).toEqual(order);
   });
 
@@ -61,7 +61,7 @@ describe('docs/DEPLOY.md', () => {
   });
 
   it('has a Phase 5 upgrade section that backs up, applies migrations 14 to 17, deploys no function and checks the features', () => {
-    const section = doc.slice(doc.indexOf('## Upgrade from Phase 4'), doc.indexOf('## Limits'));
+    const section = doc.slice(doc.indexOf('## Upgrade from Phase 4'), doc.indexOf('## Upgrade from Phase 5'));
     expect(section.length).toBeGreaterThan(500);
     const at = (text: string) => section.indexOf(text);
     const order = ['Back up first', 'npx supabase db push', 'There is no new function', 'Deploy the app', 'Check it'];
@@ -73,6 +73,32 @@ describe('docs/DEPLOY.md', () => {
       expect(existsSync(`supabase/migrations/${m}`), m).toBe(true);
     }
     for (const word of ['Import', 'Who sees what', 'Sign-out', 'Texts', 'Panels']) expect(section).toContain(word);
+  });
+
+  it('has a Phase 6 upgrade section that backs up, applies migration 18, deploys no function, checks the features and warns about a rollback', () => {
+    const section = doc.slice(doc.indexOf('## Upgrade from Phase 5'), doc.indexOf('## Limits'));
+    expect(section.length).toBeGreaterThan(500);
+    const at = (text: string) => section.indexOf(text);
+    const order = ['Back up first', 'npx supabase db push', 'There is no new function', 'Deploy the app', 'Check it', 'If something is wrong'];
+    for (const o of order) expect(at(o), o).toBeGreaterThan(-1);
+    expect(order.map(at)).toEqual([...order.map(at)].sort((a, b) => a - b));
+    expect(section).not.toContain('functions deploy');
+    // The one new migration is named, exists, and is the only file that the push lists.
+    const m = '20261118000018_ref_table_names_reference_step.sql';
+    expect(section).toContain(m);
+    expect(existsSync(`supabase/migrations/${m}`)).toBe(true);
+    expect(section).not.toMatch(/2026111800001[0-7]_/);
+    for (const word of ['Reference table step', 'Date check', 'Parameters in input boxes', 'Analyze file', 'Dragging']) expect(section).toContain(word);
+    // A rollback would strand flows that use the new step or a parameter in an input box.
+    expect(section).toMatch(/cannot run a flow that has a Reference table step/);
+    expect(section).toMatch(/version 3/);
+  });
+
+  it('states the limits of Phase 6: a sample file is never stored, the analysis is a proposal, and csv cells with a line break', () => {
+    const limits = doc.slice(doc.indexOf('## Limits'));
+    expect(limits).toMatch(/never uploaded or stored/);
+    expect(limits).toMatch(/The analysis is a proposal/);
+    expect(limits).toMatch(/line break inside quotes/);
   });
 
   it('states the limits of Phase 5: the sign-out check is in the browser and the token lives up to one hour, and which tables a user reads', () => {
