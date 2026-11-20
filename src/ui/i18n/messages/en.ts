@@ -758,7 +758,7 @@ export const en = {
   'builder.referenceTable.missingNext': 'Choose another table, or ask an admin to create it.',
   'builder.referenceTable.noVersionNext': 'Add a version that covers this date on the Reference tables screen, or change the test date on the Test tab.',
   'builder.card.chooseTable': 'Choose a table',
-  'dateCheck.gap': '{table} has no published version {range}: a run for these dates will stop.',
+  'versions.dateCheckGap': '{table} has no published version {range}: a run for these dates will stop.',
   'builder.step.sql.label': 'SQL',
   'builder.step.sql.hint': 'Runs free SQL on the steps before it.',
   'builder.stepGroup.files': 'Files',
