@@ -107,7 +107,7 @@ export function SettingsPanel({ definition, step, onChange, onDeleted, readOnly,
             <SetupTab key={step.id} definition={definition} step={step} onChange={onChange} readOnly={readOnly} error={error} setError={setError} />
           ) : null}
           {tab === 'configure' ? <ConfigureTab step={step} definition={definition} onChange={onChange} readOnly={readOnly} context={{ testFiles, refTables, parameterValues, testDate, coverage }} /> : null}
-          {tab === 'test' ? <StepPreview key={step.id} definition={definition} step={step} files={testFiles} onFile={onTestFile} refTables={refTables} parameterValues={parameterValues} onParameterValue={onParameterValue} date={testDate} onDate={onTestDate} /> : null}
+          {tab === 'test' ? <StepPreview key={step.id} definition={definition} step={step} files={testFiles} onFile={onTestFile} refTables={refTables} parameterValues={parameterValues} onParameterValue={onParameterValue} date={testDate} onDate={onTestDate} onApplySettings={(next) => { onChange(withBindingsVersion(updateSettings(definition, step.id, next))); setTab('configure'); }} /> : null}
         </div>
       </Tabs>
       <div className={styles.footer}>

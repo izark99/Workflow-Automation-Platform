@@ -2,6 +2,7 @@
 import type { Page } from '@playwright/test';
 import { seedParameterFlow } from '../e2e/parameter-flow';
 import { REF_FLOW, seedReferenceStep } from '../e2e/reference-step-flow';
+import { ambiguousLayouts, clearLayouts } from '../scripts/lib/layout-fixtures';
 import { seedRunnableFlow } from '../e2e/runnable-flow';
 import { seedSnapshot } from '../src/store/seed';
 
@@ -383,6 +384,45 @@ export const ROUTES: RuleRoute[] = [
         // The boxes in order: name, sheet, header row, rows to skip, first column, last column.
         if (typed) await boxes.nth(4).fill(typed);
         await boxes.nth(4).waitFor();
+      },
+    }),
+  ),
+  ...(
+    [
+      ['no file', undefined, false],
+      ['reading', 'title-and-footer (xlsx)', true],
+      ['a clear result', 'title-and-footer (xlsx)', false],
+      ['an ambiguous result', 'two-tables (xlsx)', false],
+      ['no table found', 'text-only (csv)', false],
+      ['an error', 'broken', false],
+    ] as const
+  ).map(
+    ([state, layoutName, slow]): RuleRoute => ({
+      path: REF_FLOW,
+      name: `${REF_FLOW} (analyze file, ${state})`,
+      sidebar: false,
+      before: async (page) => {
+        await seedReferenceStep(page, { nodes: [{ id: 'in', type: 'input_file', label: 'People', position: { x: 0, y: 0 }, settings: { key: 'people', headerRow: 1 } }] });
+        if (slow) await page.addInitScript(() => localStorage.setItem('dfw.analyzeDelayMs', '600000'));
+      },
+      // Without names that depend on the language, so the pseudo-locale check runs on these states too.
+      prepare: async (page) => {
+        await page.locator('.react-flow__node').first().click();
+        const settings = page.locator('#builder-settings');
+        await settings.getByRole('tab').nth(2).click();
+        if (layoutName === undefined) {
+          await page.locator('[data-analyze=run]').waitFor();
+          return;
+        }
+        const layout = [...clearLayouts(), ...ambiguousLayouts()].find((l) => l.name === layoutName);
+        const file = layout
+          ? { name: layout.file.name, mimeType: layout.format === 'csv' ? 'text/csv' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', buffer: Buffer.from(layout.file.bytes) }
+          : { name: 'broken.docx', mimeType: 'application/octet-stream', buffer: Buffer.from('not a table') };
+        await settings.locator('input[type=file]').setInputFiles(file);
+        await page.locator('[data-analyze=run]').click();
+        if (slow) await settings.getByRole('progressbar').waitFor();
+        else await settings.locator('[role=group] , [role=alert], [role=status]').first().waitFor();
+        await page.waitForTimeout(300);
       },
     }),
   ),

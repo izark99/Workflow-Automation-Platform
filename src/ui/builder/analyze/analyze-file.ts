@@ -27,10 +27,12 @@ export type NamedBlob = Blob & { name: string };
  * too, and the one with the largest table is chosen. Returns `'cancelled'` when the signal is aborted, so a slow read can be
  * left. A file that cannot be read throws an error whose message says what to do.
  */
-export async function analyzeFile(file: NamedBlob, options: { signal?: AbortSignal } = {}): Promise<FileAnalysis | 'cancelled'> {
-  const { signal } = options;
+export async function analyzeFile(file: NamedBlob, options: { signal?: AbortSignal; onProgress?: (done: number, total: number) => void } = {}): Promise<FileAnalysis | 'cancelled'> {
+  const { signal, onProgress } = options;
   const sheets = await listSheets(file);
   if (signal?.aborted) return 'cancelled';
+  const total = Math.max(1, Math.min(sheets.length, MAX_SHEETS));
+  onProgress?.(0, total);
   if (sheets.length === 0) {
     const grid = await readGrid(file, { maxRows: MAX_ANALYZE_ROWS + 1 });
     if (signal?.aborted) return 'cancelled';
@@ -41,6 +43,7 @@ export async function analyzeFile(file: NamedBlob, options: { signal?: AbortSign
     const grid = await readGrid(file, { sheet, maxRows: MAX_ANALYZE_ROWS + 1 });
     if (signal?.aborted) return 'cancelled';
     candidates.push({ sheet, analysis: analyzeLayout(grid), grid });
+    onProgress?.(candidates.length, total);
     // The first sheet with a table is the one to read: the others are not looked at.
     if (candidates.length === 1 && candidates[0]!.analysis.found) break;
   }

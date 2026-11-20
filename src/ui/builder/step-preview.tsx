@@ -11,6 +11,7 @@ import { Button, Chip, ChipGroup, DatePicker, EmptyState, ErrorState, InfoTip, S
 import type { Column } from '../components';
 import { bindableSetting } from '../../engine/flow/bindable';
 import { parametersOf } from '../../engine/flow/parameters';
+import { AnalysisPanel } from './analyze/analysis-panel';
 import { ParameterControl } from './parameter-control/parameter-control';
 import { stepBindingResults } from './parameter-control/parameter-control-logic';
 import { settingLabel } from './parameter-control/setting-labels';
@@ -26,6 +27,8 @@ export interface StepPreviewProps {
   /** The test date (ISO), kept by the builder so the forms can show what it selects. */
   date: string;
   onDate: (date: string) => void;
+  /** For an Input step: saves the settings that "Analyze file" proposed and shows the Configure tab. */
+  onApplySettings?: (settings: Record<string, unknown>) => void;
   definition: FlowDefinition;
   step: FlowNode;
   /** Test files by input key. Held by the builder screen, so they stay while another step is selected. */
@@ -42,7 +45,7 @@ type State = { status: 'idle' } | { status: 'loading' } | { status: 'ready'; dat
 const asSource = (f: File): FileSource => ({ name: f.name, size: f.size, blob: f });
 
 /** The Test tab: effective date, test files, and the first rows of the step, run in this browser. */
-export function StepPreview({ definition, step, files, onFile, refTables, parameterValues, onParameterValue, date, onDate }: StepPreviewProps) {
+export function StepPreview({ definition, step, files, onFile, refTables, parameterValues, onParameterValue, date, onDate, onApplySettings }: StepPreviewProps) {
   const t = useT();
   const [handle, setHandle] = useState<string | undefined>(undefined);
   const [state, setState] = useState<State>({ status: 'idle' });
@@ -126,6 +129,9 @@ export function StepPreview({ definition, step, files, onFile, refTables, parame
             </ParameterControl>
           ))}
         </div>
+      ) : null}
+      {step.type === 'input_file' && onApplySettings ? (
+        <AnalysisPanel file={typeof step.settings.key === 'string' ? files[step.settings.key] : undefined} settings={step.settings} onApply={onApplySettings} />
       ) : null}
       {needed.length > 0 ? (
         <div className={styles.block}>
