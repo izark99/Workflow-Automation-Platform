@@ -235,6 +235,7 @@ export const en = {
   'builder.analyze.match.starts_with': 'starts with',
   'builder.analyze.match.equals': 'is',
   'builder.analyze.button': 'Analyze file',
+  'builder.analyze.title': 'Analyze a sample file',
   'builder.analyze.noFile': 'Choose a test file first.',
   'builder.analyze.reading': 'Reading the file',
   'builder.analyze.cancel': 'Cancel',

@@ -228,6 +228,7 @@ export const vi: Record<MessageKey, string> = {
   'builder.analyze.match.starts_with': 'bắt đầu bằng',
   'builder.analyze.match.equals': 'đúng bằng',
   'builder.analyze.button': 'Phân tích tệp',
+  'builder.analyze.title': 'Phân tích một tệp mẫu',
   'builder.analyze.noFile': 'Hãy chọn một tệp thử trước.',
   'builder.analyze.reading': 'Đang đọc tệp',
   'builder.analyze.cancel': 'Hủy',

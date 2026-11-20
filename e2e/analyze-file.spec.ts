@@ -124,7 +124,8 @@ test('a file with no table says so and offers nothing to apply', async ({ page }
   await analyze(page).click();
   await expect(settings(page).getByText('No table found. Set the header row by hand.')).toBeVisible();
   await expect(settings(page).getByRole('button', { name: 'Apply to the step' })).toHaveCount(0);
-  await settings(page).getByRole('button', { name: 'Close' }).click();
+  // A new test file starts clean: the message of the old one is gone.
+  await settings(page).locator('input[type=file]').setInputFiles(upload(layout('title-and-footer (xlsx)')));
   await expect(settings(page).getByText('No table found.')).toHaveCount(0);
 });
 
@@ -142,7 +143,8 @@ test('a file that cannot be read says what failed and what to do', async ({ page
   const alert = settings(page).getByRole('alert');
   await expect(alert).toContainText('The file could not be analyzed.');
   await expect(alert).toContainText('.xlsx or .csv');
-  await alert.getByRole('button', { name: 'Close' }).click();
+  // Another test file clears it.
+  await settings(page).locator('input[type=file]').setInputFiles(upload(layout('title-and-footer (xlsx)')));
   await expect(settings(page).getByRole('alert')).toHaveCount(0);
 });
 

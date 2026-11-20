@@ -72,11 +72,11 @@ export function ParameterControl({ field, setting, parameters, value, readOnly, 
         <span className={`${styles.chip} ${gone ? styles.chipError : ''}`}>
           <Icon name="link" />
           {gone ? (
-            <span data-user-content>{t('builder.param.gone', { key: view.key })}</span>
+            <span data-user-content title={t('builder.param.gone', { key: view.key })}>{t('builder.param.gone', { key: view.key })}</span>
           ) : (
             <>
               <span>{t('builder.param.chip')}</span>
-              <span data-user-content>{view.label}</span>
+              <span data-user-content title={view.label}>{view.label}</span>
             </>
           )}
         </span>

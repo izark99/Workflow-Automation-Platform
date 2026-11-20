@@ -30,6 +30,14 @@ function cellText(v: unknown): string {
   return v instanceof Date ? v.toISOString().slice(0, 10) : String(v);
 }
 
+/** A column of numbers is right-aligned: every filled cell of the rows that are read is a number (or a text of digits). */
+function numericColumn(grid: Grid, result: FileAnalysis, c: number): boolean {
+  const region = result.analysis.region;
+  if (!region) return false;
+  const cells = grid.rows.slice(region.headerRow, Math.min(PREVIEW_ROWS, region.lastRow)).map((r) => r[c]).filter((v) => v !== null && v !== undefined && !(typeof v === 'string' && v.trim() === ''));
+  return cells.length > 0 && cells.every((v) => typeof v === 'number' || (typeof v === 'string' && /^-?[\d.,]+$/.test(v.trim())));
+}
+
 function previewRows(grid: Grid, result: FileAnalysis): PreviewRow[] {
   const region = result.analysis.region;
   return grid.rows.slice(0, PREVIEW_ROWS).map((row, i) => ({
@@ -103,6 +111,7 @@ export function AnalysisPanel({ file, settings, onApply }: AnalysisPanelProps) {
     setState({ status: 'idle' });
   };
 
+  const grid = state.status === 'done' ? state.result.grid : undefined;
   const columns: Column<PreviewRow>[] = [
     { key: 'n', header: t('builder.analyze.rowColumn'), align: 'right', userContent: false, render: (r) => (
       <span className={r.read ? undefined : styles.dim}>
@@ -114,35 +123,34 @@ export function AnalysisPanel({ file, settings, onApply }: AnalysisPanelProps) {
       key: `c${c}`,
       header: columnLetters(c + 1),
       userContent: true,
+      align: state.status === 'done' && grid && numericColumn(grid, state.result, c) ? ('right' as const) : ('left' as const),
       render: (r) => <span className={`${r.read ? '' : styles.dim} ${r.header ? styles.header : ''}`}>{r.cells[c]}</span>,
     })),
   ];
 
   return (
     <div className={styles.panel}>
-      <div className={styles.bar}>
-        <Button compact data-analyze="run" disabled={!file || state.status === 'reading'} onClick={() => void run()}>
+      <div className={styles.panel}>
+        <span className={styles.titleRow}>
+          <span className={styles.sectionTitle}>{t('builder.analyze.title')}</span>
+          <InfoTip label={t('builder.analyze.title')}>{t('builder.analyze.note')}</InfoTip>
+        </span>
+        <Button block data-analyze="run" disabled={!file || state.status === 'reading'} onClick={() => void run()}>
           {t('builder.analyze.button')}
         </Button>
-        <InfoTip label={t('builder.analyze.button')}>{t('builder.analyze.note')}</InfoTip>
       </div>
       {!file ? <p className={styles.note}>{t('builder.analyze.noFile')}</p> : null}
       {state.status === 'reading' ? (
         <div className={styles.panel}>
           <ProgressBar value={state.done} max={state.total} label={t('builder.analyze.reading')} />
-          <div className={styles.bar}>
-            <span className={styles.note} role="status">{t('builder.analyze.reading')}</span>
-            <Button compact onClick={cancel}>{t('builder.analyze.cancel')}</Button>
-          </div>
+          <span className={styles.note} role="status">{t('builder.analyze.reading')}</span>
+          <Button block onClick={cancel}>{t('builder.analyze.cancel')}</Button>
         </div>
       ) : null}
-      {state.status === 'failed' ? <ErrorState what={t('builder.analyze.failed')} next={state.message} actions={<Button compact onClick={() => setState({ status: 'idle' })}>{t('builder.analyze.close')}</Button>} /> : null}
+      {state.status === 'failed' ? <ErrorState what={t('builder.analyze.failed')} next={state.message} /> : null}
       {state.status === 'done' && !state.result.analysis.found ? (
         <div className={styles.result}>
           <p className={styles.note} role="status">{t('builder.analyze.noTable')}</p>
-          <div className={styles.actions}>
-            <Button compact onClick={() => setState({ status: 'idle' })}>{t('builder.analyze.close')}</Button>
-          </div>
         </div>
       ) : null}
       {state.status === 'done' && state.result.analysis.found ? (

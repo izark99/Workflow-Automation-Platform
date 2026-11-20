@@ -131,7 +131,7 @@ export function StepPreview({ definition, step, files, onFile, refTables, parame
         </div>
       ) : null}
       {step.type === 'input_file' && onApplySettings ? (
-        <AnalysisPanel file={typeof step.settings.key === 'string' ? files[step.settings.key] : undefined} settings={step.settings} onApply={onApplySettings} />
+        <AnalysisPanel key={(() => { const f = typeof step.settings.key === 'string' ? files[step.settings.key] : undefined; return f ? `${f.name}:${f.size}:${f.lastModified}` : 'none'; })()} file={typeof step.settings.key === 'string' ? files[step.settings.key] : undefined} settings={step.settings} onApply={onApplySettings} />
       ) : null}
       {needed.length > 0 ? (
         <div className={styles.block}>

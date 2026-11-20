@@ -971,3 +971,19 @@ DuckDB `read_csv` stays the csv reader (D10), with three changes for files that 
 - **The region, the stop rule and the rows to ignore are SQL** over those rows: the first and last column are positions; a marker is looked for in the named column or in every column of the row; "N empty rows in a row" is evaluated over the list of all line numbers, where a line that is not in the table is empty; a row to ignore is not empty.
 
 The xlsx reader gets the same rules in its row loop. It stops reading the file at the stop rule (`LoadStats.rowsRead` shows how many rows it took), and it counts a gap in the row numbers as empty rows, because the sheet XML does not hold empty rows.
+
+## D92 What the Phase 6 audit still lists, and what it fixed (T6.20)
+
+`ui-audit` was run on every route of the UI rules in both themes at 1440 px. On the new screens it found no row of controls with different heights. It found, and T6.20 fixed:
+
+- **Numbers in the preview of "Analyze file"** were left-aligned. A column of the preview whose filled cells in the rows that are read are all numbers is right-aligned (`numericColumn`).
+- **Truncated chip labels** of the parameter control ("Parameter: {label}", "Parameter {key} no longer exists") had no `title`; they have one now.
+- **The `Analyze file` button** was a compact button next to its info button, narrower than the fields above it. It is now a full-width button under a title row with the info button, like the other blocks of the Test tab; the reading state's `Cancel` is full width too, and the error and "No table found" states have no `Close` button (they go away when another test file is chosen: the panel is keyed by the file). "Close" stays in the result, next to "Apply to the step".
+
+What it still lists on the new screens is the pattern of the earlier phases (D83, D86), and is intentional:
+
+- A compact action button under full-width fields: "Load columns", "Add a row to ignore", "Preview first rows", "Change file" and "Choose file" on the Test tab; "Delete step" at the foot of the settings panel, now under the Reference table form too.
+- "Use a fixed value" (compact) beside the chip of a bound field, in the 40 px row of that chip.
+- The Run screen's date row (the date picker next to Run or a download), and the 1,086 px empty-named control, which is the hidden file input of the file row.
+- The panel toggles in a rail (36 px) above full-width controls, and "Collapse sidebar" above "Create flow".
+- "Analyze file" is as wide as the date picker above it, but the "Choose file" and "Change file" buttons of the file row are 97 px, as before Phase 6.
