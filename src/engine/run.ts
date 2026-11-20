@@ -8,7 +8,7 @@ import { checkOutputNodes } from './nodes/output';
 import { defaultRegistry } from './nodes/registry';
 import type { NodeRegistry } from './nodes/types';
 import { boundarySelectList, createTableStatements, quoteIdent } from './sql';
-import { coded, type Column, type LoadedTable, type SqlRunner, type TableData } from './types';
+import { coded, type Column, type EngineWarning, type LoadedTable, type SqlRunner, type TableData } from './types';
 
 export const PREVIEW_ROWS = 100;
 
@@ -37,6 +37,8 @@ export interface ResultTable extends LoadedTable {
 }
 
 export interface RunResult {
+  /** What the load of the input files did that the person should know, such as a stop text that was never found. */
+  warnings: EngineWarning[];
   /** Every output of every node, keyed `nodeId/handle`. */
   tables: Map<string, ResultTable>;
   /** First rows of an output as boundary cells: numbers, ISO date text, text, booleans. */
@@ -85,6 +87,7 @@ export async function runFlow(runner: SqlRunner, options: RunOptions): Promise<R
   };
   const onAbort = () => void runner.cancel();
   options.signal?.addEventListener('abort', onAbort);
+  const warnings: EngineWarning[] = [];
   const checkCancelled = () => {
     if (options.signal?.aborted) {
       throw coded('cancelled', 'engine.cancelled');
@@ -107,7 +110,7 @@ export async function runFlow(runner: SqlRunner, options: RunOptions): Promise<R
       if (file) {
         options.onNode?.({ nodeId: node.id, status: 'start' });
         const relation = `${prefix}file${seenKeys.size}`;
-        inputTables[settings.key] = await loadInputFile(runner, file, settings, relation, node.id);
+        inputTables[settings.key] = await loadInputFile(runner, file, settings, relation, node.id, { rowsRead: 0, warnings });
         created.push(relation);
         options.onNode?.({ nodeId: node.id, status: 'done' });
       }
@@ -187,6 +190,7 @@ export async function runFlow(runner: SqlRunner, options: RunOptions): Promise<R
 
   return {
     tables,
+    warnings,
     dispose,
     preview: (nodeId, handle, limit = PREVIEW_ROWS) => read(nodeId, handle, limit),
     rows: (nodeId, handle) => read(nodeId, handle, undefined),

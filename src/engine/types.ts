@@ -73,6 +73,20 @@ export class EngineError extends Error {
   }
 }
 
+/** Something that the run did, and that the person should know: it does not stop the run. */
+export interface EngineWarning {
+  messageId: string;
+  params: Record<string, string | number>;
+  /** The English text, filled with the parameters. The screens show the text of their language from the id. */
+  message: string;
+  nodeId?: string;
+}
+
+/** A warning with a message id: the message is the English template filled with the parameters. */
+export function warning(messageId: EngineMessageId, params: MessageParams = {}, nodeId?: string): EngineWarning {
+  return { messageId, params, message: engineText(messageId, params), ...(nodeId === undefined ? {} : { nodeId }) };
+}
+
 /** An engine error with a message id: the message is the English template filled with the parameters. */
 export function coded(code: EngineErrorCode, messageId: EngineMessageId, params: MessageParams = {}, nodeId?: string): EngineError {
   return new EngineError(code, engineText(messageId, params), nodeId, { messageId, params });

@@ -7,7 +7,7 @@ import { checkFileSize } from '../../engine/size-guard';
 import { EngineError } from '../../engine/types';
 import type { Cell } from '../../engine/types';
 import type { RefTable } from '../../engine/versions';
-import { Button, Chip, ChipGroup, DatePicker, EmptyState, ErrorState, InfoTip, SkeletonTable, Table } from '../components';
+import { Button, Chip, ChipGroup, DatePicker, EmptyState, ErrorState, InfoTip, QuietWarning, SkeletonTable, Table } from '../components';
 import type { Column } from '../components';
 import { bindableSetting } from '../../engine/flow/bindable';
 import { parametersOf } from '../../engine/flow/parameters';
@@ -167,6 +167,7 @@ export function StepPreview({ definition, step, files, onFile, refTables, parame
       {state.status === 'ready' ? (
         <div className={styles.block}>
           {state.key !== key ? <p className={styles.muted} role="status">{t('builder.preview.stale')}</p> : null}
+          <QuietWarning lines={state.data.warnings} />
           <span className={styles.muted}>{state.data.totalRows === 0 ? t('builder.preview.noRows') : (state.data.totalRows > state.data.rows.length ? t('builder.preview.showing', { shown: state.data.rows.length.toLocaleString('en-US'), total: state.data.totalRows.toLocaleString('en-US') }) : t('builder.preview.rowCount', { total: state.data.totalRows, totalText: state.data.totalRows.toLocaleString('en-US') }))}</span>
           {state.data.rows.length > 0 ? (
             <div className={styles.result}>

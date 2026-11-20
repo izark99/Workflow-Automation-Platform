@@ -1,3 +1,4 @@
+import { warningText } from '../i18n';
 import { parseOutputSettings } from '../../engine/nodes/output';
 import { resolveFlow } from '../../engine/run';
 import { buildOutputFiles } from '../../engine/output/export';
@@ -22,6 +23,8 @@ export interface RunOutcome {
   sheets: SheetPreview[];
   inputRows: number;
   outputRows: number;
+  /** What the load of the input files did that the person should know, in the current language. */
+  warnings: string[];
 }
 
 export interface RunRequest {
@@ -67,7 +70,7 @@ export async function executeRun(req: RunRequest): Promise<RunOutcome> {
     }
     const files = await buildOutputFiles(result, definition);
     const inputRows = definition.nodes.filter((n) => n.type === 'input_file').reduce((n, node) => n + (result.tables.get(`${node.id}/out`)?.rowCount ?? 0), 0);
-    return { files, sheets, inputRows, outputRows: sheets.reduce((n, s) => n + s.rowCount, 0) };
+    return { files, sheets, inputRows, outputRows: sheets.reduce((n, s) => n + s.rowCount, 0), warnings: result.warnings.map(warningText) };
   } finally {
     await result.dispose();
   }

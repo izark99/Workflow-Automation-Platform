@@ -426,6 +426,46 @@ export const ROUTES: RuleRoute[] = [
       },
     }),
   ),
+  ...(
+    [
+      ['Test tab, a stop text that was not found', 'test'],
+      ['Run screen, a stop text that was not found', 'run'],
+    ] as const
+  ).map(
+    ([state, where]): RuleRoute => ({
+      path: where === 'run' ? '/flows/flow-refstep/run' : REF_FLOW,
+      name: `${where === 'run' ? '/flows/flow-refstep/run' : REF_FLOW} (${state})`,
+      sidebar: where === 'run',
+      busy: where === 'run' ? true : undefined,
+      before: (page) =>
+        seedReferenceStep(page, {
+          status: where === 'run' ? 'published' : 'draft',
+          nodes: [
+            { id: 'in', type: 'input_file', label: 'People', position: { x: 0, y: 0 }, settings: { key: 'people', headerRow: 1, stopAt: { kind: 'marker', text: 'No such footer', match: 'contains' } } },
+            { id: 'out', type: 'output', label: 'Result', position: { x: 0, y: 160 }, settings: { file: 'Result', format: 'xlsx', sheet: 'Rows' } },
+          ],
+          edges: [{ source: 'in', target: 'out' }],
+        }),
+      // The file is a small csv; the page waits for the result. No language-dependent names.
+      prepare: async (page) => {
+        const file = { name: 'people.csv', mimeType: 'text/csv', buffer: Buffer.from('Code,Amount\nK1,5\nK2,6\nK3,7\n') };
+        if (where === 'run') {
+          await page.locator('input[type=file]').setInputFiles(file);
+          // The Run button is the first button after the group of files.
+          await page.locator('[role=group]').last().locator('xpath=following::button[1]').click();
+          await page.getByRole('status').filter({ has: page.locator('li') }).first().waitFor({ timeout: 60_000 });
+        } else {
+          await page.locator('.react-flow__node').first().click();
+          const settings = page.locator('#builder-settings');
+          await settings.getByRole('tab').nth(2).click();
+          await settings.locator('input[type=file]').setInputFiles(file);
+          await settings.getByRole('tabpanel').getByRole('button').last().click();
+          await settings.getByRole('status').first().waitFor({ timeout: 30_000 });
+        }
+        await page.waitForTimeout(500);
+      },
+    }),
+  ),
   {
     path: '/reference-tables',
     name: '/reference-tables (import dialog)',

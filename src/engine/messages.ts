@@ -33,6 +33,8 @@ export const ENGINE_MESSAGES = {
   'engine.bindNumber': 'Step "{step}": the parameter "{key}" has the value {value}, but "{setting}" must be {rule}. Enter a value that fits.',
   'engine.bindBlank': 'Step "{step}": "{setting}" needs a value, but the parameter "{key}" is blank. Enter a value for the parameter, or give the setting a fixed value.',
   'engine.inputMissingColumns': '{file} lacks {missing}, which this step requires. The file has: {have}. Choose the right file or sheet, or change the columns that the step requires.',
+  'engine.inputNoHeader': '{file} has no data at header row {row}. Type the number of the row that holds the column names, in the settings of the step "{step}".',
+  'engine.inputStopNotFound': 'The stop text "{text}" was not found in {file}, so all rows to the end were read. Check the text in the settings of the step "{step}", or choose another way to stop.',
   'engine.layoutHeaderClear': 'Row {row} has {n} different names, and rows of data follow it.',
   'engine.layoutHeaderFew': 'Row {row} looks like the header, but only {rows} row(s) of data follow it.',
   'engine.layoutHeaderDuplicate': 'Row {row} looks like the header, but a name is used more than once. Check the names.',

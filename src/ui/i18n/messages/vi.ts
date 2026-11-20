@@ -1294,6 +1294,8 @@ export const vi: Record<MessageKey, string> = {
   'engine.bindNumber': 'Bước "{step}": tham số "{key}" có giá trị {value}, nhưng "{setting}" phải là {rule}. Hãy nhập một giá trị phù hợp.',
   'engine.bindBlank': 'Bước "{step}": "{setting}" cần có giá trị, nhưng tham số "{key}" đang để trống. Hãy nhập giá trị cho tham số, hoặc nhập một giá trị cố định.',
   'engine.inputMissingColumns': '{file} thiếu {missing}, mà bước này yêu cầu. Tệp có các cột: {have}. Hãy chọn đúng tệp hoặc trang tính, hoặc đổi các cột mà bước yêu cầu.',
+  'engine.inputNoHeader': '{file} không có dữ liệu ở dòng tiêu đề {row}. Hãy nhập số của dòng chứa tên cột, trong thiết lập của bước "{step}".',
+  'engine.inputStopNotFound': 'Không tìm thấy văn bản dừng "{text}" trong {file}, nên đã đọc tất cả các dòng đến hết. Hãy kiểm tra văn bản trong thiết lập của bước "{step}", hoặc chọn cách dừng khác.',
   'engine.layoutHeaderClear': 'Dòng {row} có {n} tên khác nhau, và các dòng dữ liệu nằm ngay dưới nó.',
   'engine.layoutHeaderFew': 'Dòng {row} giống dòng tiêu đề, nhưng chỉ có {rows} dòng dữ liệu bên dưới.',
   'engine.layoutHeaderDuplicate': 'Dòng {row} giống dòng tiêu đề, nhưng có tên bị lặp lại. Hãy kiểm tra các tên.',

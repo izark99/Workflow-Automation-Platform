@@ -1,3 +1,4 @@
+import { warningText } from '../i18n';
 import { runFlow } from '../../engine/run';
 import { createBrowserRunner } from '../../engine/runner/browser-runner';
 import type { FileSource } from '../../engine/input/load';
@@ -16,6 +17,8 @@ export interface PreviewData {
   rows: Cell[][];
   /** Rows in the whole table; the preview holds at most 100. */
   totalRows: number;
+  /** What the load of the files did that the person should know (a stop text that was never found), in the current language. */
+  warnings: string[];
 }
 
 let shared: Promise<SqlRunner> | null = null;
@@ -64,7 +67,7 @@ export async function runPreview(req: PreviewRequest): Promise<PreviewData> {
   try {
     const table = result.tables.get(`${req.nodeId}/${req.handle}`);
     const data = await result.preview(req.nodeId, req.handle);
-    return { columns: data.columns, rows: data.rows, totalRows: table?.rowCount ?? data.rows.length };
+    return { columns: data.columns, rows: data.rows, totalRows: table?.rowCount ?? data.rows.length, warnings: result.warnings.map(warningText) };
   } finally {
     await result.dispose();
   }

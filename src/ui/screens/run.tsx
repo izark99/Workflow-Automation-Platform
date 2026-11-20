@@ -267,6 +267,7 @@ function Result({ outcome, tab, onTab }: { outcome: RunOutcome; tab: string; onT
     : [];
   return (
     <>
+      <QuietWarning lines={outcome.warnings} />
       <div className={styles.split}>
         <div className={styles.downloads}>
           {outcome.files.map((f) => (

@@ -2,8 +2,8 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { allLayouts, clearLayouts, type Layout, type TruthCell } from '../../../scripts/lib/layout-fixtures.ts';
 import { xlsxBytes } from '../../../scripts/lib/refimport-fixtures.ts';
 import { createNodeRunner } from '../runner/node-runner';
-import { EngineError, type SqlRunner, type TableData } from '../types';
-import { loadInputFile, parseInputSettings, type FileSource } from './load';
+import { EngineError, type EngineWarning, type SqlRunner, type TableData } from '../types';
+import { loadInputFile, parseInputSettings, type FileSource, type LoadStats } from './load';
 
 // SPEC 13.2: a table inside a larger sheet is read with the region settings, from an xlsx file and from a csv file alike.
 let runner: SqlRunner;
@@ -16,7 +16,7 @@ afterAll(async () => {
 
 const source = (l: Layout): FileSource => ({ name: l.file.name, size: l.file.bytes.length, blob: new Blob([l.file.bytes as BlobPart]) });
 let n = 0;
-async function read(file: FileSource, settings: Record<string, unknown>, stats?: { rowsRead: number }): Promise<TableData> {
+async function read(file: FileSource, settings: Record<string, unknown>, stats?: LoadStats): Promise<TableData> {
   const relation = `lay_${++n}`;
   const table = await loadInputFile(runner, file, parseInputSettings({ key: 'k', ...settings }, 'n'), relation, 'n', stats);
   const res = await runner.query(`SELECT * FROM "${table.relation}"`);
@@ -164,5 +164,44 @@ describe('the columns that the file must have', () => {
     const csv = allLayouts().find((l) => l.name === 'later-row-and-column (csv)')!;
     const err = (await read(source(csv), { ...settingsOf(csv), expect: ['Missing one'] }).catch((e: unknown) => e)) as EngineError;
     expect(err.messageId).toBe('engine.inputMissingColumns');
+  });
+});
+
+describe('what the run says is wrong or doubtful (T6.19)', () => {
+  const layout = clearLayouts().find((l) => l.name === 'title-and-footer (xlsx)')!;
+  const csvLayout = clearLayouts().find((l) => l.name === 'title-and-footer (csv)')!;
+  const base = settingsOf(layout);
+
+  it('a header row past the end of the sheet is a coded error that names the row and the file, for xlsx and csv', async () => {
+    for (const l of [layout, csvLayout]) {
+      const err = (await read(source(l), { ...settingsOf(l), headerRow: 500 }).catch((e: unknown) => e)) as EngineError;
+      expect(err).toBeInstanceOf(EngineError);
+      expect(err.code).toBe('file_read_failed');
+      expect(err.messageId).toBe('engine.inputNoHeader');
+      expect(err.message).toContain('row 500');
+      expect(err.message).toContain(l.file.name);
+      expect(err.message).toMatch(/Type the number of the row that holds the column names/);
+    }
+  });
+
+  it('a stop text that is never found reads to the end and says so, with the text', async () => {
+    for (const l of [layout, csvLayout]) {
+      const warnings: EngineWarning[] = [];
+      const stop = { kind: 'marker', text: 'No such footer', match: 'contains' };
+      const table = await read(source(l), { ...settingsOf(l), stopAt: stop }, { rowsRead: 0, warnings });
+      expect(table.rows.length).toBeGreaterThan(l.truth!.rows.length);
+      expect(warnings).toHaveLength(1);
+      expect(warnings[0]!.messageId).toBe('engine.inputStopNotFound');
+      expect(warnings[0]!.message).toContain('"No such footer"');
+      expect(warnings[0]!.message).toContain('all rows to the end');
+    }
+  });
+
+  it('no warning when the stop text is found, for the other ways to stop, and when the step has no stop rule', async () => {
+    for (const stop of [{ kind: 'marker', text: 'prepared by', match: 'contains' }, { kind: 'blank_rows', count: 1 }, { kind: 'row', row: 8 }, { kind: 'end' }]) {
+      const warnings: EngineWarning[] = [];
+      await read(source(layout), { ...base, stopAt: stop }, { rowsRead: 0, warnings });
+      expect(warnings, JSON.stringify(stop)).toEqual([]);
+    }
   });
 });

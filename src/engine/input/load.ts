@@ -4,7 +4,7 @@ import { columnNumber, MAX_BLANK_ROWS, STOP_MATCHES, textMatches, type StopRule 
 import { checkFileSize } from '../size-guard';
 import { createTableStatement, insertRowsStatements, quoteIdent, quoteString } from '../sql';
 import { megabytes } from '../messages';
-import { coded, EngineError, type Cell, type Column, type ColumnType, type LoadedTable, type SqlRunner } from '../types';
+import { coded, EngineError, warning, type EngineWarning, type Cell, type Column, type ColumnType, type LoadedTable, type SqlRunner } from '../types';
 
 export interface InputFileSettings {
   /** Logical name of the input, for example "Timesheet". The run screen asks for one file per key. */
@@ -205,6 +205,8 @@ function toText(v: Exclude<CellValue, undefined>): string {
 export interface LoadStats {
   /** Rows of the sheet that the reader took from the file, the title rows and the header row included. */
   rowsRead: number;
+  /** Things that the load did and that the person should know, such as a stop text that was never found. */
+  warnings?: EngineWarning[];
 }
 
 async function loadXlsx(runner: SqlRunner, file: FileSource, s: InputFileSettings, relation: string, nodeId: string, stats?: LoadStats) {
@@ -225,6 +227,7 @@ async function loadXlsx(runner: SqlRunner, file: FileSource, s: InputFileSetting
   let ignore: { index: number; text: string }[] = [];
   let markerIndex: number | undefined;
   let blankRun = 0;
+  let markerFound = false;
   // The reader gives the rows that the sheet holds: an empty row is not in the file, and shows only as a gap in the numbers.
   let lastRow = 0;
 
@@ -260,7 +263,10 @@ async function loadXlsx(runner: SqlRunner, file: FileSource, s: InputFileSetting
       if (stop.kind === 'row' && row > stop.row) break;
       if (stop.kind === 'marker') {
         const hit = markerIndex !== undefined ? !emptyCell(cells[from + markerIndex]) && textMatches(toText(cells[from + markerIndex]!), stop.text, stop.match) : cells.some((c) => !emptyCell(c) && textMatches(toText(c!), stop.text, stop.match));
-        if (hit) break;
+        if (hit) {
+          markerFound = true;
+          break;
+        }
       }
       const region = names.map((_, i) => cells[from + i]);
       // A row to ignore is not empty, whatever it holds: it neither ends the table nor adds a row to it.
@@ -307,13 +313,10 @@ async function loadXlsx(runner: SqlRunner, file: FileSource, s: InputFileSetting
       if (batch.length >= 2000) await flush();
     }
     if (!names) {
-      throw new EngineError(
-        'file_read_failed',
-        `${file.name} has no data at header row ${s.headerRow}. Check the header row number in the step settings.`,
-        nodeId,
-      );
+      throw coded('file_read_failed', 'engine.inputNoHeader', { file: file.name, row: s.headerRow, step: nodeId }, nodeId);
     }
     await flush();
+    if (s.stopAt.kind === 'marker' && !markerFound) stats?.warnings?.push(warning('engine.inputStopNotFound', { text: s.stopAt.text, file: file.name, step: nodeId }, nodeId));
   } catch (e) {
     await runner.exec(`DROP TABLE IF EXISTS ${quoteIdent(stage)}`);
     if (e instanceof XlsxReadError) throw new EngineError('file_read_failed', `${file.name}: ${e.message}`, nodeId);
@@ -333,7 +336,7 @@ function sqlMatches(expr: string, text: string, match: 'contains' | 'starts_with
   return `trim(${value}) = trim(${t})`;
 }
 
-async function loadCsv(runner: SqlRunner, file: FileSource, s: InputFileSettings, relation: string, nodeId: string) {
+async function loadCsv(runner: SqlRunner, file: FileSource, s: InputFileSettings, relation: string, nodeId: string, stats?: LoadStats) {
   const raw = `${relation}_raw`;
   const rows = `${relation}_rows`;
   const stage = `${relation}_stage`;
@@ -346,10 +349,10 @@ async function loadCsv(runner: SqlRunner, file: FileSource, s: InputFileSettings
     // only make the width larger; the cells that are not there are empty).
     const lines = `read_csv(${quoteString(virtualName)}, columns = {'line': 'VARCHAR'}, delim = chr(1), quote = '', escape = '', header = false, auto_detect = false, skip = 0)`;
     const counts = (d: string) => `length("line") - length(replace("line", ${quoteString(d)}, ''))`;
-    const stats = await runner.query(
+    const dialect = await runner.query(
       `SELECT ${CSV_DELIMITERS.map((d, i) => `coalesce(sum(CASE WHEN ${counts(d)} >= 1 THEN 1 ELSE 0 END), 0) AS lines${i}, coalesce(max(${counts(d)}), 0) AS widest${i}`).join(', ')} FROM ${lines}`,
     );
-    const row0 = stats.rows[0] ?? [];
+    const row0 = dialect.rows[0] ?? [];
     let best = 0;
     CSV_DELIMITERS.forEach((_, i) => {
       if (Number(row0[i * 2] ?? 0) > Number(row0[best * 2] ?? 0)) best = i;
@@ -375,11 +378,7 @@ async function loadCsv(runner: SqlRunner, file: FileSource, s: InputFileSettings
     const head = await runner.query(`SELECT * EXCLUDE ("__rn") FROM ${quoteIdent(raw)} WHERE "__rn" = ${s.headerRow}`);
     const headCells = head.rows[0];
     if (!headCells) {
-      throw new EngineError(
-        'file_read_failed',
-        `${file.name} has no data at header row ${s.headerRow}. Check the header row number in the step settings.`,
-        nodeId,
-      );
+      throw coded('file_read_failed', 'engine.inputNoHeader', { file: file.name, row: s.headerRow, step: nodeId }, nodeId);
     }
     // The region: the columns from the first to the last of the file, as positions in the cells of a row.
     const from = s.firstColumn - 1;
@@ -407,7 +406,10 @@ async function loadCsv(runner: SqlRunner, file: FileSource, s: InputFileSettings
     // The first row that is not read, when a stop rule ends the table.
     let stopAtRow: number | null = null;
     if (stop.kind === 'row') stopAtRow = stop.row + 1;
-    else if (stop.kind === 'marker') stopAtRow = ((await runner.query(`SELECT min("__rn") FROM ${quoteIdent(rows)} WHERE "__marker"`)).rows[0]?.[0] as number | null) ?? null;
+    else if (stop.kind === 'marker') {
+      stopAtRow = ((await runner.query(`SELECT min("__rn") FROM ${quoteIdent(rows)} WHERE "__marker"`)).rows[0]?.[0] as number | null) ?? null;
+      if (stopAtRow === null) stats?.warnings?.push(warning('engine.inputStopNotFound', { text: stop.text, file: file.name, step: nodeId }, nodeId));
+    }
     else if (stop.kind === 'blank_rows') {
       // The first row that starts a run of `count` empty rows (a row to ignore is not empty). Every line of the file counts: a
       // line that is not in the table is an empty line, so the lines are listed and joined to the rows.
@@ -483,5 +485,5 @@ export async function loadInputFile(
     throw coded('file_too_large', 'engine.fileTooLarge', { fileName: file.name, size: megabytes(check.sizeBytes), limit: megabytes(check.limitBytes) }, nodeId);
   }
   const isCsv = /\.(csv|txt)$/i.test(file.name);
-  return isCsv ? loadCsv(runner, file, settings, relation, nodeId) : loadXlsx(runner, file, settings, relation, nodeId, stats);
+  return isCsv ? loadCsv(runner, file, settings, relation, nodeId, stats) : loadXlsx(runner, file, settings, relation, nodeId, stats);
 }
