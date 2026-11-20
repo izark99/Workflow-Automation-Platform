@@ -123,3 +123,105 @@ test('a published (read-only) version cannot be dragged', async ({ page }) => {
   expect(await visible(page)).toBe(12);
   await expect(page.getByRole('status').filter({ hasText: 'Unsaved changes' })).toHaveCount(0);
 });
+
+// T6.3: the other ways to move a card (SPEC 13.1 item 5).
+const gapOf = async (page: Page, a: string, b: string) => {
+  const [p, q] = [await centre(page, a), await centre(page, b)];
+  return { x: q.x - p.x, y: q.y - p.y };
+};
+
+async function zoomTo(page: Page, percent: number) {
+  const button = page.getByRole('button', { name: percent < 50 ? 'Zoom out' : 'Zoom in' });
+  for (let i = 0; i < 20 && !(await page.getByText(`${percent}%`, { exact: true }).count()); i++) {
+    await button.click();
+    await page.waitForTimeout(200);
+  }
+  await expect(page.getByText(`${percent}%`, { exact: true })).toBeVisible();
+}
+
+test('a card dragged in from the step list lands where it is dropped and nothing flickers', async ({ page }) => {
+  await open(page, 12);
+  const pane = page.locator('.react-flow__pane');
+  const box = (await pane.boundingBox())!;
+  const drop = { x: box.width - 200, y: box.height - 120 };
+  await page.getByRole('button', { name: 'Add step Group by' }).dragTo(pane, { targetPosition: drop });
+  await expect(page.locator('.react-flow__node')).toHaveCount(13);
+  // Right after the drop every card, the new one included, is visible at every sample.
+  for (let i = 0; i < 10; i++) {
+    expect(await visible(page)).toBe(13);
+    await page.waitForTimeout(30);
+  }
+  const c = await centre(page, 'Group by');
+  expect(Math.abs(c.x - (box.x + drop.x))).toBeLessThan(3);
+  expect(Math.abs(c.y - (box.y + drop.y))).toBeLessThan(3);
+  await expect(page.locator('.react-flow__node.selected')).toContainText('Group by');
+});
+
+for (const steps of [true, false]) {
+  for (const settings of [true, false]) {
+    test(`a drag works with the step list ${steps ? 'open' : 'collapsed'} and the settings panel ${settings ? 'open' : 'collapsed'}`, async ({ page }) => {
+      await open(page, 12);
+      if (!steps) await page.getByRole('button', { name: 'Collapse step list' }).click();
+      if (!settings) await page.getByRole('button', { name: 'Collapse settings panel' }).click();
+      await expect.poll(async () => (await page.getByRole('complementary', { name: 'Step types' }).boundingBox())?.width).toBe(steps ? 184 : 48);
+      await page.waitForTimeout(400);
+      const before = await gapOf(page, 'Step 3', 'Step 4');
+      const r = await drag(page, 'Step 3', 120, 80);
+      expect(r.minVisible).toBe(12);
+      expect(await visible(page)).toBe(12);
+      const after = await gapOf(page, 'Step 3', 'Step 4');
+      // The card moved by the pointer's distance relative to its neighbour, whatever the panels did to the canvas width.
+      expect(Math.abs(before.x - after.x - 120)).toBeLessThan(3);
+      expect(Math.abs(before.y - after.y - 80)).toBeLessThan(3);
+    });
+  }
+}
+
+test('a card dragged to the edge pans the canvas and stays visible', async ({ page }) => {
+  await open(page, 12);
+  const canvas = (await page.locator('.react-flow').boundingBox())!;
+  const viewport = () => page.locator('.react-flow__viewport').getAttribute('style');
+  const before = await viewport();
+  const from = await centre(page, 'Step 6');
+  await page.mouse.move(from.x, from.y);
+  await page.mouse.down();
+  await page.mouse.move(canvas.x + canvas.width - 6, from.y, { steps: 10 });
+  await page.waitForTimeout(700); // the canvas pans while the pointer rests at the edge
+  expect(await visible(page)).toBe(12);
+  await page.mouse.up();
+  expect(await viewport()).not.toBe(before);
+  expect(await visible(page)).toBe(12);
+  const c = await centre(page, 'Step 6');
+  expect(c.x).toBeGreaterThan(canvas.x);
+  expect(c.x).toBeLessThan(canvas.x + canvas.width);
+  await expect(page.locator('.react-flow__node.selected')).toContainText('Step 6');
+});
+
+for (const percent of [20, 200]) {
+  test(`a drag works at a zoom of ${percent}%`, async ({ page }) => {
+    await open(page, 12);
+    await zoomTo(page, percent);
+    // The card nearest to the middle of the canvas, so that it is on the screen at 200%.
+    const name = await page.evaluate(() => {
+      const canvas = document.querySelector('.react-flow')!.getBoundingClientRect();
+      const mid = { x: canvas.x + canvas.width / 2, y: canvas.y + canvas.height / 2 };
+      let best = { d: Infinity, text: '' };
+      for (const el of document.querySelectorAll('.react-flow__node')) {
+        const r = el.getBoundingClientRect();
+        const d = Math.hypot(r.x + r.width / 2 - mid.x, r.y + r.height / 2 - mid.y);
+        if (d < best.d) best = { d, text: el.textContent ?? '' };
+      }
+      return /Step \d+/.exec(best.text)![0];
+    });
+    const n = Number(name.slice(5));
+    const other = n === 12 ? 'Step 11' : n === 1 ? 'Step 2' : `Step ${n + 1}`;
+    expect([name, other].every((x) => !/^Step 1$/.test(x))).toBe(true); // 'Step 1' would also match Step 10 to 12
+    const before = await gapOf(page, name, other);
+    const r = await drag(page, name, 100, 40);
+    expect(r.minVisible).toBe(12);
+    expect(await visible(page)).toBe(12);
+    const after = await gapOf(page, name, other);
+    expect(Math.abs(before.x - after.x - 100)).toBeLessThan(3);
+    expect(Math.abs(before.y - after.y - 40)).toBeLessThan(3);
+  });
+}
