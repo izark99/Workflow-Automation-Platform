@@ -207,3 +207,58 @@ export function planPublish(versions: (VersionRange & { status: 'draft' | 'publi
   }
   return { ok: true, ends: open ? { versionNo: open.versionNo, validTo: open.validTo as string } : undefined };
 }
+
+// ---- The date check (SPEC 13.3 item 7) ----
+
+/** A run of days, both ends included. `to: null` means with no end. */
+export interface CoverageGap {
+  from: string;
+  to: string | null;
+}
+
+/**
+ * The days of `range` that no published version of a table covers. Open ends count (`validTo: null` on the range or on a
+ * version), only published versions count (a version with no status is published), versions that touch (one ends the day
+ * before the next starts) leave no gap, and a table with no published version is one gap for the whole range.
+ */
+export function coverageGaps(range: { validFrom: string; validTo: string | null }, versions: VersionRange[]): CoverageGap[] {
+  const published = versions.filter((v) => v.status === undefined || v.status === 'published').sort((a, b) => (a.validFrom < b.validFrom ? -1 : a.validFrom > b.validFrom ? 1 : 0));
+  const gaps: CoverageGap[] = [];
+  const end = range.validTo;
+  const beyond = (day: string): boolean => end !== null && day > end;
+  let cursor = range.validFrom; // the first day that is not known to be covered
+  for (const v of published) {
+    if (beyond(cursor)) return gaps;
+    if (v.validTo !== null && v.validTo < cursor) continue; // ended before the days that are left
+    if (v.validFrom > cursor) {
+      const last = dayBefore(v.validFrom);
+      gaps.push({ from: cursor, to: end !== null && end < last ? end : last });
+      if (beyond(v.validFrom)) return gaps;
+    }
+    if (v.validTo === null) return gaps; // covers every later day
+    const next = dayAfter(v.validTo);
+    if (next > cursor) cursor = next;
+  }
+  if (!beyond(cursor)) gaps.push({ from: cursor, to: end });
+  return gaps;
+}
+
+/** A gap in the versions of one reference table that a flow reads. */
+export interface TableGap extends CoverageGap {
+  table: string;
+}
+
+/**
+ * The gaps of every reference table that a definition reads (a Lookup, a Pivot or a Reference table step) over the range of
+ * a flow version. A table that is not in the list is left out (another check reports it). With `skipEmpty` a table with no
+ * version at all is left out too: a person who may not read a table yet sees it with no versions, which says nothing.
+ */
+export function dateCheck(definition: unknown, range: { validFrom: string; validTo: string | null }, tables: RefTable[], options: { skipEmpty?: boolean } = {}): TableGap[] {
+  const out: TableGap[] = [];
+  for (const name of referencedTables(definition)) {
+    const table = tables.find((t) => t.name === name);
+    if (!table || (options.skipEmpty && table.versions.length === 0)) continue;
+    for (const gap of coverageGaps(range, table.versions)) out.push({ table: name, ...gap });
+  }
+  return out;
+}

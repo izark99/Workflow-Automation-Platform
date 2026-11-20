@@ -1,0 +1,25 @@
+.warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--radius-control);
+  background: var(--color-note-bg);
+  color: var(--color-note-ink);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.warning svg {
+  margin-top: 2px;
+}
+
+.lines {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}

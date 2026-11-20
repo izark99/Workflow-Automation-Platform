@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, DatePicker, Dialog, ErrorState, Field } from '../components';
+import { Button, DatePicker, Dialog, ErrorState, Field, QuietWarning } from '../components';
 import { useT } from '../i18n';
 import styles from './builder.module.css';
 
@@ -24,7 +24,7 @@ export function DiscardDialog({ onDiscard, onStay }: { onDiscard: () => void; on
   );
 }
 
-export function PublishDialog({ versionNo, text, dirty, busy, error, onConfirm, onCancel }: { versionNo: number; text: string; dirty: boolean; busy: boolean; error: string | null; onConfirm: () => void; onCancel: () => void }) {
+export function PublishDialog({ versionNo, text, dirty, busy, error, warnings = [], onConfirm, onCancel }: { versionNo: number; text: string; dirty: boolean; busy: boolean; error: string | null; /** The date check: gaps in the versions of the tables the flow reads. They do not block the publish. */ warnings?: string[]; onConfirm: () => void; onCancel: () => void }) {
   const t = useT();
   return (
     <Dialog
@@ -42,6 +42,7 @@ export function PublishDialog({ versionNo, text, dirty, busy, error, onConfirm, 
       <div className={styles.dialogBody}>
         <span>{text}</span>
         {dirty ? <span>{t('builder.publishUnsaved')}</span> : null}
+        <QuietWarning lines={warnings} />
         {error ? <ErrorState what={t('builder.publishFailed')} next={error} /> : null}
       </div>
     </Dialog>

@@ -1,6 +1,7 @@
-import { Dropdown, ErrorState } from '../../components';
+import { Dropdown, ErrorState, QuietWarning } from '../../components';
 import { useT } from '../../i18n';
-import { formatDate } from '../../../engine/versions';
+import { coverageGaps, formatDate } from '../../../engine/versions';
+import { gapLine } from '../../date-check';
 import { referenceTableInfo } from './reference-table-logic';
 import type { FormProps } from './types';
 import styles from '../settings-panel.module.css';
@@ -19,6 +20,9 @@ export function ReferenceTableForm({ step, context, onSettings, readOnly }: Form
   if (table === '') options.unshift({ value: '', label: t('builder.referenceTable.choose') });
   // A name that is not in the list stays visible, so the person sees what the step points at.
   if (table !== '' && !options.some((o) => o.value === table)) options.push({ value: table, label: table });
+  // The date check for this table over the whole range of the flow version (the test date shows one day of it).
+  const chosen = context.refTables.find((r) => r.name === table);
+  const gaps = context.coverage && chosen && !(context.coverage.skipEmpty && chosen.versions.length === 0) ? coverageGaps(context.coverage.range, chosen.versions).map((g) => gapLine({ table, ...g })) : [];
   const columns = info.kind === 'ready' || info.kind === 'no_version' ? info.columns : [];
   return (
     <div className={styles.stack} style={{ paddingTop: 0 }}>
@@ -43,6 +47,7 @@ export function ReferenceTableForm({ step, context, onSettings, readOnly }: Form
           {t('builder.referenceTable.version', { date: formatDate(date), n: info.versionNo, range: info.range })}
         </p>
       ) : null}
+      <QuietWarning lines={gaps} />
       {columns.length > 0 ? (
         <section aria-label={t('builder.referenceTable.columns')}>
           <h3 className={styles.listTitle}>{t('builder.referenceTable.columns')}</h3>

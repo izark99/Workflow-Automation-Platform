@@ -11,6 +11,8 @@ export interface FormContext {
   parameterValues?: Record<string, ParameterValue | undefined>;
   /** The test date of the builder (the date of the Test tab), an ISO date. */
   testDate: string;
+  /** For the date check: the range of the open flow version, and whether tables with no version are left out. */
+  coverage?: { range: { validFrom: string; validTo: string | null }; skipEmpty: boolean };
 }
 
 export interface FormProps {

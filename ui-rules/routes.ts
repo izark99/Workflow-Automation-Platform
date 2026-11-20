@@ -278,6 +278,30 @@ export const ROUTES: RuleRoute[] = [
     },
   },
   {
+    path: REF_FLOW,
+    name: `${REF_FLOW} (date check, Configure tab)`,
+    sidebar: false,
+    // A flow version of 2027 and a table whose last version ends in 2026: the warning under the dropdown.
+    before: (page) => seedReferenceStep(page, { nodes: [{ id: 'ref', type: 'reference_table', label: 'Reference table', position: { x: 0, y: 0 }, settings: { table: 'Ends 2026' } }], validFrom: '2027-01-01', validTo: '2027-12-31' }),
+    prepare: async (page) => {
+      const settings = page.locator('#builder-settings');
+      await page.locator('.react-flow__node').first().click();
+      await settings.getByRole('tab').nth(1).click();
+      await settings.getByRole('tabpanel').getByRole('status').first().waitFor();
+    },
+  },
+  {
+    path: REF_FLOW,
+    name: `${REF_FLOW} (date check, publish dialog)`,
+    sidebar: false,
+    pseudo: false, // the Publish button is found by its English name
+    before: (page) => seedReferenceStep(page, { nodes: [{ id: 'ref', type: 'reference_table', label: 'Reference table', position: { x: 0, y: 0 }, settings: { table: 'Ends 2026' } }], validFrom: '2027-01-01', validTo: '2027-12-31' }),
+    prepare: async (page) => {
+      await page.getByRole('button', { name: 'Publish', exact: true }).click();
+      await page.getByRole('dialog').getByRole('status').waitFor();
+    },
+  },
+  {
     path: '/reference-tables',
     name: '/reference-tables (import dialog)',
     sidebar: true,

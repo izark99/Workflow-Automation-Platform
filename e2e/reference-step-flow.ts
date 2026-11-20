@@ -12,6 +12,9 @@ export interface ReferenceStepSeed {
   status?: 'draft' | 'published';
   /** The steps of the saved version. Default: one Reference table step with no table. */
   nodes?: { id: string; type: string; label: string; position: { x: number; y: number }; settings: Record<string, unknown> }[];
+  /** The dates of the saved flow version. Default: from 2026-01-01, open ended. */
+  validFrom?: string;
+  validTo?: string | null;
   /** Today in the browser's time zone (ISO): the table "Dated" changes its version on this day. */
   today?: string;
 }
@@ -29,6 +32,7 @@ export async function seedReferenceStep(page: Page, opts: ReferenceStepSeed = {}
   s.refTables.push(
     { id: 'ref-closed', name: 'Closed range', description: 'Valid on every test date.', versions: [version(1, '2026-01-01', '2099-12-31')] },
     { id: 'ref-old', name: 'Old limits', description: 'Ended in 2020.', versions: [version(1, '2020-01-01', '2020-12-31')] },
+    { id: 'ref-ends', name: 'Ends 2026', description: 'Its last version ends on 31 Dec 2026.', versions: [version(1, '2026-01-01', '2026-12-31')] },
     { id: 'ref-dated', name: 'Dated', description: 'Changes version today.', versions: [version(1, '2000-01-01', yesterday), version(2, today, null)] },
   );
   s.flows.push({
@@ -41,8 +45,8 @@ export async function seedReferenceStep(page: Page, opts: ReferenceStepSeed = {}
     versions: [
       {
         versionNo: 1,
-        validFrom: '2026-01-01',
-        validTo: null,
+        validFrom: opts.validFrom ?? '2026-01-01',
+        validTo: opts.validTo === undefined ? null : opts.validTo,
         status: opts.status ?? 'draft',
         changeNote: '',
         definition: { schemaVersion: 1, nodes: opts.nodes ?? [{ id: 'ref', type: 'reference_table', label: 'Reference table', position: { x: 0, y: 0 }, settings: {} }], edges: [] },

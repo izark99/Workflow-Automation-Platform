@@ -733,6 +733,7 @@ export const vi: Record<MessageKey, string> = {
   'builder.referenceTable.missingNext': 'Hãy chọn bảng khác, hoặc nhờ quản trị viên tạo bảng này.',
   'builder.referenceTable.noVersionNext': 'Hãy thêm một phiên bản bao phủ ngày này ở màn hình Bảng tham chiếu, hoặc đổi ngày thử ở thẻ Thử.',
   'builder.card.chooseTable': 'Chọn một bảng',
+  'dateCheck.gap': '{table} không có phiên bản đã phát hành nào {range}: lần chạy cho các ngày này sẽ dừng lại.',
   'builder.step.sql.label': 'SQL',
   'builder.step.sql.hint': 'Chạy SQL tự do trên các bước phía trước.',
   'builder.stepGroup.files': 'Tệp',
