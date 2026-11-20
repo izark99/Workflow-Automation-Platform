@@ -32,7 +32,7 @@ const whole = (name: string, min: number, placeholder: number): BindableSetting 
 const choice = (name: string, choices: readonly string[], optional: boolean): BindableSetting => ({ name, type: 'choice', choices, optional, placeholder: choices[0] as string });
 
 export const BINDABLE_SETTINGS: Readonly<Record<NodeType, readonly BindableSetting[]>> = {
-  input_file: [text('sheet', true, 'Sheet1'), whole('headerRow', 1, 1), whole('skipRows', 0, 0), text('rowNumberColumn', true, 'row_number')],
+  input_file: [text('sheet', true, 'Sheet1'), whole('headerRow', 1, 1), whole('skipRows', 0, 0), text('rowNumberColumn', true, 'row_number'), text('firstColumn', true, 'A'), text('lastColumn', true, 'Z')],
   reference_table: [],
   column_mapping: [],
   filter: [],
@@ -54,7 +54,7 @@ export const BINDABLE_SETTINGS: Readonly<Record<NodeType, readonly BindableSetti
 
 /** Settings that never take a parameter, with the reason. */
 export const NOT_BINDABLE_SETTINGS: Readonly<Record<NodeType, Readonly<Record<string, string>>>> = {
-  input_file: { key: 'The name of the file slot: the Run screen asks for one file per key before any parameter has a value.', fillDown: 'A list of columns of the data.' },
+  input_file: { key: 'The name of the file slot: the Run screen asks for one file per key before any parameter has a value.', fillDown: 'A list of columns of the data.', stopAt: 'Where to stop: a choice with its own settings.', ignoreRows: 'The rows of a list.', expect: 'A list of column names.' },
   reference_table: { table: 'The name of the table. The flow must name it when it is saved: what a person may read depends on it (SPEC 12.1).' },
   column_mapping: { columns: 'The rows of a grid.' },
   filter: { condition: 'A formula. Use PARAM("key").' },

@@ -4,7 +4,7 @@ import type { MessageKey } from '../../i18n';
 
 /** The catalog key of the label that the form of each step shows for a setting that can take a parameter. */
 export const SETTING_LABEL_KEYS: Readonly<Partial<Record<NodeType, Readonly<Record<string, MessageKey>>>>> = {
-  input_file: { sheet: 'builder.form.input.sheet', headerRow: 'builder.form.input.headerRow', skipRows: 'builder.form.input.skipRows', rowNumberColumn: 'builder.form.input.rowNumberColumn' },
+  input_file: { sheet: 'builder.form.input.sheet', headerRow: 'builder.form.input.headerRow', skipRows: 'builder.form.input.skipRows', rowNumberColumn: 'builder.form.input.rowNumberColumn', firstColumn: 'builder.form.input.firstColumn', lastColumn: 'builder.form.input.lastColumn' },
   formula_column: { name: 'builder.formula.name' },
   lookup_join: { onNoMatch: 'builder.join.onNoMatch' },
   unpivot: { nameColumn: 'builder.reshape.nameColumn', valueColumn: 'builder.reshape.valueColumn', skipBlank: 'builder.reshape.skipBlank' },

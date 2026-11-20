@@ -1,5 +1,6 @@
 import { readXlsx, XlsxReadError, type CellValue } from '../xlsx-stream';
 import { requireColumn } from '../nodes/columns';
+import { columnNumber, MAX_BLANK_ROWS, STOP_MATCHES, type StopRule } from './region';
 import { checkFileSize } from '../size-guard';
 import { createTableStatement, insertRowsStatements, quoteIdent, quoteString } from '../sql';
 import { megabytes } from '../messages';
@@ -18,6 +19,15 @@ export interface InputFileSettings {
   fillDown: string[];
   /** Name of an added column that holds the row number in the file. No column is added when unset. */
   rowNumberColumn: string | undefined;
+  /** The region (SPEC 13.2): the first and last column of the table (1-based; the last is open when unset). */
+  firstColumn: number;
+  lastColumn: number | undefined;
+  /** Where the reading stops. The end of the sheet when unset. */
+  stopAt: StopRule;
+  /** Rows inside the table to leave out: those that have the text in the column. */
+  ignoreRows: { column: string; text: string }[];
+  /** The columns that the file must have (case and order do not matter). Nothing is required when empty. */
+  expect: string[];
 }
 
 export interface FileSource {
@@ -45,6 +55,51 @@ export function parseInputSettings(raw: Record<string, unknown>, nodeId: string)
   };
   const fillDown = raw.fillDown ?? [];
   if (!Array.isArray(fillDown) || fillDown.some((c) => typeof c !== 'string')) bad('fillDown', 'must be a list of column names');
+
+  // The region.
+  const column = (value: unknown, name: string): number | undefined => {
+    if (value === undefined) return undefined;
+    const n = columnNumber(value);
+    if (n === undefined) bad(name, 'must be a column letter such as C, or a column number such as 3');
+    return n;
+  };
+  const firstColumn = column(raw.firstColumn, 'firstColumn') ?? 1;
+  const lastColumn = column(raw.lastColumn, 'lastColumn');
+  if (lastColumn !== undefined && lastColumn < firstColumn) bad('lastColumn', 'must not be before the first column');
+  const nonEmpty = (v: unknown, name: string): string => {
+    if (typeof v !== 'string' || v.trim() === '') bad(name, 'must be a text that is not empty');
+    return v as string;
+  };
+  let stopAt: StopRule = { kind: 'end' };
+  if (raw.stopAt !== undefined) {
+    const o = raw.stopAt;
+    if (typeof o !== 'object' || o === null || Array.isArray(o)) return bad('stopAt', 'must say where to stop, for example {"kind": "end"}');
+    const r = o as Record<string, unknown>;
+    if (r.kind === 'end') stopAt = { kind: 'end' };
+    else if (r.kind === 'blank_rows') {
+      const count = r.count === undefined ? 1 : r.count;
+      if (typeof count !== 'number' || !Number.isInteger(count) || count < 1 || count > MAX_BLANK_ROWS) bad('stopAt.count', `must be a whole number from 1 to ${MAX_BLANK_ROWS}`);
+      stopAt = { kind: 'blank_rows', count: count as number };
+    } else if (r.kind === 'marker') {
+      const match = r.match === undefined ? 'contains' : r.match;
+      if (!(STOP_MATCHES as readonly unknown[]).includes(match)) bad('stopAt.match', `must be one of: ${STOP_MATCHES.join(', ')}`);
+      stopAt = { kind: 'marker', text: nonEmpty(r.text, 'stopAt.text'), match: match as 'contains' | 'starts_with' | 'equals', ...(r.column === undefined ? {} : { column: nonEmpty(r.column, 'stopAt.column') }) };
+    } else if (r.kind === 'row') {
+      if (typeof r.row !== 'number' || !Number.isInteger(r.row) || r.row < 1) bad('stopAt.row', 'must be a whole number of 1 or more');
+      stopAt = { kind: 'row', row: r.row as number };
+    } else bad('stopAt.kind', 'must be one of: end, blank_rows, marker, row');
+  }
+  const ignoreRaw = raw.ignoreRows ?? [];
+  if (!Array.isArray(ignoreRaw)) bad('ignoreRows', 'must be a list of a column and a text');
+  const ignoreRows = (ignoreRaw as unknown[]).map((item, i) => {
+    if (typeof item !== 'object' || item === null || Array.isArray(item)) return bad(`ignoreRows ${i + 1}`, 'must have a column and a text');
+    const o = item as Record<string, unknown>;
+    return { column: nonEmpty(o.column, `ignoreRows ${i + 1} column`), text: nonEmpty(o.text, `ignoreRows ${i + 1} text`) };
+  });
+  const expectRaw = raw.expect ?? [];
+  if (!Array.isArray(expectRaw)) bad('expect', 'must be a list of column names');
+  const expectNames = (expectRaw as unknown[]).map((c, i) => nonEmpty(c, `expect ${i + 1}`));
+
   return {
     key: raw.key as string,
     sheet: text('sheet'),
@@ -52,6 +107,11 @@ export function parseInputSettings(raw: Record<string, unknown>, nodeId: string)
     skipRows: int('skipRows', 0, 0),
     fillDown: fillDown as string[],
     rowNumberColumn: text('rowNumberColumn'),
+    firstColumn,
+    lastColumn,
+    stopAt,
+    ignoreRows,
+    expect: expectNames,
   };
 }
 

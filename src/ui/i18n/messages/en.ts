@@ -199,6 +199,8 @@ export const en = {
   'builder.form.input.fillDownHint': 'Column names separated by commas. Use it for merged cells: an empty cell takes the value above it.',
   'builder.form.input.addRowNumber': 'Add a row number column',
   'builder.form.input.rowNumberColumn': 'Row number column name',
+  'builder.form.input.firstColumn': 'First column of the table',
+  'builder.form.input.lastColumn': 'Last column of the table',
   'builder.form.mapping.hint': 'One row for each column to change. Columns that are not listed stay as they are.',
   'builder.form.mapping.add': 'Add column',
   'builder.form.mapping.paste': 'Paste from Excel',

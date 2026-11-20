@@ -192,6 +192,8 @@ export const vi: Record<MessageKey, string> = {
   'builder.form.input.fillDownHint': 'Tên cột, cách nhau bằng dấu phẩy. Dùng cho ô gộp: ô trống lấy giá trị của ô phía trên.',
   'builder.form.input.addRowNumber': 'Thêm cột số dòng',
   'builder.form.input.rowNumberColumn': 'Tên cột số dòng',
+  'builder.form.input.firstColumn': 'Cột đầu của bảng',
+  'builder.form.input.lastColumn': 'Cột cuối của bảng',
   'builder.form.mapping.hint': 'Mỗi cột cần thay đổi là một dòng. Các cột không liệt kê được giữ nguyên.',
   'builder.form.mapping.add': 'Thêm cột',
   'builder.form.mapping.paste': 'Dán từ Excel',
