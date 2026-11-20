@@ -30,11 +30,13 @@ export function bindingView(value: unknown, parameters: readonly FlowParameter[]
   return param ? { kind: 'bound', key: param.key, label: param.label, param } : { kind: 'missing', key: value.$param };
 }
 
-/** "Now: {value}": the value that the run will use, in the words of the screens. */
-export function nowText(type: ParameterType, value: ParameterValue | null): string {
-  const shown = value === null ? translate('builder.param.blank') : type === 'boolean' ? translate(value ? 'builder.param.yes' : 'builder.param.no') : type === 'date' ? formatDate(String(value)) : String(value);
-  return translate('builder.param.now', { value: shown });
+/** A value in the words of the screens: dates as `30 Sep 2026`, Yes and No, a blank as "(blank)". */
+export function valueText(type: ParameterType, value: ParameterValue | null): string {
+  return value === null ? translate('builder.param.blank') : type === 'boolean' ? translate(value ? 'builder.param.yes' : 'builder.param.no') : type === 'date' ? formatDate(String(value)) : String(value);
 }
+
+/** "Now: {value}": the value that the run will use, in the words of the screens. */
+export const nowText = (type: ParameterType, value: ParameterValue | null): string => translate('builder.param.now', { value: valueText(type, value) });
 
 export interface StepBindingResult {
   setting: string;

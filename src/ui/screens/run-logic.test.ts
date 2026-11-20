@@ -3,7 +3,8 @@ import { prepareRun } from '../../engine/versions';
 import type { RefTable } from '../../engine/versions';
 import { seedSnapshot } from '../../store/seed';
 import { addStep, emptyDefinition } from '../builder/graph';
-import { inputsOf, progressText, runDateCheck, sheetLabel, sizeLabel, versionRows } from './run-logic';
+import type { FlowDefinition } from '../../engine/flow/types';
+import { boundRows, inputsOf, progressText, runDateCheck, sheetLabel, sizeLabel, versionRows } from './run-logic';
 
 describe('inputs of a flow', () => {
   it('one file for each Input file step key, in step order, and a key used twice is asked once', () => {
@@ -78,5 +79,29 @@ describe('runDateCheck (T6.10b)', () => {
     const empty: RefTable[] = [{ name: 'Limits', versions: [] }];
     expect(runDateCheck(versions, '2026-06-01', empty, false)).toEqual([]);
     expect(runDateCheck(versions, '2026-06-01', empty, true)).toEqual([{ table: 'Limits', from: '2026-01-01', to: '2026-12-31' }]);
+  });
+});
+
+describe('boundRows (T6.13)', () => {
+  const def = (settings: Record<string, unknown>, parameters: unknown[]) =>
+    ({ schemaVersion: 3, parameters, nodes: [{ id: 'in', type: 'input_file', label: 'People', settings: { key: 'k', ...settings } }, { id: 'out', type: 'output', settings: { file: { $param: 'file' }, sheet: 'S' } }], edges: [] }) as unknown as FlowDefinition;
+  const params = [
+    { key: 'sheet', label: 'Sheet', type: 'text', required: true },
+    { key: 'row', label: 'Row', type: 'number', required: true },
+    { key: 'file', label: 'File', type: 'text', required: true },
+  ];
+  it('has no rows for a flow without a setting that uses a parameter', () => {
+    const plain = { schemaVersion: 3, parameters: params, nodes: [{ id: 'in', type: 'input_file', settings: { key: 'k', sheet: 'Sheet1' } }], edges: [] } as unknown as FlowDefinition;
+    expect(boundRows(plain, {})).toEqual([]);
+  });
+  it('writes "{step}, {setting}: {value}" for each bound setting, in the order of the steps, with the name of the step or its id', () => {
+    const rows = boundRows(def({ sheet: { $param: 'sheet' }, headerRow: { $param: 'row' } }, params), { sheet: 'July', row: 2, file: 'Report' });
+    expect(rows).toEqual([{ text: 'People, Sheet name: July' }, { text: 'People, Header row: 2' }, { text: 'out, File name: Report' }]);
+  });
+  it('puts the error under the row of a setting that cannot be resolved, and keeps the other rows', () => {
+    const rows = boundRows(def({ sheet: { $param: 'sheet' } }, params), { file: 'Report' });
+    expect(rows[0]).toMatchObject({ text: 'People, Sheet name: no value' });
+    expect(rows[0]!.error).toContain('needs a value');
+    expect(rows[1]).toEqual({ text: 'out, File name: Report' });
   });
 });

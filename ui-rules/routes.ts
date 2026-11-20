@@ -334,6 +334,32 @@ export const ROUTES: RuleRoute[] = [
       },
     }),
   ),
+  ...(
+    [
+      ['with the group and a value', { key: 'sheet', label: 'Sheet to read', type: 'text', required: true, default: 'July' }],
+      ['with the group and an error', { key: 'sheet', label: 'Sheet to read', type: 'text', required: true }],
+    ] as const
+  ).map(
+    ([state, parameter]): RuleRoute => ({
+      path: '/flows/flow-refstep/run',
+      name: `/flows/flow-refstep/run (settings that use a parameter, ${state})`,
+      sidebar: true,
+      busy: true,
+      before: (page) =>
+        seedReferenceStep(page, {
+          status: 'published',
+          parameters: [{ ...parameter }],
+          nodes: [
+            { id: 'in', type: 'input_file', label: 'People', position: { x: 0, y: 0 }, settings: { key: 'people', sheet: { $param: 'sheet' }, headerRow: 1 } },
+            { id: 'ref', type: 'reference_table', label: 'Limits table', position: { x: 0, y: 120 }, settings: { table: 'Closed range' } },
+          ],
+        }),
+      // Three groups: the versions, the settings that use a parameter, and the files. No language-dependent names.
+      prepare: async (page) => {
+        await page.locator('[role=group]').nth(2).waitFor();
+      },
+    }),
+  ),
   {
     path: '/reference-tables',
     name: '/reference-tables (import dialog)',

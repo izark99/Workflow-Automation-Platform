@@ -19,7 +19,7 @@ import { gapLine } from '../date-check';
 import { todayIso } from './flows-logic';
 import { executeRun } from './run-engine';
 import type { RunOutcome } from './run-engine';
-import { inputsOf, progressText, sheetLabel, sizeLabel, runDateCheck, versionRows } from './run-logic';
+import { inputsOf, progressText, sheetLabel, sizeLabel, boundRows, runDateCheck, versionRows } from './run-logic';
 import styles from './run.module.css';
 
 type RunState = { status: 'idle' } | { status: 'running'; started: number; total: number; label: string } | { status: 'done'; outcome: RunOutcome } | { status: 'cancelled' } | { status: 'error'; message: string };
@@ -71,6 +71,9 @@ export function RunScreen() {
   const values = initialValues(parameters, typed);
   const valueErrors = parameterValueErrors(parameters, values);
   const hasParameters = parameters.length > 0;
+  // The settings that use a parameter, with the value of this run; a value that cannot be used stops the run (SPEC 13.3 item 4).
+  const bound = definition ? boundRows(definition, values) : [];
+  const bindingProblem = bound.some((r) => r.error !== undefined);
   const missing = inputs.filter((i) => !files[i.key]);
   const running = state.status === 'running';
   // A run in progress counts as activity, so a long run is not cut off by the inactivity limit (SPEC 12.2 item 2).
@@ -154,6 +157,19 @@ export function RunScreen() {
                 ))
               : null}
           </div>
+          {bound.length > 0 ? (
+            <div role="group" aria-label={t('run.boundTitle')} className={styles.list}>
+              <span className={styles.name}>{t('run.boundTitle')}</span>
+              {bound.map((r, i) => (
+                <div key={i}>
+                  <div className={styles.row}>
+                    <span data-user-content>{r.text}</span>
+                  </div>
+                  {r.error ? <ErrorState what={r.error} next="" /> : null}
+                </div>
+              ))}
+            </div>
+          ) : null}
           {prepared && !prepared.ok ? (
             <ErrorState
               what={prepared.noPublished ? t('run.noPublished') : t('run.versionsFailed')}
@@ -187,7 +203,7 @@ export function RunScreen() {
           </div>
           <PendingParametersNote parameters={parameters} errors={valueErrors} action="run" />
           <div className={styles.actions}>
-            <Button variant="primary" busy={running} disabled={!prepared?.ok || missing.length > 0 || Object.keys(valueErrors).length > 0} onClick={() => void run()}>
+            <Button variant="primary" busy={running} disabled={!prepared?.ok || missing.length > 0 || Object.keys(valueErrors).length > 0 || bindingProblem} onClick={() => void run()}>
               {running ? t('run.running') : state.status === 'idle' ? t('run.run') : t('run.runAgain')}
             </Button>
             {running ? (

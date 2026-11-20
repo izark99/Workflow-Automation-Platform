@@ -4,7 +4,7 @@ import { seedSnapshot } from '../src/store/seed';
 export const REF_FLOW = '/flows/flow-refstep/versions/1';
 
 const columns = [{ name: 'code', type: 'text' as const }, { name: 'limit', type: 'number' as const }];
-const version = (versionNo: number, validFrom: string, validTo: string | null) => ({ versionNo, validFrom, validTo, status: 'published' as const, columns, rows: [['A', 4]] });
+const version = (versionNo: number, validFrom: string, validTo: string | null, rows: (string | number)[][] = [['A', 4]]) => ({ versionNo, validFrom, validTo, status: 'published' as const, columns, rows });
 
 export interface ReferenceStepSeed {
   /** The signed-in user. The flow belongs to this user. Default: the admin. */
@@ -37,7 +37,7 @@ export async function seedReferenceStep(page: Page, opts: ReferenceStepSeed = {}
     { id: 'ref-closed', name: 'Closed range', description: 'Valid on every test date.', versions: [version(1, '2026-01-01', '2099-12-31')] },
     { id: 'ref-old', name: 'Old limits', description: 'Ended in 2020.', versions: [version(1, '2020-01-01', '2020-12-31')] },
     { id: 'ref-ends', name: 'Ends 2026', description: 'Its last version ends on 31 Dec 2026.', versions: [version(1, '2026-01-01', '2026-12-31')] },
-    { id: 'ref-dated', name: 'Dated', description: 'Changes version today.', versions: [version(1, '2000-01-01', yesterday), version(2, today, null)] },
+    { id: 'ref-dated', name: 'Dated', description: 'Changes version today.', versions: [version(1, '2000-01-01', yesterday), version(2, today, null, [['A', 6]])] },
   );
   s.flows.push({
     id: 'flow-refstep',

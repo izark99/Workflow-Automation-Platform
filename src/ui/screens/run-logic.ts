@@ -1,4 +1,8 @@
 import type { FlowDefinition } from '../../engine/flow/types';
+import { parametersOf } from '../../engine/flow/parameters';
+import type { ParameterValues } from '../../engine/flow/parameter-values';
+import { stepBindingResults, valueText } from '../builder/parameter-control/parameter-control-logic';
+import { settingLabel } from '../builder/parameter-control/setting-labels';
 import { dateCheck, resolveVersion } from '../../engine/versions';
 import type { FlowVersion, PreparedRun, RefTable, TableGap } from '../../engine/versions';
 import type { FlowVersionRecord } from '../../store/types';
@@ -69,4 +73,29 @@ export function runDateCheck(flowVersions: FlowVersion[], date: string, tables: 
   } catch {
     return []; // no usable flow version: the screen already says so
   }
+}
+
+export interface BoundRow {
+  /** "{step}, {setting}: {value}" for a value, or the setting alone when it cannot be resolved. */
+  text: string;
+  /** What failed and what to do, when the value cannot be used: the run does not start. */
+  error?: string;
+}
+
+/**
+ * One row for each setting of the flow that uses a parameter (the card "Versions used for this date" of the Run screen):
+ * the step, the setting and the value that this run will use, or the error under it. In the order of the steps.
+ */
+export function boundRows(definition: FlowDefinition, values: ParameterValues): BoundRow[] {
+  const parameters = parametersOf(definition);
+  const rows: BoundRow[] = [];
+  for (const node of definition.nodes) {
+    for (const r of stepBindingResults(node, parameters, values)) {
+      const step = node.label ?? node.id;
+      const setting = settingLabel(node.type, r.setting);
+      if (r.outcome.ok) rows.push({ text: translate('run.boundRow', { step, setting, value: valueText(r.param?.type ?? 'text', r.outcome.value) }) });
+      else rows.push({ text: translate('run.boundRowFailed', { step, setting }), error: r.outcome.error });
+    }
+  }
+  return rows;
 }
