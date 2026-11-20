@@ -38,3 +38,12 @@ export function columnLetters(n: number): string {
   for (let rest = n; rest > 0; rest = Math.floor((rest - 1) / 26)) out = String.fromCharCode(65 + ((rest - 1) % 26)) + out;
   return out;
 }
+
+/** Does a cell's text match, not case sensitive? `equals` ignores spaces around both. */
+export function textMatches(cell: string, text: string, match: 'contains' | 'starts_with' | 'equals'): boolean {
+  const a = cell.toLowerCase();
+  const b = text.toLowerCase();
+  if (match === 'contains') return a.includes(b);
+  if (match === 'starts_with') return a.trimStart().startsWith(b.trimStart());
+  return a.trim() === b.trim();
+}

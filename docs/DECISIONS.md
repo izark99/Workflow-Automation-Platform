@@ -961,3 +961,13 @@ DESIGN says the card of the Reference table step has "the table icon". Every oth
 ## D90 The parameter button is 40 px, as high as the box beside it (T6.11)
 
 DESIGN says "a 36 px icon button ... one height with the box beside it". The input boxes of the forms are 40 px, and D83 says compact (36 px) buttons next to 40 px controls are 40 px. The link button of the parameter control is therefore 40 px (`Dropdown` with `iconTrigger`, square, the height of the control), and it stays in the allowed set of button sizes (40 and 36). The "Use a fixed value" button of a bound field is compact (36 px) and sits in the 40 px row of the chip. A test measures the button against the box. The options of the list show the label and, in muted text, the key (`DropdownOption.hint`).
+
+## D91 How the csv path reads a table inside a larger file (T6.16a)
+
+DuckDB `read_csv` stays the csv reader (D10), with three changes for files that have a title block, a footer or empty lines:
+
+- **The dialect is decided in the engine, not by the sniffer.** The sniffer of DuckDB takes a one-column title for the whole format (it chose `|` and one column, or failed with "not possible to detect the dialect") when the rows have different widths. The engine scans the lines once: the delimiter is the one of `, ; tab |` that splits the most lines (a tie goes to the comma), and the width is that of the widest line (a delimiter inside quotes can only make it larger; the cells that are not there are empty). Then `read_csv` gets the dialect and the column list explicitly (`auto_detect = false`, `skip = 0`, `null_padding`).
+- **Rows are numbered by the line of the file.** DuckDB leaves empty lines out of a table, so the n-th row is mapped to the n-th line that is not empty. When the two counts differ (a quoted cell that holds a line break) the order of the rows is kept, and then "header row", "rows to skip" and the row number column count rows, not lines.
+- **The region, the stop rule and the rows to ignore are SQL** over those rows: the first and last column are positions; a marker is looked for in the named column or in every column of the row; "N empty rows in a row" is evaluated over the list of all line numbers, where a line that is not in the table is empty; a row to ignore is not empty.
+
+The xlsx reader gets the same rules in its row loop. It stops reading the file at the stop rule (`LoadStats.rowsRead` shows how many rows it took), and it counts a gap in the row numbers as empty rows, because the sheet XML does not hold empty rows.

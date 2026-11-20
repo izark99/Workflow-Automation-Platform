@@ -1261,6 +1261,7 @@ export const vi: Record<MessageKey, string> = {
   'engine.bindChoice': 'Bước "{step}": tham số "{key}" có giá trị "{value}", không nằm trong các lựa chọn của "{setting}" ({choices}). Hãy chọn một trong các giá trị này cho tham số.',
   'engine.bindNumber': 'Bước "{step}": tham số "{key}" có giá trị {value}, nhưng "{setting}" phải là {rule}. Hãy nhập một giá trị phù hợp.',
   'engine.bindBlank': 'Bước "{step}": "{setting}" cần có giá trị, nhưng tham số "{key}" đang để trống. Hãy nhập giá trị cho tham số, hoặc nhập một giá trị cố định.',
+  'engine.inputMissingColumns': '{file} thiếu {missing}, mà bước này yêu cầu. Tệp có các cột: {have}. Hãy chọn đúng tệp hoặc trang tính, hoặc đổi các cột mà bước yêu cầu.',
   'engine.paramShape': 'Tham số {n} không phải là một đối tượng có khóa, nhãn và kiểu. Hãy viết mỗi tham số thành một đối tượng.',
   'engine.paramKey': 'Tham số {n} có khóa "{key}". Khóa gồm chữ cái, chữ số và dấu gạch dưới, không bắt đầu bằng chữ số, và dài tối đa {max} ký tự.',
   'engine.paramDuplicateKey': 'Hai tham số dùng cùng khóa "{key}" (khóa được so sánh không phân biệt chữ hoa, chữ thường). Hãy đặt cho mỗi tham số một khóa riêng.',

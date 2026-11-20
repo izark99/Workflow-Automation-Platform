@@ -30,3 +30,17 @@ describe('columnLetters', () => {
     for (let n = 1; n <= 1000; n += 7) expect(columnNumber(columnLetters(n))).toBe(n);
   });
 });
+
+import { textMatches } from './region';
+
+describe('textMatches', () => {
+  it('contains, starts with and equals are not case sensitive', () => {
+    expect(textMatches('Prepared by: A. Maker', 'prepared by', 'contains')).toBe(true);
+    expect(textMatches('Prepared by: A. Maker', 'PREPARED BY', 'starts_with')).toBe(true);
+    expect(textMatches('  Prepared by', 'prepared', 'starts_with')).toBe(true);
+    expect(textMatches('Signature', ' signature ', 'equals')).toBe(true);
+    expect(textMatches('Signatures', 'signature', 'equals')).toBe(false);
+    expect(textMatches('Now Prepared by', 'prepared by', 'starts_with')).toBe(false);
+    expect(textMatches('Người lập', 'người', 'starts_with')).toBe(true);
+  });
+});

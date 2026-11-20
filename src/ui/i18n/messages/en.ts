@@ -1312,6 +1312,7 @@ export const en = {
   'engine.bindChoice': 'Step "{step}": the parameter "{key}" has the value "{value}", which is not one of the choices of "{setting}" ({choices}). Choose one of these values for the parameter.',
   'engine.bindNumber': 'Step "{step}": the parameter "{key}" has the value {value}, but "{setting}" must be {rule}. Enter a value that fits.',
   'engine.bindBlank': 'Step "{step}": "{setting}" needs a value, but the parameter "{key}" is blank. Enter a value for the parameter, or give the setting a fixed value.',
+  'engine.inputMissingColumns': '{file} lacks {missing}, which this step requires. The file has: {have}. Choose the right file or sheet, or change the columns that the step requires.',
   'engine.paramShape': 'Parameter {n} is not an object with a key, a label and a type. Write each parameter as an object.',
   'engine.paramKey': 'Parameter {n} has the key "{key}". A key has letters, digits and underscores, does not start with a digit, and has at most {max} characters.',
   'engine.paramDuplicateKey': 'Two parameters use the key "{key}" (keys are compared without regard to case). Give each parameter its own key.',
