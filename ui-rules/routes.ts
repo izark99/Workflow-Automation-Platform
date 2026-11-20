@@ -264,6 +264,20 @@ export const ROUTES: RuleRoute[] = [
     }),
   ),
   {
+    path: REF_FLOW,
+    name: `${REF_FLOW} (Reference table, Test tab with rows)`,
+    sidebar: false,
+    before: (page) => seedReferenceStep(page, { nodes: [{ id: 'ref', type: 'reference_table', label: 'Reference table', position: { x: 0, y: 0 }, settings: { table: 'OT limits' } }] }),
+    // The preview of the table: no file is needed, so the rows appear. No language-dependent names.
+    prepare: async (page) => {
+      const settings = page.locator('#builder-settings');
+      await page.locator('.react-flow__node').first().click();
+      await settings.getByRole('tab').nth(2).click();
+      await settings.getByRole('tabpanel').getByRole('button').filter({ hasNotText: /\d{4}/ }).first().click();
+      await settings.getByRole('table').locator('tbody tr').first().waitFor({ timeout: 30_000 });
+    },
+  },
+  {
     path: '/reference-tables',
     name: '/reference-tables (import dialog)',
     sidebar: true,

@@ -155,6 +155,8 @@ function previewColumns(data: PreviewData): Column<PreviewRow>[] {
   return data.columns.map((c, i) => ({
     key: `${i}-${c.name}`,
     header: c.name,
+    // The column names and the cells are the user's data, not texts of the app.
+    userContent: true,
     align: c.type === 'number' ? ('right' as const) : ('left' as const),
     render: (row: PreviewRow) => formatCell(row.cells[i] ?? null, c.type),
   }));
