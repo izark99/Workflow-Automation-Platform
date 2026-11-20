@@ -312,6 +312,28 @@ export const ROUTES: RuleRoute[] = [
       await page.getByRole('status').first().waitFor();
     },
   },
+  ...(
+    [
+      ['Configure: a bound field', 1, [{ key: 'sheet', label: 'Sheet to read', type: 'text', required: true, default: 'July' }], { key: 'people', sheet: { $param: 'sheet' }, headerRow: 1 }],
+      ['Configure: a deleted parameter', 1, [{ key: 'other', label: 'Other', type: 'text', required: false }], { key: 'people', sheet: { $param: 'gone' }, headerRow: 1 }],
+      ['Test: the value now', 2, [{ key: 'sheet', label: 'Sheet to read', type: 'text', required: true, default: 'July' }], { key: 'people', sheet: { $param: 'sheet' }, headerRow: 1 }],
+      ['Test: a value that cannot be used', 2, [{ key: 'row', label: 'Header row number', type: 'number', required: true, default: 0 }], { key: 'people', headerRow: { $param: 'row' } }],
+    ] as const
+  ).map(
+    ([state, tab, parameters, inputSettings]): RuleRoute => ({
+      path: REF_FLOW,
+      name: `${REF_FLOW} (parameter control, ${state})`,
+      sidebar: false,
+      before: (page) => seedReferenceStep(page, { parameters: [...parameters], nodes: [{ id: 'in', type: 'input_file', label: 'People', position: { x: 0, y: 0 }, settings: { ...inputSettings } }] }),
+      // Without names that depend on the language, so the pseudo-locale check runs on these states too.
+      prepare: async (page) => {
+        await page.locator('.react-flow__node').first().click();
+        const settings = page.locator('#builder-settings');
+        await settings.getByRole('tab').nth(tab).click();
+        await settings.getByRole('tabpanel').getByText(/\S/).first().waitFor();
+      },
+    }),
+  ),
   {
     path: '/reference-tables',
     name: '/reference-tables (import dialog)',

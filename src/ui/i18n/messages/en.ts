@@ -768,6 +768,7 @@ export const en = {
   'builder.param.no': 'No',
   'builder.param.gone': 'Parameter {key} no longer exists',
   'builder.param.goneNext': 'Choose another parameter, or use a fixed value.',
+  'builder.preview.boundTitle': 'Settings that use a parameter',
   'dev.parameterControl': 'Parameter control',
   'dev.demo.pcFixed': 'A fixed value',
   'dev.demo.pcNoFit': 'No parameter of this type',

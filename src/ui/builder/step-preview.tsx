@@ -9,6 +9,11 @@ import type { Cell } from '../../engine/types';
 import type { RefTable } from '../../engine/versions';
 import { Button, Chip, ChipGroup, DatePicker, EmptyState, ErrorState, InfoTip, SkeletonTable, Table } from '../components';
 import type { Column } from '../components';
+import { bindableSetting } from '../../engine/flow/bindable';
+import { parametersOf } from '../../engine/flow/parameters';
+import { ParameterControl } from './parameter-control/parameter-control';
+import { stepBindingResults } from './parameter-control/parameter-control-logic';
+import { settingLabel } from './parameter-control/setting-labels';
 import { useT, errorText } from '../i18n';
 import { ParameterInputs, PendingParametersNote } from '../parameter-inputs';
 import { initialValues, parameterValueErrors } from '../parameter-logic';
@@ -56,6 +61,8 @@ export function StepPreview({ definition, step, files, onFile, refTables, parame
   const values = initialValues(used, parameterValues);
   const valueErrors = parameterValueErrors(used, values);
   const invalid = Object.keys(valueErrors).length > 0;
+  // What each setting of this step that uses a parameter gets from the test values: the value, or the reason it cannot be used.
+  const bound = stepBindingResults(step, parametersOf(definition), values);
   const key = previewKey(target.definition, target.nodeId, target.handle, date) + JSON.stringify(values);
 
   const run = async (): Promise<void> => {
@@ -96,6 +103,28 @@ export function StepPreview({ definition, step, files, onFile, refTables, parame
           </span>
           <ParameterInputs parameters={used} values={values} errors={valueErrors} onChange={onParameterValue} />
           <PendingParametersNote parameters={used} errors={valueErrors} action="preview" />
+        </div>
+      ) : null}
+      {bound.length > 0 ? (
+        <div className={styles.block} role="group" aria-label={t('builder.preview.boundTitle')}>
+          <span className={styles.label}>{t('builder.preview.boundTitle')}</span>
+          {bound.map((b) => (
+            <ParameterControl
+              key={b.setting}
+              field={settingLabel(step.type, b.setting)}
+              setting={bindableSetting(step.type, b.setting)!}
+              parameters={parametersOf(definition)}
+              value={step.settings[b.setting]}
+              readOnly
+              viewOnly
+              onBind={() => undefined}
+              onUnbind={() => undefined}
+              now={b.outcome.ok && b.param ? { type: b.param.type, value: b.outcome.value } : undefined}
+              error={b.outcome.ok ? undefined : b.outcome.error}
+            >
+              {null}
+            </ParameterControl>
+          ))}
         </div>
       ) : null}
       {needed.length > 0 ? (

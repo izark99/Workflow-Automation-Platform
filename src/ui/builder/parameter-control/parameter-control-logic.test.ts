@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { BindableSetting } from '../../../engine/flow/bindable';
 import type { FlowParameter } from '../../../engine/flow/parameters';
-import { bindingView, nowText, parametersThatFit } from './parameter-control-logic';
+import type { FlowNode } from '../../../engine/flow/types';
+import { bindingView, nowText, parametersThatFit, stepBindingResults } from './parameter-control-logic';
 
 const P = (key: string, type: FlowParameter['type'], label = key.toUpperCase()): FlowParameter => ({ key, label, type, required: false });
 const params = [P('t', 'text'), P('n', 'number'), P('d', 'date'), P('b', 'boolean'), P('l', 'list')];
@@ -48,5 +49,35 @@ describe('nowText', () => {
   });
   it('says so when the value is blank', () => {
     expect(nowText('text', null)).toBe('Now: (blank)');
+  });
+});
+
+describe('stepBindingResults', () => {
+  const step = (type: FlowNode['type'], settings: Record<string, unknown>): FlowNode => ({ id: 's', type, label: 'My step', settings });
+  const ps: FlowParameter[] = [{ key: 'sheet', label: 'Sheet', type: 'text', required: true }, { key: 'row', label: 'Row', type: 'number', required: false }, { key: 'kind', label: 'Kind', type: 'list', required: false, options: ['xlsx', 'csv'] }];
+  const input = step('input_file', { key: 'k', sheet: { $param: 'sheet' }, headerRow: { $param: 'row' } });
+
+  it('gives the value of each bound setting from the values, with a number as a number', () => {
+    const r = stepBindingResults(input, ps, { sheet: 'July', row: 3 });
+    expect(r.map((x) => [x.setting, x.outcome])).toEqual([['sheet', { ok: true, value: 'July' }], ['headerRow', { ok: true, value: 3 }]]);
+  });
+  it('reports a missing required value, a value of the wrong kind for the setting, and a choice that is not one of the choices', () => {
+    const r = stepBindingResults(input, ps, { row: 0 });
+    expect(r[0]!.outcome).toMatchObject({ ok: false, error: expect.stringContaining('needs a value') });
+    expect(r[1]!.outcome).toMatchObject({ ok: false, error: expect.stringContaining('whole number of 1 or more') });
+    const out = stepBindingResults(step('lookup_join', { onNoMatch: { $param: 'kind' } }), ps, { kind: 'csv' });
+    expect(out[0]!.outcome).toMatchObject({ ok: false, error: expect.stringContaining('blank, drop, fail') });
+  });
+  it('a blank optional parameter leaves an optional setting unset, which is a blank value', () => {
+    const r = stepBindingResults(step('input_file', { key: 'k', headerRow: { $param: 'row' } }), ps, { row: null });
+    expect(r[0]!.outcome).toEqual({ ok: true, value: null });
+  });
+  it('a deleted parameter is an error that names the setting, and the result keeps its key', () => {
+    const r = stepBindingResults(step('input_file', { key: 'k', sheet: { $param: 'gone' } }), ps, {});
+    expect(r[0]).toMatchObject({ key: 'gone', param: undefined });
+    expect(r[0]!.outcome).toMatchObject({ ok: false, error: expect.stringContaining('gone') });
+  });
+  it('lists only the settings that hold a binding, in the order of the settings', () => {
+    expect(stepBindingResults(step('input_file', { key: 'k', headerRow: 1 }), ps, {})).toEqual([]);
   });
 });

@@ -26,6 +26,8 @@ export interface ParameterControlProps {
   children: ReactNode;
   /** Starts with the list open, for the components page. */
   defaultOpen?: boolean;
+  /** Shows a bound field only, with no button to give it back (the Test tab and the Run screen show what a run will use). */
+  viewOnly?: boolean;
 }
 
 /**
@@ -33,7 +35,7 @@ export interface ParameterControlProps {
  * beside it that lists the parameters that fit. A bound field is one row, with the parameter as a chip and a button that
  * gives the field back. Errors are shown under the field.
  */
-export function ParameterControl({ field, setting, parameters, value, readOnly, onBind, onUnbind, now, error, children, defaultOpen }: ParameterControlProps) {
+export function ParameterControl({ field, setting, parameters, value, readOnly, onBind, onUnbind, now, error, children, defaultOpen, viewOnly = false }: ParameterControlProps) {
   const t = useT();
   const view = bindingView(value, parameters);
 
@@ -78,9 +80,11 @@ export function ParameterControl({ field, setting, parameters, value, readOnly, 
             </>
           )}
         </span>
-        <Button compact disabled={readOnly} onClick={onUnbind}>
-          {t('builder.param.fixed')}
-        </Button>
+        {viewOnly ? null : (
+          <Button compact disabled={readOnly} onClick={onUnbind}>
+            {t('builder.param.fixed')}
+          </Button>
+        )}
       </div>
       {gone ? (
         <p className={styles.error} role="alert">{error ?? t('builder.param.goneNext')}</p>

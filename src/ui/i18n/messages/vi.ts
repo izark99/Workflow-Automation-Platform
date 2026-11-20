@@ -743,6 +743,7 @@ export const vi: Record<MessageKey, string> = {
   'builder.param.no': 'Không',
   'builder.param.gone': 'Tham số {key} không còn tồn tại',
   'builder.param.goneNext': 'Hãy chọn tham số khác, hoặc dùng giá trị cố định.',
+  'builder.preview.boundTitle': 'Thiết lập dùng tham số',
   'dev.parameterControl': 'Điều khiển tham số',
   'dev.demo.pcFixed': 'Giá trị cố định',
   'dev.demo.pcNoFit': 'Không có tham số cùng kiểu',

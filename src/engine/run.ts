@@ -1,4 +1,5 @@
-import { resolveParameterValues, type ParameterValues } from './flow/parameter-values';
+import { resolveParameterValues, type ParameterValues, type ResolvedParameters } from './flow/parameter-values';
+import type { FlowDefinition } from './flow/types';
 import { parametersOf } from './flow/parameters';
 import { resolveBindings } from './flow/resolve-bindings';
 import { resolveEdgeHandles, topologicalOrder, validateFlow } from './flow/validate';
@@ -48,14 +49,25 @@ export interface RunResult {
 
 let runCounter = 0;
 
-export async function runFlow(runner: SqlRunner, options: RunOptions): Promise<RunResult> {
-  const validation = validateFlow(options.flow);
+/**
+ * Validates a definition and puts the values of the parameters in the place of every binding (SPEC 13.3), so that code that
+ * reads settings from the definition (the names of the output files, for example) sees plain values. Throws an `EngineError`
+ * for a definition that is not valid, a value that is not valid, or a binding that cannot be filled. The result is for reading
+ * settings: it is the validated definition, which carries `parameters: []` even for a version 1 definition, so it is not passed
+ * to `runFlow` again (the validation would refuse it); `runFlow` takes the original definition and resolves it itself.
+ */
+export function resolveFlow(definition: unknown, parameterValues?: ParameterValues): { flow: FlowDefinition; parameters: ResolvedParameters } {
+  const validation = validateFlow(definition);
   if (!validation.ok) {
     throw coded('invalid_flow', 'engine.invalidFlow', { problems: validation.errors.map((e) => e.message).join(' ') }, validation.errors[0]?.nodeId);
   }
-  const parameters = resolveParameterValues(parametersOf(validation.flow), options.parameterValues);
+  const parameters = resolveParameterValues(parametersOf(validation.flow), parameterValues);
+  return { flow: resolveBindings(validation.flow, parameters), parameters };
+}
+
+export async function runFlow(runner: SqlRunner, options: RunOptions): Promise<RunResult> {
   // Every binding becomes its value before any step is read, so the step modules see plain settings (SPEC 13.3).
-  const flow = resolveBindings(validation.flow, parameters);
+  const { flow, parameters } = resolveFlow(options.flow, options.parameterValues);
   checkOutputNodes(flow);
   const registry = options.registry ?? defaultRegistry;
   const prefix = `r${++runCounter}_`;
