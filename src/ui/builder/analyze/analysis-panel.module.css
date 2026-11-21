@@ -65,7 +65,7 @@
   grid-row: 1 / span 2;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-2);
 }
 
 .undecided {
@@ -99,7 +99,7 @@
 }
 
 .header {
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .srOnly {

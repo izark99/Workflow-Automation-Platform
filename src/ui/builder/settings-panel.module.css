@@ -74,7 +74,7 @@
 
 .railName {
   display: block;
-  margin-top: 44px;
+  margin-top: var(--space-7);
   writing-mode: vertical-rl;
   font-size: 13px;
   line-height: 20px;
@@ -94,7 +94,7 @@
 .head {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-1);
 }
 
 .note {
@@ -118,7 +118,7 @@
 }
 
 .fieldLabel {
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .footer {
