@@ -192,7 +192,6 @@ export function AnalysisPanel({ file, settings, onApply }: AnalysisPanelProps) {
           </div>
           <div className={styles.actions}>
             <Button
-              variant="primary"
               onClick={() => {
                 onApply(applyProposal(settings, state.result));
                 setState({ status: 'idle' });

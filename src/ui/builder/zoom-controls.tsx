@@ -13,14 +13,14 @@ export function ZoomControls({ summary }: { summary: string }) {
     <Panel position="bottom-left">
       <div className={styles.toolbar} role="toolbar" aria-label={t('builder.canvasTools')}>
         <span className={styles.summary}>{summary}</span>
-        <Button compact aria-label={t('builder.zoomOut')} onClick={() => void zoomOut({ duration: 150 })}>
+        <Button size="sm" aria-label={t('builder.zoomOut')} onClick={() => void zoomOut({ duration: 150 })}>
           -
         </Button>
         <span className={styles.zoom} aria-live="polite">{`${Math.round(zoom * 100)}%`}</span>
-        <Button compact aria-label={t('builder.zoomIn')} onClick={() => void zoomIn({ duration: 150 })}>
+        <Button size="sm" aria-label={t('builder.zoomIn')} onClick={() => void zoomIn({ duration: 150 })}>
           +
         </Button>
-        <Button compact onClick={() => void fitView({ duration: 150, ...FIT_VIEW_OPTIONS })}>
+        <Button size="sm" onClick={() => void fitView({ duration: 150, ...FIT_VIEW_OPTIONS })}>
           {t('builder.fit')}
         </Button>
       </div>

@@ -74,7 +74,7 @@ export function ChangePasswordScreen({ onSave, onSignOut }: { onSave: (password:
               <InfoTip label={t('signIn.change.title')}>{t('signIn.change.subtitle')}</InfoTip>
             </div>
             <NewPasswordForm onSave={onSave} submitLabel={t('signIn.change.submit')} />
-            <Button compact onClick={onSignOut}>
+            <Button size="sm" onClick={onSignOut}>
               {t('nav.signOut')}
             </Button>
           </div>

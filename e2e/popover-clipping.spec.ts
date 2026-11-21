@@ -115,7 +115,7 @@ test('the items of the More menu are on one line and start at the left padding, 
   for (const name of ['Reset password', 'Lock account']) {
     const item = page.getByRole('option', { name });
     const box = (await item.boundingBox())!;
-    expect(Math.round(box.height), `${name} is one line`).toBe(36);
+    expect(Math.round(box.height), `${name} is one line`).toBe(32);
     const fit = await item.evaluate((el) => ({ over: el.scrollWidth - el.clientWidth, lines: Math.round(el.getBoundingClientRect().height) }));
     expect(fit.over, `${name} is not cut off`).toBeLessThanOrEqual(0);
     // The text starts at the 12 px padding of the item: no icon or empty column before it.

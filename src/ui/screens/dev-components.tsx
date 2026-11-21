@@ -87,19 +87,19 @@ function Content() {
         <Card title={t('dev.buttons')}>
           <div className={styles.row}>
             <span className={styles.rowLabel}>{t('dev.demo.default40Px')}</span>
-            <Button variant="cta">{t('dev.demo.run')}</Button>
-            <Button variant="primary">{t('dev.demo.newVersion')}</Button>
+            <Button variant="primary">{t('dev.demo.run')}</Button>
+            <Button>{t('dev.demo.newVersion')}</Button>
             <Button>{t('dev.demo.saveDraft')}</Button>
             <Button variant="danger">{t('dev.demo.deleteStep')}</Button>
             <Button disabled>{t('dev.demo.notAvailable')}</Button>
-            <Button variant="primary" busy>{t('dev.demo.running')}</Button>
+            <Button busy>{t('dev.demo.running')}</Button>
           </div>
           <div className={styles.row}>
             <span className={styles.rowLabel}>{t('dev.demo.compact36Px')}</span>
-            <Button compact variant="primary">{t('dev.demo.run')}</Button>
-            <Button compact>{t('dev.demo.open')}</Button>
-            <Button compact variant="danger">{t('dev.demo.delete')}</Button>
-            <Button compact disabled>{t('dev.demo.notAvailable')}</Button>
+            <Button size="sm">{t('dev.demo.run')}</Button>
+            <Button size="sm">{t('dev.demo.open')}</Button>
+            <Button size="sm" variant="danger">{t('dev.demo.delete')}</Button>
+            <Button size="sm" disabled>{t('dev.demo.notAvailable')}</Button>
             <Button icon variant="ghost" aria-label={t('dev.demo.delete')}>
               <Icon name="x" />
             </Button>
@@ -125,7 +125,7 @@ function Content() {
           <div className={styles.row}>
             <Badge>{t('dev.demo.published')}</Badge>
             <Badge tone="outline">{t('dev.demo.shared')}</Badge>
-            <Button compact onClick={() => toast('Draft saved')}>{t('dev.demo.showToast')}</Button>
+            <Button size="sm" onClick={() => toast('Draft saved')}>{t('dev.demo.showToast')}</Button>
           </div>
         </Card>
         <div className={styles.mid} style={{ display: 'contents' }}>
@@ -163,7 +163,7 @@ function Content() {
           <p className={styles.note}>{t('dev.loadingNote')}</p>
         </Card>
         <Card title={t('dev.empty')}>
-          <EmptyState title={t('dev.demo.noFlowsYet')} text={t('dev.demo.createYourFirstFlow')} action={<Button variant="primary">{t('dev.demo.createFlow')}</Button>} />
+          <EmptyState title={t('dev.demo.noFlowsYet')} text={t('dev.demo.createYourFirstFlow')} action={<Button>{t('dev.demo.createFlow')}</Button>} />
         </Card>
         <Card title={t('dev.panels')}>
           <div className={styles.row} style={{ alignItems: 'flex-start', gap: 24 }}>
@@ -180,7 +180,7 @@ function Content() {
             <span>
               <b>{t('dev.demo.step7Of12')}</b>{t('dev.demo.groupOtHours')}
             </span>
-            <Button compact>{t('dev.demo.cancelRun')}</Button>
+            <Button size="sm">{t('dev.demo.cancelRun')}</Button>
           </div>
         </Card>
         <Card title={t('dev.error')}>
@@ -189,8 +189,8 @@ function Content() {
             next={t('dev.demo.row3HasNo')}
             actions={
               <>
-                <Button compact>{t('dev.demo.chooseAnotherFile')}</Button>
-                <Button compact>{t('dev.demo.openTheStep')}</Button>
+                <Button size="sm">{t('dev.demo.chooseAnotherFile')}</Button>
+                <Button size="sm">{t('dev.demo.openTheStep')}</Button>
               </>
             }
           />

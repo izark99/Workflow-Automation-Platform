@@ -1029,3 +1029,12 @@ What it still lists on the new screens is the pattern of the earlier phases (D83
 - The UI rule `oneCta` is replaced by `onePrimary` (the final rule: at most one `data-variant="primary"` per page, with a self-check) and `oneMainAction` (the same rule on `cta`, the one that runs in `COMMON_RULES` until T7.6b, because the call sites still mark the other buttons `primary`).
 - An icon button (`icon`) must have an `aria-label` (a type error otherwise) and shows it as a tooltip after 400 ms of hover or on keyboard focus. The tooltip is drawn by the button (`::after`, `surface-overlay`, `shadow-md`), and a native `title` is dropped so that two tooltips never show. T7.8b replaces it by the shared Tooltip.
 - Compact buttons are 32 px now instead of 36: the e2e checks of those heights (the step buttons and the zoom controls of the builder, the panel toggle, "Use a fixed value") say 32.
+
+## D99 Button call sites on the Harold look (T7.6b)
+
+- The variant `cta` and the prop `compact` are gone; `size="sm"` is the 32 px button. Every `cta` became `primary`; every `compact` became `size="sm"`.
+- One `primary` per screen. On the sidebar screens that button is "Create flow" in the sidebar (DESIGN: it "stays the one primary button of the screens that have it"), so the other buttons of those screens that were `primary` are now `secondary`: the page actions (Run on the Run screen, Download, New table, Save, Publish on the Versions screen, Copy to new version, Save in Admin settings, the Run link in the Flows rows, the empty-state actions). On the builder the one primary is Run, and Publish, "Preview first rows" and Apply of the analysis panel are `secondary`. The sign-in, change-password and locked screens keep their one `primary`. The footer button of a dialog is the one `primary` of the dialog.
+- The rule `onePrimary` counts `data-variant="primary"` per screen, and inside the open modal dialog while there is one (the page behind it is inert). `oneMainAction` is removed. `BUTTON_HEIGHTS` is 32 and 40.
+- Every other 36 px element (the dropdown triggers and options, the date picker's day and month buttons) follows `--size-button-compact`, which is now `var(--control-sm)` (32 px) until T7.7b restyles those components; T7.17 removes the old token.
+- The dev page label `dev.demo.compact36Px` said "Compact, 36 px" and now says "Small, 32 px" (and in Vietnamese "Nhỏ, 32 px"): a stale number in a development-only text, no new wording.
+- The e2e check of the More menu's item height (36 px) is now 32.

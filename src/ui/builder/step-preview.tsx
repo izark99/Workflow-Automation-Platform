@@ -157,7 +157,7 @@ export function StepPreview({ definition, step, files, onFile, refTables, parame
         </div>
       ) : null}
       <div>
-        <Button variant="primary" busy={state.status === 'loading'} disabled={missing.length > 0 || invalid} onClick={() => void run()}>
+        <Button busy={state.status === 'loading'} disabled={missing.length > 0 || invalid} onClick={() => void run()}>
           {state.status === 'loading' ? t('builder.preview.busy') : t('builder.preview.button')}
         </Button>
       </div>
@@ -219,7 +219,7 @@ function FileRow({ label, file, onFile }: { label: string; file: File | undefine
           e.target.value = '';
         }}
       />
-      <Button compact aria-label={t('builder.preview.fileLabel', { action: file ? t('builder.preview.change') : t('builder.preview.choose'), name: label })} onClick={() => input.current?.click()}>
+      <Button size="sm" aria-label={t('builder.preview.fileLabel', { action: file ? t('builder.preview.change') : t('builder.preview.choose'), name: label })} onClick={() => input.current?.click()}>
         {file ? t('builder.preview.change') : t('builder.preview.choose')}
       </Button>
     </div>

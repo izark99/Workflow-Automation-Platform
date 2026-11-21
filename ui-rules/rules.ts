@@ -6,8 +6,8 @@ import type { Page } from '@playwright/test';
 export const TITLE_Y = 63;
 export const FIRST_BLOCK_Y = 123;
 export const ROW_HEIGHT = 57;
-/** Harold: 40 (md) and 32 (sm), and the 24 px info button. 36 stays until T7.6b moves the last `compact` call sites. */
-export const BUTTON_HEIGHTS = [32, 36, 40];
+/** Harold: 40 (md) and 32 (sm), and the 24 px info button (checked apart). */
+export const BUTTON_HEIGHTS = [32, 40];
 
 export type Rule = (page: Page) => Promise<string[]>;
 
@@ -64,23 +64,17 @@ export const forbiddenElements: Rule = async (page) =>
     return bad;
   });
 
-const countRule = (selector: string, name: string): Rule => async (page) =>
-  page.evaluate(
-    ([sel, label]) => {
-      const n = document.querySelectorAll(sel!).length;
-      return n > 1 ? [`${n} ${label} buttons on one screen; at most 1 is allowed`] : [];
-    },
-    [selector, name],
-  );
-
-/** Harold: at most one `primary` button per screen (the final rule; T7.6b puts it in COMMON_RULES). */
-export const onePrimary: Rule = countRule('[data-variant="primary"]', 'primary');
-
 /**
- * The same rule for the call sites of Phases 2 to 6, where the one main action of a screen is marked `cta` and the other
- * buttons are `primary`. It runs in COMMON_RULES until T7.6b moves the call sites; then `onePrimary` replaces it.
+ * Harold: at most one `primary` button per screen. While a modal dialog is open it is the screen (the page behind it is
+ * inert), so the count is made inside the dialog; it is the one `primary` button of its footer.
  */
-export const oneMainAction: Rule = countRule('[data-variant="cta"]', 'cta (the old name of primary)');
+export const onePrimary: Rule = async (page) =>
+  page.evaluate(() => {
+    const modal = document.querySelector('[role="dialog"][aria-modal="true"], dialog[open]');
+    const scope: ParentNode = modal ?? document;
+    const n = scope.querySelectorAll('[data-variant="primary"]').length;
+    return n > 1 ? [`${n} primary buttons on one screen${modal ? ' (inside the open dialog)' : ''}; at most 1 is allowed`] : [];
+  });
 
 export const noHorizontalScroll: Rule = async (page) =>
   page.evaluate(() => {
@@ -237,7 +231,7 @@ export const COMMON_RULES: Record<string, Rule> = {
   'button heights': buttonHeights,
   'no visible hint paragraphs': noHintParagraphs,
   'forbidden elements': forbiddenElements,
-  'one primary (cta until T7.6b)': oneMainAction,
+  'one primary': onePrimary,
   'no horizontal scroll': noHorizontalScroll,
   'table rows': tableRows,
   'row buttons are named': duplicateButtonNames,

@@ -80,12 +80,12 @@ export function FormulaEditor({ label, hint, value, onChange, readOnly, source, 
         {COMMON_FUNCTIONS.map((name) => {
           const doc = FUNCTION_DOCS.find((f) => f.name === name)!;
           return (
-            <Button key={name} compact disabled={readOnly} aria-label={t('builder.formula.insertFunctionLabel', { name })} onClick={() => insertFunction(doc.signature)}>
+            <Button key={name} size="sm" disabled={readOnly} aria-label={t('builder.formula.insertFunctionLabel', { name })} onClick={() => insertFunction(doc.signature)}>
               <span className={styles.mono} data-code>{name}</span>
             </Button>
           );
         })}
-        <Button compact onClick={() => { setQuery(''); setListOpen(true); }}>
+        <Button size="sm" onClick={() => { setQuery(''); setListOpen(true); }}>
           {t('builder.formula.allFunctions')}
         </Button>
       </div>
@@ -137,7 +137,7 @@ export function FormulaEditor({ label, hint, value, onChange, readOnly, source, 
                             <span className={styles.text}>{f.text}</span>
                           </span>
                           <Button
-                            compact
+                            size="sm"
                             disabled={readOnly}
                             aria-label={t('builder.formula.insertFunctionLabel', { name: f.name })}
                             onClick={() => {

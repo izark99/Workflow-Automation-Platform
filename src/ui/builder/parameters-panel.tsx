@@ -107,13 +107,13 @@ function ParameterForm({
       </Checkbox>
       <Field label={num(t('builder.params.help'))} hint={t('builder.params.helpHint')} value={p.help ?? ''} disabled={readOnly} onChange={(e) => onPatch({ help: e.target.value })} />
       <div className={styles.actions}>
-        <Button compact disabled={readOnly || index === 0} aria-label={t('builder.params.moveUpLabel', { n })} onClick={() => onMove(-1)}>
+        <Button size="sm" disabled={readOnly || index === 0} aria-label={t('builder.params.moveUpLabel', { n })} onClick={() => onMove(-1)}>
           {t('builder.params.moveUp')}
         </Button>
-        <Button compact disabled={readOnly || index === count - 1} aria-label={t('builder.params.moveDownLabel', { n })} onClick={() => onMove(1)}>
+        <Button size="sm" disabled={readOnly || index === count - 1} aria-label={t('builder.params.moveDownLabel', { n })} onClick={() => onMove(1)}>
           {t('builder.params.moveDown')}
         </Button>
-        <Button compact variant="danger" disabled={readOnly} aria-label={t('builder.params.deleteLabel', { n })} onClick={onRemove}>
+        <Button size="sm" variant="danger" disabled={readOnly} aria-label={t('builder.params.deleteLabel', { n })} onClick={onRemove}>
           {t('builder.params.delete')}
         </Button>
       </div>

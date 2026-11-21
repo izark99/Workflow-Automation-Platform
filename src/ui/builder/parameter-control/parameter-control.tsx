@@ -90,7 +90,7 @@ export function ParameterControl({ field, setting, parameters, value, readOnly, 
           )}
         </span>
         {viewOnly ? null : (
-          <Button compact disabled={readOnly} onClick={onUnbind}>
+          <Button size="sm" disabled={readOnly} onClick={onUnbind}>
             {t('builder.param.fixed')}
           </Button>
         )}

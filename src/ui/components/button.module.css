@@ -29,14 +29,12 @@
   font-size: 13px;
 }
 
-/* cta stays an alias of primary until T7.6b moves the call sites. */
-.cta,
+
 .primary {
   background: var(--primary);
   color: var(--on-primary);
 }
 
-.cta:hover:not(:disabled),
 .primary:hover:not(:disabled) {
   background: var(--primary-hover);
 }

@@ -270,7 +270,7 @@ Foundation
 
 Components (each: component test first, then the UI rules for the routes that show it; the behaviour and the keyboard tests of Phases 2 to 6 stay as they are)
 - [x] T7.6a Button and icon button: variants `primary`, `secondary` (default, solid `neutral-fill`), `ghost`, `danger`; sizes `md` 40 px and `sm` 32 px; no border on any variant; `loading` keeps the width and sets `aria-busy`; press 0.98 over 120 ms (none under reduced motion); the icon button always has a label and a tooltip after 400 ms. The UI rules: `buttonHeights` accepts 24 (info), 32, 36 and 40 for now, `oneCta` becomes `onePrimary` (at most one `primary` button per screen) with a self-check.
-- [ ] T7.6b Button call sites: remove the `cta` variant (the one main action of each screen is `primary`; the other buttons that were `primary` become `secondary`), `compact` becomes `sm`, destructive buttons stay 8 px from their neighbours and keep their confirm dialog. Then `buttonHeights` accepts only 24, 32 and 40. Update the e2e selectors that name the variant, if any. Run the e2e and the UI rules of every screen.
+- [x] T7.6b Button call sites: remove the `cta` variant (the one main action of each screen is `primary`; the other buttons that were `primary` become `secondary`), `compact` becomes `sm`, destructive buttons stay 8 px from their neighbours and keep their confirm dialog. Then `buttonHeights` accepts only 24, 32 and 40. Update the e2e selectors that name the variant, if any. Run the e2e and the UI rules of every screen.
 - [ ] T7.7a Fields: text field (label above, helper line, error that replaces the helper, `suffix`, `aria-invalid`, a 1 px `primary` inner focus ring over `border-strong`), textarea, search field, checkbox (18 px, 1.5 px `border-strong`), the yes/no control (Switch, 40 x 24 px, only where it applies a setting at once today; elsewhere a checkbox), disabled at 40 % opacity.
 - [ ] T7.7b Dropdown and date picker: the list and the popover on `surface-overlay` with `shadow-md`, the selected option in `primary-text` with a check, opens in 200 ms and closes in 120 ms, the chevron turns 180 degrees, the same keys as today; the date picker keeps the format `30 Sep 2026` and the Monday start, and takes the Harold look for the selected day (blue fill) and today (ring); it still opens upward when there is no room.
 - [ ] T7.8a Dialog and toast: dialog on `surface-overlay`, `radius-xl`, `shadow-lg`, the scrim (`scrim` with `blur-sm`), enters in 260 ms (fade, 8 px rise, 0.98 scale) and leaves in 170 ms, footer with the primary button last; toast fixed at the bottom right, at most 3, 5 s, `shadow-lg`. Focus trap, Escape and focus return stay (their tests unchanged).
@@ -302,6 +302,7 @@ Decisions with a default. Build with the default unless this list says otherwise
 
 | Topic | Default used by the build |
 | --- | --- |
+| Phase 7: the one `primary` button of a sidebar screen | "Create flow" in the sidebar, as DESIGN says; the page's own main action (Run, Download, New table) is `secondary`. If Harold wants the page action to be the primary one, the sidebar button becomes `secondary` instead (D99) |
 | OT type of a day | From the attendance code of the same employee on the same day (rule R9) |
 | Week for the weekly OT limit | ISO week, only days of the run month (rule R11) |
 | Hours equal to a limit | Not a breach (rule R11) |
@@ -353,6 +354,11 @@ None. The Pages file size blocker of T3.9 is solved by D71.
 ## Log
 
 Newest first.
+
+### 2026-11-21 T7.6b Button call sites (turn 7)
+Changed: the variant `cta` and the prop `compact` removed from `Button`, `ButtonLink` and every call site (`size="sm"`, one `primary` per screen, the other former `primary` buttons are `secondary`), `--size-button-compact` is 32 px until T7.7b, `ui-rules/rules.ts` (`BUTTON_HEIGHTS` 32 and 40, `onePrimary` in `COMMON_RULES` and scoped to an open modal dialog, `oneMainAction` removed) and its self-checks, `src/ui/screens/dev-components.tsx` (one primary), the dev demo label "Small, 32 px", `e2e/popover-clipping.spec.ts` (item height 32). D99. A question for Harold is in "Needs Harold" (which button is the one primary of a sidebar screen).
+Gates run: `npm run check` PASS (exit 0); full `npm run test:e2e` PASS on the second run (368 passed incl. canvas drag; the first run had the one failure fixed in `popover-clipping`, and the full suite was not run again after the last edit, which changed the dev page only: `button` and `components` specs PASS, 16); ui-rules (button heights, one primary, danger buttons, accessibility, keyboard focus, self-checks) PASS except `/dev/components` one primary (3 failures, fixed), then `/dev/components` on all projects PASS (39). `git diff main -- src/engine src/store supabase flows` empty.
+Next: T7.7a.
 
 ### 2026-11-21 T7.6a Button and icon button (turn 6)
 Changed: `src/ui/components/button.tsx` and `button.module.css` (Harold variants and sizes, no border, loading keeps the width, press 0.98, icon button with a label and a 400 ms tooltip), `button-link.tsx`, `src/ui/components/base.test.tsx`, `e2e/button.spec.ts` (new: fills, heights, borders, loading width, press, tooltip), `ui-rules/rules.ts` (`BUTTON_HEIGHTS` 32, 36, 40; `onePrimary` and `oneMainAction`) and its self-checks, `src/ui/screens/dev-components.tsx` (an icon button demo, existing catalog text), the 36 px expectations of compact buttons in `e2e/builder.spec.ts`, `panel-toggle.spec.ts`, `parameter-control.spec.ts` (now 32), `src/ui/tokens.test.ts` (`--color-on-cta` is no longer used). D98.

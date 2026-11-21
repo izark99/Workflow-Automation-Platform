@@ -85,7 +85,7 @@ export function AdminScreen() {
       },
       { key: 'actions', header: t('admin.userCols.actions'), render: (u) => (
           <div className={styles.actions}>
-            <Button compact aria-label={t('admin.userDialogEdit', { name: u.name })} onClick={() => open({ kind: 'user', user: u })}>
+            <Button size="sm" aria-label={t('admin.userDialogEdit', { name: u.name })} onClick={() => open({ kind: 'user', user: u })}>
               {t('admin.edit')}
             </Button>
             <Dropdown
@@ -112,8 +112,8 @@ export function AdminScreen() {
         header: t('admin.groupCols.actions'),
         render: (g) => (
           <div className={styles.actions}>
-            <Button compact aria-label={t('admin.renameGroup', { name: g.name })} onClick={() => open({ kind: 'group', group: g })}>{t('admin.rename')}</Button>
-            <Button compact variant="danger" aria-label={t('admin.deleteGroupLabel', { name: g.name })} onClick={() => open({ kind: 'deleteGroup', group: g })}>{t('admin.delete')}</Button>
+            <Button size="sm" aria-label={t('admin.renameGroup', { name: g.name })} onClick={() => open({ kind: 'group', group: g })}>{t('admin.rename')}</Button>
+            <Button size="sm" variant="danger" aria-label={t('admin.deleteGroupLabel', { name: g.name })} onClick={() => open({ kind: 'deleteGroup', group: g })}>{t('admin.delete')}</Button>
           </div>
         ),
       },
@@ -145,8 +145,8 @@ export function AdminScreen() {
         header: t('admin.deletedCols.actions'),
         render: (f) => (
           <div className={styles.actions}>
-            <Button compact aria-label={t('admin.restoreFlow', { name: f.name })} onClick={() => void run(() => store.restoreFlow(f.id), t('admin.restored', { name: f.name }), t('admin.deletedFailed'), false)}>{t('admin.restore')}</Button>
-            <Button compact variant="danger" aria-label={t('admin.deleteForGoodFlow', { name: f.name })} onClick={() => open({ kind: 'purge', flow: f })}>{t('admin.deleteForGood')}</Button>
+            <Button size="sm" aria-label={t('admin.restoreFlow', { name: f.name })} onClick={() => void run(() => store.restoreFlow(f.id), t('admin.restored', { name: f.name }), t('admin.deletedFailed'), false)}>{t('admin.restore')}</Button>
+            <Button size="sm" variant="danger" aria-label={t('admin.deleteForGoodFlow', { name: f.name })} onClick={() => open({ kind: 'purge', flow: f })}>{t('admin.deleteForGood')}</Button>
           </div>
         ),
       },

@@ -1022,7 +1022,7 @@ export const vi: Record<MessageKey, string> = {
   'dev.demo.deleteStep': 'Xóa bước',
   'dev.demo.notAvailable': 'Không khả dụng',
   'dev.demo.running': 'Đang chạy',
-  'dev.demo.compact36Px': 'Nhỏ gọn, 36 px',
+  'dev.demo.compact36Px': 'Nhỏ, 32 px',
   'dev.demo.open': 'Mở',
   'dev.demo.delete': 'Xóa',
   'dev.demo.newColumnName': 'Tên cột mới',

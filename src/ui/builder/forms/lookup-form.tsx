@@ -69,7 +69,7 @@ export function LookupForm(props: FormProps) {
           </div>
         ))}
         <div style={{ paddingTop: 8 }}>
-          <Button compact disabled={readOnly} onClick={() => apply({ ...v, keys: [...v.keys, { left: '', right: '' }] })}>
+          <Button size="sm" disabled={readOnly} onClick={() => apply({ ...v, keys: [...v.keys, { left: '', right: '' }] })}>
             {t('builder.join.addKey')}
           </Button>
         </div>
@@ -91,7 +91,7 @@ export function LookupForm(props: FormProps) {
           </div>
         ))}
         <div style={{ paddingTop: 8 }}>
-          <Button compact disabled={readOnly} onClick={() => apply({ ...v, bring: [...v.bring, { column: '', as: '' }] })}>
+          <Button size="sm" disabled={readOnly} onClick={() => apply({ ...v, bring: [...v.bring, { column: '', as: '' }] })}>
             {t('builder.join.addBring')}
           </Button>
         </div>

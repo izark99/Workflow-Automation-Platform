@@ -66,7 +66,7 @@ export function VersionsScreen() {
 
   let body;
   if (data.error) {
-    body = <ErrorState what={t('versions.loadFailed')} next={t('versions.loadFailedNext')} actions={<ButtonLink compact to="/flows">{t('versions.screen.crumb')}</ButtonLink>} />;
+    body = <ErrorState what={t('versions.loadFailed')} next={t('versions.loadFailedNext')} actions={<ButtonLink size="sm" to="/flows">{t('versions.screen.crumb')}</ButtonLink>} />;
   } else if (!flow) {
     body = data.loading && showSkeleton ? <SkeletonTable weights={[8, 16, 12, 12, 30, 18]} rows={3} label={t('versions.loading')} /> : null;
   } else {
@@ -92,16 +92,16 @@ export function VersionsScreen() {
         header: t('versions.cols.actions'),
         render: (v) => (
           <div className={styles.actions}>
-            <ButtonLink compact to={`/flows/${flow.id}/versions/${v.versionNo}`} aria-label={t('versions.actionLabel', { action: v.status === 'draft' && editable ? t('versions.edit') : t('versions.view'), n: v.versionNo })}>
+            <ButtonLink size="sm" to={`/flows/${flow.id}/versions/${v.versionNo}`} aria-label={t('versions.actionLabel', { action: v.status === 'draft' && editable ? t('versions.edit') : t('versions.view'), n: v.versionNo })}>
               {v.status === 'draft' && editable ? t('versions.edit') : t('versions.view')}
             </ButtonLink>
             {editable && v.status === 'draft' ? (
-              <Button compact variant="primary" aria-label={t('versions.actionLabel', { action: t('versions.publish'), n: v.versionNo })} onClick={() => { setPublishError(null); setPublishNo(v.versionNo); }}>
+              <Button size="sm" aria-label={t('versions.actionLabel', { action: t('versions.publish'), n: v.versionNo })} onClick={() => { setPublishError(null); setPublishNo(v.versionNo); }}>
                 {t('versions.publish')}
               </Button>
             ) : null}
             {editable ? (
-              <Button compact aria-label={t('versions.actionLabel', { action: t('versions.copy'), n: v.versionNo })} onClick={() => setCopyFrom(v.versionNo)}>
+              <Button size="sm" aria-label={t('versions.actionLabel', { action: t('versions.copy'), n: v.versionNo })} onClick={() => setCopyFrom(v.versionNo)}>
                 {t('versions.copy')}
               </Button>
             ) : null}
@@ -161,7 +161,7 @@ export function VersionsScreen() {
       breadcrumb={crumb}
       title={t('versions.screen.title')}
       subtitle={t('versions.screen.subtitle')}
-      action={flow && editable ? <Button variant="primary" onClick={() => setCopyFrom([...flow.versions].sort((a, b) => b.versionNo - a.versionNo)[0]?.versionNo ?? 1)}>{t('versions.newVersion')}</Button> : undefined}
+      action={flow && editable ? <Button onClick={() => setCopyFrom([...flow.versions].sort((a, b) => b.versionNo - a.versionNo)[0]?.versionNo ?? 1)}>{t('versions.newVersion')}</Button> : undefined}
     >
       {body}
     </ScreenFrame>

@@ -45,7 +45,7 @@ export function GroupByForm(props: FormProps) {
           </div>
         ))}
         <div style={{ paddingTop: 8 }}>
-          <Button compact disabled={readOnly} onClick={() => apply({ ...v, aggregations: [...v.aggregations, { fn: 'sum', column: '', as: '' }] })}>
+          <Button size="sm" disabled={readOnly} onClick={() => apply({ ...v, aggregations: [...v.aggregations, { fn: 'sum', column: '', as: '' }] })}>
             {t('builder.group.add')}
           </Button>
         </div>

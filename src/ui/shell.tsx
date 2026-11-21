@@ -210,7 +210,7 @@ export function Shell() {
         {collapsed ? (
           <>
             <div className={styles.railTop} />
-            <Button variant="cta" icon aria-label={t('nav.createFlow')} title={t('nav.createFlow')} onClick={() => setCreating(true)}>
+            <Button variant="primary" icon aria-label={t('nav.createFlow')} title={t('nav.createFlow')} onClick={() => setCreating(true)}>
               <Icon name="plus" size={20} />
             </Button>
             <RailLink to="/flows" icon="workflow" label={t('nav.flows')} />
@@ -229,7 +229,7 @@ export function Shell() {
               {t('app.brand')}
             </div>
             <div className={styles.create}>
-              <Button variant="cta" onClick={() => setCreating(true)}>
+              <Button variant="primary" onClick={() => setCreating(true)}>
                 {t('nav.createFlow')}
               </Button>
             </div>

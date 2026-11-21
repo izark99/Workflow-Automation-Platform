@@ -32,7 +32,7 @@ export function StepList({ onAdd, disabled }: { onAdd: (type: NodeType) => void;
           {g.types.map((type) => (
             <Button
               key={type}
-              compact
+              size="sm"
               block
               disabled={disabled}
               draggable={!disabled}

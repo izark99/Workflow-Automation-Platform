@@ -125,7 +125,7 @@ export function InputFileForm(props: FormProps) {
         ))}
         {errors.ignoreRows ? <p className={pickers.note} role="alert">{errors.ignoreRows}</p> : null}
         <div style={{ paddingTop: 8 }}>
-          <Button compact disabled={readOnly} onClick={() => change({ ignoreRows: [...values.ignoreRows, { column: '', text: '' }] })}>
+          <Button size="sm" disabled={readOnly} onClick={() => change({ ignoreRows: [...values.ignoreRows, { column: '', text: '' }] })}>
             {t('builder.form.input.ignoreAdd')}
           </Button>
         </div>

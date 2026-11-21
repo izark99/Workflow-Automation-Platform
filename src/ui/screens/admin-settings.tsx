@@ -60,7 +60,7 @@ function SettingsForm({ saved, onSaved }: { saved: number; onSaved: () => void }
       </div>
       {failure ? <ErrorState what={t('admin.settings.saveFailed')} next={failure} /> : null}
       <div className={styles.settingsField}>
-        <Button variant="primary" type="submit" block busy={busy} disabled={!canSaveHours(text, saved)}>
+        <Button type="submit" block busy={busy} disabled={!canSaveHours(text, saved)}>
           {t('admin.settings.save')}
         </Button>
       </div>
@@ -74,7 +74,7 @@ export function AdminSettings() {
   const data = useLoad((s) => s.getAppSettings());
   const showSkeleton = useDelayedLoading(data.loading && !data.data);
   let body;
-  if (data.error) body = <ErrorState what={t('admin.settings.loadFailed')} next={errorText(data.error)} actions={<Button compact onClick={data.reload}>{t('flows.retry')}</Button>} />;
+  if (data.error) body = <ErrorState what={t('admin.settings.loadFailed')} next={errorText(data.error)} actions={<Button size="sm" onClick={data.reload}>{t('flows.retry')}</Button>} />;
   else if (!data.data) body = showSkeleton ? <SkeletonTable weights={[40, 20]} rows={1} label={t('admin.settings.loading')} /> : null;
   else body = <SettingsForm key={data.data.idleTimeoutHours} saved={data.data.idleTimeoutHours} onSaved={data.reload} />;
   return <Card title={t('admin.settings.title')}>{body}</Card>;

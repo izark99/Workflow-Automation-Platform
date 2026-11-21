@@ -37,7 +37,7 @@
   --radius-card: 12px;
 
   --size-button: 40px;
-  --size-button-compact: 36px;
+  --size-button-compact: var(--control-sm);
   --size-sidebar: 232px;
   --size-step-list: 184px;
   --size-settings: 380px;

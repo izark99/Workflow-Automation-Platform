@@ -1057,7 +1057,7 @@ export const en = {
   'dev.demo.deleteStep': 'Delete step',
   'dev.demo.notAvailable': 'Not available',
   'dev.demo.running': 'Running',
-  'dev.demo.compact36Px': 'Compact, 36 px',
+  'dev.demo.compact36Px': 'Small, 32 px',
   'dev.demo.open': 'Open',
   'dev.demo.delete': 'Delete',
   'dev.demo.newColumnName': 'New column name',
