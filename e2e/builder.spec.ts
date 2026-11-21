@@ -25,7 +25,7 @@ async function connect(page: Page, from: string, to: string, fromHandle = '.sour
   await page.mouse.up();
 }
 
-test('the layout follows the design: header bar 64 px, step list 184 px, grouped step buttons of 36 px', async ({ page }) => {
+test('the layout follows the design: header bar 64 px, step list 184 px, grouped step buttons of 32 px', async ({ page }) => {
   await page.goto(draft);
   const bar = await page.getByRole('banner').boundingBox();
   expect(Math.round(bar!.height)).toBe(64);
@@ -36,7 +36,7 @@ test('the layout follows the design: header bar 64 px, step list 184 px, grouped
   const stepButtons = list.getByRole('button', { name: /^Add step / });
   await expect(stepButtons).toHaveCount(12);
   await expect(list.getByRole('button')).toHaveCount(14);
-  expect(Math.round((await stepButtons.first().boundingBox())!.height)).toBe(36);
+  expect(Math.round((await stepButtons.first().boundingBox())!.height)).toBe(32);
   // The seed flow of this test has only a draft, so Run is off until a version is published (T2.15).
   await expect(page.getByRole('button', { name: 'Run' })).toBeDisabled();
 });
@@ -106,12 +106,12 @@ test('clicking a card selects it with a 2 px accent border; Backspace deletes it
   await expect(page.locator('.react-flow__edge')).toHaveCount(0);
 });
 
-test('own zoom controls (36 px buttons) zoom in, zoom out and fit to screen', async ({ page }) => {
+test('own zoom controls (32 px buttons) zoom in, zoom out and fit to screen', async ({ page }) => {
   await page.goto('/flows/flow-timesheet/versions/4');
   await expect(cards(page)).toHaveCount(12);
   await expect(page.getByText('12 steps, 1 output sheet')).toBeVisible();
   const tools = page.getByRole('toolbar', { name: 'Canvas tools' });
-  for (const b of await tools.getByRole('button').all()) expect(Math.round((await b.boundingBox())!.height)).toBe(36);
+  for (const b of await tools.getByRole('button').all()) expect(Math.round((await b.boundingBox())!.height)).toBe(32);
   const percent = async () => Number((await tools.locator('[aria-live]').innerText()).replace('%', ''));
   const start = await percent();
   await tools.getByRole('button', { name: 'Zoom in' }).click();
@@ -145,7 +145,7 @@ test('the Reference table step: a button, the keyboard or a drag adds it; its ca
   const files = page.getByRole('group', { name: 'Files' });
   await expect(files.getByRole('button')).toHaveText(['Input file', 'Reference table', 'Output']);
   const button = page.getByRole('button', { name: 'Add step Reference table' });
-  expect(Math.round((await button.boundingBox())!.height)).toBe(36);
+  expect(Math.round((await button.boundingBox())!.height)).toBe(32);
   await button.focus();
   await page.keyboard.press('Enter');
   await expect(cards(page)).toHaveCount(1);

@@ -326,7 +326,6 @@ const OLD_NAMES_IN_USE = [
   '--color-muted',
   '--color-note-bg',
   '--color-note-ink',
-  '--color-on-cta',
   '--color-on-primary',
   '--color-overlay',
   '--color-primary',

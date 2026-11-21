@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Badge, Button, Card, Checkbox, DatePicker, Dialog, Dropdown, EmptyState, ErrorState, Field, InfoTip, PageHeader, ProgressBar, SearchField, SkeletonTable, Tabs, ToastProvider, useToast } from '../components';
+import { Badge, Button, Icon, Card, Checkbox, DatePicker, Dialog, Dropdown, EmptyState, ErrorState, Field, InfoTip, PageHeader, ProgressBar, SearchField, SkeletonTable, Tabs, ToastProvider, useToast } from '../components';
 import { useT } from '../i18n';
 import { ParameterControl } from '../builder/parameter-control/parameter-control';
 import type { FlowParameter } from '../../engine/flow/parameters';
@@ -100,6 +100,9 @@ function Content() {
             <Button compact>{t('dev.demo.open')}</Button>
             <Button compact variant="danger">{t('dev.demo.delete')}</Button>
             <Button compact disabled>{t('dev.demo.notAvailable')}</Button>
+            <Button icon variant="ghost" aria-label={t('dev.demo.delete')}>
+              <Icon name="x" />
+            </Button>
           </div>
           <p className={styles.note}>{t('dev.buttonsNote')}</p>
         </Card>

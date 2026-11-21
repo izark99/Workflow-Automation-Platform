@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { axeSeriousOrCritical, buttonHeights, dangerSpacing, noHintParagraphs, untranslatedText, duplicateButtonNames, forbiddenElements, headerPosition, keyboardFocusRing, noBlurAnimation, noHorizontalScroll, oneCta, panelWidth, railShape, sidebarWidth, tableRows } from './rules';
+import { axeSeriousOrCritical, buttonHeights, dangerSpacing, noHintParagraphs, untranslatedText, duplicateButtonNames, forbiddenElements, headerPosition, keyboardFocusRing, noBlurAnimation, noHorizontalScroll, oneMainAction, onePrimary, panelWidth, railShape, sidebarWidth, tableRows } from './rules';
 
 // Each rule must fail on a page that breaks it, and pass on a page that does not.
 const bad = (html: string) => `<!doctype html><html lang="en"><head><title>t</title></head><body style="margin:0">${html}</body></html>`;
@@ -20,10 +20,10 @@ test('info button: 24 x 24 px passes, 26 x 26 and 24 x 36 fail', async ({ page }
   expect((await buttonHeights(page)).length).toBe(1);
 });
 
-test('button heights: 30 px fails, 36 and 40 pass', async ({ page }) => {
+test('button heights: 30 px fails, 32, 36 and 40 pass', async ({ page }) => {
   await page.setContent(bad('<button style="height:30px">a</button>'));
   expect((await buttonHeights(page)).length).toBe(1);
-  await page.setContent(bad('<button style="height:36px">a</button><button style="height:40px">b</button>'));
+  await page.setContent(bad('<button style="height:32px">a</button><button style="height:36px">a</button><button style="height:40px">b</button>'));
   expect(await buttonHeights(page)).toEqual([]);
 });
 
@@ -34,11 +34,18 @@ test('forbidden elements: native select, checkbox, date, a visible file input an
   expect(await forbiddenElements(page)).toEqual([]);
 });
 
-test('one cta: two fail', async ({ page }) => {
+test('one primary: two primary buttons fail, one primary with other variants passes', async ({ page }) => {
+  await page.setContent(bad('<button data-variant="primary">a</button><button data-variant="primary">b</button>'));
+  expect((await onePrimary(page)).length).toBe(1);
+  await page.setContent(bad('<button data-variant="primary">a</button><button data-variant="secondary">b</button><button data-variant="ghost">c</button><button data-variant="danger">d</button>'));
+  expect(await onePrimary(page)).toEqual([]);
+});
+
+test('one main action (the cta of the old call sites): two fail, many primary buttons beside one pass', async ({ page }) => {
   await page.setContent(bad('<button data-variant="cta">a</button><button data-variant="cta">b</button>'));
-  expect((await oneCta(page)).length).toBe(1);
-  await page.setContent(bad('<button data-variant="cta">a</button>'));
-  expect(await oneCta(page)).toEqual([]);
+  expect((await oneMainAction(page)).length).toBe(1);
+  await page.setContent(bad('<button data-variant="cta">a</button><button data-variant="primary">b</button><button data-variant="primary">c</button>'));
+  expect(await oneMainAction(page)).toEqual([]);
 });
 
 test('horizontal scroll fails', async ({ page }) => {

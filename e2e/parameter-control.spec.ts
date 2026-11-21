@@ -54,7 +54,7 @@ test('a bound field is one row: the chip with the parameter, "Use a fixed value"
   await expect(d.getByText('Period', { exact: true })).toBeVisible();
   await expect(d.getByRole('button', { name: 'Use a fixed value' })).toBeEnabled();
   await expect(d.getByText('Now: July')).toBeVisible();
-  expect(Math.round((await d.getByRole('button', { name: 'Use a fixed value' }).boundingBox())!.height)).toBe(36);
+  expect(Math.round((await d.getByRole('button', { name: 'Use a fixed value' }).boundingBox())!.height)).toBe(32);
 });
 
 test('an error is shown under the field, and a deleted parameter says so', async ({ page }) => {

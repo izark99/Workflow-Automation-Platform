@@ -21,6 +21,27 @@ describe('Button', () => {
     expect(out).toContain('<svg');
     expect(html(<Button>Idle</Button>)).not.toContain('aria-busy');
   });
+  it('has the four Harold variants, and cta stays an alias of primary until T7.6b', () => {
+    for (const v of ['primary', 'secondary', 'ghost', 'danger', 'cta'] as const) {
+      expect(html(<Button variant={v}>x</Button>)).toContain(`data-variant="${v}"`);
+    }
+  });
+  it('has the sizes md (40 px) and sm (32 px): sm adds the small class, compact is its old name', () => {
+    const md = html(<Button>x</Button>);
+    expect(html(<Button size="sm">x</Button>)).not.toBe(md);
+    expect(html(<Button compact>x</Button>)).toBe(html(<Button size="sm">x</Button>));
+  });
+  it('an icon button carries its label as the tooltip text, and a plain button has no tooltip', () => {
+    const out = html(<Button icon aria-label="Close dialog">x</Button>);
+    expect(out).toContain('aria-label="Close dialog"');
+    expect(out).toContain('data-tooltip="Close dialog"');
+    expect(html(<Button>x</Button>)).not.toContain('data-tooltip');
+  });
+  it('keeps the label in the layout while busy, so the width does not change', () => {
+    const out = html(<Button busy>Running</Button>);
+    expect(out).toContain('Running');
+    expect(out).toContain('aria-busy="true"');
+  });
   it('keeps the disabled attribute and the aria-label of a row action', () => {
     const out = html(<Button compact aria-label="Delete Monthly timesheet" disabled>Delete</Button>);
     expect(out).toContain('disabled');

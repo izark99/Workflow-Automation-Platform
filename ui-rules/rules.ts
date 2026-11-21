@@ -6,7 +6,8 @@ import type { Page } from '@playwright/test';
 export const TITLE_Y = 63;
 export const FIRST_BLOCK_Y = 123;
 export const ROW_HEIGHT = 57;
-export const BUTTON_HEIGHTS = [36, 40];
+/** Harold: 40 (md) and 32 (sm), and the 24 px info button. 36 stays until T7.6b moves the last `compact` call sites. */
+export const BUTTON_HEIGHTS = [32, 36, 40];
 
 export type Rule = (page: Page) => Promise<string[]>;
 
@@ -63,11 +64,23 @@ export const forbiddenElements: Rule = async (page) =>
     return bad;
   });
 
-export const oneCta: Rule = async (page) =>
-  page.evaluate(() => {
-    const n = document.querySelectorAll('[data-variant="cta"]').length;
-    return n > 1 ? [`${n} cta buttons on one screen; at most 1 is allowed`] : [];
-  });
+const countRule = (selector: string, name: string): Rule => async (page) =>
+  page.evaluate(
+    ([sel, label]) => {
+      const n = document.querySelectorAll(sel!).length;
+      return n > 1 ? [`${n} ${label} buttons on one screen; at most 1 is allowed`] : [];
+    },
+    [selector, name],
+  );
+
+/** Harold: at most one `primary` button per screen (the final rule; T7.6b puts it in COMMON_RULES). */
+export const onePrimary: Rule = countRule('[data-variant="primary"]', 'primary');
+
+/**
+ * The same rule for the call sites of Phases 2 to 6, where the one main action of a screen is marked `cta` and the other
+ * buttons are `primary`. It runs in COMMON_RULES until T7.6b moves the call sites; then `onePrimary` replaces it.
+ */
+export const oneMainAction: Rule = countRule('[data-variant="cta"]', 'cta (the old name of primary)');
 
 export const noHorizontalScroll: Rule = async (page) =>
   page.evaluate(() => {
@@ -224,7 +237,7 @@ export const COMMON_RULES: Record<string, Rule> = {
   'button heights': buttonHeights,
   'no visible hint paragraphs': noHintParagraphs,
   'forbidden elements': forbiddenElements,
-  'one cta': oneCta,
+  'one primary (cta until T7.6b)': oneMainAction,
   'no horizontal scroll': noHorizontalScroll,
   'table rows': tableRows,
   'row buttons are named': duplicateButtonNames,
