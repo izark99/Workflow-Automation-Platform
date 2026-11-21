@@ -38,7 +38,7 @@
 
 .title {
   padding: var(--space-5) var(--space-5) 0;
-  font: 600 18px/28px var(--font-sans);
+  font: 600 18px/28px var(--family-sans);
   color: var(--ink);
 }
 

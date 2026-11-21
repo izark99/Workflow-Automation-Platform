@@ -14,7 +14,7 @@
 }
 
 .card h2 {
-  font: 600 22px/32px var(--font-sans);
+  font: 600 22px/32px var(--family-sans);
 }
 
 .flush {

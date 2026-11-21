@@ -9,7 +9,7 @@
   justify-content: space-between;
   gap: 12px;
   padding: 12px 0;
-  border-bottom: 1px solid var(--color-rule);
+  border-bottom: 1px solid var(--border);
 }
 
 .row:last-child {
@@ -23,13 +23,13 @@
 }
 
 .name {
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .sub {
   font-size: 13px;
   line-height: 20px;
-  color: var(--color-muted);
+  color: var(--ink-muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -67,12 +67,13 @@
   margin: 0;
   font-size: 13px;
   line-height: 20px;
-  color: var(--color-muted);
+  color: var(--ink-muted);
 }
 
 .result {
-  border: 1px solid var(--color-rule);
-  border-radius: var(--radius-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-overlay);
   overflow: hidden;
 }
 

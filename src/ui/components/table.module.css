@@ -9,7 +9,7 @@
   /* Separate borders, so heights are exact: header 41 px (40 + 1 divider), body rows 45 px (44 + 1 divider). */
   border-collapse: separate;
   border-spacing: 0;
-  font: 400 14px/20px var(--font-sans);
+  font: 400 14px/20px var(--family-sans);
   color: var(--ink);
 }
 
@@ -21,7 +21,7 @@
   padding: 0 var(--space-4);
   background: var(--surface-overlay);
   text-align: left;
-  font: 500 13px/20px var(--font-sans);
+  font: 500 13px/20px var(--family-sans);
   color: var(--ink-muted);
   border-bottom: 1px solid var(--border);
   white-space: nowrap;

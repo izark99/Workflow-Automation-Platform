@@ -8,7 +8,7 @@
   border: 0;
   background: none;
   color: var(--ink);
-  font: 400 15px/22px var(--font-sans);
+  font: 400 15px/22px var(--family-sans);
   cursor: pointer;
 }
 
@@ -48,7 +48,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-3);
-  font: 400 15px/22px var(--font-sans);
+  font: 400 15px/22px var(--family-sans);
   color: var(--ink);
 }
 

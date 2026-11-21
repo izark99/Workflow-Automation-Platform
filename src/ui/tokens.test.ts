@@ -357,3 +357,37 @@ describe('inventory of the old token names that the code still reads', () => {
     expect([...used].sort()).toEqual(OLD_NAMES_IN_USE);
   });
 });
+
+// ---- files that have moved to the Harold tokens ----------------------------------------------------------------------------
+
+/** Files that read no old token name any more. Each restyle task adds its files; T7.17 turns this into the whole of `src`. */
+const MOVED_FILES = [
+  'ui/components/badge.module.css',
+  'ui/components/button.module.css',
+  'ui/components/card.module.css',
+  'ui/components/checkbox.module.css',
+  'ui/components/crumb-link.module.css',
+  'ui/components/dialog.module.css',
+  'ui/components/field.module.css',
+  'ui/components/info-tip.module.css',
+  'ui/components/page-header.module.css',
+  'ui/components/popover.module.css',
+  'ui/components/quiet-warning.module.css',
+  'ui/components/skeleton.module.css',
+  'ui/components/states.module.css',
+  'ui/components/table.module.css',
+  'ui/components/tabs.module.css',
+  'ui/components/toast.module.css',
+  'ui/screens/flows.module.css',
+  'ui/screens/versions.module.css',
+  'ui/screens/run.module.css',
+  'ui/parameter-inputs.module.css',
+];
+
+describe('files that have moved to the Harold tokens', () => {
+  it.each(MOVED_FILES)('%s reads no old token name', (file) => {
+    const text = readFileSync(join(fileURLToPath(new URL('../', import.meta.url)), file), 'utf8');
+    const old = [...text.matchAll(/var\((--[\w-]+)/g)].map((m) => m[1]!).filter((n) => OLD_NAME.test(n));
+    expect(old).toEqual([]);
+  });
+});

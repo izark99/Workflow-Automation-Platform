@@ -39,7 +39,7 @@
   background: var(--surface-overlay);
   color: var(--ink);
   box-shadow: var(--shadow-md);
-  font: 400 13px/19px var(--font-sans);
+  font: 400 13px/19px var(--family-sans);
   text-align: left;
   white-space: normal;
   animation: tip-in 120ms ease-out;
