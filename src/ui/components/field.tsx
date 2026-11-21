@@ -15,10 +15,12 @@ export interface FieldProps extends TextProps {
   secret?: boolean;
   /** The label is the user's own text (a name they typed), which is never translated. */
   userLabel?: boolean;
+  /** A unit or a short word at the end of the box, inside it (for example `days`). */
+  suffix?: string;
 }
 
 /** A labelled text field. The label and error are tied to the input for screen readers; the hint is an info button after the label. */
-export function Field({ label, hint, error, secret = false, userLabel = false, ...rest }: FieldProps) {
+export function Field({ label, hint, error, secret = false, userLabel = false, suffix, ...rest }: FieldProps) {
   const id = useId();
   const errorId = `${id}-error`;
   return (
@@ -30,14 +32,23 @@ export function Field({ label, hint, error, secret = false, userLabel = false, .
           </label>
           {hint ? <InfoTip label={label}>{hint}</InfoTip> : null}
         </div>
-        <input {...rest} id={id} type={secret ? 'password' : 'text'} className={styles.input} aria-invalid={error ? 'true' : undefined} aria-describedby={error ? errorId : undefined} />
+        <div className={styles.control} data-invalid={error ? 'true' : undefined} data-disabled={rest.disabled ? 'true' : undefined}>
+          <input {...rest} id={id} type={secret ? 'password' : 'text'} className={styles.input} aria-invalid={error ? 'true' : undefined} aria-describedby={error ? errorId : undefined} />
+          {suffix ? <span className={styles.suffix}>{suffix}</span> : null}
+        </div>
       </div>
-      {error ? (
-        <span id={errorId} className={styles.error} role="alert">
-          {error}
-        </span>
-      ) : null}
+      {error ? <FieldError id={errorId}>{error}</FieldError> : null}
     </div>
+  );
+}
+
+/** The error of a field: the icon and the words (an error is never colour alone). It replaces the note under the field. */
+function FieldError({ id, children }: { id?: string; children: string }) {
+  return (
+    <span id={id} className={styles.error} role="alert">
+      <Icon name="circle-alert" />
+      {children}
+    </span>
   );
 }
 
@@ -84,18 +95,15 @@ export function TextAreaField({ label, hint, error, status, note, mono = false, 
         <textarea data-user-content={userContent ? '' : undefined} {...rest} ref={textareaRef} id={id} rows={rows} className={`${styles.textarea} ${mono ? styles.mono : ''}`} aria-invalid={error ? 'true' : undefined} aria-describedby={describedBy} />
       </div>
       <span id={noteId}>
-        {error ? (
-          <span className={styles.error} role="alert" style={{ display: 'block' }}>
-            {error}
-          </span>
-        ) : null}
+        {error ? <FieldError>{error}</FieldError> : null}
         {note && !error && !status ? (
           <span className={styles.note} style={{ display: 'block' }}>
             {note}
           </span>
         ) : null}
         {status && !error ? (
-          <span className={styles.ok} role="status" style={{ display: 'block' }}>
+          <span className={styles.ok} role="status">
+            <Icon name="circle-check" />
             {status}
           </span>
         ) : null}

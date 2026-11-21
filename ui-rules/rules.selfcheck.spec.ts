@@ -20,6 +20,15 @@ test('info button: 24 x 24 px passes, 26 x 26 and 24 x 36 fail', async ({ page }
   expect((await buttonHeights(page)).length).toBe(1);
 });
 
+test('switch: 40 x 24 px passes, 40 x 40 and 36 x 24 fail', async ({ page }) => {
+  await page.setContent(bad('<button role="switch" aria-checked="false" style="width:40px;height:24px;padding:0;border:0"></button>'));
+  expect(await buttonHeights(page)).toEqual([]);
+  await page.setContent(bad('<button role="switch" aria-checked="false" style="width:40px;height:40px;padding:0;border:0"></button>'));
+  expect((await buttonHeights(page)).length).toBe(1);
+  await page.setContent(bad('<button role="switch" aria-checked="false" style="width:36px;height:24px;padding:0;border:0"></button>'));
+  expect((await buttonHeights(page)).length).toBe(1);
+});
+
 test('button heights: 30 and 36 px fail, 32 and 40 pass', async ({ page }) => {
   await page.setContent(bad('<button style="height:30px">a</button>'));
   expect((await buttonHeights(page)).length).toBe(1);

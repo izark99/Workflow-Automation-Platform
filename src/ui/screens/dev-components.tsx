@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Badge, Button, Icon, Card, Checkbox, DatePicker, Dialog, Dropdown, EmptyState, ErrorState, Field, InfoTip, PageHeader, ProgressBar, SearchField, SkeletonTable, Tabs, ToastProvider, useToast } from '../components';
+import { Badge, Button, Icon, Card, Checkbox, Switch, DatePicker, Dialog, Dropdown, EmptyState, ErrorState, Field, InfoTip, PageHeader, ProgressBar, SearchField, SkeletonTable, Tabs, ToastProvider, useToast } from '../components';
 import { useT } from '../i18n';
 import { ParameterControl } from '../builder/parameter-control/parameter-control';
 import type { FlowParameter } from '../../engine/flow/parameters';
@@ -111,6 +111,9 @@ function Content() {
             <div style={{ width: 240 }}>
               <Field label={t('dev.demo.newColumnName')} defaultValue="OT flag" />
             </div>
+            <div style={{ width: 240 }}>
+              <Field label={t('flows.createDialog.name')} defaultValue="" error={t('flows.createDialog.emptyName')} />
+            </div>
             <SearchField label={t('dev.demo.searchFlows')} placeholder={t('dev.demo.flowName')} />
           </div>
           <div className={styles.row}>
@@ -118,6 +121,7 @@ function Content() {
             <Checkbox checked={checked} onChange={setChecked}>{t('dev.demo.viewAndRun')}</Checkbox>
             <Checkbox checked={false} onChange={() => undefined}>{t('dev.demo.viewAndRun')}</Checkbox>
             <Checkbox checked={false} disabled onChange={() => undefined}>{t('dev.demo.notAvailable')}</Checkbox>
+            <Switch checked={checked} onChange={setChecked}>{t('dev.demo.viewAndRun')}</Switch>
           </div>
           <Tabs label={t('dev.demo.stepSettings')} tabs={[{ id: 'setup', label: t('dev.demo.setup') }, { id: 'configure', label: t('dev.demo.configure') }, { id: 'test', label: t('dev.demo.test') }]} selected={tab} onSelect={setTab}>
             <p className={styles.note}>{t('dev.demo.selectedTab')}{' '}<span data-code>{tab}</span></p>

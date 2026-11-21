@@ -22,6 +22,11 @@ export const buttonHeights: Rule = async (page) =>
         if (r.width !== 24 || r.height !== 24) bad.push(`info button "${el.getAttribute('aria-label') ?? ''}" is ${r.width} x ${r.height} px; it must be 24 x 24`);
         continue;
       }
+      if (el.getAttribute('role') === 'switch') {
+        // The Harold switch: a 40 x 24 px track.
+        if (r.width !== 40 || r.height !== 24) bad.push(`switch "${el.getAttribute('aria-label') ?? ''}" is ${r.width} x ${r.height} px; it must be 40 x 24`);
+        continue;
+      }
       if (!allowed.includes(Math.round(r.height * 10) / 10)) {
         bad.push(`button "${(el.getAttribute('aria-label') ?? el.textContent ?? '').trim()}" is ${r.height} px high; allowed: ${allowed.join(', ')}`);
       }

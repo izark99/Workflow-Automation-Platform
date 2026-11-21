@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { Badge, Button, Card, Field, SearchField, Table } from './index';
+import { Badge, Button, Card, Checkbox, Field, SearchField, Switch, Table } from './index';
 
 const html = (el: React.ReactElement): string => renderToStaticMarkup(el);
 
@@ -113,5 +113,32 @@ describe('Field and SearchField', () => {
     expect(out).toContain('type="text"');
     expect(out).not.toContain('type="search"');
     expect(out).toContain('aria-label="Search flows"');
+  });
+});
+
+describe('Field (T7.7a)', () => {
+  it('ties the label and the error to the input, and the error replaces nothing it must not: aria-invalid and role=alert', () => {
+    const out = html(<Field label="Flow name" error="Enter a name." defaultValue="" />);
+    expect(out).toContain('aria-invalid="true"');
+    expect(out).toContain('role="alert"');
+    expect(out).toContain('Enter a name.');
+    expect(out).toContain('<svg');
+  });
+  it('shows a suffix inside the box', () => {
+    expect(html(<Field label="Hours" suffix="h" defaultValue="12" />)).toContain('>h<');
+    expect(html(<Field label="Hours" defaultValue="12" />)).not.toContain('>h<');
+  });
+  it('marks a disabled field on its box', () => {
+    expect(html(<Field label="Hours" disabled defaultValue="12" />)).toContain('data-disabled="true"');
+  });
+});
+
+describe('Checkbox and Switch (T7.7a)', () => {
+  it('a checkbox is a role=checkbox button with aria-checked, a switch is a role=switch button', () => {
+    expect(html(<Checkbox checked onChange={() => undefined}>Keep</Checkbox>)).toContain('role="checkbox" aria-checked="true"');
+    const out = html(<Switch checked={false} onChange={() => undefined}>Lock</Switch>);
+    expect(out).toContain('role="switch"');
+    expect(out).toContain('aria-checked="false"');
+    expect(out).toContain('aria-label="Lock"');
   });
 });

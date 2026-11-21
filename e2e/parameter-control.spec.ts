@@ -13,7 +13,7 @@ test('a fixed field has the link button beside its box: same height, haspopup li
   const button = useButton(page, 'pcFixed');
   await expect(button).toHaveAttribute('aria-haspopup', 'listbox');
   await expect(button).toBeEnabled();
-  const [b, input] = [await button.boundingBox(), await demo(page, 'pcFixed').getByRole('textbox').boundingBox()];
+  const [b, input] = [await button.boundingBox(), await demo(page, 'pcFixed').getByRole('textbox').locator('..').boundingBox()];
   expect(Math.round(b!.height)).toBe(Math.round(input!.height));
   expect(Math.round(b!.width)).toBe(Math.round(b!.height));
   await button.click();
