@@ -1,10 +1,17 @@
 .main {
   box-sizing: border-box;
   min-height: 1800px;
-  padding: 32px 40px;
+  padding-bottom: var(--space-7);
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: var(--space-5);
+}
+
+/* The same page as the screens of the shell (a full-width header, space-7 margins), but not limited to 1200 px: the demos need the room. */
+.main > :not(header) {
+  box-sizing: border-box;
+  width: 100%;
+  padding-inline: var(--space-7);
 }
 
 .grid {

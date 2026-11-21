@@ -311,7 +311,6 @@ const OLD_NAME = /^--(color-|font-|radius-(control|step|card)$|size-(button|butt
 const OLD_NAMES_IN_USE = [
   '--color-accent',
   '--color-badge-ink',
-  '--color-bg',
   '--color-card',
   '--color-cta',
   '--color-danger',
@@ -334,7 +333,6 @@ const OLD_NAMES_IN_USE = [
   '--radius-card',
   '--radius-control',
   '--radius-step',
-  '--shadow-popover',
   '--size-builder-header',
   '--size-button',
   '--size-button-compact',

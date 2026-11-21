@@ -2,9 +2,10 @@ import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
 
 // Each rule returns a list of violations (empty = the rule holds). Numbers come from docs/DESIGN.md and were checked
-// against design/screens/*.html with getBoundingClientRect: title y 63, first block y 123 (148 before Phase 4), table row 57, buttons 40/36.
-export const TITLE_Y = 63;
-export const FIRST_BLOCK_Y = 123;
+// against design/screens/*.html with getBoundingClientRect: title y 23, first block y 88 from Phase 7 (63 and 123 before), table row 57, buttons 40/36.
+// Phase 7 (T7.10): the 64 px page header (3 px, a 20 px breadcrumb line, the 38 px title) and 24 px (space-5) to the first block.
+export const TITLE_Y = 23;
+export const FIRST_BLOCK_Y = 88;
 /** Harold: rows of 44 px plus a 1 px divider; dense rows (a grid where the same data is edited) of 36 px plus 1. */
 export const ROW_HEIGHT = 45;
 export const DENSE_ROW_HEIGHT = 37;
@@ -108,7 +109,7 @@ export const tableRows: Rule = async (page) =>
     [ROW_HEIGHT, DENSE_ROW_HEIGHT],
   );
 
-/** Sidebar screens: the h1 sits at y 63 and the block with data-first-block at y 123. */
+/** Sidebar screens: the h1 sits at y 23 and the block with data-first-block at y 88 (T7.10). */
 export const headerPosition: Rule = async (page) =>
   page.evaluate(
     ([titleY, blockY]) => {
@@ -179,8 +180,8 @@ export const dangerSpacing: Rule = async (page) =>
     return bad;
   });
 
-/** DESIGN: the sidebar is 232 px wide on every screen that has it, and 64 px when it is collapsed to a rail. */
-export const sidebarWidth = async (page: Page, expected = 232): Promise<string[]> =>
+/** DESIGN: the sidebar is 240 px wide on every screen that has it, and 64 px when it is collapsed to a rail. */
+export const sidebarWidth = async (page: Page, expected = 240): Promise<string[]> =>
   page.evaluate((want) => {
     const nav = document.querySelector('nav[aria-label="Main"]');
     if (!nav) return ['no main navigation'];

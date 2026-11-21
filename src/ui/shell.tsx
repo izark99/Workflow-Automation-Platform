@@ -10,6 +10,7 @@ import { ThemeSwitch } from './theme-switch';
 import { useT, errorText } from './i18n';
 import { usePanel } from './panels/use-panel';
 import { PanelToggle } from './panels/panel-toggle';
+import { usePanelMotion } from './panels/use-panel-motion';
 import panelStyles from './panels/panel.module.css';
 import styles from './shell.module.css';
 
@@ -194,12 +195,15 @@ export function Shell() {
   const [creating, setCreating] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
   const { collapsed, toggle } = usePanel('sidebar');
+  const navRef = useRef<HTMLElement>(null);
+  usePanelMotion(navRef);
   const me = user.data;
   const roleLabel = me ? t(me.role === 'admin' ? 'nav.role.admin' : 'nav.role.user') : '';
   return (
     <ToastProvider>
     <div className={styles.frame}>
-      <nav id="sidebar-body" aria-label={t('nav.label')} className={`${panelStyles.panel} ${styles.nav} ${collapsed ? styles.navRail : ''}`}>
+      <nav ref={navRef} id="sidebar-body" aria-label={t('nav.label')} className={`${panelStyles.panel} ${styles.nav} ${collapsed ? styles.navRail : ''}`}>
+        <span className={styles.glass} aria-hidden="true" />
         <div className={styles.toggle}>
           <PanelToggle panel="sidebar" collapsed={collapsed} onToggle={toggle} controls="sidebar-body" />
         </div>
@@ -221,7 +225,7 @@ export function Shell() {
         ) : (
           <>
             <div className={styles.brand}>
-              <Icon name="workflow" size={24} />
+              <span className={styles.mark} aria-hidden="true" />
               {t('app.brand')}
             </div>
             <div className={styles.create}>

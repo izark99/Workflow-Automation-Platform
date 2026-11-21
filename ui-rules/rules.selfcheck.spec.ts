@@ -80,10 +80,10 @@ test('table rows: 44 and 57 px fail, 45 px passes; a dense table takes 37 px and
   expect((await tableRows(page)).length).toBe(1);
 });
 
-test('header position: a title at y 0 fails, y 63 and block at y 123 pass', async ({ page }) => {
+test('header position: a title at y 0 fails, y 23 and block at y 88 pass', async ({ page }) => {
   await page.setContent(bad('<h1>t</h1><div data-first-block>b</div>'));
   expect((await headerPosition(page)).length).toBe(2);
-  await page.setContent(bad('<div style="height:63px"></div><h1 style="margin:0;height:36px">t</h1><div style="height:24px"></div><div data-first-block>b</div>'));
+  await page.setContent(bad('<div style="height:23px"></div><h1 style="margin:0;height:38px">t</h1><div style="height:27px"></div><div data-first-block>b</div>'));
   expect(await headerPosition(page)).toEqual([]);
 });
 
@@ -111,10 +111,10 @@ test('danger spacing: a danger button 4 px from its neighbour fails, 8 px passes
   expect(await dangerSpacing(page)).toEqual([]);
 });
 
-test('sidebar width: 200 px fails, 232 px passes', async ({ page }) => {
+test('sidebar width: 200 px fails, 240 px passes', async ({ page }) => {
   await page.setContent(bad('<nav aria-label="Main" style="width:200px">x</nav>'));
   expect((await sidebarWidth(page)).length).toBe(1);
-  await page.setContent(bad('<nav aria-label="Main" style="width:232px">x</nav>'));
+  await page.setContent(bad('<nav aria-label="Main" style="width:240px">x</nav>'));
   expect(await sidebarWidth(page)).toEqual([]);
 });
 
