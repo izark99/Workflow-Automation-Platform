@@ -17,8 +17,8 @@
   --color-on-primary: #ffffff;
   --color-on-cta: #ffffff;
 
-  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
-  --font-mono: ui-monospace, Menlo, Consolas, monospace;
+  --font-sans: var(--family-sans);
+  --font-mono: var(--family-mono);
 
   --radius-control: 8px;
   --radius-step: 10px;

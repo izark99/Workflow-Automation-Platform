@@ -9,6 +9,8 @@ import { allowedCodeUrls, runDataset, watchRequests, type DatasetConfig } from '
 // CLAUDE.md: input file content never leaves the browser. A run may load the static assets of the app and nothing
 // else, and no request may carry a piece of the files. The files below hold marker texts that no request may contain.
 const ORIGIN = 'http://localhost:4176';
+// T7.2: fonts are served by the app (@fontsource); a request to a font or script host fails a run.
+const FONT_HOSTS = /fonts\.(googleapis|gstatic)\.com|use\.typekit\.net|fontawesome|bunny\.net/i;
 const MARKERS = ['PRIVATE-MARKER-Nguyen Thi Hoa 9f3a', 'Second PRIVATE-MARKER value ü & more'];
 
 const flowFor = (sheet: boolean) => ({
@@ -45,6 +47,7 @@ test('a run of an xlsx file loads only static assets and sends no file content',
   // the log lacks it, the log does not see worker requests.
   expect(requests.some((r) => /\/duckdb-[^/]*\.wasm$/.test(r.url))).toBe(true);
   expect(auditRequests(requests, ORIGIN, MARKERS, allowedCodeUrls())).toEqual([]);
+  expect(requests.filter((r) => FONT_HOSTS.test(r.url))).toEqual([]);
 });
 
 test('a run of a csv file, which DuckDB reads from the file handle, sends no file content either', async ({ page }, info) => {
