@@ -318,7 +318,7 @@ test.describe('adjust a draft', () => {
     await page.goto(SMALL);
     await fromMenu(page, 'Columns');
     const d = dialogOf(page);
-    expect(Math.round((await d.boundingBox())!.width)).toBe(640);
+    expect(await d.evaluate((el) => (el as HTMLElement).offsetWidth)).toBe(640);
     await d.getByRole('textbox', { name: 'Name of column 1' }).fill('Code of day');
     await d.getByRole('button', { name: /^Type of column 2/ }).click();
     await page.getByRole('option', { name: 'Text' }).click();

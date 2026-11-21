@@ -33,7 +33,7 @@ test('both languages are edited with one Save, and both show in the table and af
   await expect(page.getByRole('row')).toHaveCount(2); // header and one text
   await page.getByRole('button', { name: 'Edit nav.createFlow' }).click();
   const dialog = dialogOf(page);
-  expect(Math.round((await dialog.boundingBox())!.width)).toBe(880);
+  expect(await dialog.evaluate((el) => (el as HTMLElement).offsetWidth)).toBe(880);
   await expect(dialog).toContainText('Create flow'); // the default under the English text
   await english(page).fill('New pipeline');
   await vietnamese(page).fill('Quy trình mới');
