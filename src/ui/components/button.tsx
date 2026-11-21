@@ -1,4 +1,5 @@
-import type { ButtonHTMLAttributes, ReactNode, Ref } from 'react';
+import { useState } from 'react';
+import type { ButtonHTMLAttributes, KeyboardEvent, ReactNode, Ref } from 'react';
 import { Icon } from './icons';
 import styles from './button.module.css';
 
@@ -28,6 +29,16 @@ export function Button({ variant = 'secondary', size = 'md', busy = false, block
   const small = size === 'sm';
   const classes = [styles.button, styles[variant], small ? styles.sm : '', block ? styles.block : '', icon ? styles.icon : ''].filter(Boolean).join(' ');
   const label = props['aria-label'];
+  // Escape hides the tooltip of an icon button while it shows (Harold: "Escape hides it"); the key is then used up.
+  const [tipOff, setTipOff] = useState(false);
+  const onKeyDown = (e: KeyboardEvent<HTMLButtonElement>): void => {
+    props.onKeyDown?.(e);
+    if (!icon || e.key !== 'Escape' || e.defaultPrevented) return;
+    if (Number(getComputedStyle(e.currentTarget, '::after').opacity) > 0) {
+      e.preventDefault();
+      setTipOff(true);
+    }
+  };
   return (
     <button
       {...(icon ? rest : props)}
@@ -35,6 +46,16 @@ export function Button({ variant = 'secondary', size = 'md', busy = false, block
       className={classes}
       data-variant={variant}
       data-tooltip={icon ? label : undefined}
+      data-tooltip-off={icon && tipOff ? '' : undefined}
+      onKeyDown={onKeyDown}
+      onMouseLeave={(e) => {
+        props.onMouseLeave?.(e);
+        setTipOff(false);
+      }}
+      onBlur={(e) => {
+        props.onBlur?.(e);
+        setTipOff(false);
+      }}
       aria-busy={busy ? 'true' : undefined}
       onClick={busy ? undefined : onClick}
     >

@@ -28,3 +28,4 @@ export { CrumbLink } from './crumb-link';
 export { QuietWarning } from './quiet-warning';
 export { InfoTip } from './info-tip';
 export type { InfoTipProps } from './info-tip';
+export { useEscapeLayer } from './layers';

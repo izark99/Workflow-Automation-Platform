@@ -5,6 +5,7 @@ import { Icon } from './icons';
 import type { IconName } from './icons';
 import { isTypeAheadKey, moveIndex, typeAhead } from './list-keys';
 import type { ListKey } from './list-keys';
+import { useEscapeLayer } from './layers';
 import { useOutsideClose, usePresence } from './popover';
 import styles from './popover.module.css';
 
@@ -56,6 +57,7 @@ export function Dropdown({ label, options, value, onChange, width = 260, disable
     if (returnFocus) triggerRef.current?.focus();
   }, []);
   useOutsideClose([rootRef, popRef], open, () => close(false));
+  useEscapeLayer(open, () => close(true));
 
   useEffect(() => {
     if (skipFocus.current) {
@@ -83,10 +85,7 @@ export function Dropdown({ label, options, value, onChange, width = 260, disable
   };
 
   const onListKey = (e: React.KeyboardEvent): void => {
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      close(true);
-    } else if (e.key === 'Tab') {
+    if (e.key === 'Tab') {
       close(true); // focus goes back to the button, so the Tab that follows moves on from it
 
     } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Home' || e.key === 'End') {

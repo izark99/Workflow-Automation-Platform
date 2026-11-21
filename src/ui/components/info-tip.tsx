@@ -6,6 +6,7 @@ import { useT } from '../i18n';
 import { Icon } from './icons';
 import { INFO_TIP_CLOSED, INFO_TIP_HOVER_MS, infoTipNext } from './info-tip-logic';
 import type { InfoTipEvent, InfoTipState } from './info-tip-logic';
+import { useEscapeLayer } from './layers';
 import { useOutsideClose } from './popover';
 import styles from './info-tip.module.css';
 
@@ -35,14 +36,8 @@ export function InfoTip({ label, children, defaultOpen = false }: InfoTipProps) 
 
   useOutsideClose([rootRef, popRef], state.open, () => send('outside'));
 
-  useEffect(() => {
-    if (!state.open) return;
-    const onKey = (e: KeyboardEvent): void => {
-      if (e.key === 'Escape') send('escape'); // focus stays on the button: it was never moved
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [state.open, send]);
+  // Escape closes the popover; focus stays on the button, because it was never moved.
+  useEscapeLayer(state.open, () => send('escape'));
 
   useEffect(() => () => window.clearTimeout(timer.current), []);
 

@@ -142,10 +142,20 @@
   transition: opacity 120ms ease-out 0s;
 }
 
-.icon:hover::after,
-.icon:focus-visible::after {
+.icon:hover::after {
   opacity: 1;
   transition-delay: 400ms;
+}
+
+/* On keyboard focus the tooltip shows at once. */
+.icon:focus-visible::after {
+  opacity: 1;
+}
+
+/* Escape hides it until the pointer or the focus leaves. */
+.icon[data-tooltip-off]::after {
+  opacity: 0;
+  transition-delay: 0s;
 }
 
 @media (prefers-reduced-motion: reduce) {

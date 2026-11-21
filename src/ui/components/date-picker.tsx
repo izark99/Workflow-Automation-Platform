@@ -5,6 +5,7 @@ import { useT, formatDate } from '../i18n';
 import { addMonths, dayLabel, monthCells, monthOf, monthTitle, moveDate, weekdays } from './date-logic';
 import type { DateKey } from './date-logic';
 import { Icon } from './icons';
+import { useEscapeLayer } from './layers';
 import { useOutsideClose, usePresence } from './popover';
 import styles from './popover.module.css';
 
@@ -45,6 +46,7 @@ export function DatePicker({ label, value, onChange, width = 180, disabled = fal
   const { mounted, leaving } = usePresence(open);
   const floating = useFloating(rootRef, popRef, mounted);
   useOutsideClose([rootRef, popRef], open, () => close(false));
+  useEscapeLayer(open, () => close(true));
 
   // Focus the focused day after every move.
   useEffect(() => {
@@ -74,10 +76,7 @@ export function DatePicker({ label, value, onChange, width = 180, disabled = fal
   };
 
   const onKey = (e: React.KeyboardEvent): void => {
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      close(true);
-    } else if ((KEYS as string[]).includes(e.key) && (e.target as HTMLElement).dataset.iso) {
+    if ((KEYS as string[]).includes(e.key) && (e.target as HTMLElement).dataset.iso) {
       e.preventDefault();
       show(moveDate(focused, e.key as DateKey));
     }

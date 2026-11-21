@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { Button, Dialog, Dropdown, ErrorState, Field, Icon, ToastProvider, useToast } from './components';
+import { Button, Dialog, Dropdown, ErrorState, Field, Icon, ToastProvider, useEscapeLayer, useToast } from './components';
 import type { IconName } from './components';
 import { useAuth } from './auth-gate';
 import { useLoad, useStore } from './store-context';
@@ -81,18 +81,14 @@ function UserMenu({ name, role, onChangePassword }: { name: string; role: string
       if (!target || pop.current?.contains(target) || button.current?.contains(target) || target.closest('[role="listbox"]')) return;
       setOpen(false);
     };
-    const onKey = (e: KeyboardEvent): void => {
-      if (e.key !== 'Escape' || document.querySelector('[role="listbox"]')) return;
-      setOpen(false);
-      button.current?.focus();
-    };
     document.addEventListener('mousedown', onDown);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onDown);
-      document.removeEventListener('keydown', onKey);
-    };
+    return () => document.removeEventListener('mousedown', onDown);
   }, [open]);
+  // Escape closes the menu unless a list opened from it is on top: that one closes first.
+  useEscapeLayer(open, () => {
+    setOpen(false);
+    button.current?.focus();
+  });
   return (
     <>
       <Button ref={button} icon aria-haspopup="dialog" aria-expanded={open} aria-label={t('nav.userMenu')} title={t('nav.userMenu')} onClick={() => setOpen(!open)}>

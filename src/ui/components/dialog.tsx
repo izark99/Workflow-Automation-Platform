@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef } from 'react';
 import type { ReactNode } from 'react';
+import { useEscapeLayer } from './layers';
 import { trapIndex } from './tab-keys';
 
 /** How long a dialog takes to leave (Harold: 170 ms). */
@@ -28,6 +29,8 @@ export function Dialog({ title, onClose, children, actions, width }: DialogProps
   useEffect(() => {
     closeRef.current = onClose;
   }, [onClose]);
+  // Escape closes the top layer: a list or an info popover open in the dialog closes first.
+  useEscapeLayer(true, onClose);
 
   useEffect(() => {
     // React clears the ref before this effect's cleanup runs on an unmount, so the layer is kept here.
@@ -46,10 +49,7 @@ export function Dialog({ title, onClose, children, actions, width }: DialogProps
     // A scroll region made focusable for the keyboard (data-dialog-scroll) is a stop of the dialog, but not the first one.
     (items().find((el) => el.hasAttribute('data-autofocus')) ?? items().find((el) => !el.hasAttribute('data-dialog-scroll')) ?? items()[0] ?? ref.current)?.focus();
     const onKey = (e: KeyboardEvent): void => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        closeRef.current();
-      } else if (e.key === 'Tab') {
+      if (e.key === 'Tab') {
         const list = items();
         if (list.length === 0) return;
         e.preventDefault();
