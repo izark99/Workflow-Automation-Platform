@@ -67,9 +67,9 @@ describe('type styles', () => {
 });
 
 describe('fonts', () => {
-  it('--font-sans and --font-mono point to the Harold families', () => {
-    expect(variable('--font-sans')).toBe('var(--family-sans)');
-    expect(variable('--font-mono')).toBe('var(--family-mono)');
+  it('the Harold families are the only font variables, and the page uses them', () => {
+    expect(tokens).not.toMatch(/--font-(sans|mono)/);
+    expect(globalCss).toContain('font-family: var(--family-sans)');
     expect(variable('--family-sans')).toMatch(/^"Be Vietnam Pro"/);
     expect(variable('--family-mono')).toMatch(/^"JetBrains Mono"/);
   });

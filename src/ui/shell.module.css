@@ -6,7 +6,7 @@
 .nav {
   position: relative;
   isolation: isolate;
-  width: var(--size-sidebar);
+  width: var(--layout-sidebar);
   box-sizing: border-box;
   display: flex;
   flex-direction: column;

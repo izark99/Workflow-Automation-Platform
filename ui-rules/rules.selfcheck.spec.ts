@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { axeSeriousOrCritical, buttonHeights, dangerSpacing, noHintParagraphs, untranslatedText, duplicateButtonNames, forbiddenElements, headerPosition, keyboardFocusRing, noBlurAnimation, noHorizontalScroll, onePrimary, panelWidth, railShape, sidebarWidth, tableRows } from './rules';
+import { axeSeriousOrCritical, buttonHeights, dangerSpacing, noHintParagraphs, untranslatedText, duplicateButtonNames, forbiddenElements, headerPosition, keyboardFocusRing, noBlurAnimation, noGradient, noStripe, fontSizes, noHorizontalScroll, onePrimary, panelWidth, railShape, sidebarWidth, tableRows } from './rules';
 
 // Each rule must fail on a page that breaks it, and pass on a page that does not.
 const bad = (html: string) => `<!doctype html><html lang="en"><head><title>t</title></head><body style="margin:0">${html}</body></html>`;
@@ -118,15 +118,6 @@ test('sidebar width: 200 px fails, 240 px passes', async ({ page }) => {
   expect(await sidebarWidth(page)).toEqual([]);
 });
 
-test('keyboard focus ring: a button with no outline fails, one with a 2 px outline passes, a wrapper that shows the ring counts', async ({ page }) => {
-  await page.setContent(bad('<button style="outline:none">a</button>'));
-  expect((await keyboardFocusRing(page)).length).toBe(1);
-  await page.setContent(bad('<button style="outline:2px solid #0d9488">a</button>'));
-  expect(await keyboardFocusRing(page)).toEqual([]);
-  await page.setContent(bad('<label style="display:inline-block" class="w"><style>.w:focus-within{outline:2px solid #0d9488}</style><input type="text" style="outline:0"></label>'));
-  expect(await keyboardFocusRing(page)).toEqual([]);
-});
-
 test('pseudo-locale: a text outside the markers fails, marked text, user content and digits pass', async ({ page }) => {
   await page.setContent(bad('<main><p>Plain text</p></main>'));
   expect((await untranslatedText(page, 'main')).length).toBe(1);
@@ -167,4 +158,43 @@ test('no blur animation: a blurred panel that animates its width fails; a blurre
   expect(await noBlurAnimation(page)).toEqual([]);
   await page.setContent(bad(panel('backdrop-filter:blur(24px);transition:width 0s')));
   expect(await noBlurAnimation(page)).toEqual([]);
+});
+
+test('no gradient: a gradient on a card or on text fails; the page background (the scene) and a flat fill pass', async ({ page }) => {
+  await page.setContent(bad('<div style="background-image:linear-gradient(red,blue);width:40px;height:40px">a</div>'));
+  expect((await noGradient(page)).length).toBe(1);
+  await page.setContent(bad('<p style="background:linear-gradient(90deg,red,blue);-webkit-background-clip:text;color:transparent">t</p>'));
+  expect((await noGradient(page)).length).toBe(1);
+  await page.setContent('<!doctype html><html><head><title>t</title></head><body style="background-image:radial-gradient(red,blue)"><div style="background:#ccc;width:40px;height:40px">a</div></body></html>');
+  expect(await noGradient(page)).toEqual([]);
+});
+
+test('no stripe: a card with a thick border on one side fails; a card with a border all round, and a hairline on one side, pass', async ({ page }) => {
+  await page.setContent(bad('<div style="width:200px;height:60px;border-left:4px solid red">a</div>'));
+  expect((await noStripe(page)).length).toBe(1);
+  await page.setContent(bad('<div style="width:200px;height:60px;border:2px solid red">a</div><div style="width:200px;height:60px;border-bottom:1px solid red">b</div>'));
+  expect(await noStripe(page)).toEqual([]);
+});
+
+test('font sizes: 11, 17 and 20 px fail; 12, 14, 15 and 28 px pass', async ({ page }) => {
+  await page.setContent(bad('<p style="font-size:11px">a</p><p style="font-size:17px">b</p><p style="font-size:20px">c</p>'));
+  expect((await fontSizes(page)).length).toBe(3);
+  await page.setContent(bad('<p style="font-size:12px">a</p><p style="font-size:14px">b</p><p style="font-size:15px">c</p><p style="font-size:28px">d</p>'));
+  expect(await fontSizes(page)).toEqual([]);
+});
+
+test('the Harold focus ring: no outline fails, a 2 px primary-text outline at 2 px passes, a ring on the box of a field passes', async ({ page }) => {
+  const root = ':root{--primary-text:rgb(26,86,192)}';
+  await page.setContent(`<!doctype html><html><head><title>t</title><style>${root} button{outline:none}</style></head><body><button>a</button></body></html>`);
+  expect((await keyboardFocusRing(page)).length).toBe(1);
+  await page.setContent(`<!doctype html><html><head><title>t</title><style>${root} button:focus-visible{outline:2px solid var(--primary-text);outline-offset:2px}</style></head><body><button>a</button></body></html>`);
+  expect(await keyboardFocusRing(page)).toEqual([]);
+  await page.setContent(`<!doctype html><html><head><title>t</title><style>${root} .box:focus-within{box-shadow:0 0 0 1px var(--primary-text)} input{outline:none}</style></head><body><div class="box"><input aria-label="x"></div></body></html>`);
+  expect(await keyboardFocusRing(page)).toEqual([]);
+  await page.setContent(`<!doctype html><html><head><title>t</title><style>:root{--primary-text:rgb(26,86,192);--danger:rgb(179,38,30)} .box:focus-within{box-shadow:0 0 0 1px var(--danger)} input{outline:none}</style></head><body><div class="box"><input aria-label="x" aria-invalid="true"></div></body></html>`);
+  expect(await keyboardFocusRing(page)).toEqual([]);
+  await page.setContent(`<!doctype html><html><head><title>t</title><style>:root{--primary-text:rgb(26,86,192);--danger:rgb(179,38,30)} .box:focus-within{box-shadow:0 0 0 1px var(--danger)} input{outline:none}</style></head><body><div class="box"><input aria-label="x"></div></body></html>`);
+  expect((await keyboardFocusRing(page)).length).toBe(1);
+  await page.setContent(`<!doctype html><html><head><title>t</title><style>${root} button:focus-visible{outline:3px solid var(--primary-text);outline-offset:2px}</style></head><body><button>a</button></body></html>`);
+  expect((await keyboardFocusRing(page)).length).toBe(1);
 });

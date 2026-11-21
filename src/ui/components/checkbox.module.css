@@ -74,7 +74,7 @@
   height: 18px;
   border-radius: var(--radius-full);
   background: var(--thumb);
-  box-shadow: 0 1px 3px rgb(0 0 0 / 35%);
+  box-shadow: var(--shadow-sm);
   transition: transform 200ms ease-out;
 }
 

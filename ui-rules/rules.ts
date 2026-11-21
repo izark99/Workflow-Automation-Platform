@@ -199,15 +199,31 @@ export const keyboardFocusRing: Rule = async (page) => {
   await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
   for (let i = 0; i < 80; i++) {
     await page.keyboard.press('Tab');
+    await settleAnimations(page); // a ring fades in over 120 ms: it is judged when it has arrived
     const info = await page.evaluate(() => {
       const el = document.activeElement as HTMLElement | null;
       if (!el || el === document.body) return null;
-      const indicator = (e: Element): boolean => {
+      // The colour of the ring is the token `primary-text`, as the browser computes it.
+      const probe = document.createElement('span');
+      probe.style.color = 'var(--primary-text)';
+      document.body.append(probe);
+      const ring = getComputedStyle(probe).color;
+      probe.style.color = 'var(--danger)';
+      const danger = getComputedStyle(probe).color;
+      probe.remove();
+      // Harold: a 2 px `primary-text` outline with a 2 px gap on every interactive element; a text field draws a 1 px
+      // `primary-text` ring (a shadow) on its box instead, so the shadow may sit on the field or on the box that wraps it.
+      const outlined = (e: Element): boolean => {
         const s = getComputedStyle(e);
-        return (s.outlineStyle !== 'none' && parseFloat(s.outlineWidth) >= 2) || s.boxShadow !== 'none';
+        return s.outlineStyle !== 'none' && parseFloat(s.outlineWidth) === 2 && s.outlineColor === ring && parseFloat(s.outlineOffset) === 2;
       };
-      let ok = indicator(el);
-      for (let p: Element | null = el.parentElement, depth = 0; !ok && p && depth < 3; p = p.parentElement, depth++) ok = indicator(p) && p.matches(':focus-within');
+      // A field with an error draws its ring in `danger`.
+      const shadowed = (e: Element): boolean => {
+        const shadow = getComputedStyle(e).boxShadow;
+        return shadow.includes(ring) || (el.getAttribute('aria-invalid') === 'true' && shadow.includes(danger));
+      };
+      let ok = outlined(el) || shadowed(el);
+      for (let p: Element | null = el.parentElement, depth = 0; !ok && p && depth < 3; p = p.parentElement, depth++) ok = shadowed(p) && p.matches(':focus-within');
       const r = el.getBoundingClientRect();
       const id = `${el.tagName}|${el.getAttribute('aria-label') ?? ''}|${(el.textContent ?? '').trim().slice(0, 30)}|${Math.round(r.x)},${Math.round(r.y)}`;
       return { id, ok, visible: r.width > 0 && r.height > 0, name: `${el.tagName.toLowerCase()} "${el.getAttribute('aria-label') ?? (el.textContent ?? '').trim().slice(0, 30)}"` };
@@ -215,10 +231,54 @@ export const keyboardFocusRing: Rule = async (page) => {
     if (!info) break; // focus left the page: every control had its turn
     if (seen.has(info.id)) break; // came round to the first control again
     seen.add(info.id);
-    if (info.visible && !info.ok) bad.push(`${info.name} shows no focus ring when it has keyboard focus`);
+    if (info.visible && !info.ok) bad.push(`${info.name} does not show the Harold focus ring (2 px primary-text, 2 px gap) when it has keyboard focus`);
   }
   return bad;
 };
+
+/** Harold: the scene is the only gradient (the page background), and there is no gradient text. */
+export const noGradient: Rule = async (page) =>
+  page.evaluate(() => {
+    const bad: string[] = [];
+    for (const el of document.querySelectorAll('*')) {
+      if (el === document.body || el === document.documentElement) continue;
+      for (const pseudo of [null, '::before', '::after'] as const) {
+        const image = getComputedStyle(el, pseudo).backgroundImage;
+        if (image.includes('gradient')) bad.push(`${el.tagName.toLowerCase()}${pseudo ?? ''} "${String(el.className).slice(0, 30)}" has a gradient`);
+      }
+    }
+    return bad;
+  });
+
+/** Harold: no card with a coloured stripe on one side (one border side thicker than 1 px while the others have none). */
+export const noStripe: Rule = async (page) =>
+  page.evaluate(() => {
+    const bad: string[] = [];
+    for (const el of document.querySelectorAll('*')) {
+      const s = getComputedStyle(el);
+      if (el.closest('.react-flow__edges, svg')) continue;
+      const widths = [s.borderTopWidth, s.borderRightWidth, s.borderBottomWidth, s.borderLeftWidth].map(parseFloat);
+      const drawn = widths.filter((w) => w > 0);
+      if (drawn.length === 1 && drawn[0]! >= 2 && (el.getBoundingClientRect().height >= 24 || el.getBoundingClientRect().width >= 24)) bad.push(`${el.tagName.toLowerCase()} "${String(el.className).slice(0, 30)}" has a ${drawn[0]} px border on one side only`);
+    }
+    return bad;
+  });
+
+/** Harold: font sizes only from the type table (12, 13, 14, 15, 16, 18, 22, 28 px) on text that is drawn. */
+export const FONT_SIZES = [12, 13, 14, 15, 16, 18, 22, 28];
+export const fontSizes: Rule = async (page) =>
+  page.evaluate((allowed) => {
+    const bad = new Map<string, number>();
+    for (const el of document.querySelectorAll('body *')) {
+      const r = el.getBoundingClientRect();
+      if (r.width === 0 || r.height === 0 || getComputedStyle(el).visibility === 'hidden') continue;
+      const own = Array.from(el.childNodes).some((n) => n.nodeType === 3 && (n.textContent ?? '').trim() !== '');
+      if (!own || el.closest('svg')) continue;
+      const px = parseFloat(getComputedStyle(el).fontSize);
+      if (!allowed.includes(px)) bad.set(`${el.tagName.toLowerCase()} "${String(el.className).slice(0, 30)}" has font size ${px} px`, 1);
+    }
+    return [...bad.keys()];
+  }, FONT_SIZES);
 
 /**
  * Harold: a blurred element never changes size by animation. An element with a backdrop blur must have no transition on
@@ -256,6 +316,9 @@ export const COMMON_RULES: Record<string, Rule> = {
   'keyboard focus ring': keyboardFocusRing,
   'accessibility (axe)': axeSeriousOrCritical,
   'no blur animation': noBlurAnimation,
+  'no gradient but the scene': noGradient,
+  'no card with a stripe on one side': noStripe,
+  'font sizes from the type table': fontSizes,
 };
 
 /**

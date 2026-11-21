@@ -1,7 +1,7 @@
 .panel {
   position: relative;
   flex: none;
-  width: var(--size-settings);
+  width: var(--layout-settings);
   box-sizing: border-box;
   isolation: isolate;
   padding: var(--space-5);
@@ -43,7 +43,7 @@
 
 .content {
   /* A fixed width, so the contents are clipped and never wrapped while the panel changes width. */
-  width: calc(var(--size-settings) - 2 * var(--space-5) - 1px);
+  width: calc(var(--layout-settings) - 2 * var(--space-5) - 1px);
   display: flex;
   flex-direction: column;
   gap: var(--space-4);

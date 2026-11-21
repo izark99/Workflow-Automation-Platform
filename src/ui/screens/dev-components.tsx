@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Badge, Button, Icon, Card, Checkbox, Switch, DatePicker, Dialog, Dropdown, EmptyState, ErrorState, Field, InfoTip, PageHeader, ProgressBar, SearchField, SkeletonTable, Tabs, ToastProvider, useToast } from '../components';
+import { Badge, Button, Icon, Card, Checkbox, Chip, ChipGroup, QuietWarning, Switch, DatePicker, Dialog, Dropdown, EmptyState, ErrorState, Field, InfoTip, PageHeader, ProgressBar, SearchField, SkeletonTable, Tabs, ToastProvider, useToast } from '../components';
 import { useT } from '../i18n';
 import { ParameterControl } from '../builder/parameter-control/parameter-control';
 import type { FlowParameter } from '../../engine/flow/parameters';
@@ -78,6 +78,7 @@ function Content() {
   const [checked, setChecked] = useState(true);
   const [tab, setTab] = useState('setup');
   const [confirm, setConfirm] = useState(false);
+  const [scope, setScope] = useState<'all' | 'personal' | 'shared'>('all');
   const toast = useToast();
 
   return (
@@ -131,6 +132,21 @@ function Content() {
             <Badge tone="outline">{t('dev.demo.shared')}</Badge>
             <Button size="sm" onClick={() => toast('Draft saved')}>{t('dev.demo.showToast')}</Button>
           </div>
+          <div className={styles.row}>
+            <Badge tone="success" icon="circle-check">{t('admin.status.active')}</Badge>
+            <Badge tone="accent" icon="pencil">{t('flows.draft')}</Badge>
+            <Badge tone="warning" icon="triangle-alert">{t('admin.status.mustChange')}</Badge>
+            <Badge tone="danger" icon="circle-x">{t('admin.status.locked')}</Badge>
+            <Badge tone="info" icon="info">{t('builder.analyze.confidence.medium')}</Badge>
+          </div>
+          <ChipGroup label={t('flows.filterLabel')}>
+            {([['all', t('flows.all')], ['personal', t('flows.personal')], ['shared', t('flows.shared')]] as const).map(([key, label]) => (
+              <Chip key={key} pressed={scope === key} onClick={() => setScope(key)}>
+                {label}
+              </Chip>
+            ))}
+          </ChipGroup>
+          <QuietWarning lines={[t('versions.state.upcoming')]} />
         </Card>
         <div className={styles.mid} style={{ display: 'contents' }}>
           <Card title={t('dev.dropdown')}>

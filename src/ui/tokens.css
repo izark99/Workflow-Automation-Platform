@@ -1,47 +1,10 @@
-/* Design tokens (docs/DESIGN.md). Components use these variables and never a raw colour value. */
-/* Old token names of Phases 2 to 6. Since Phase 7 (T7.3) they are aliases of Harold tokens (docs/DESIGN.md, "Token mapping"), so a
-   screen that is not restyled yet shows Harold colours on its old structure. Sizes and radii keep their old values until their
-   screens move. T7.17 removes this block and every use of an old name. */
+/* Design tokens (docs/DESIGN.md). Components use these variables and never a raw colour, radius or shadow value. The Harold tokens
+   below have the names and values of design/harold/tokens.json (src/ui/tokens.test.ts keeps them equal). The three widths of the
+   panels are layout, not part of the design system: the names start with --layout-. */
 :root {
-  --color-bg: var(--scene-100);
-  --color-card: var(--surface-overlay);
-  --color-ink: var(--ink);
-  --color-muted: var(--ink-muted);
-  --color-line: var(--border);
-  --color-rule: var(--border);
-  --color-control: var(--border-strong);
-  --color-primary: var(--primary);
-  --color-primary-soft: var(--primary-soft);
-  --color-focus: var(--primary-text);
-  --color-cta: var(--primary);
-  --color-accent: var(--accent);
-  --color-danger: var(--danger);
-  --color-skeleton: var(--neutral-fill);
-  --color-on-primary: var(--on-primary);
-  --color-on-cta: var(--on-primary);
-  --color-badge-ink: var(--primary-text);
-  --color-danger-soft: var(--surface-300);
-  --color-danger-ink: var(--danger);
-  --color-overlay: var(--scrim);
-  --color-note-bg: var(--surface-300);
-  --color-note-ink: var(--info);
-  --color-draft-ink: var(--accent);
-  --color-ended-ink: var(--ink-muted);
-  --shadow-popover: var(--shadow-md);
-
-  --font-sans: var(--family-sans);
-  --font-mono: var(--family-mono);
-
-  --radius-control: 8px;
-  --radius-step: 10px;
-  --radius-card: 12px;
-
-  --size-button: 40px;
-  --size-button-compact: var(--control-sm);
-  --size-sidebar: 240px;
-  --size-step-list: 184px;
-  --size-settings: 380px;
-  --size-builder-header: 64px;
+  --layout-sidebar: 240px;
+  --layout-step-list: 184px;
+  --layout-settings: 380px;
 }
 
 :root[data-theme='dark'] {
@@ -52,9 +15,8 @@
   color-scheme: light;
 }
 
-/* Harold tokens (Phase 7, T7.1): the same names and values as design/harold/tokens.json; src/ui/tokens.test.ts keeps them equal.
-   They sit beside the old names above: no screen reads them yet. Theme-independent tokens live in plain :root so that a page with
-   no data-theme attribute still has them. Light is also the fallback of a page with no data-theme attribute. */
+/* Harold tokens: theme-independent tokens live in plain :root so that a page with no data-theme attribute still has them. Light is
+   also the fallback of a page with no data-theme attribute. */
 :root {
   /* Families and type styles (design/harold/tokens.json, "type"). src/ui/type.css builds the classes on these. */
   --family-sans: "Be Vietnam Pro", "Segoe UI", system-ui, sans-serif;

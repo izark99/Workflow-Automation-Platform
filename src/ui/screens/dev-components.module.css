@@ -45,7 +45,7 @@
 .popovers {
   display: flex;
   flex-wrap: wrap;
-  gap: 40px;
+  gap: var(--space-7);
   align-items: flex-start;
 }
 

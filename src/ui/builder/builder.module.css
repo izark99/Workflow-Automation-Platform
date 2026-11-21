@@ -78,7 +78,7 @@
 .stepList {
   position: relative;
   flex: none;
-  width: var(--size-step-list);
+  width: var(--layout-step-list);
   box-sizing: border-box;
   isolation: isolate;
   padding: var(--space-4) var(--space-3);
@@ -120,7 +120,7 @@
 
 .stepListBody {
   /* A fixed width, so the contents are clipped and never wrapped while the panel changes width. */
-  width: calc(var(--size-step-list) - 2 * var(--space-3) - 1px);
+  width: calc(var(--layout-step-list) - 2 * var(--space-3) - 1px);
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -195,6 +195,8 @@
 
 .canvas :global(.react-flow__attribution) {
   color: var(--ink-muted);
+  font-size: 12px;
+  line-height: 16px;
 }
 
 .canvas :global(.react-flow__attribution a) {
@@ -259,7 +261,7 @@
   flex: none;
   width: 24px;
   height: 24px;
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   display: inline-flex;
   align-items: center;
   justify-content: center;

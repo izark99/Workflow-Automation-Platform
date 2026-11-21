@@ -12,17 +12,6 @@ function declarations(block: string): Record<string, string> {
   return out;
 }
 
-function themeTokens(theme: 'light' | 'dark'): Record<string, string> {
-  const light: Record<string, string> = {};
-  const dark: Record<string, string> = {};
-  for (const m of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
-    const selector = m[1]!.replace(/\/\*[\s\S]*?\*\//g, '').trim();
-    if (selector === ':root') Object.assign(light, declarations(m[2]!));
-    else if (selector === ":root[data-theme='dark']") Object.assign(dark, declarations(m[2]!));
-  }
-  return theme === 'light' ? light : { ...light, ...dark };
-}
-
 function luminance(hex: string): number {
   const n = parseInt(hex.slice(1), 16);
   const channels = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => {
@@ -37,47 +26,10 @@ export function contrast(a: string, b: string): number {
   return (hi! + 0.05) / (lo! + 0.05);
 }
 
-/** Old names of Phases 2 to 6 and the Harold token each is an alias of since T7.3 (docs/DESIGN.md, "Token mapping"). */
-const ALIASES: Array<[string, string]> = [
-  ['--color-bg', 'scene-100'],
-  ['--color-card', 'surface-overlay'],
-  ['--color-ink', 'ink'],
-  ['--color-muted', 'ink-muted'],
-  ['--color-line', 'border'],
-  ['--color-rule', 'border'],
-  ['--color-control', 'border-strong'],
-  ['--color-primary', 'primary'],
-  ['--color-primary-soft', 'primary-soft'],
-  ['--color-focus', 'primary-text'],
-  ['--color-cta', 'primary'],
-  ['--color-accent', 'accent'],
-  ['--color-danger', 'danger'],
-  ['--color-skeleton', 'neutral-fill'],
-  ['--color-on-primary', 'on-primary'],
-  ['--color-on-cta', 'on-primary'],
-  ['--color-badge-ink', 'primary-text'],
-  ['--color-danger-soft', 'surface-300'],
-  ['--color-danger-ink', 'danger'],
-  ['--color-overlay', 'scrim'],
-  ['--color-note-bg', 'surface-300'],
-  ['--color-note-ink', 'info'],
-  ['--color-draft-ink', 'accent'],
-  ['--color-ended-ink', 'ink-muted'],
-  ['--shadow-popover', 'shadow-md'],
-  ['--font-sans', 'family-sans'],
-  ['--font-mono', 'family-mono'],
-];
-
-// The contrast of the old pairs is now the contrast of the Harold tokens they point to (tests of T7.1 below).
-describe('old names are aliases of Harold tokens', () => {
-  const plain = themeTokens('light');
-  it.each(ALIASES)('%s is var(--%s)', (old, token) => {
-    expect(plain[old]).toBe(`var(--${token})`);
-  });
-  it('the dark block gives no old colour name a value of its own, so both themes follow the Harold tokens', () => {
-    const dark = css.match(/:root\[data-theme='dark'\]\s*\{([^}]*)\}/)![1]!;
-    const names = Object.keys(declarations(dark)).filter((n) => n.startsWith('--color-') || n === '--shadow-popover');
-    expect(names).toEqual([]);
+describe('the old token names are gone', () => {
+  it('tokens.css defines no old name: no --color-*, --font-*, --radius-control, --radius-step, --radius-card, --size-* or --shadow-popover', () => {
+    const defined = blocks(css).flatMap((b) => Object.keys(b.decls));
+    expect(defined.filter((n) => OLD_NAME.test(n))).toEqual([]);
   });
 });
 
@@ -172,13 +124,16 @@ describe.each(['light', 'dark'] as const)('Harold tokens, %s theme: parity with 
   });
 });
 
+/** The widths of the panels (layout, not design tokens). */
+const LAYOUT_NAME = /^--layout-(sidebar|step-list|settings)$/;
+
 describe('Harold tokens: nothing in tokens.css claims to be a Harold token and is not', () => {
-  it('every custom property is either an old name or a token of the snapshot', () => {
+  it('every custom property is a token of the snapshot or a --layout-* width', () => {
     const known = new Set([...Object.keys(expectedHarold('light')), ...Object.keys(expectedHarold('dark'))]);
     const strays = new Set<string>();
     for (const b of blocks(css)) {
       for (const name of Object.keys(b.decls)) {
-        if (!known.has(name) && !OLD_NAME.test(name)) strays.add(name);
+        if (!known.has(name) && !LAYOUT_NAME.test(name)) strays.add(name);
       }
     }
     expect([...strays]).toEqual([]);
@@ -308,12 +263,7 @@ it('the contrast helper agrees with the one above on opaque colours', () => {
 /** Names of Phases 2 to 6. They stay until T7.17, which removes them and sets OLD_NAMES_IN_USE to an empty list. */
 const OLD_NAME = /^--(color-|font-|radius-(control|step|card)$|size-(button|button-compact|sidebar|step-list|settings|builder-header)$|shadow-popover$)/;
 
-const OLD_NAMES_IN_USE = [
-  // The widths of the panels: they are layout, not Harold tokens, and T7.17 gives them names that are not old ones.
-  '--size-settings',
-  '--size-sidebar',
-  '--size-step-list',
-].sort();
+const OLD_NAMES_IN_USE: string[] = [];
 
 function sourceFiles(dir: string): string[] {
   const out: string[] = [];
@@ -333,69 +283,57 @@ describe('inventory of the old token names that the code still reads', () => {
     for (const m of readFileSync(file, 'utf8').matchAll(/var\((--[\w-]+)/g)) if (OLD_NAME.test(m[1]!)) used.add(m[1]!);
   }
 
-  it('lists exactly the old names in OLD_NAMES_IN_USE (the list shrinks to empty by T7.17)', () => {
+  it('finds no old name in a CSS module or in a component: the list is empty (T7.17)', () => {
     expect([...used].sort()).toEqual(OLD_NAMES_IN_USE);
   });
 });
 
-// ---- files that have moved to the Harold tokens ----------------------------------------------------------------------------
+// ---- the code reads Harold tokens only -------------------------------------------------------------------------------------
 
-/** Files that read no old token name any more. Each restyle task adds its files; T7.17 turns this into the whole of `src`. */
-const MOVED_FILES = [
-  'ui/builder/analyze/analysis-panel.module.css',
-  'ui/builder/builder.module.css',
-  'ui/builder/forms/column-mapping-form.module.css',
-  'ui/builder/forms/column-pickers.module.css',
-  'ui/builder/forms/formula-editor.module.css',
-  'ui/builder/parameter-control/parameter-control.module.css',
-  'ui/builder/parameters-panel.module.css',
-  'ui/builder/settings-panel.module.css',
-  'ui/builder/step-preview.module.css',
-  'ui/components/badge.module.css',
-  'ui/components/button.module.css',
-  'ui/components/card.module.css',
-  'ui/components/checkbox.module.css',
-  'ui/components/crumb-link.module.css',
-  'ui/components/dialog.module.css',
-  'ui/components/field.module.css',
-  'ui/components/info-tip.module.css',
-  'ui/components/page-header.module.css',
-  'ui/components/popover.module.css',
-  'ui/components/quiet-warning.module.css',
-  'ui/components/skeleton.module.css',
-  'ui/components/states.module.css',
-  'ui/components/table.module.css',
-  'ui/components/tabs.module.css',
-  'ui/components/toast.module.css',
-  'ui/glass.css',
-  'ui/global.css',
-  'ui/panels/panel.module.css',
-  'ui/parameter-inputs.module.css',
-  'ui/screens/admin.module.css',
-  'ui/screens/dev-components.module.css',
-  'ui/screens/flows.module.css',
-  'ui/screens/ref-import.module.css',
-  'ui/screens/reference-tables.module.css',
-  'ui/screens/run.module.css',
-  'ui/screens/versions.module.css',
-  'ui/session/idle-gate.module.css',
-  'ui/shell.module.css',
-  'ui/sign-in.module.css',
-  'ui/type.css',
-];
+function appFiles(extensions: RegExp): string[] {
+  const here = fileURLToPath(new URL('.', import.meta.url));
+  return sourceFiles(join(here, '..')).filter((f) => extensions.test(f) && !f.endsWith(join('ui', 'tokens.css')) && !/\.test\.tsx?$/.test(f) && !f.includes(join('i18n', 'messages')));
+}
 
-describe('files that have moved to the Harold tokens', () => {
-  it.each(MOVED_FILES)('%s reads no old token name', (file) => {
-    const text = readFileSync(join(fileURLToPath(new URL('../', import.meta.url)), file), 'utf8');
-    const old = [...text.matchAll(/var\((--[\w-]+)/g)].map((m) => m[1]!).filter((n) => OLD_NAME.test(n) && !OLD_NAMES_IN_USE.includes(n));
-    expect(old).toEqual([]);
+describe('colours, radii, shadows and spacing come from the tokens', () => {
+  const styleFiles = appFiles(/\.(css|tsx)$/);
+
+  it('no raw colour outside tokens.css (no #hex, rgb(), rgba(), hsl())', () => {
+    const found: string[] = [];
+    for (const f of styleFiles) {
+      // icons.tsx holds path data, which has no colour; strings of the catalog are not read here.
+      const text = readFileSync(f, 'utf8');
+      for (const m of text.matchAll(/#[0-9a-fA-F]{3,8}\b(?![\w-])|\brgba?\(|\bhsla?\(/g)) found.push(`${f.split('/src/')[1]}: ${m[0]}`);
+    }
+    expect(found).toEqual([]);
   });
-});
 
-describe('screens whose inline styles have moved to the Harold tokens', () => {
-  it.each(['ui/screens/reference-tables.tsx', 'ui/screens/ref-import-dialog.tsx', 'ui/screens/versions.tsx', 'ui/screens/admin.tsx', 'ui/screens/admin-accounts.tsx', 'ui/screens/admin-settings.tsx', 'ui/screens/admin-texts.tsx', 'ui/session/idle-gate.tsx'])('%s has no old name and no 20 px spacing in a style attribute', (file) => {
-    const text = readFileSync(join(fileURLToPath(new URL('../', import.meta.url)), file), 'utf8');
-    expect(text).not.toMatch(/var\(--(color-|radius-card|radius-control|size-button)/);
-    expect(text).not.toMatch(/style=\{\{[^}]*\b20(px)?\b/);
+  it('no raw border radius or box shadow outside tokens.css', () => {
+    const found: string[] = [];
+    for (const f of styleFiles) {
+      const text = readFileSync(f, 'utf8');
+      for (const m of text.matchAll(/border-radius:\s*([^;]+);|borderRadius:\s*([^,}]+)/g)) {
+        const value = (m[1] ?? m[2] ?? '').trim();
+        if (!/^(var\(--radius-(sm|md|lg|xl|full)\)|0|inherit|50%)$/.test(value.replace(/['"]/g, ''))) found.push(`${f.split('/src/')[1]}: border-radius ${value}`);
+      }
+      for (const m of text.matchAll(/box-shadow:\s*([^;]+);/g)) {
+        const value = m[1]!.trim();
+        // a hairline or a ring built from tokens is fine; a shadow with a length and no variable is a raw one
+        if (/\d+px/.test(value) && !/var\(--/.test(value)) found.push(`${f.split('/src/')[1]}: box-shadow ${value}`);
+      }
+    }
+    expect(found).toEqual([]);
+  });
+
+  it('no 20 px, 10 px or 40 px padding, margin or gap in a CSS module (the scale is 4, 8, 12, 16, 24, 32, 48, 64)', () => {
+    const found: string[] = [];
+    for (const f of appFiles(/\.css$/)) {
+      for (const m of readFileSync(f, 'utf8').matchAll(/(?:padding|margin|gap)[\w-]*:\s*([^;]+);/g)) {
+        for (const n of m[1]!.matchAll(/(?<![\w.-])(\d+(?:\.\d+)?)px/g)) {
+          if (![0, 1, 2, 4, 8, 12, 16, 24, 32, 48, 64].includes(Number(n[1]))) found.push(`${f.split('/src/')[1]}: ${m[0].trim()}`);
+        }
+      }
+    }
+    expect(found).toEqual([]);
   });
 });
