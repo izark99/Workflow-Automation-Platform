@@ -295,6 +295,28 @@ this order. A fresh deployment does not: "Apply the migrations" already applies 
    flow version that uses a parameter in an input box (it reads definition versions 1 and 2, and this is version 3). Roll back
    only while nobody has saved such a flow. Do not undo a migration by hand.
 
+## Upgrade from Phase 6
+
+Phase 7 changed the look of the app and nothing else: the Harold design system (glass panels over a soft blue scene, a new type,
+new icons, light and dark themes). A deployment that is on Phase 6 needs only the last two steps of this list. A fresh deployment
+does not need any of it.
+
+1. **There is no migration.** The database is the same (migrations 1 to 18). Do not run `npx supabase db push` for this upgrade.
+2. **There is no new function.** `admin-users` stays as it is; do not deploy it again.
+3. **The fonts are served by the app.** Be Vietnam Pro and JetBrains Mono are part of the build (`@fontsource`), so no request goes to
+   a font host and no setting in Cloudflare or Supabase has to change. The size limit of a Pages file is not affected: the Pages
+   build (`npm run build:pages`) still checks it.
+4. **Deploy the app.** Pushing to the branch that Cloudflare Pages builds starts the build. Wait for it to finish.
+5. **Check it**, in this order:
+   - Themes: in the sidebar footer choose Light, Dark and System in turn. Text is readable on every screen in each, and with System
+     on a browser that has no preference the app is dark.
+   - Fonts: Vietnamese text (for example the sign-in screen in "Tiếng Việt") shows its marks, none cut off at the top of a line.
+   - Dragging: open a flow, drag a step across the canvas. No step disappears, the drag follows the pointer without jumps, and the
+     flow shows "Unsaved changes" once.
+   - A run: run a flow on a sample file and download the workbook. It opens and has the same sheets as before.
+6. **If something is wrong,** roll back the app in Cloudflare Pages. Nothing in the database or in a saved flow depends on the new
+   look, so a rollback is safe at any time. Do not undo a migration: there is none.
+
 ## Limits
 
 - There is no sign-up and no email invitation. The admin creates accounts in the app (Admin, Users, Add user) with a

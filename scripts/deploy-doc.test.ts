@@ -9,7 +9,7 @@ describe('docs/DEPLOY.md', () => {
   it('exists and has the steps in order', () => {
     expect(doc.length).toBeGreaterThan(1000);
     const headings = [...doc.matchAll(/^## (.+)$/gm)].map((m) => m[1]!);
-    const order = ['Before you start', 'Create the Supabase project', 'Apply the migrations', 'Deploy the account function', 'Close sign-ups', 'Create the first admin', 'Deploy the app on Cloudflare Pages', 'Keep the project awake', 'Check it works', 'Upgrade an existing deployment', 'Upgrade from Phase 4', 'Upgrade from Phase 5', 'Limits'];
+    const order = ['Before you start', 'Create the Supabase project', 'Apply the migrations', 'Deploy the account function', 'Close sign-ups', 'Create the first admin', 'Deploy the app on Cloudflare Pages', 'Keep the project awake', 'Check it works', 'Upgrade an existing deployment', 'Upgrade from Phase 4', 'Upgrade from Phase 5', 'Upgrade from Phase 6', 'Limits'];
     expect(headings.filter((h) => order.includes(h))).toEqual(order);
   });
 
@@ -76,7 +76,7 @@ describe('docs/DEPLOY.md', () => {
   });
 
   it('has a Phase 6 upgrade section that backs up, applies migration 18, deploys no function, checks the features and warns about a rollback', () => {
-    const section = doc.slice(doc.indexOf('## Upgrade from Phase 5'), doc.indexOf('## Limits'));
+    const section = doc.slice(doc.indexOf('## Upgrade from Phase 5'), doc.indexOf('## Upgrade from Phase 6'));
     expect(section.length).toBeGreaterThan(500);
     const at = (text: string) => section.indexOf(text);
     const order = ['Back up first', 'npx supabase db push', 'There is no new function', 'Deploy the app', 'Check it', 'If something is wrong'];
@@ -92,6 +92,25 @@ describe('docs/DEPLOY.md', () => {
     // A rollback would strand flows that use the new step or a parameter in an input box.
     expect(section).toMatch(/cannot run a flow that has a Reference table step/);
     expect(section).toMatch(/version 3/);
+  });
+
+  it('has a Phase 7 upgrade section: no migration, no function, the fonts come from the app, and a check list of the themes and the drag', () => {
+    const section = doc.slice(doc.indexOf('## Upgrade from Phase 6'), doc.indexOf('## Limits'));
+    expect(section.length).toBeGreaterThan(500);
+    expect(section).toMatch(/There is no migration/);
+    expect(section).toMatch(/There is no new function/);
+    expect(section).not.toContain('functions deploy');
+    expect(section).not.toMatch(/db push`? for this upgrade is|Run `npx supabase db push`/);
+    expect(section).toMatch(/fonts are served by the app/);
+    expect(section).toMatch(/no request goes to\s+a font host/);
+    const at = (text: string) => section.indexOf(text);
+    const order = ['There is no migration', 'There is no new function', 'The fonts are served by the app', 'Deploy the app', 'Check it', 'If something is wrong'];
+    for (const o of order) expect(at(o), o).toBeGreaterThan(-1);
+    expect(order.map(at)).toEqual([...order.map(at)].sort((a, b) => a - b));
+    for (const word of ['Themes', 'Fonts', 'Dragging', 'A run']) expect(section).toContain(word);
+    // The last migration is still 18: this phase adds none.
+    expect(existsSync('supabase/migrations/20261118000018_ref_table_names_reference_step.sql')).toBe(true);
+    expect(existsSync('supabase/migrations/20261118000019')).toBe(false);
   });
 
   it('states the limits of Phase 6: a sample file is never stored, the analysis is a proposal, and csv cells with a line break', () => {
