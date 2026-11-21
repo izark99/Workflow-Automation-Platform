@@ -3,22 +3,52 @@
   flex: none;
   width: var(--size-settings);
   box-sizing: border-box;
-  padding: 20px;
-  background: var(--color-card);
-  border-left: 1px solid var(--color-line);
+  isolation: isolate;
+  padding: var(--space-5);
+  border-left: 1px solid var(--border);
   overflow-x: hidden;
   overflow-y: auto;
   transition: width 200ms ease-out;
 }
 
+/* The settings panel is glass as its own layer, with no blur while its width changes (usePanelMotion). */
+.glass {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--surface-200);
+  -webkit-backdrop-filter: blur(var(--blur-md)) saturate(1.5);
+  backdrop-filter: blur(var(--blur-md)) saturate(1.5);
+}
+
+.panel[data-moving] .glass {
+  background: var(--surface-overlay);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass {
+    background: var(--surface-overlay);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass {
+    background: var(--surface-overlay);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
 .content {
   /* A fixed width, so the contents are clipped and never wrapped while the panel changes width. */
-  width: calc(var(--size-settings) - 40px - 1px);
+  width: calc(var(--size-settings) - 2 * var(--space-5) - 1px);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--space-4);
   /* The toggle sits in the top left corner of the open panel: its row of 36 px + the gap is above the contents. */
-  padding-top: 44px;
+  padding-top: var(--space-5);
 }
 
 .content[hidden] {
@@ -48,7 +78,7 @@
   writing-mode: vertical-rl;
   font-size: 13px;
   line-height: 20px;
-  color: var(--color-muted);
+  color: var(--ink-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -71,7 +101,7 @@
   margin: 0;
   font-size: 13px;
   line-height: 20px;
-  color: var(--color-muted);
+  color: var(--ink-muted);
 }
 
 .stack {
@@ -115,8 +145,8 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-control);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
 }
 
 .columnList li {
@@ -129,9 +159,9 @@
 }
 
 .columnList li + li {
-  border-top: 1px solid var(--color-line);
+  border-top: 1px solid var(--border);
 }
 
 .columnType {
-  color: var(--color-muted);
+  color: var(--ink-muted);
 }

@@ -17,6 +17,7 @@ import { ParametersPanel } from './parameters-panel';
 import { StepPreview } from './step-preview';
 import { usePanel } from '../panels/use-panel';
 import { PanelToggle } from '../panels/panel-toggle';
+import { usePanelMotion } from '../panels/use-panel-motion';
 import { countRender } from './render-counter';
 import styles from './settings-panel.module.css';
 
@@ -24,8 +25,11 @@ import styles from './settings-panel.module.css';
 function PanelFrame({ stepName, children }: { stepName?: string; children: ReactNode }) {
   const t = useT();
   const { collapsed, toggle } = usePanel('settings');
+  const ref = useRef<HTMLElement>(null);
+  usePanelMotion(ref);
   return (
-    <aside id="builder-settings" aria-label={t('builder.settings.panel')} className={`${styles.panel} ${collapsed ? styles.rail : ''}`}>
+    <aside ref={ref} id="builder-settings" aria-label={t('builder.settings.panel')} className={`${styles.panel} ${collapsed ? styles.rail : ''}`}>
+      <span className={styles.glass} aria-hidden="true" />
       <div className={styles.toggle}>
         <PanelToggle panel="settings" collapsed={collapsed} onToggle={toggle} controls="builder-settings" />
       </div>

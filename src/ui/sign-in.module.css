@@ -42,7 +42,7 @@
 
 .title {
   margin: 0;
-  font: 600 28px/38px var(--font-sans);
+  font: 600 28px/38px var(--family-sans);
 }
 
 .titleRow {
@@ -62,7 +62,7 @@
   align-items: flex-start;
   gap: 8px;
   margin: 0;
-  color: var(--color-muted);
+  color: var(--ink-muted);
   font-size: 13px;
   line-height: 20px;
 }

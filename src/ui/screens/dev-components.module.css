@@ -32,14 +32,14 @@
   width: 120px;
   font-size: 12px;
   font-weight: 700;
-  color: var(--color-muted);
+  color: var(--ink-muted);
 }
 
 .note {
   margin: 0;
   font-size: 13px;
   line-height: 20px;
-  color: var(--color-muted);
+  color: var(--ink-muted);
 }
 
 .popovers {
@@ -58,8 +58,8 @@
 }
 
 .skeleton {
-  border: 1px solid var(--color-rule);
-  border-radius: var(--radius-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
   overflow: hidden;
 }
 

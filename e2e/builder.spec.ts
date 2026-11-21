@@ -90,7 +90,7 @@ test('a second input on the same port is refused with what to do next, and a loo
   await expect(page.locator('.react-flow__edge')).toHaveCount(1);
 });
 
-test('clicking a card selects it with a 2 px accent border; Backspace deletes it and its connections', async ({ page }) => {
+test('clicking a card selects it with a 2 px primary-text ring; Backspace deletes it and its connections', async ({ page }) => {
   await newFlow(page);
   await addStep(page, 'Column mapping');
   await addStep(page, 'Output');
@@ -99,8 +99,10 @@ test('clicking a card selects it with a 2 px accent border; Backspace deletes it
   const target = card(page, 'Output');
   await target.click();
   await expect(target).toHaveClass(/selected/);
-  const width = await target.locator('div').first().evaluate((el) => getComputedStyle(el).borderTopWidth);
-  expect(width).toBe('2px');
+  // The ring is a 2 px shadow (D111), so the card keeps its size when it is selected.
+  const ring = await target.locator('div').first().evaluate((el) => getComputedStyle(el).boxShadow);
+  expect(ring).toContain('0px 0px 0px 2px');
+  expect(ring).toContain('rgb(26, 86, 192)');
   await page.keyboard.press('Backspace');
   await expect(cards(page)).toHaveCount(1);
   await expect(page.locator('.react-flow__edge')).toHaveCount(0);

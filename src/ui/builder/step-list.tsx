@@ -1,9 +1,11 @@
+import { useRef } from 'react';
 import { Button, InfoTip } from '../components';
 import type { NodeType } from '../../engine/flow/types';
 import { STEP_CATALOG, STEP_GROUPS } from './graph';
 import { useT } from '../i18n';
 import { usePanel } from '../panels/use-panel';
 import { PanelToggle } from '../panels/panel-toggle';
+import { usePanelMotion } from '../panels/use-panel-motion';
 import { countRender } from './render-counter';
 import styles from './builder.module.css';
 
@@ -14,8 +16,11 @@ export function StepList({ onAdd, disabled }: { onAdd: (type: NodeType) => void;
   countRender('StepList');
   const t = useT();
   const { collapsed, toggle } = usePanel('steps');
+  const ref = useRef<HTMLElement>(null);
+  usePanelMotion(ref);
   return (
-    <aside id="builder-steps" aria-label={t('builder.stepTypes')} className={`${styles.stepList} ${collapsed ? styles.stepListRail : ''}`}>
+    <aside ref={ref} id="builder-steps" aria-label={t('builder.stepTypes')} className={`${styles.stepList} ${collapsed ? styles.stepListRail : ''}`}>
+      <span className={styles.glass} aria-hidden="true" />
       <div className={styles.stepToggle}>
         <PanelToggle panel="steps" collapsed={collapsed} onToggle={toggle} controls="builder-steps" />
       </div>

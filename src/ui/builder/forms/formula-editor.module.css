@@ -15,7 +15,7 @@
 }
 
 .mono {
-  font-family: var(--font-mono);
+  font-family: var(--family-mono);
 }
 
 .list {
@@ -34,7 +34,7 @@
   justify-content: space-between;
   gap: 12px;
   padding: 8px;
-  border-bottom: 1px solid var(--color-rule);
+  border-bottom: 1px solid var(--border);
 }
 
 .itemText {
@@ -45,25 +45,25 @@
 }
 
 .signature {
-  font: 600 13px var(--font-mono);
+  font: 600 13px var(--family-mono);
 }
 
 .text {
   font-size: 12px;
   line-height: 18px;
-  color: var(--color-muted);
+  color: var(--ink-muted);
 }
 
 .group {
   padding: 8px 8px 2px;
   font-size: 12px;
   font-weight: 700;
-  color: var(--color-muted);
+  color: var(--ink-muted);
 }
 
 .dialogBody {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  color: var(--color-ink);
+  color: var(--ink);
 }
