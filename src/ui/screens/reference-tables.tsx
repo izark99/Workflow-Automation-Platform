@@ -318,26 +318,26 @@ export function ReferenceTablesScreen() {
                   {versionOptionLabel(v)}
                 </Chip>
               ))}
-              <Badge tone={version.status === 'draft' ? 'outline' : 'soft'}>{version.status === 'draft' ? t('refTables.badge.draft') : t('refTables.badge.published')}</Badge>
+              <Badge tone={version.status === 'draft' ? 'accent' : 'success'} icon={version.status === 'draft' ? 'pencil' : 'circle-check'}>{version.status === 'draft' ? t('refTables.badge.draft') : t('refTables.badge.published')}</Badge>
             </div>
-            {dirty && editable ? <p className={styles.note} style={{ padding: '0 20px 12px' }}>{t('refTables.publishNeedsSave')}</p> : null}
+            {dirty && editable ? <p className={styles.note} style={{ padding: '0 var(--space-5) var(--space-3)' }}>{t('refTables.publishNeedsSave')}</p> : null}
             {info ? (
-              <p className={styles.note} style={{ padding: '0 20px 12px' }} role="status">
+              <p className={styles.note} style={{ padding: '0 var(--space-5) var(--space-3)' }} role="status">
                 {info}
               </p>
             ) : null}
             {errors.length > 0 ? (
-              <div style={{ padding: '0 20px 12px' }}>
+              <div style={{ padding: '0 var(--space-5) var(--space-3)' }}>
                 <ErrorState what={t('refTables.rowErrors', { n: errors.length })} next={t('refTables.cellError', { row: errors[0]!.row, column: errors[0]!.column, message: errors[0]!.message })} />
               </div>
             ) : null}
             {saveError ? (
-              <div style={{ padding: '0 20px 12px' }}>
+              <div style={{ padding: '0 var(--space-5) var(--space-3)' }}>
                 <ErrorState what={t('refTables.saveFailed')} next={saveError} />
               </div>
             ) : null}
             <div className={styles.gridWrap} onPaste={onPaste}>
-              {grid.length === 0 ? <p className={styles.note} style={{ padding: 20 }}>{t('refTables.noRows')}</p> : <Table dense label={t('refTables.grid', { name: table.name })} columns={columns} rows={pageRows} rowKey={(r) => String(r.index)} />}
+              {grid.length === 0 ? <p className={styles.note} style={{ padding: 'var(--space-5)' }}>{t('refTables.noRows')}</p> : <Table dense label={t('refTables.grid', { name: table.name })} columns={columns} rows={pageRows} rowKey={(r) => String(r.index)} />}
             </div>
             {editable || range.pages > 1 ? (
               <div className={styles.pager}>

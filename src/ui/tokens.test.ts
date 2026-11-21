@@ -319,7 +319,6 @@ const OLD_NAMES_IN_USE = [
   '--color-line',
   '--color-control',
   '--color-muted',
-  '--color-primary',
   '--color-primary-soft',
   '--color-rule',
   '--font-mono',
@@ -382,6 +381,8 @@ const MOVED_FILES = [
   'ui/screens/versions.module.css',
   'ui/screens/run.module.css',
   'ui/parameter-inputs.module.css',
+  'ui/screens/reference-tables.module.css',
+  'ui/screens/ref-import.module.css',
 ];
 
 describe('files that have moved to the Harold tokens', () => {
@@ -389,5 +390,13 @@ describe('files that have moved to the Harold tokens', () => {
     const text = readFileSync(join(fileURLToPath(new URL('../', import.meta.url)), file), 'utf8');
     const old = [...text.matchAll(/var\((--[\w-]+)/g)].map((m) => m[1]!).filter((n) => OLD_NAME.test(n));
     expect(old).toEqual([]);
+  });
+});
+
+describe('screens whose inline styles have moved to the Harold tokens', () => {
+  it.each(['ui/screens/reference-tables.tsx', 'ui/screens/ref-import-dialog.tsx', 'ui/screens/versions.tsx'])('%s has no old name and no 20 px spacing in a style attribute', (file) => {
+    const text = readFileSync(join(fileURLToPath(new URL('../', import.meta.url)), file), 'utf8');
+    expect(text).not.toMatch(/var\(--(color-|radius-card|radius-control|size-button)/);
+    expect(text).not.toMatch(/style=\{\{[^}]*\b20(px)?\b/);
   });
 });

@@ -1105,3 +1105,10 @@ What it still lists on the new screens is the pattern of the earlier phases (D83
 
 - `run.module.css` and `parameter-inputs.module.css` read Harold tokens only: the file rows are separated by the `border` hairline, names are 14 px at 500, notes and sub-lines are `ink-muted`, the result box is `surface-overlay` with `radius-lg`. The cards, the buttons, the progress bar, the Parameters card and its fields, the warning and the error states come from the components of D98 to D105. The one `primary` button of the screen is "Create flow" in the sidebar (D99), so Run, Cancel and the downloads are `secondary`.
 - A unit test (`MOVED_FILES` in `src/ui/tokens.test.ts`) fails when one of the files that have moved reads an old token name. Each restyle task adds its files, and T7.17 widens it to the whole of `src`, together with the empty inventory. A codemod of the old names to the Harold ones (colours, radii, sizes, fonts, shadow) was used for the mechanical part; a colour that was `--color-primary` as text became `primary-text`, and as a fill or a line `primary`.
+
+## D109 Reference tables (T7.13)
+
+- `reference-tables.module.css` and `ref-import.module.css` read Harold tokens only and their spacing is on the scale (the 20 px paddings and gaps are `space-5`, 24 px); the 20 px paddings in the inline styles of `reference-tables.tsx` are `var(--space-5)` and `var(--space-3)`. The list items of the rail are 14 px at 500. The grid is dense (D105), the pager is a row of `size="sm"` buttons under the grid, and the dialogs (import, columns, description, new table) are the Dialog of D102 with the one `primary` button last.
+- The draft and published badges are the status badges of D107: Draft is `accent` with a `pencil` icon, Published is `success` with `circle-check`.
+- The card of the timeline on the Versions screen (T7.11) was drawn by an inline style with old names and a 20 px padding; it is now the `timelineCard` class (glass, `radius-lg`, `space-5`).
+- `MOVED_FILES` gets the two CSS modules, and a second test checks that the inline styles of `reference-tables.tsx`, `ref-import-dialog.tsx` and `versions.tsx` have no old name and no 20 px value.

@@ -111,7 +111,7 @@ export function VersionsScreen() {
     ];
     body = (
       <>
-        <section aria-label={t('versions.timeline')} className="timeline-card" style={{ background: 'var(--color-card)', border: '1px solid var(--color-line)', borderRadius: 'var(--radius-card)', padding: 20, minWidth: 0 }}>
+        <section aria-label={t('versions.timeline')} className={styles.timelineCard}>
           <ol className={`${styles.bar} ${styles.list}`} aria-label={t('versions.timeline')}>
             {segments.map((s) => (
               <li key={s.versionNo} className={`${styles.segment} ${s.state === 'in_effect' ? styles.inEffect : ''} ${s.state === 'draft' ? styles.draft : ''}`} style={{ flex: `${s.weight} 1 0` }}>
