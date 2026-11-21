@@ -204,7 +204,7 @@ function Builder() {
             onChange={(no) => go(`/flows/${id}/versions/${no}`)}
           />
         ) : null}
-        {version ? <Badge>{published ? t('builder.versionBadgePublished') : t('builder.versionBadgeDraft')}</Badge> : null}
+        {version ? <Badge tone={published ? 'success' : 'accent'} icon={published ? 'circle-check' : 'pencil'}>{published ? t('builder.versionBadgePublished') : t('builder.versionBadgeDraft')}</Badge> : null}
         {dirty ? (
           <span className={styles.dirty} role="status">
             {t('builder.unsaved')}

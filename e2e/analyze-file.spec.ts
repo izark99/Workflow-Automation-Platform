@@ -62,7 +62,7 @@ test('the result shows each proposed setting with its confidence and a reason, w
   await expect(rows.nth(0)).toContainText('Left out');
   await expect(rows.nth(4)).not.toContainText('Left out');
   await expect(rows.nth(4)).toContainText('Code');
-  expect(await rows.nth(4).locator('td').nth(1).locator('span').evaluate((el) => getComputedStyle(el).fontWeight)).toBe('700');
+  expect(await rows.nth(4).locator('td').nth(1).locator('span').evaluate((el) => getComputedStyle(el).fontWeight)).toBe('600');
   expect(await rows.nth(0).locator('td').nth(1).locator('span').evaluate((el) => getComputedStyle(el).opacity)).toBe('0.5');
   // Nothing was applied by itself.
   await settings(page).getByRole('tab', { name: 'Configure' }).click();
