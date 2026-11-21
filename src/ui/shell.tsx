@@ -21,7 +21,7 @@ export interface ShellContext {
 function NavItem({ to, icon, children }: { to: string; icon: IconName; children: string }) {
   return (
     <NavLink to={to} className={styles.link}>
-      <Icon name={icon} size={18} />
+      <Icon name={icon} size={20} />
       {children}
     </NavLink>
   );
@@ -30,7 +30,7 @@ function NavItem({ to, icon, children }: { to: string; icon: IconName; children:
 function RailLink({ to, icon, label }: { to: string; icon: IconName; label: string }) {
   return (
     <NavLink to={to} className={styles.railLink} aria-label={label} title={label}>
-      <Icon name={icon} size={18} />
+      <Icon name={icon} size={20} />
     </NavLink>
   );
 }
@@ -211,10 +211,10 @@ export function Shell() {
           <>
             <div className={styles.railTop} />
             <Button variant="cta" icon aria-label={t('nav.createFlow')} title={t('nav.createFlow')} onClick={() => setCreating(true)}>
-              <Icon name="plus" size={18} />
+              <Icon name="plus" size={20} />
             </Button>
-            <RailLink to="/flows" icon="flow" label={t('nav.flows')} />
-            <RailLink to="/reference-tables" icon="table" label={t('nav.refTables')} />
+            <RailLink to="/flows" icon="workflow" label={t('nav.flows')} />
+            <RailLink to="/reference-tables" icon="file-spreadsheet" label={t('nav.refTables')} />
             {me?.role === 'admin' ? <RailLink to="/admin" icon="shield" label={t('nav.admin')} /> : null}
             {me ? (
               <div className={styles.railUser}>
@@ -225,7 +225,7 @@ export function Shell() {
         ) : (
           <>
             <div className={styles.brand}>
-              <Icon name="flow" size={22} />
+              <Icon name="workflow" size={24} />
               {t('app.brand')}
             </div>
             <div className={styles.create}>
@@ -233,10 +233,10 @@ export function Shell() {
                 {t('nav.createFlow')}
               </Button>
             </div>
-            <NavItem to="/flows" icon="flow">
+            <NavItem to="/flows" icon="workflow">
               {t('nav.flows')}
             </NavItem>
-            <NavItem to="/reference-tables" icon="table">
+            <NavItem to="/reference-tables" icon="file-spreadsheet">
               {t('nav.refTables')}
             </NavItem>
             {me?.role === 'admin' ? (

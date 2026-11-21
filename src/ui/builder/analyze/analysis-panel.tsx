@@ -165,7 +165,7 @@ export function AnalysisPanel({ file, settings, onApply }: AnalysisPanelProps) {
                 {l.confidence ? (
                   <span className={styles.badges}>
                     <Badge tone={l.confidence === 'high' ? 'soft' : 'outline'}>
-                      {l.confidence === 'low' ? <Icon name="alert" size={14} /> : null}
+                      {l.confidence === 'low' ? <Icon name="circle-alert" size={16} /> : null}
                       {t(`builder.analyze.confidence.${l.confidence}` as MessageKey)}
                     </Badge>
                     {l.reason ? <InfoTip label={l.label}>{l.reason}</InfoTip> : null}

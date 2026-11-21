@@ -32,7 +32,7 @@ export function Button({ variant = 'secondary', compact = false, busy = false, b
     >
       {busy ? (
         <span className={styles.spin} style={{ display: 'inline-flex' }}>
-          <Icon name="spinner" />
+          <Icon name="loader-circle" />
         </span>
       ) : null}
       {children}

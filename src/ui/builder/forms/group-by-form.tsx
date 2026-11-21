@@ -38,7 +38,7 @@ export function GroupByForm(props: FormProps) {
               </div>
               <ColumnSelect label={t('common.numbered', { label: t('builder.group.column'), n: i + 1 })} value={a.column} columns={names} disabled={readOnly} width={150} onChange={(column) => patch(i, { column })} />
               <Button icon disabled={readOnly} aria-label={t('builder.group.remove', { n: i + 1 })} onClick={() => apply({ ...v, aggregations: v.aggregations.filter((_, j) => j !== i) })}>
-                <Icon name="close" />
+                <Icon name="x" />
               </Button>
             </div>
             <Field label={t('common.numbered', { label: t('builder.group.resultName'), n: i + 1 })} value={a.as} placeholder={a.column ? `${a.fn}_${a.column}` : a.fn} data-code disabled={readOnly} onChange={(e) => patch(i, { as: e.target.value })} />

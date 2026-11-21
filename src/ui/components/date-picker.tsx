@@ -110,13 +110,13 @@ export function DatePicker({ label, value, onChange, width = 180, disabled = fal
         >
           <div className={styles.monthRow}>
             <button type="button" className={styles.nav} aria-label={t('common.datePicker.previousMonth')} onClick={() => step(-1)}>
-              <Icon name="chevronLeft" />
+              <Icon name="chevron-left" />
             </button>
             <span style={{ fontWeight: 700 }} aria-live="polite">
               {monthTitle(shown)}
             </span>
             <button type="button" className={styles.nav} aria-label={t('common.datePicker.nextMonth')} onClick={() => step(1)}>
-              <Icon name="chevronRight" />
+              <Icon name="chevron-right" />
             </button>
           </div>
           <div className={styles.grid} ref={gridRef}>

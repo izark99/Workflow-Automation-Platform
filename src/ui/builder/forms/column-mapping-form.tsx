@@ -93,7 +93,7 @@ export function ColumnMappingForm({ step, definition, onSettings, readOnly, cont
                 <Field label={t('builder.form.mapping.source')} value={r.source} disabled={readOnly} onChange={(e) => patch(i, { source: e.target.value })} />
               </div>
               <Button icon aria-label={t('builder.form.mapping.remove', { name: r.source || t('builder.form.mapping.thisRow') })} disabled={readOnly} onClick={() => apply(rows.filter((_, j) => j !== i))}>
-                <Icon name="close" />
+                <Icon name="x" />
               </Button>
             </div>
             <div className={styles.line}>

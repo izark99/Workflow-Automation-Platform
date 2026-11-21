@@ -8,8 +8,8 @@ export type PanelSide = 'left' | 'right';
 /** A chevron that points to the edge when the panel is open (it will move there) and away from it when collapsed. */
 export function toggleIcon(side: PanelSide, collapsed: boolean): IconName {
   const towardEdge = !collapsed;
-  if (side === 'left') return towardEdge ? 'chevronLeft' : 'chevronRight';
-  return towardEdge ? 'chevronRight' : 'chevronLeft';
+  if (side === 'left') return towardEdge ? 'chevron-left' : 'chevron-right';
+  return towardEdge ? 'chevron-right' : 'chevron-left';
 }
 
 export const PANEL_NAME_KEYS: Record<PanelId, MessageKey> = {

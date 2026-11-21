@@ -161,7 +161,7 @@ export function ReferenceTablesScreen() {
         ...(editable
           ? [{ key: 'remove', header: '', render: (row: { index: number; cells: string[] }) => (
               <Button compact aria-label={t('refTables.removeRow', { n: row.index + 1 })} onClick={() => edit((g) => g.filter((_, i) => i !== row.index))}>
-                <Icon name="close" />
+                <Icon name="x" />
               </Button>
             ) }]
           : []),
@@ -540,7 +540,7 @@ function ColumnsDialog({ initial, onApply, onCancel }: { initial: Column[]; onAp
                 onChange={(v) => set(i, { type: v as ColumnType })}
               />
               <Button aria-label={t('refTables.cols.remove', { n: i + 1 })} onClick={() => setPlan((p) => p.filter((_, ci) => ci !== i))}>
-                <Icon name="close" />
+                <Icon name="x" />
               </Button>
             </li>
           ))}

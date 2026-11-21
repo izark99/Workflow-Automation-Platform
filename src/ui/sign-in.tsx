@@ -43,7 +43,7 @@ export function SignInScreen({ auth, ended, idleHours }: { auth: AuthService; en
       </div>
       <div className={styles.card}>
         <div className={styles.brand}>
-          <Icon name="flow" size={22} />
+          <Icon name="workflow" size={24} />
           {t('app.brand')}
         </div>
         <Card>

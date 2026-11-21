@@ -50,7 +50,7 @@ export function ColumnList({ label, hint, values, onChange, columns, disabled }:
           <span key={v} className={styles.chip}>
             <span data-user-content>{v}</span>
             <Button compact icon disabled={disabled} aria-label={t('builder.picker.remove', { name: v, label })} onClick={() => onChange(values.filter((x) => x !== v))}>
-              <Icon name="close" />
+              <Icon name="x" />
             </Button>
           </span>
         ))}

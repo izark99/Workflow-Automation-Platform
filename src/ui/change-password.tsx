@@ -64,7 +64,7 @@ export function ChangePasswordScreen({ onSave, onSignOut }: { onSave: (password:
       </div>
       <div className={styles.card}>
         <div className={styles.brand}>
-          <Icon name="flow" size={22} />
+          <Icon name="workflow" size={24} />
           {t('app.brand')}
         </div>
         <Card>
@@ -95,7 +95,7 @@ export function LockedScreen({ onSignOut }: { onSignOut: () => void }) {
       </div>
       <div className={styles.card}>
         <div className={styles.brand}>
-          <Icon name="flow" size={22} />
+          <Icon name="workflow" size={24} />
           {t('app.brand')}
         </div>
         <Card>

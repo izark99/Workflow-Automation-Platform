@@ -6,7 +6,7 @@ import styles from './states.module.css';
 export function EmptyState({ title, text, action }: { title: string; text: string; action: ReactNode }) {
   return (
     <div className={styles.empty}>
-      <Icon name="inbox" size={32} />
+      <Icon name="inbox" size={24} />
       <span className={styles.emptyTitle}>{title}</span>
       <span className={styles.muted}>{text}</span>
       {action}
@@ -18,7 +18,7 @@ export function EmptyState({ title, text, action }: { title: string; text: strin
 export function ErrorState({ what, next, actions }: { what: string; next: string; actions?: ReactNode }) {
   return (
     <div role="alert" className={styles.error}>
-      <Icon name="alert" size={20} />
+      <Icon name="circle-alert" size={20} />
       <div className={styles.errorBody}>
         <span>
           <b>{what}</b> {next}

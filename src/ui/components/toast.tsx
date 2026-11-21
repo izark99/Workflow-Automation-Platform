@@ -30,7 +30,7 @@ export function ToastProvider({ children, durationMs = 5000 }: { children: React
           <div key={t.id} className={styles.toast}>
             {t.message}
             <button type="button" className={styles.dismiss} aria-label={tr('common.toast.dismiss')} onClick={() => dispatch({ type: 'remove', id: t.id })}>
-              <Icon name="close" />
+              <Icon name="x" />
             </button>
           </div>
         ))}

@@ -120,7 +120,7 @@ export function Dropdown({ label, options, value, onChange, width = 260, disable
         onClick={() => (open ? close(false) : openList())}
         onKeyDown={onTriggerKey}
       >
-        {iconTrigger ? <Icon name={iconTrigger} /> : <>{buttonLabel ?? current}<Icon name="chevronDown" /></>}
+        {iconTrigger ? <Icon name={iconTrigger} /> : <>{buttonLabel ?? current}<Icon name="chevron-down" /></>}
       </button>
       {open && popoverLayer()
         ? createPortal(
