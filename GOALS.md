@@ -64,3 +64,15 @@ Before you paste it: make sure `main` has every Phase 5 change (and the follow-u
 ```
 /goal Read PROMPT.md and follow it exactly, one task per turn, Phase 6 only. The goal is met when your Evidence block in this conversation shows all of: every Phase 6 task in PROGRESS.md is ticked, including the tasks that T6.22 added from docs/UI_AUDIT_P6.md; "npm run test:e2e" exited 0 with the canvas drag spec inside it; "npm run test:functions" exited 0 on a local Supabase; "npm run test:db" exited 0 on a local Supabase with the migrations 14 to 18 applied from zero; "npm run test:acceptance" exited 0 with both datasets and the layout files; "npm run test:ui-rules" exited 0 in the light theme at 1280 and 1440 px and in the dark theme at 1440 px, with the routes of the parameter control, the Reference table step and the analysis panel included; a full "npm run gates" started after "npm ci" exited 0 with all seven gates passing; "npm run test:acceptance:pages" exited 0; "git diff main -- flows/monthly-timesheet.flow.json" is empty; "head -1 PROGRESS.md" prints STATUS: COMPLETE; "git status --porcelain testcase" is empty. Also stop when "head -1 PROGRESS.md" prints STATUS: BLOCKED, or after 80 turns.
 ```
+
+## Phase 7: Harold design system
+
+Before you paste it: make sure `main` has every Phase 6 change (merge the Phase 6 pull request first: the check
+"`git diff main` is empty" below only means something when `main` already has Phase 6), and that line 1 of `PROGRESS.md` says
+`STATUS: IN PROGRESS`. Review the "Needs Harold" rows marked Phase 7 first, above all the first four (where the look comes from,
+the default theme, the end of the orange call-to-action, the text size): the build uses the default unless the list says
+otherwise. This phase changes the look only; it reads `design/harold/` and does not need access to the design system itself.
+
+```
+/goal Read PROMPT.md and follow it exactly, one task per turn, Phase 7 only. The goal is met when your Evidence block in this conversation shows all of: every Phase 7 task in PROGRESS.md is ticked, including the tasks that T7.19 added from docs/UI_AUDIT_P7.md; "npm run test:e2e" exited 0 with the canvas drag spec inside it and unchanged; "npm run test:ui-rules" exited 0 in the light theme at 1280 and 1440 px and in the dark theme at 1440 px, with the Harold rules and the /dev/components route included; "npm run test:functions" exited 0 on a local Supabase; "npm run test:db" exited 0 on a local Supabase with the migrations 1 to 18 applied from zero; "npm run test:acceptance" exited 0 with both datasets and the layout files; a full "npm run gates" started after "npm ci" exited 0 with all seven gates passing; "npm run test:acceptance:pages" exited 0; "git diff main -- src/engine src/store supabase flows" is empty; "git status --porcelain testcase" is empty; "head -1 PROGRESS.md" prints STATUS: COMPLETE. Also stop when "head -1 PROGRESS.md" prints STATUS: BLOCKED, or after 70 turns.
+```

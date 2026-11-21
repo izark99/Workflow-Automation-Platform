@@ -16,6 +16,7 @@ export default tseslint.config(
       'dist-ui-rules',
       'dist-e2e',
       'testcase',
+      'design',
       'node_modules',
     ],
   },

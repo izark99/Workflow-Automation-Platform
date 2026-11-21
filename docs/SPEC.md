@@ -218,6 +218,7 @@ fixed values in the flow.
 | 4. Accounts, themes, texts, parameters | Section 11 | All gates of PROMPT section 2, including G6, pass in one clean run |
 | 5. Reference tables, idle sign-out, texts, panels | Section 12 | The same gates pass in one clean run |
 | 6. Canvas drag, input regions, parameters in input boxes, Reference table step | Section 13 | The same gates pass in one clean run |
+| 7. Harold design system | Section 14 | The same gates pass in one clean run, with no change to `src/engine/`, `src/store/`, `supabase/` and the flow file |
 
 ## 11. Phase 4 additions
 
@@ -501,3 +502,109 @@ can be put on the canvas like any other step.
   the backfill) with the parity cases of the engine, and `ref_table_versions` access for a table that a flow reads only through
   the Reference table step.
 - G6 (`admin-users`) and G0 (the spike) are unchanged.
+
+## 14. Phase 7 additions
+
+Phase 7 changes how the whole app looks, and nothing else. It adds no feature, no setting, no table, no migration, and it
+does not change the engine, the flow definition, the data stores, the wording of any text or any behaviour. Everything in
+sections 1 to 13 still holds, the acceptance flow `flows/monthly-timesheet.flow.json` is not edited, and the budgets of
+section 13.1 (dragging steps) still hold. Requirement 1 is below; more requirements of the same kind are added as 14.x.
+
+The visual authority is the design system "Harold" (Spatial), kept in this repository as a snapshot in `design/harold/`
+(`design/harold/SOURCE.md` says where it came from). Where it disagrees with `design/screens/` (the teal look of Phases 2
+to 6), Harold wins. `docs/DESIGN.md` ("Harold design system (Phase 7)") records the exact values and what replaces each old rule.
+
+### 14.1 The look
+
+1. Glass panels over a soft blue scene, in the style of visionOS: a translucent panel with blur, a lit top edge and a soft
+   shadow. The scene is the only gradient of the app. Dark and light are both Harold themes, and both hold the same
+   contrast targets.
+2. One blue (`primary` as a fill, `primary-text` as text and line). The warm second hue (Ember, `accent`) appears at most
+   once per screen and never means a warning or an error. The orange call-to-action button of Phases 2 to 6 is gone: the
+   one main action of a screen is the one `primary` button.
+3. Type is Be Vietnam Pro, with full Vietnamese support, and JetBrains Mono for formulas and code. Both are served by the
+   app itself (no font request to another address). Vietnamese marks never clip: text styles keep the line heights of the
+   Harold type table.
+4. Shape: radii of 8, 14, 22 and 32 px and pills. Controls have fixed heights of 32 and 40 px, no outline on buttons,
+   and an outline of `border-strong` on inputs. Spacing uses only 4, 8, 12, 16, 24, 32, 48 and 64 px.
+5. Icons are the 47 Lucide icons of Harold, drawn in `currentColor`.
+
+### 14.2 Tokens and themes
+
+1. `src/ui/tokens.css` holds the Harold tokens of `design/harold/tokens.json`, with the same names and values, for both
+   themes. A test reads the snapshot and fails when the two differ. No raw colour, radius, shadow or blur value exists
+   outside `tokens.css`.
+2. The tokens of Phases 2 to 6 (`--color-bg`, `--color-card`, `--color-cta`, ...) are replaced. While the app is being
+   moved they may exist as aliases that point to Harold tokens; at the end of the phase no alias and no use of an old name
+   is left, and a test fails if one comes back.
+3. The Light, Dark and System choice of Phase 4 stays. System follows the operating system; when the browser reports no
+   preference the app uses dark (Harold's default).
+4. Contrast is tested, not assumed. A unit test composites every translucent surface over the scene (the lightest part
+   of it) and checks every text and ground pair of both themes at 4.5:1 (3:1 for control borders, focus rings and
+   icons that carry meaning). If a Harold value fails its own target, the test records the pair and the build asks
+   Harold under "Needs Harold" instead of changing the value.
+5. React Flow takes its colours from the tokens (dots, edges, handles, selection, controls) in both themes.
+
+### 14.3 Glass, and what it must not cost
+
+1. A glass panel is: translucent fill, `blur-md` with `saturate(1.5)`, a 1 px `border` and `shadow-sm`. Menus, selects, date
+   pickers, dialogs, toasts and sticky table headers use `surface-overlay` (nearly opaque). A panel inside a panel uses the
+   inset tint, not a second blur.
+2. No limit on glass: Harold's recipe may be used on any surface, in any number, including tables, grids, the step cards and
+   the controls of the canvas. Two things still hold. A blurred element does not change size by animation (the width of a
+   collapsing panel keeps its 200 ms and the panel has no blur while it moves, 14.4). And the one safeguard is the drag budget:
+   if blur makes a drag test of 13.1 fail, the build removes the blur from the element that causes it (the `surface-overlay`
+   fill stays), records which element and why in `docs/DECISIONS.md`, and does not loosen the budget.
+3. Text on glass keeps its contrast (14.2 item 4). Long reading and long forms may use `surface-overlay` where the contrast
+   test or the review shows that glass hurts them; that is a choice per surface, not a rule.
+4. Fallbacks: without `backdrop-filter`, and under `prefers-reduced-transparency`, glass panels switch to
+   `surface-overlay` with no blur.
+5. Dragging a step is as smooth as before: the tests of 13.1 pass unchanged on the new look (`e2e/canvas-drag.spec.ts`
+   keeps its budgets and its numbers; `npm run perf:canvas` is run again and its report replaced).
+
+### 14.4 Controls, layout and states
+
+1. Every component of the app is restyled to its Harold counterpart: button and icon button (primary, secondary, ghost,
+   danger; sizes 32 and 40 px), text field, dropdown, date picker, checkbox, search field, tabs and filter chips,
+   dialog, menu, info button and its popover, toast, badge, card, table, skeleton, empty state, error and warning
+   messages (the Harold alert), progress bar, pagination, breadcrumbs, sidebar, page header. The behaviour and the keyboard
+   keys of each stay as they are.
+2. Page structure: the 240 px sidebar (a 64 px rail when collapsed, SPEC 12.4), a 64 px page header with breadcrumbs, the
+   title with its info button and the actions, content up to 1200 px wide. The builder keeps its panel widths (184, 380 and
+   the 48 px rails) and its 240 x 56 px step cards; only their look changes. The minimum window width stays 1280 px.
+3. Tables: header 40 px, rows 44 px plus a 1 px divider (dense 36 px), numbers right-aligned in tabular figures, status
+   always a word or an icon with a colour.
+4. Focus: a 2 px `primary-text` ring with a 2 px gap in the scene colour on every interactive element, in both themes.
+5. Motion: 120 ms for hover, press and toggles, 200 ms for menus and popovers, 260 ms for dialogs, closing about two
+   thirds of that; only opacity and transform move; none with `prefers-reduced-motion`. The one exception is the width
+   of a collapsing panel (Phase 5): it keeps its 200 ms and the panel has no blur while it moves.
+6. Loading, empty and error states keep their rules (DESIGN "Loading, empty, and error states"): skeleton in the final
+   layout after 300 ms, an empty state with one action, an error that says what failed and what to do.
+7. The patterns that Harold names under "Avoid" are not used: a gradient other than the scene, gradient text, a glow around
+   a component, a card with a coloured stripe on one side, emoji, an icon in a coloured circle above a card title.
+
+### 14.5 What does not change
+
+- Every flow, run, version, permission, reference table and text behaves as before; the catalog keys and both languages stay.
+- Dates stay `30 Sep 2026` and numbers keep their current format in every language (Harold's Vietnamese formats
+  `20/11/2026` and `3.024` are a later phase, see "Needs Harold").
+- The parts of Harold made for phones and for charts (app bar, bottom navigation, sheet, list item, KPI tile, avatar,
+  chart colours) are not used: the app is for laptops, 1280 px and wider.
+- `src/engine/`, `src/store/`, `supabase/` and the flow file have no change at all.
+
+### 14.6 Gates for Phase 7
+
+- G1, G5 and G6 are unchanged and must still pass. A search of the diff against `main` finds no change in `src/engine/`,
+  `src/store/`, `supabase/` or `flows/`.
+- G2 has the token parity test, the contrast test with composited surfaces, a test that no old token name or raw colour is
+  left, the icon set test (every icon the app uses is in the set) and the font test (the families load from the app's own
+  files).
+- G3 passes unchanged: every journey of Phases 2 to 6, the drag budgets included. A selector may change only when the
+  markup changed on purpose, and the log says which. New: the three themes show every journey's key screen readable
+  (Light, Dark, System with no preference), the fallbacks without blur render, the Vietnamese sample text is not clipped,
+  and a run sends no request to a font or script host.
+- G4 holds the Harold rules on every route in light at 1280 and 1440 px and in dark at 1440 px, with the pseudo-locale check:
+  button heights 32 and 40 px (and the 24 px info button), one `primary` button per screen, table rows 45 px, sidebar 240
+  or 64 px, no gradient except the scene, no coloured stripe on one side of a
+  card, font sizes only from the Harold scale, the 4 px spacing scale of 14.1, the focus ring, and axe.
+- The Pages build (`npm run build:pages`) stays under its size limit with the fonts, and `npm run test:acceptance:pages` passes.
