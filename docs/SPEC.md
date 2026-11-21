@@ -550,12 +550,13 @@ to 6), Harold wins. `docs/DESIGN.md` ("Harold design system (Phase 7)") records 
 1. A glass panel is: translucent fill, `blur-md` with `saturate(1.5)`, a 1 px `border` and `shadow-sm`. Menus, selects, date
    pickers, dialogs, toasts and sticky table headers use `surface-overlay` (nearly opaque). A panel inside a panel uses the
    inset tint, not a second blur.
-2. Budget: at most 6 elements with a backdrop blur on any route; at most two glass layers deep; no element with a backdrop
-   blur inside the canvas, and none that overlaps the canvas area (the step cards, the zoom controls and the bar at the
-   bottom of the canvas use `surface-overlay`); no blurred element changes size by animation. A dialog and its scrim
-   are the one allowed overlap.
-3. Dense data stays easy to read: tables, grids and the long forms of the settings panel sit on `surface-overlay`
-   or the inset tint, not on blur.
+2. No limit on glass: Harold's recipe may be used on any surface, in any number, including tables, grids, the step cards and
+   the controls of the canvas. Two things still hold. A blurred element does not change size by animation (the width of a
+   collapsing panel keeps its 200 ms and the panel has no blur while it moves, 14.4). And the one safeguard is the drag budget:
+   if blur makes a drag test of 13.1 fail, the build removes the blur from the element that causes it (the `surface-overlay`
+   fill stays), records which element and why in `docs/DECISIONS.md`, and does not loosen the budget.
+3. Text on glass keeps its contrast (14.2 item 4). Long reading and long forms may use `surface-overlay` where the contrast
+   test or the review shows that glass hurts them; that is a choice per surface, not a rule.
 4. Fallbacks: without `backdrop-filter`, and under `prefers-reduced-transparency`, glass panels switch to
    `surface-overlay` with no blur.
 5. Dragging a step is as smooth as before: the tests of 13.1 pass unchanged on the new look (`e2e/canvas-drag.spec.ts`
@@ -604,6 +605,6 @@ to 6), Harold wins. `docs/DESIGN.md` ("Harold design system (Phase 7)") records 
   and a run sends no request to a font or script host.
 - G4 holds the Harold rules on every route in light at 1280 and 1440 px and in dark at 1440 px, with the pseudo-locale check:
   button heights 32 and 40 px (and the 24 px info button), one `primary` button per screen, table rows 45 px, sidebar 240
-  or 64 px, the blur budget and no blur on the canvas, no gradient except the scene, no coloured stripe on one side of a
+  or 64 px, no gradient except the scene, no coloured stripe on one side of a
   card, font sizes only from the Harold scale, the 4 px spacing scale of 14.1, the focus ring, and axe.
 - The Pages build (`npm run build:pages`) stays under its size limit with the fonts, and `npm run test:acceptance:pages` passes.

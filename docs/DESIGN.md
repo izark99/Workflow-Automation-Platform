@@ -95,17 +95,22 @@ everywhere. Lines are 60 to 75 characters at most.
 
 ### Glass, and where it is used
 
-| Surface | Fill | Blur |
-| --- | --- | --- |
-| Page | the scene | none |
-| Sidebar, cards and panels on the screens, the step list and the settings panel of the builder | `surface-200` | `blur-md` + `saturate(1.5)` |
-| Page header (sticky), the header bar of the builder | `surface-overlay` | none |
-| Dialog, menu, dropdown list, date picker, info popover, toast, sticky table header | `surface-overlay` | none (the dialog scrim has `blur-sm`) |
-| Tables, grids, long forms, the canvas, the step cards on it, the controls and the bar at the bottom of the canvas | `surface-overlay` or `surface-300` | none |
+There is no limit on the number of glass surfaces and no surface that may not be glass: Harold's recipe (translucent fill,
+`blur-md` with `saturate(1.5)`, 1 px `border`, `shadow-sm`) may be used on the sidebar, cards, panels, tables, grids, forms,
+step cards and the controls of the canvas. Floating layers (dialog, menu, dropdown list, date picker, info popover, toast, sticky
+table header) use `surface-overlay`, as Harold says; a dialog scrim uses `scrim` with `blur-sm`.
 
-At most 6 elements with a backdrop blur on a route, never inside or over the canvas (the scrim of a dialog excepted), and no
-animation of the size of a blurred element. Without `backdrop-filter` and under `prefers-reduced-transparency`, glass is
-`surface-overlay`.
+| Surface | Default fill |
+| --- | --- |
+| Page | the scene |
+| Sidebar, cards, panels, the step list and the settings panel of the builder, tables and grids, step cards, canvas controls | `surface-200` glass |
+| Page header (sticky), the header bar of the builder | `surface-overlay` |
+| Dialog, menu, dropdown list, date picker, info popover, toast, sticky table header | `surface-overlay` |
+
+Three things still hold. A blurred element does not change size by animation (a collapsing panel keeps its 200 ms and has no
+blur while it moves). Without `backdrop-filter` and under `prefers-reduced-transparency`, glass is `surface-overlay`. And the drag
+budgets of SPEC 13.1 are never loosened: if blur on some element makes a drag test fail, remove the blur from that element, keep
+its `surface-overlay` fill and record it in `docs/DECISIONS.md`. Text on glass keeps the contrast of the contrast test.
 
 ### Components
 
