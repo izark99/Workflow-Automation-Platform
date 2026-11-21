@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { ROUTES } from './routes';
-import { COMMON_RULES, headerPosition, sidebarWidth } from './rules';
+import { COMMON_RULES, headerPosition, settleAnimations, sidebarWidth } from './rules';
 
 // The dark project must really run in the dark theme: otherwise a green run would prove nothing.
 test('the app runs in the theme of the project, and the page colours differ between themes', async ({ page }, testInfo) => {
@@ -19,6 +19,7 @@ for (const route of ROUTES) {
         await page.goto(route.path);
         await page.waitForLoadState('networkidle');
         await route.prepare?.(page);
+        await settleAnimations(page);
         expect(await rule(page)).toEqual([]);
       });
     }

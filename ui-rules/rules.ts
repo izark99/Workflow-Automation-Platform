@@ -11,6 +11,11 @@ export const BUTTON_HEIGHTS = [32, 40];
 
 export type Rule = (page: Page) => Promise<string[]>;
 
+/** Waits for the finite animations of the page: a popover opens with a fade and a scale, and is measured when it has settled. */
+export async function settleAnimations(page: Page): Promise<void> {
+  await page.evaluate(() => Promise.all(document.getAnimations().filter((a) => a.effect?.getComputedTiming().iterations !== Infinity).map((a) => a.finished.catch(() => undefined))));
+}
+
 export const buttonHeights: Rule = async (page) =>
   page.evaluate((allowed) => {
     const bad: string[] = [];
