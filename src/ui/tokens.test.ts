@@ -37,44 +37,47 @@ export function contrast(a: string, b: string): number {
   return (hi! + 0.05) / (lo! + 0.05);
 }
 
-// [foreground, background, minimum ratio]
-const PAIRS: Array<[string, string, number]> = [
-  ['ink', 'bg', 4.5],
-  ['ink', 'card', 4.5],
-  ['muted', 'card', 4.5],
-  ['muted', 'bg', 4.5],
-  ['control', 'card', 3],
-  ['focus', 'card', 3],
-  ['on-primary', 'primary', 4.5],
-  ['on-cta', 'cta', 4.5],
-  ['danger', 'card', 4.5],
-  ['ink', 'primary-soft', 4.5],
-  ['badge-ink', 'primary-soft', 4.5],
-  ['danger-ink', 'danger-soft', 4.5],
-  ['note-ink', 'note-bg', 4.5],
-  ['draft-ink', 'note-bg', 4.5],
-  ['ended-ink', 'rule', 4.5],
-  ['bg', 'ink', 4.5], // toast text on the toast fill
+/** Old names of Phases 2 to 6 and the Harold token each is an alias of since T7.3 (docs/DESIGN.md, "Token mapping"). */
+const ALIASES: Array<[string, string]> = [
+  ['--color-bg', 'scene-100'],
+  ['--color-card', 'surface-overlay'],
+  ['--color-ink', 'ink'],
+  ['--color-muted', 'ink-muted'],
+  ['--color-line', 'border'],
+  ['--color-rule', 'border'],
+  ['--color-control', 'border-strong'],
+  ['--color-primary', 'primary'],
+  ['--color-primary-soft', 'primary-soft'],
+  ['--color-focus', 'primary-text'],
+  ['--color-cta', 'primary'],
+  ['--color-accent', 'accent'],
+  ['--color-danger', 'danger'],
+  ['--color-skeleton', 'neutral-fill'],
+  ['--color-on-primary', 'on-primary'],
+  ['--color-on-cta', 'on-primary'],
+  ['--color-badge-ink', 'primary-text'],
+  ['--color-danger-soft', 'surface-300'],
+  ['--color-danger-ink', 'danger'],
+  ['--color-overlay', 'scrim'],
+  ['--color-note-bg', 'surface-300'],
+  ['--color-note-ink', 'info'],
+  ['--color-draft-ink', 'accent'],
+  ['--color-ended-ink', 'ink-muted'],
+  ['--shadow-popover', 'shadow-md'],
+  ['--font-sans', 'family-sans'],
+  ['--font-mono', 'family-mono'],
 ];
 
-describe.each(['light', 'dark'] as const)('%s theme contrast', (theme) => {
-  const tokens = themeTokens(theme);
-  it.each(PAIRS)('%s on %s is at least %s:1', (fg, bg, min) => {
-    const fgValue = tokens[`--color-${fg}`];
-    const bgValue = tokens[`--color-${bg}`];
-    expect(fgValue, `--color-${fg}`).toMatch(/^#[0-9a-f]{6}$/);
-    expect(bgValue, `--color-${bg}`).toMatch(/^#[0-9a-f]{6}$/);
-    expect(contrast(fgValue!, bgValue!)).toBeGreaterThanOrEqual(min);
+// The contrast of the old pairs is now the contrast of the Harold tokens they point to (tests of T7.1 below).
+describe('old names are aliases of Harold tokens', () => {
+  const plain = themeTokens('light');
+  it.each(ALIASES)('%s is var(--%s)', (old, token) => {
+    expect(plain[old]).toBe(`var(--${token})`);
   });
-});
-
-describe('both themes define the same colour tokens', () => {
-  it('dark overrides every colour token of light', () => {
-    const light = themeTokens('light');
+  it('the dark block gives no old colour name a value of its own, so both themes follow the Harold tokens', () => {
     const dark = css.match(/:root\[data-theme='dark'\]\s*\{([^}]*)\}/)![1]!;
-    const darkNames = Object.keys(declarations(dark));
-    const missing = Object.keys(light).filter((k) => k.startsWith('--color-') && !darkNames.includes(k));
-    expect(missing).toEqual([]);
+    const names = Object.keys(declarations(dark)).filter((n) => n.startsWith('--color-') || n === '--shadow-popover');
+    expect(names).toEqual([]);
   });
 });
 

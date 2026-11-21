@@ -1,5 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { THEME_STORAGE_KEY, parseChoice, readChoice, resolveTheme, saveChoice } from './theme';
+import { THEME_STORAGE_KEY, parseChoice, readChoice, resolveTheme, saveChoice, systemPrefersDark } from './theme';
+
+describe('System with no browser preference', () => {
+  const browser = (scheme: 'light' | 'dark' | 'none') => (query: string) =>
+    (query === '(prefers-color-scheme: light)' && scheme === 'light') || (query === '(prefers-color-scheme: dark)' && scheme === 'dark');
+  it('uses dark when the browser says neither light nor dark', () => {
+    expect(resolveTheme('system', systemPrefersDark(browser('none')))).toBe('dark');
+  });
+  it('still follows a browser that prefers light or dark', () => {
+    expect(resolveTheme('system', systemPrefersDark(browser('light')))).toBe('light');
+    expect(resolveTheme('system', systemPrefersDark(browser('dark')))).toBe('dark');
+  });
+});
 
 describe('theme choice', () => {
   it('accepts the three choices and falls back to system', () => {

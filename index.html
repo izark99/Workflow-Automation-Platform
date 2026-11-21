@@ -12,7 +12,8 @@
           var v = localStorage.getItem('dfw.theme');
           if (v === 'light' || v === 'dark') c = v;
         } catch (e) {}
-        var t = c === 'system' ? (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : c;
+        // System is dark unless the browser prefers light, so a browser with no preference gets dark.
+        var t = c === 'system' ? (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark') : c;
         document.documentElement.setAttribute('data-theme', t);
         document.documentElement.style.colorScheme = t;
       })();

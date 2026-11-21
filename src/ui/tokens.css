@@ -1,21 +1,33 @@
-/* Design tokens (docs/DESIGN.md). Components use these variables and never a raw hex value. */
+/* Design tokens (docs/DESIGN.md). Components use these variables and never a raw colour value. */
+/* Old token names of Phases 2 to 6. Since Phase 7 (T7.3) they are aliases of Harold tokens (docs/DESIGN.md, "Token mapping"), so a
+   screen that is not restyled yet shows Harold colours on its old structure. Sizes and radii keep their old values until their
+   screens move. T7.17 removes this block and every use of an old name. */
 :root {
-  --color-bg: #f0fdfa;
-  --color-card: #ffffff;
-  --color-ink: #134e4a;
-  --color-muted: #475569;
-  --color-line: #99f6e4;
-  --color-rule: #e8f1f4;
-  --color-control: #6f918d;
-  --color-primary: #0f766e;
-  --color-primary-soft: #ccfbf1;
-  --color-focus: #0d9488;
-  --color-cta: #c2410c;
-  --color-accent: #ea580c;
-  --color-danger: #b91c1c;
-  --color-skeleton: #dce7ea;
-  --color-on-primary: #ffffff;
-  --color-on-cta: #ffffff;
+  --color-bg: var(--scene-100);
+  --color-card: var(--surface-overlay);
+  --color-ink: var(--ink);
+  --color-muted: var(--ink-muted);
+  --color-line: var(--border);
+  --color-rule: var(--border);
+  --color-control: var(--border-strong);
+  --color-primary: var(--primary);
+  --color-primary-soft: var(--primary-soft);
+  --color-focus: var(--primary-text);
+  --color-cta: var(--primary);
+  --color-accent: var(--accent);
+  --color-danger: var(--danger);
+  --color-skeleton: var(--neutral-fill);
+  --color-on-primary: var(--on-primary);
+  --color-on-cta: var(--on-primary);
+  --color-badge-ink: var(--primary-text);
+  --color-danger-soft: var(--surface-300);
+  --color-danger-ink: var(--danger);
+  --color-overlay: var(--scrim);
+  --color-note-bg: var(--surface-300);
+  --color-note-ink: var(--info);
+  --color-draft-ink: var(--accent);
+  --color-ended-ink: var(--ink-muted);
+  --shadow-popover: var(--shadow-md);
 
   --font-sans: var(--family-sans);
   --font-mono: var(--family-mono);
@@ -32,53 +44,8 @@
   --size-builder-header: 64px;
 }
 
-/* Extra tokens taken from the screens: text on soft fills, error panel, popover shadow. */
-:root {
-  --color-badge-ink: #115e59;
-  --color-danger-soft: #fef2f2;
-  --color-danger-ink: #7f1d1d;
-  --shadow-popover: 0 8px 24px rgb(19 78 74 / 14%);
-  --color-overlay: rgb(19 78 74 / 35%);
-}
-
-/* Version timeline and notes (screen 4). */
-:root {
-  --color-note-bg: #fff7ed;
-  --color-note-ink: #7c2d12;
-  --color-draft-ink: #9a3412;
-  --color-ended-ink: #334155;
-}
-
-/* Dark theme (docs/DESIGN.md, "Tokens for both themes"). Same names, other values. */
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --color-bg: #0e1a19;
-  --color-card: #152422;
-  --color-ink: #e3f2ef;
-  --color-muted: #a7bdb9;
-  --color-line: #2a4a46;
-  --color-rule: #1d302d;
-  --color-control: #6e938e;
-  --color-primary: #2dd4bf;
-  --color-on-primary: #04201d;
-  --color-primary-soft: #123f3b;
-  --color-focus: #5eead4;
-  --color-cta: #fb923c;
-  --color-on-cta: #2a1003;
-  --color-accent: #fb923c;
-  --color-danger: #f87171;
-  --color-skeleton: #22362f;
-
-  --color-badge-ink: #99f6e4;
-  --color-danger-soft: #3a1717;
-  --color-danger-ink: #fecaca;
-  --shadow-popover: 0 8px 24px rgb(0 0 0 / 50%);
-  --color-overlay: rgb(0 0 0 / 60%);
-
-  --color-note-bg: #2b1a0e;
-  --color-note-ink: #fed7aa;
-  --color-draft-ink: #fdba74;
-  --color-ended-ink: #cbd5e1;
 }
 
 :root[data-theme='light'] {
