@@ -383,6 +383,8 @@ const MOVED_FILES = [
   'ui/parameter-inputs.module.css',
   'ui/screens/reference-tables.module.css',
   'ui/screens/ref-import.module.css',
+  'ui/screens/admin.module.css',
+  'ui/session/idle-gate.module.css',
 ];
 
 describe('files that have moved to the Harold tokens', () => {
@@ -394,7 +396,7 @@ describe('files that have moved to the Harold tokens', () => {
 });
 
 describe('screens whose inline styles have moved to the Harold tokens', () => {
-  it.each(['ui/screens/reference-tables.tsx', 'ui/screens/ref-import-dialog.tsx', 'ui/screens/versions.tsx'])('%s has no old name and no 20 px spacing in a style attribute', (file) => {
+  it.each(['ui/screens/reference-tables.tsx', 'ui/screens/ref-import-dialog.tsx', 'ui/screens/versions.tsx', 'ui/screens/admin.tsx', 'ui/screens/admin-accounts.tsx', 'ui/screens/admin-settings.tsx', 'ui/screens/admin-texts.tsx', 'ui/session/idle-gate.tsx'])('%s has no old name and no 20 px spacing in a style attribute', (file) => {
     const text = readFileSync(join(fileURLToPath(new URL('../', import.meta.url)), file), 'utf8');
     expect(text).not.toMatch(/var\(--(color-|radius-card|radius-control|size-button)/);
     expect(text).not.toMatch(/style=\{\{[^}]*\b20(px)?\b/);

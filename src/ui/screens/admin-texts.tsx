@@ -20,7 +20,7 @@ function TextCellView({ cell }: { cell: TextCell }) {
       <span className={styles.clamp} title={cell.current} data-user-content>
         {cell.current}
       </span>
-      {cell.edited ? <Badge tone="soft">{t('admin.texts.edited')}</Badge> : null}
+      {cell.edited ? <Badge tone="soft" icon="pencil">{t('admin.texts.edited')}</Badge> : null}
     </div>
   );
 }

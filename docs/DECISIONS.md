@@ -1112,3 +1112,9 @@ What it still lists on the new screens is the pattern of the earlier phases (D83
 - The draft and published badges are the status badges of D107: Draft is `accent` with a `pencil` icon, Published is `success` with `circle-check`.
 - The card of the timeline on the Versions screen (T7.11) was drawn by an inline style with old names and a 20 px padding; it is now the `timelineCard` class (glass, `radius-lg`, `space-5`).
 - `MOVED_FILES` gets the two CSS modules, and a second test checks that the inline styles of `reference-tables.tsx`, `ref-import-dialog.tsx` and `versions.tsx` have no old name and no 20 px value.
+
+## D110 Admin (T7.14)
+
+- `admin.module.css` and `idle-gate.module.css` read Harold tokens only; the 20 px paddings are `space-5`. The tabs, the Users table (45 px rows) and its "More" menu (the dropdown of D101), the account dialogs, the Texts tab and its edit dialog, the Settings tab, the delete-group dialog and the sign-out and inactivity dialogs come from the components of D98 to D105; none needed a change of its own beyond the tokens and the badges.
+- Status badges carry an icon and a word: Active is `success` with `circle-check`, Locked is `danger` with `circle-x` (the icon set has no lock), "Must change password" is `warning` with `triangle-alert`, and the "edited" mark of a text is the blue tint with a `pencil`. The role labels in the account dialogs are 14 px at 500 (they were bold 700, a weight Harold does not use).
+- `MOVED_FILES` gets the two CSS modules, and the inline-style test gets `admin.tsx`, `admin-accounts.tsx`, `admin-settings.tsx`, `admin-texts.tsx` and `idle-gate.tsx`.
