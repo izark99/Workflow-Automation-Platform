@@ -987,3 +987,11 @@ What it still lists on the new screens is the pattern of the earlier phases (D83
 - The Run screen's date row (the date picker next to Run or a download), and the 1,086 px empty-named control, which is the hidden file input of the file row.
 - The panel toggles in a rail (36 px) above full-width controls, and "Collapse sidebar" above "Create flow".
 - "Analyze file" is as wide as the date picker above it, but the "Choose file" and "Change file" buttons of the file row are 97 px, as before Phase 6.
+
+## D93 Names of the Harold variables, and how they sit beside the old ones (T7.1)
+
+- The Harold tokens are CSS variables with the token name of `design/harold/tokens.json`: `--ink`, `--primary-text`, `--surface-200`, `--space-4`, `--radius-md`, `--shadow-sm`, `--control-md`, `--blur-md`. No old name is changed or aliased in T7.1 (that is T7.3), so no screen looks different yet. A grep found no earlier use of these bare names.
+- The tokens that do not depend on the theme (type, spacing, radius, size, blur) are in plain `:root`. The colours and shadows are in `:root, :root[data-theme='light']` and `:root[data-theme='dark']`: light is also the value of a page with no `data-theme` attribute, so a token is never undefined.
+- The Harold font families are `--family-sans` and `--family-mono`, not `--font-sans` and `--font-mono`: the old names keep the Plus Jakarta Sans stack until T7.2. A type style is four variables: `--type-<style>-size`, `-line-height`, `-weight` and, where the snapshot has one, `-letter-spacing` (`--type-h1-size`). `src/ui/type.css` (T7.2) builds its classes on them.
+- An alias in the snapshot (`{accent}`, `{scene-100}`) is written as `var(--accent)`, `var(--scene-100)`. Colours keep the form of the snapshot (`rgba(15,26,43,0.05)`); the parity test normalises only whitespace.
+- Contrast (4.5:1 text, 3:1 `border-strong`, focus ring, icons) is measured with alpha compositing: each translucent ground over `scene-100` and `scene-200`, each also with a glow drawn on it, and the tints (`surface-300`, `neutral-fill`, `primary-soft`, `accent-soft`) over the panel. Every pair of both themes passes; the test has an empty `KNOWN_FAILURES` table for a pair that fails its target, so that such a pair stays visible with its measured ratio.
