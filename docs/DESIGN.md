@@ -20,6 +20,136 @@ cards that run top to bottom, a settings panel with Setup, Configure and Test
 tabs, and one strong action per screen. Do not copy the branding of any
 existing product.
 
+## Harold design system (Phase 7)
+
+From Phase 7 (SPEC 14) the look of the app is the design system "Harold" (Spatial). Its snapshot is in `design/harold/`:
+`README.md` (principles and rules), `tokens.json` (every value), `components/<Name>/README.md` (guidelines), and
+`components/bundle.css` and `bundle.js` (exact sizes, states, motion and markup; read them, do not import them: the bundle is
+React 18 and the app is React 19 with CSS modules). **Where this section and an older section of this file disagree, this
+section wins.** Task T7.18 rewrites the older sections to the final values and removes this note. `design/screens/` stays as the
+reference for structure and layout only; its colours, radii and fonts are superseded.
+
+### Rules that changed
+
+| Before (Phases 2 to 6) | From Phase 7 |
+| --- | --- |
+| Teal palette, orange `cta` button, orange accent | Harold tokens (below). One `primary` blue button per screen. Ember (`accent`) at most once per screen, never for a warning or an error |
+| Font Plus Jakarta Sans | Be Vietnam Pro 400, 500, 600 and 700 (Latin and Vietnamese subsets) and JetBrains Mono 400 and 500, both from `@fontsource`, served by the app |
+| Text 14 px on 21 px | The Harold type table below |
+| Buttons 40 px and compact 36 px, border on secondary | 40 px (`md`) and 32 px (`sm`). No variant has a border. The 24 px info button stays |
+| Table header 40 px, rows 56 px plus 1 px | Header 40 px, rows 44 px plus a 1 px divider (45 px), dense rows 36 px plus 1 px |
+| Sidebar 232 px | 240 px. The 64 px rail and the builder widths (184, 380, 48 px rails) do not change |
+| Radius 8 px controls, 10 px step cards, 12 px cards | 8 (checkbox, badge, skeleton), 14 (button, input, select, menu, step card), 22 (card, panel, dialog), 32 (outer window, hero panel), pills |
+| Cards: white with a 1 px line | Glass: translucent fill, blur, 1 px `border`, `shadow-sm` |
+| Spacing 4, 8, 12, 16, 20, 24, 32, 40 | 4, 8, 12, 16, 24, 32, 48, 64 (`space-1` to `space-8`). 20 and 40 px are gone |
+| Transitions at most 200 ms | 120 ms (hover, press, toggles), 200 ms (menus, popovers), 260 ms (dialogs); closing about two thirds. Only opacity and transform move. The width of a collapsing panel keeps 200 ms and the panel has no blur while it moves |
+| Focus ring 2 px `--color-focus`, offset 2 px | 2 px `primary-text`, 2 px gap in the scene colour. Same geometry |
+| Default theme System | System stays. With no browser preference the app uses dark |
+| Title at y 63, first block at y 123, rows 57 | Measured again in T7.10 with the 64 px page header and recorded in `docs/DECISIONS.md`; the rule that every sidebar screen has them at the same y stays |
+
+### Token mapping
+
+The Harold names are the CSS variable names (`--surface-200`, `--ink`, `--primary`, `--space-4`, `--radius-md`, ...), for both
+themes under `:root[data-theme]`. While the screens are moved, the old names may exist as aliases that point to a Harold token;
+the last Phase 7 tasks remove them.
+
+| Old name | Harold token |
+| --- | --- |
+| `--color-bg` | `scene-100` (the page also draws the scene: `scene-200` fading to `scene-100` with the two glows) |
+| `--color-card` | `surface-200` (glass), or `surface-overlay` for what floats and for dense data |
+| `--color-ink`, `--color-muted` | `ink`, `ink-muted` |
+| `--color-line`, `--color-rule` | `border` |
+| `--color-control` | `border-strong` |
+| `--color-primary`, `--color-on-primary`, `--color-primary-soft` | `primary` (fill), `on-primary`, `primary-soft` |
+| `--color-focus`, `--color-badge-ink` and other blue text | `primary-text` |
+| `--color-cta`, `--color-on-cta` | removed: the `primary` button |
+| `--color-accent` | `accent` (Ember), one highlight per screen; the build uses it for the Draft state of a version and nowhere else |
+| `--color-danger`, `--color-danger-soft`, `--color-danger-ink` | `danger`, `on-danger` (fill text); the soft background is `surface-300` with a `danger` border |
+| `--color-skeleton` | `surface-300` and `neutral-fill` |
+| `--color-overlay`, `--shadow-popover` | `scrim` (with `blur-sm`), `shadow-md` |
+| `--color-note-*`, `--color-draft-*`, `--color-ended-*` | `info`, `accent`, `ink-muted` on `surface-300` |
+| `--font-sans`, `--font-mono` | the Harold families `sans` and `mono` |
+| `--radius-control` | `radius-md` |
+
+The extra tokens of Harold that the app uses as they are: `surface-100`, `surface-300`, `neutral-fill`, `neutral-fill-hover`,
+`primary-hover`, `accent-soft`, `on-accent`, `success`, `warning`, `info`, `thumb`, `shadow-sm`, `shadow-md`, `shadow-lg`,
+`blur-sm`, `blur-md`, `blur-lg`, `control-sm`, `control-md`. The chart tokens (`chart-1` to `chart-5`) are not used: the app has no chart.
+
+### Type
+
+| Style | Size / line | Weight | Use in the app |
+| --- | --- | --- | --- |
+| `h1` | 28 / 38 | 600 | Page title (one per page) |
+| `h2` | 22 / 32 | 600 | Card titles on screens |
+| `h3` | 18 / 28 | 600 | Dialog titles, titles of the settings panel and of the step list |
+| `body` | 16 / 24 | 400 | Text, paragraphs, messages |
+| `label` | 14 / 20 | 500 | Form labels, buttons, tabs, table headers |
+| `small` | 14 / 20 | 400 | Table cells, helper text, metadata, the settings panel when 16 px does not fit (record it in `docs/DECISIONS.md`) |
+| `caption` | 12 / 16 | 500 | Axis-like labels, footnotes, section titles of the sidebar (the only uppercase) |
+| `mono` | 13 / 20 | 400 | Formulas, keys, ids, SQL |
+
+`display-xl`, `display` and `kpi` are not used. Input text is 15 px and table header text is 13 px, as in `bundle.css`: the
+sizes allowed on a route are the sizes of this table plus the sizes that `bundle.css` uses for controls. Numbers in a table, a
+progress text or a changing value use `font-variant-numeric: tabular-nums`. Weights below 400 do not exist. Sentence case
+everywhere. Lines are 60 to 75 characters at most.
+
+### Glass, and where it is used
+
+| Surface | Fill | Blur |
+| --- | --- | --- |
+| Page | the scene | none |
+| Sidebar, cards and panels on the screens, the step list and the settings panel of the builder | `surface-200` | `blur-md` + `saturate(1.5)` |
+| Page header (sticky), the header bar of the builder | `surface-overlay` | none |
+| Dialog, menu, dropdown list, date picker, info popover, toast, sticky table header | `surface-overlay` | none (the dialog scrim has `blur-sm`) |
+| Tables, grids, long forms, the canvas, the step cards on it, the controls and the bar at the bottom of the canvas | `surface-overlay` or `surface-300` | none |
+
+At most 6 elements with a backdrop blur on a route, never inside or over the canvas (the scrim of a dialog excepted), and no
+animation of the size of a blurred element. Without `backdrop-filter` and under `prefers-reduced-transparency`, glass is
+`surface-overlay`.
+
+### Components
+
+Restyle each component of "Components built for this app" to its Harold counterpart. Behaviour, keyboard keys and accessible names
+stay. Read `design/harold/components/<Name>/README.md` and `bundle.css` for each.
+
+| Component here | Harold | Note |
+| --- | --- | --- |
+| Button | Button | `primary`, `secondary` (default), `ghost`, `danger`; `md` 40, `sm` 32; `loading` keeps the width; press 0.98 over 120 ms; the label is a verb |
+| Icon-only button | IconButton | Always a label and a tooltip; toolbars and table rows use `ghost` |
+| Field (text, number, textarea) | TextField | Label above, helper line, error replaces the helper; focus is a 1 px `primary` inner ring; the error says what to fix |
+| Dropdown | Select | Selected option in `primary` with a check; opens in 200 ms, closes in 120 ms; chevron turns |
+| Date picker | DatePicker | Our format `30 Sep 2026` stays; the popover, the selected day (blue fill) and today (ring) follow Harold |
+| Checkbox, yes/no | Checkbox (18 px, 1.5 px `border-strong`) and Switch (40 x 24 px) | A setting that applies at once is a Switch only where it does so today |
+| Tabs, filter chips | Tabs, Chip (32 px pill) | Selected chip: `primary-soft` with a `primary` border and a check |
+| Dialog | Dialog | Title is the question; the confirm button repeats the verb; enters in 260 ms, leaves in 170 ms |
+| Menu, popover, info button | Menu, Tooltip | The info button keeps its 24 px size and toggletip behaviour (Phase 4) |
+| Toast | Toaster | Fixed bottom right, at most 3, 5 s, polite announcement |
+| Badge | Badge | A status carries an icon and a word |
+| Card | Card | `radius-lg`, `space-5`, no stripe, no nested card |
+| Table | Table | Sticky header on `surface-overlay`, numbers right-aligned |
+| Skeleton, empty state | Skeleton, EmptyState | Shimmer 1.4 s sweep, still under reduced motion; the icon sits in a 48 px `surface-300` tile |
+| Error and warning messages | Alert | The icon carries the tone; `danger` also has a `danger` border and `role="alert"` |
+| Run progress | ProgressBar | Width changes over 260 ms |
+| Reference grid pager | Pagination | |
+| Breadcrumbs, sidebar, page header | Breadcrumbs, Sidebar, NavItem, TopBar | The "Create flow" button stays the one `primary` button of the screens that have it |
+
+### Icons and wordmark
+
+The 47 Lucide icons of `design/harold/assets/Icons/README.md`, drawn in `currentColor`, stroke 2 at 16 px and below and 1.75
+above, sizes 16 (dense), 20 (default) and 24. Their path data is in `design/harold/components/bundle.js`. An icon that the app
+needs and the set lacks is taken from Lucide v0.460.0 (same stroke and corners) and recorded in `docs/DECISIONS.md`. There is
+no logo: the app name is set in `sans` 700 next to a `radius-sm` blue square.
+
+### Rules that Harold adds to the UI quality checklist
+
+- No gradient except the scene (on the page background only), no gradient text, no glow around a component, no card with a
+  coloured stripe on one side, no emoji, no icon in a coloured circle above a card title.
+- Text colours: `primary-text` and `accent` only for links, active states and the one highlight, never for body text.
+- Status is never colour alone: a word or an icon comes with `success`, `warning`, `danger` and `info`.
+- Disabled is 40 % opacity on the whole control, with the not-allowed cursor.
+- Empty text says why it is empty and what to do; an error says what failed and what to do (already a rule here).
+- No filler numbers and no marketing words ("seamless", "unlock", "empower") in any text.
+
 ## Tokens
 
 Define these once as CSS variables. Components never use raw hex values.
