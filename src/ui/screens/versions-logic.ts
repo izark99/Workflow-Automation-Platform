@@ -19,6 +19,14 @@ export function versionState(v: Pick<FlowVersionRecord, 'status' | 'validFrom' |
   return 'in_effect';
 }
 
+/** The badge of a state: a tone, an icon and (in the screen) the word, so a status is never colour alone. The Draft state is the one use of Ember. */
+export const STATE_BADGE: Record<VersionState, { tone: 'accent' | 'success' | 'info' | 'neutral'; icon: 'pencil' | 'circle-check' | 'clock' | 'calendar' }> = {
+  draft: { tone: 'accent', icon: 'pencil' },
+  in_effect: { tone: 'success', icon: 'circle-check' },
+  upcoming: { tone: 'info', icon: 'clock' },
+  ended: { tone: 'neutral', icon: 'calendar' },
+};
+
 export const stateText = (s: VersionState): string => translate(`versions.state.${s}`);
 
 export const rangeEnd = (v: Pick<FlowVersionRecord, 'validTo'>): string => (v.validTo === null ? translate('versions.noEnd') : two(v.validTo));

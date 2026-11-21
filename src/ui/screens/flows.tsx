@@ -70,7 +70,7 @@ export function FlowsScreen() {
         const v = versionInEffect(f, today) ?? versionToOpen(f, today);
         return v ? (
           <>
-            {t('common.versionLabel', { n: v.versionNo })} <Badge tone="soft">{v.status === 'published' ? t('flows.published') : t('flows.draft')}</Badge>
+            {t('common.versionLabel', { n: v.versionNo })} <Badge tone={v.status === 'published' ? 'success' : 'accent'} icon={v.status === 'published' ? 'circle-check' : 'pencil'}>{v.status === 'published' ? t('flows.published') : t('flows.draft')}</Badge>
           </>
         ) : null;
       },

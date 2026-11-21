@@ -282,7 +282,7 @@ Shell
 - [x] T7.10 The shell: the sidebar 240 px (a 64 px rail, SPEC 12.4) on glass with the brand as the wordmark (DESIGN "Icons and wordmark"), `NavItem` (40 px, `primary-soft` and `primary-text` when active), the user and the theme and language switches in the footer, the page header of 64 px (breadcrumbs, title with its info button, actions) on `surface-overlay`, the content up to 1200 px wide with `space-7` margins, the sign-in screen and the change-password screen on the scene. Measure the new y of the title and of the first block and record the numbers and the new `TITLE_Y`, `FIRST_BLOCK_Y`, `ROW_HEIGHT` and the sidebar width (240 or 64) in `ui-rules/rules.ts` and in `docs/DECISIONS.md`; the rule that every sidebar screen has them at the same y stays. The panel specs of Phase 5 pass (the rail widths, the 200 ms width change with no blur while it moves).
 
 Screens (each: restyle, the e2e of the screen unchanged, the routes of the screen in light at 1280 and 1440 px and in dark at 1440 px)
-- [ ] T7.11 Flows and Versions: the list, the filter chips, the version cards and rows, the status badges (the Draft state uses `accent`), the dialogs (create, delete, restore, new version, clash).
+- [x] T7.11 Flows and Versions: the list, the filter chips, the version cards and rows, the status badges (the Draft state uses `accent`), the dialogs (create, delete, restore, new version, clash).
 - [ ] T7.12 Run: the Parameters card, the Files card, the date and the versions card with the warning, the progress, the result tables and downloads, the error states, the settings group of Phase 6.
 - [ ] T7.13 Reference tables: the list and its rail, the grid, the pager, the import dialogs (empty, with a file, with problems), the columns and description dialogs, the draft and published badges.
 - [ ] T7.14 Admin: the tabs, the Users table and its "More" menu, the account dialogs, the Texts tab and its edit dialog, the Settings tab, the delete group dialog, the sign-out and inactivity dialogs.
@@ -354,6 +354,11 @@ None. The Pages file size blocker of T3.9 is solved by D71.
 ## Log
 
 Newest first.
+
+### 2026-11-21 T7.11 Flows and Versions (turn 15)
+Changed: `src/ui/screens/versions.module.css` and `flows.module.css` (Harold tokens only), `versions-logic.ts` (`STATE_BADGE`), `versions.tsx` and `flows.tsx` (badges with an icon and a word; Draft is accent), `e2e/flows-versions-look.spec.ts` (new), `src/ui/tokens.test.ts` (six old names no longer used). D107.
+Gates run: `npm run check` PASS (exit 0); e2e `flows`, `versioning`, `versions-screen` and `journeys` PASS (31); the full e2e was not run for this task (the last full run, 390 passed, was in T7.10); every rule on the `/flows` and Versions routes (light 1280, light 1440, dark 1440) PASS (840, exit 0). `git diff main -- src/engine src/store supabase flows` empty.
+Next: T7.12.
 
 ### 2026-11-21 T7.10 The shell (turn 14)
 Changed: `src/ui/shell.tsx` and `shell.module.css` (240 px glass sidebar, wordmark, 40 px nav items, content up to 1200 px), `src/ui/panels/use-panel-motion.ts` (new), `components/page-header.module.css` (64 px sticky header on surface-overlay), `global.css` (h1 28/38 at 600), `sign-in.module.css`, `sign-in.tsx`, `change-password.tsx` (brand mark on the scene), `tokens.css` (`--size-sidebar` 240), `ui-rules/rules.ts`, `routes.spec.ts`, `panels.spec.ts`, `rules.selfcheck.spec.ts`, `e2e/shell.spec.ts` (title y 23, first block y 88, sidebar 240), `src/ui/tokens.test.ts`. Measured: title y 23, first block y 88, rows 45, sidebar 240 or 64 (D106).

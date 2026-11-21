@@ -10,7 +10,7 @@ import { canEditFlow, publishBlockers, publishSummary } from '../builder/version
 import { useLoad, useStore } from '../store-context';
 import { useT, errorText, formatDate } from '../i18n';
 import { todayIso } from './flows-logic';
-import { dateCheck, rangeEnd, stateText, timeline, timelineNote, versionState } from './versions-logic';
+import { STATE_BADGE, dateCheck, rangeEnd, stateText, timeline, timelineNote, versionState } from './versions-logic';
 import styles from './versions.module.css';
 
 const two = (iso: string): string => formatDate(iso).replace(/^(\d) /, '0$1 ');
@@ -81,7 +81,7 @@ export function VersionsScreen() {
         header: t('versions.cols.status'),
         render: (v) => {
           const s = versionState(v, today);
-          return <Badge tone={s === 'in_effect' ? 'soft' : 'outline'}>{stateText(s)}</Badge>;
+          return <Badge tone={STATE_BADGE[s].tone} icon={STATE_BADGE[s].icon}>{stateText(s)}</Badge>;
         },
       },
       { key: 'from', header: t('versions.cols.from'), render: (v) => two(v.validFrom) },
