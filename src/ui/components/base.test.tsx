@@ -142,3 +142,12 @@ describe('Checkbox and Switch (T7.7a)', () => {
     expect(out).toContain('aria-label="Lock"');
   });
 });
+
+describe('Table (T7.9b)', () => {
+  const rows = [{ id: 'a', n: 3 }];
+  const columns = [{ key: 'n', header: 'N', align: 'right' as const, render: (r: { n: number }) => r.n }];
+  it('marks a dense table so the row-height rule expects 37 px', () => {
+    expect(html(<Table label="x" columns={columns} rows={rows} rowKey={(r) => r.id} dense />)).toContain('data-dense');
+    expect(html(<Table label="x" columns={columns} rows={rows} rowKey={(r) => r.id} />)).not.toContain('data-dense');
+  });
+});

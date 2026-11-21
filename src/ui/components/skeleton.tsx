@@ -22,10 +22,10 @@ export function useDelayedLoading(loading: boolean, delayMs = SKELETON_DELAY_MS)
 const WIDTHS = [70, 59, 48, 67, 54, 63, 45, 56];
 
 /**
- * A placeholder with the header and row heights of the real table (41 px and 57 px), so nothing moves when the data arrives.
+ * A placeholder with the header and row heights of the real table (41 px and 45 px, 37 px when `dense`), so nothing moves when the data arrives.
  * `weights` are the relative column widths. The region is `aria-busy` while it is shown.
  */
-export function SkeletonTable({ weights, rows = 3, label }: { weights: number[]; rows?: number; label: string }) {
+export function SkeletonTable({ weights, rows = 3, label, dense = false }: { weights: number[]; rows?: number; label: string; dense?: boolean }) {
   return (
     <div className={styles.box} aria-busy="true" role="status" aria-label={label}>
       <div className={styles.head} aria-hidden="true">
@@ -36,7 +36,7 @@ export function SkeletonTable({ weights, rows = 3, label }: { weights: number[];
         ))}
       </div>
       {Array.from({ length: rows }, (_, r) => (
-        <div key={r} className={styles.row} aria-hidden="true">
+        <div key={r} className={`${styles.row} ${dense ? styles.dense : ''}`} aria-hidden="true">
           {weights.map((w, c) => (
             <span key={c} className={styles.cell} style={{ flex: `${w} 1 0` }}>
               <span className={styles.bar} style={{ width: `${WIDTHS[(r * 3 + c) % WIDTHS.length]}%` }} />

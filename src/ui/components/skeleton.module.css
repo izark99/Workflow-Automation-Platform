@@ -20,8 +20,12 @@
 }
 
 .row {
-  height: 57px;
+  height: 45px;
   border-bottom: 1px solid var(--border);
+}
+
+.dense {
+  height: 37px;
 }
 
 .cell {

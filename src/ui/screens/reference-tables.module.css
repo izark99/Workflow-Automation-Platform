@@ -148,7 +148,7 @@
   box-sizing: border-box;
   width: 100%;
   min-width: 90px;
-  height: var(--size-button);
+  height: var(--control-sm); /* a dense row: 36 px plus its divider */
   padding: 0 12px;
   border-radius: var(--radius-control);
   border: 1px solid var(--color-control);

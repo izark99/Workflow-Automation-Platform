@@ -66,11 +66,18 @@ test('horizontal scroll fails', async ({ page }) => {
   expect(await noHorizontalScroll(page)).toEqual([]);
 });
 
-test('table rows: 56 px fails, 57 px passes', async ({ page }) => {
-  await page.setContent(bad('<table><tbody><tr style="height:56px"><td>a</td></tr></tbody></table>'));
+test('table rows: 44 and 57 px fail, 45 px passes; a dense table takes 37 px and fails 45', async ({ page }) => {
+  const table = (attr: string, h: number) => `<div ${attr}><table style="border-collapse:separate;border-spacing:0"><tbody><tr style="height:${h}px"><td>a</td></tr></tbody></table></div>`;
+  await page.setContent(bad(table('', 44)));
   expect((await tableRows(page)).length).toBe(1);
-  await page.setContent(bad('<table style="border-collapse:separate;border-spacing:0"><tbody><tr style="height:57px"><td>a</td></tr></tbody></table>'));
+  await page.setContent(bad(table('', 57)));
+  expect((await tableRows(page)).length).toBe(1);
+  await page.setContent(bad(table('', 45)));
   expect(await tableRows(page)).toEqual([]);
+  await page.setContent(bad(table('data-dense', 37)));
+  expect(await tableRows(page)).toEqual([]);
+  await page.setContent(bad(table('data-dense', 45)));
+  expect((await tableRows(page)).length).toBe(1);
 });
 
 test('header position: a title at y 0 fails, y 63 and block at y 123 pass', async ({ page }) => {

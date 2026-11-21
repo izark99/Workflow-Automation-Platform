@@ -64,7 +64,7 @@ test('choosing another table shows its rows; numbers are right-aligned', async (
   await expect(gridRows(page, 'OT types')).toHaveCount(4);
   const align = await gridRows(page, 'OT types').first().locator('td').nth(2).evaluate((el) => getComputedStyle(el).textAlign);
   expect(align).toBe('right');
-  expect(Math.round((await gridRows(page, 'OT types').first().boundingBox())!.height)).toBe(57);
+  expect(Math.round((await gridRows(page, 'OT types').first().boundingBox())!.height)).toBe(37); // the grid uses dense rows
 });
 
 test('New version copies the version as a draft; its cells are editable; save keeps them; publish ends the previous version and makes it read-only', async ({ page }) => {

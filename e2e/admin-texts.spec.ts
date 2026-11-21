@@ -18,7 +18,7 @@ test('the table has the columns Key, English, Vietnamese and Actions, and no lan
   await search(page, 'nav.signOut');
   await expect(row(page, 'nav.signOut')).toContainText('Sign out');
   await expect(row(page, 'nav.signOut')).toContainText('Đăng xuất');
-  expect(Math.round((await row(page, 'nav.signOut').boundingBox())!.height)).toBe(57);
+  expect(Math.round((await row(page, 'nav.signOut').boundingBox())!.height)).toBe(45);
   // A long key is cut with an ellipsis and keeps its full text in the title, so it never runs into the next column.
   await search(page, 'common.datePicker.previousMonth');
   await expect(page.locator('[title="common.datePicker.previousMonth"]')).toBeVisible();

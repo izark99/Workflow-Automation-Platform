@@ -234,7 +234,7 @@ export function ReferenceTablesScreen() {
   if (data.error) {
     body = <ErrorState what={t('refTables.loadFailed')} next={t('refTables.loadFailedNext')} actions={<Button size="sm" onClick={data.reload}>{t('flows.retry')}</Button>} />;
   } else if (data.loading && !data.data) {
-    body = showSkeleton ? <SkeletonTable weights={[10, 16, 12, 12, 14]} rows={3} label={t('refTables.loading')} /> : null;
+    body = showSkeleton ? <SkeletonTable dense weights={[10, 16, 12, 12, 14]} rows={3} label={t('refTables.loading')} /> : null;
   } else if (tables.length === 0 || !table || !version) {
     body = <EmptyState title={t('refTables.emptyTitle')} text={isAdmin ? t('refTables.emptyText') : t('refTables.emptyReader')} action={isAdmin ? <Button onClick={() => { setDialogError(null); setDialog('newTable'); }}>{t('refTables.newTable')}</Button> : null} />;
   } else {
@@ -337,7 +337,7 @@ export function ReferenceTablesScreen() {
               </div>
             ) : null}
             <div className={styles.gridWrap} onPaste={onPaste}>
-              {grid.length === 0 ? <p className={styles.note} style={{ padding: 20 }}>{t('refTables.noRows')}</p> : <Table label={t('refTables.grid', { name: table.name })} columns={columns} rows={pageRows} rowKey={(r) => String(r.index)} />}
+              {grid.length === 0 ? <p className={styles.note} style={{ padding: 20 }}>{t('refTables.noRows')}</p> : <Table dense label={t('refTables.grid', { name: table.name })} columns={columns} rows={pageRows} rowKey={(r) => String(r.index)} />}
             </div>
             {editable || range.pages > 1 ? (
               <div className={styles.pager}>

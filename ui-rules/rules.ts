@@ -5,7 +5,9 @@ import type { Page } from '@playwright/test';
 // against design/screens/*.html with getBoundingClientRect: title y 63, first block y 123 (148 before Phase 4), table row 57, buttons 40/36.
 export const TITLE_Y = 63;
 export const FIRST_BLOCK_Y = 123;
-export const ROW_HEIGHT = 57;
+/** Harold: rows of 44 px plus a 1 px divider; dense rows (a grid where the same data is edited) of 36 px plus 1. */
+export const ROW_HEIGHT = 45;
+export const DENSE_ROW_HEIGHT = 37;
 /** Harold: 40 (md) and 32 (sm), and the 24 px info button (checked apart). */
 export const BUTTON_HEIGHTS = [32, 40];
 
@@ -93,14 +95,18 @@ export const noHorizontalScroll: Rule = async (page) =>
   });
 
 export const tableRows: Rule = async (page) =>
-  page.evaluate((expected) => {
-    const bad: string[] = [];
-    for (const tr of document.querySelectorAll('tbody tr')) {
-      const h = tr.getBoundingClientRect().height;
-      if (h !== expected) bad.push(`table row is ${h} px high; expected ${expected}`);
-    }
-    return bad;
-  }, ROW_HEIGHT);
+  page.evaluate(
+    ([normal, dense]) => {
+      const bad: string[] = [];
+      for (const tr of document.querySelectorAll('tbody tr')) {
+        const expected = tr.closest('[data-dense]') ? dense! : normal!;
+        const h = tr.getBoundingClientRect().height;
+        if (h !== expected) bad.push(`table row is ${h} px high; expected ${expected}`);
+      }
+      return bad;
+    },
+    [ROW_HEIGHT, DENSE_ROW_HEIGHT],
+  );
 
 /** Sidebar screens: the h1 sits at y 63 and the block with data-first-block at y 123. */
 export const headerPosition: Rule = async (page) =>
