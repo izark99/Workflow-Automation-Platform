@@ -196,6 +196,29 @@ export const keyboardFocusRing: Rule = async (page) => {
   return bad;
 };
 
+/**
+ * Harold: a blurred element never changes size by animation. An element with a backdrop blur must have no transition on
+ * width, height, their min and max, or `all` (a collapsing panel keeps its 200 ms and has no blur while it moves).
+ */
+export const noBlurAnimation: Rule = async (page) =>
+  page.evaluate(() => {
+    const SIZE = new Set(['all', 'width', 'height', 'min-width', 'max-width', 'min-height', 'max-height', 'inline-size', 'block-size']);
+    const bad: string[] = [];
+    for (const el of document.querySelectorAll('*')) {
+      const cs = getComputedStyle(el);
+      const blur = cs.backdropFilter || (cs as unknown as { webkitBackdropFilter?: string }).webkitBackdropFilter || 'none';
+      if (blur === 'none') continue;
+      const props = cs.transitionProperty.split(',').map((p) => p.trim());
+      const times = cs.transitionDuration.split(',').map((t) => parseFloat(t));
+      const moves = props.filter((p, i) => SIZE.has(p) && (times[i % times.length] ?? 0) > 0);
+      if (moves.length > 0) {
+        const name = el.getAttribute('aria-label') ?? el.className?.toString().slice(0, 40) ?? el.tagName;
+        bad.push(`${el.tagName.toLowerCase()} "${name}" has a backdrop blur and a transition on ${moves.join(', ')}`);
+      }
+    }
+    return bad;
+  });
+
 /** Rules that run on every route. */
 export const COMMON_RULES: Record<string, Rule> = {
   'button heights': buttonHeights,
@@ -208,6 +231,7 @@ export const COMMON_RULES: Record<string, Rule> = {
   'danger buttons are 8 px from their neighbours': dangerSpacing,
   'keyboard focus ring': keyboardFocusRing,
   'accessibility (axe)': axeSeriousOrCritical,
+  'no blur animation': noBlurAnimation,
 };
 
 /**

@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { axeSeriousOrCritical, buttonHeights, dangerSpacing, noHintParagraphs, untranslatedText, duplicateButtonNames, forbiddenElements, headerPosition, keyboardFocusRing, noHorizontalScroll, oneCta, panelWidth, railShape, sidebarWidth, tableRows } from './rules';
+import { axeSeriousOrCritical, buttonHeights, dangerSpacing, noHintParagraphs, untranslatedText, duplicateButtonNames, forbiddenElements, headerPosition, keyboardFocusRing, noBlurAnimation, noHorizontalScroll, oneCta, panelWidth, railShape, sidebarWidth, tableRows } from './rules';
 
 // Each rule must fail on a page that breaks it, and pass on a page that does not.
 const bad = (html: string) => `<!doctype html><html lang="en"><head><title>t</title></head><body style="margin:0">${html}</body></html>`;
@@ -128,4 +128,18 @@ test('rail shape: a wide button or an unnamed button fails, a named icon button 
   expect((await railShape(page, '#p')).length).toBe(1);
   await page.setContent(bad('<aside id="p" style="width:48px;overflow:hidden"><button aria-label="Expand" style="width:36px"></button></aside>'));
   expect(await railShape(page, '#p')).toEqual([]);
+});
+
+test('no blur animation: a blurred panel that animates its width fails; a blurred panel that animates opacity, and a plain panel that animates its width, pass', async ({ page }) => {
+  const panel = (style: string) => `<div style="width:100px;height:40px;${style}">p</div>`;
+  await page.setContent(bad(panel('backdrop-filter:blur(24px);transition:width 200ms')));
+  expect((await noBlurAnimation(page)).length).toBe(1);
+  await page.setContent(bad(panel('backdrop-filter:blur(24px);transition:all 200ms')));
+  expect((await noBlurAnimation(page)).length).toBe(1);
+  await page.setContent(bad(panel('backdrop-filter:blur(24px);transition:opacity 200ms, transform 120ms')));
+  expect(await noBlurAnimation(page)).toEqual([]);
+  await page.setContent(bad(panel('transition:width 200ms')));
+  expect(await noBlurAnimation(page)).toEqual([]);
+  await page.setContent(bad(panel('backdrop-filter:blur(24px);transition:width 0s')));
+  expect(await noBlurAnimation(page)).toEqual([]);
 });

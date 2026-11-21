@@ -1008,3 +1008,9 @@ What it still lists on the new screens is the pattern of the earlier phases (D83
 - The scene is the `body` background (`scene-200` fading to `scene-100` at 160 degrees with the blue glow at the top left and the warm glow at the bottom right, fixed to the window), with `scene-100` as the colour of `html` and `body`. The canvas of the builder is transparent so the scene shows; its dots are `border`, edges `ink-muted`, handles `surface-overlay` with a `border-strong` outline, selection `primary-soft` and `primary-text`.
 - System: dark unless the browser matches `(prefers-color-scheme: light)`. Chromium reports light or dark even for `no-preference`, so the e2e builds a browser with no match by wrapping `matchMedia`; `index.html` and `src/ui/theme.ts` use the same rule.
 - The global focus ring already uses `primary-text` (2 px, offset 2 px).
+
+## D96 Glass classes and the blur rule (T7.4)
+
+- `src/ui/glass.css` has three global classes: `.glass` (the Harold recipe), `.glass-overlay` (`surface-overlay`, 1 px `border`, `shadow-md`, no blur) and `.glass-inset` (`surface-300`). Components apply them from their CSS modules by `composes` or by the class name; no component uses them yet. There is no limit on the number of glass surfaces (SPEC 14.3); the safeguard is the drag budget of T7.15.
+- The fallbacks are `@supports not (backdrop-filter ...)` and `@media (prefers-reduced-transparency: reduce)`; both give glass the overlay fill and no blur. Playwright cannot emulate reduced transparency, so `src/ui/glass.test.ts` reads the stylesheet.
+- The UI rule `no blur animation` (in `COMMON_RULES`) fails an element with a backdrop blur that has a running transition on width, height, their min and max, or `all`. A collapsing panel therefore has to drop its blur while it moves (T7.10, T7.15). The self-check builds a page that breaks the rule.
