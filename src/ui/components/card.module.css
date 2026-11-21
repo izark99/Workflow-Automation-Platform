@@ -1,15 +1,38 @@
+/* Card (design/harold/components/Card): glass (translucent fill, blur, 1 px border, shadow-sm), radius-lg, space-5 padding, no
+   stripe on a side. A card never sits inside a card: what sits inside a card uses the inset tint. */
 .card {
-  background: var(--color-card);
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-card);
-  padding: 20px;
+  background: var(--surface-200);
+  -webkit-backdrop-filter: blur(var(--blur-md)) saturate(1.5);
+  backdrop-filter: blur(var(--blur-md)) saturate(1.5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-5);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--space-4);
+}
+
+.card h2 {
+  font: 600 22px/32px var(--font-sans);
 }
 
 .flush {
   padding: 0;
   gap: 0;
   overflow: hidden;
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .card {
+    background: var(--surface-overlay);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .card {
+    background: var(--surface-overlay);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
 }

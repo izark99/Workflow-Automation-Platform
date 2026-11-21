@@ -1070,3 +1070,12 @@ What it still lists on the new screens is the pattern of the earlier phases (D83
 - The tooltip of an icon button (D98) shows after 400 ms of hover and at once on keyboard focus. Escape hides it while it shows (the key is used up, so a dialog behind it stays open), and it comes back when the pointer or the focus leaves and returns.
 - The "More" menus are the dropdown with `buttonLabel` (D101): `surface-overlay` list, Escape and focus return as for the other layers.
 - `e2e/run-parameters.spec.ts` read the h2 headings once, before the cards had loaded, and failed in two of three full runs; it now waits for them (`expect.poll`). The headings it expects are unchanged.
+
+## D104 Display components (T7.9a)
+
+- `Card` is glass (the recipe of D96 written in its own module, with the same two fallbacks), `radius-lg`, `space-5` padding, `space-4` gap, no stripe; the `h2` of a card is the Harold `h2` (22 px on 32 px at 600). "No card inside a card" is a rule of use (what sits in a card uses the inset tint), not a component check.
+- `Badge` keeps `soft` (blue tint) and `outline`, and has the tones `neutral`, `accent`, `success`, `warning`, `danger` and `info`, 22 px high, `radius-sm`, 12 px at 500, with an optional icon (16 px). A status badge is given its icon and word by the screen that shows it (T7.11).
+- `Chip` is a 32 px pill on `surface-300` with a `border-strong` outline; the pressed chip is `primary-soft` with a `primary-text` border and a check. `Tabs` have the underline (2 px `primary-text`, on the bottom border) and 14 px labels at 500.
+- The segmented switch of Harold is not built: nothing in the app uses one, and Phase 7 adds no component.
+- `Skeleton`: bars on `surface-300` with `radius-sm`, a soft band of the text colour (`color-mix` of `ink`, no gradient, so the scene stays the only one) that sweeps over 1.4 s. Reduced motion keeps the sweep (`!important` over the global rule) and still drops the table's head bars. Row heights are those of the table (41 and 57) until T7.9b changes both.
+- `EmptyState` has its icon in a 48 px `surface-300` tile with `radius-lg`. `ErrorState` is the Harold alert: `surface-overlay`, 1 px `danger` border, `radius-md`, the icon in `danger` and the words in `ink`, `role="alert"`. `QuietWarning` has the `warning` icon on `surface-300`. `ProgressBar` has an 8 px `surface-300` track, a `primary` fill and a 260 ms width transition. Pagination is the pager of the Reference tables screen and moves with T7.13; breadcrumbs move with the page header (T7.10).

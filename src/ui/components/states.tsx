@@ -6,7 +6,9 @@ import styles from './states.module.css';
 export function EmptyState({ title, text, action }: { title: string; text: string; action: ReactNode }) {
   return (
     <div className={styles.empty}>
-      <Icon name="inbox" size={24} />
+      <span className={styles.emptyIcon}>
+        <Icon name="inbox" size={24} />
+      </span>
       <span className={styles.emptyTitle}>{title}</span>
       <span className={styles.muted}>{text}</span>
       {action}
