@@ -11,6 +11,10 @@ export interface Column<T> {
   userContent?: boolean;
   /** A fixed width in px. When any column has one, the table uses a fixed layout and the other columns share the rest. */
   width?: number;
+  /** One line that is shortened with an ellipsis when the table is too narrow: the column gives up its width before the others do. The cell should carry the full text in a `title`. */
+  ellipsis?: boolean;
+  /** The cells of this column may wrap onto several lines when the table is too narrow (a row of buttons). */
+  wrap?: boolean;
 }
 
 export interface TableProps<T> {
@@ -46,7 +50,7 @@ export function Table<T>({ label, columns, rows, rowKey, maxHeight, dense = fals
           {rows.map((row) => (
             <tr key={rowKey(row)}>
               {columns.map((c) => (
-                <td key={c.key} className={cls(styles.td ?? '', c.align)} data-user-content={c.userContent ? '' : undefined}>
+                <td key={c.key} className={cls(styles.td ?? '', c.align)} style={c.ellipsis ? { maxWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' } : c.wrap ? { whiteSpace: 'normal' } : undefined} data-user-content={c.userContent ? '' : undefined}>
                   {c.render(row)}
                 </td>
               ))}

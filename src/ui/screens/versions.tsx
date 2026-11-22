@@ -86,10 +86,11 @@ export function VersionsScreen() {
       },
       { key: 'from', header: t('versions.cols.from'), render: (v) => two(v.validFrom) },
       { key: 'to', header: t('versions.cols.to'), render: (v) => rangeEnd(v) },
-      { key: 'note', header: t('versions.cols.note'), render: (v) => <span data-user-content>{v.changeNote}</span> },
+      { key: 'note', header: t('versions.cols.note'), ellipsis: true, render: (v) => <span data-user-content title={v.changeNote}>{v.changeNote}</span> },
       {
         key: 'actions',
         header: t('versions.cols.actions'),
+        wrap: true,
         render: (v) => (
           <div className={styles.actions}>
             <ButtonLink size="sm" to={`/flows/${flow.id}/versions/${v.versionNo}`} aria-label={t('versions.actionLabel', { action: v.status === 'draft' && editable ? t('versions.edit') : t('versions.view'), n: v.versionNo })}>
