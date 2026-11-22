@@ -995,6 +995,8 @@ export const vi: Record<MessageKey, string> = {
   'versions.problem.inside': '{date} nằm trong v{n} ({from} đến {to}). Hãy chọn một ngày sau {to}.',
   'versions.problem.notBefore': 'v{n} bắt đầu vào {from}, không sớm hơn {date}. Hãy chọn một ngày sau {from}.',
   'versions.actionLabel': '{action} v{n}',
+  'versions.menu.more': 'Thêm',
+  'versions.menu.moreFor': 'Thêm thao tác cho v{n}',
   'refTables.noVersion': 'Chưa có phiên bản',
   'refTables.rowCount': '{count, plural, other {{countText} dòng}}',
   'refTables.summary.inEffect': '{rows}, v{n} đang hiệu lực',

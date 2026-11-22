@@ -15,6 +15,12 @@ const seed = async (page: Page, change: (s: ReturnType<typeof seedSnapshot>) => 
   change(s);
   await page.addInitScript((json) => localStorage.setItem('dfw.seed', json), JSON.stringify(s));
 };
+/** Opens the "More" menu of a version and returns its list. */
+const more = (page: Page, n: number) => page.getByRole('button', { name: `More actions for v${n}` });
+async function fromMenu(page: Page, n: number, action: 'Publish' | 'Copy to new version') {
+  await more(page, n).click();
+  await page.getByRole('option', { name: action, exact: true }).click();
+}
 /** Opens a date picker and moves back by months and days with the keyboard. */
 async function pickDate(page: Page, trigger: RegExp, keys: string[]) {
   await page.getByRole('button', { name: trigger }).click();
@@ -46,13 +52,18 @@ test('the timeline shows every version with its range, the note says what publis
   await expect(rows(page).nth(3)).toContainText('First version');
 });
 
-test('the admin has Edit and Publish for a draft, View for published versions, and Copy for each', async ({ page }) => {
+test('the admin has Edit for a draft and View for published versions, and a More menu with Publish for a draft and Copy for each', async ({ page }) => {
   await page.goto(URL);
   await expect(page.getByRole('link', { name: 'Edit v4' })).toHaveAttribute('href', '/flows/flow-timesheet/versions/4');
-  await expect(page.getByRole('button', { name: 'Publish v4' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'View v3' })).toHaveAttribute('href', '/flows/flow-timesheet/versions/3');
-  await expect(page.getByRole('button', { name: 'Publish v3' })).toHaveCount(0);
-  for (const n of [1, 2, 3, 4]) await expect(page.getByRole('button', { name: `Copy to new version v${n}` })).toBeVisible();
+  // Publish is in the menu of the draft only; Copy is in the menu of every version.
+  await more(page, 4).click();
+  await expect(page.getByRole('option')).toHaveText(['Publish', 'Copy to new version']);
+  await page.keyboard.press('Escape');
+  await more(page, 3).click();
+  await expect(page.getByRole('option')).toHaveText(['Copy to new version']);
+  await page.keyboard.press('Escape');
+  for (const n of [1, 2]) await expect(more(page, n)).toBeVisible();
 });
 
 test('the date check names the version a run would use; a date no version covers says what happens', async ({ page }) => {
@@ -85,7 +96,7 @@ test('New version asks for a start day, refuses one inside an existing version, 
 
 test('Copy to new version copies the chosen version', async ({ page }) => {
   await page.goto(URL);
-  await page.getByRole('button', { name: 'Copy to new version v3' }).click();
+  await fromMenu(page, 3, 'Copy to new version');
   await expect(page.getByRole('dialog', { name: 'New version from v3' })).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog')).toHaveCount(0);
@@ -93,7 +104,7 @@ test('Copy to new version copies the chosen version', async ({ page }) => {
 
 test('Publish from the table: an unfinished draft is refused with what to fix', async ({ page }) => {
   await page.goto(URL);
-  await page.getByRole('button', { name: 'Publish v4' }).click();
+  await fromMenu(page, 4, 'Publish');
   const dialog = page.getByRole('dialog', { name: 'Publish v4?' });
   await expect(dialog).toContainText('Publishing v4 will end v3 on 31 Dec 2026');
   await dialog.getByRole('button', { name: 'Publish' }).click();
@@ -113,13 +124,15 @@ test('Publish from the table: a finished draft is published, v3 ends the day bef
     };
   });
   await page.goto(URL);
-  await page.getByRole('button', { name: 'Publish v4' }).click();
+  await fromMenu(page, 4, 'Publish');
   await page.getByRole('dialog', { name: 'Publish v4?' }).getByRole('button', { name: 'Publish' }).click();
   await expect(toastWith(page, 'v4 published.')).toBeVisible();
   await expect(rows(page).nth(1)).toContainText('31 Dec 2026');
   await expect(rows(page).nth(1)).toContainText('Published, in effect'); // it now ends on 31 Dec 2026; today is still inside it
   await expect(rows(page).nth(0)).toContainText('Published, starts later');
-  await expect(page.getByRole('button', { name: 'Publish v4' })).toHaveCount(0);
+  await more(page, 4).click();
+  await expect(page.getByRole('option')).toHaveText(['Copy to new version']); // the published version has no Publish any more
+  await page.keyboard.press('Escape');
   await expect(page.getByText('Versions cannot overlap. A new version starts after the one before it.')).toBeVisible();
 });
 
@@ -128,8 +141,7 @@ test('a group member who is not the admin sees the versions but cannot create, c
   await page.goto(URL);
   await expect(rows(page)).toHaveCount(4);
   await expect(page.getByRole('button', { name: 'New version', exact: true })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: /^Copy to new version/ })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: /^Publish v/ })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /^More actions for v/ })).toHaveCount(0); // no Copy and no Publish for a group member
   await expect(page.getByRole('link', { name: 'View v4' })).toBeVisible();
 });
 

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Badge, Button, ButtonLink, Card, CrumbLink, DatePicker, ErrorState, ScreenFrame, SkeletonTable, Table, useDelayedLoading, useToast } from '../components';
+import { Badge, Button, ButtonLink, Card, CrumbLink, DatePicker, Dropdown, ErrorState, ScreenFrame, SkeletonTable, Table, useDelayedLoading, useToast } from '../components';
 import type { Column } from '../components';
 import { CopyVersionHost } from './versions-dialogs';
 import type { FlowDefinition } from '../../engine/flow/types';
@@ -90,24 +90,37 @@ export function VersionsScreen() {
       {
         key: 'actions',
         header: t('versions.cols.actions'),
-        wrap: true,
-        render: (v) => (
-          <div className={styles.actions}>
-            <ButtonLink size="sm" to={`/flows/${flow.id}/versions/${v.versionNo}`} aria-label={t('versions.actionLabel', { action: v.status === 'draft' && editable ? t('versions.edit') : t('versions.view'), n: v.versionNo })}>
-              {v.status === 'draft' && editable ? t('versions.edit') : t('versions.view')}
-            </ButtonLink>
-            {editable && v.status === 'draft' ? (
-              <Button size="sm" aria-label={t('versions.actionLabel', { action: t('versions.publish'), n: v.versionNo })} onClick={() => { setPublishError(null); setPublishNo(v.versionNo); }}>
-                {t('versions.publish')}
-              </Button>
-            ) : null}
-            {editable ? (
-              <Button size="sm" aria-label={t('versions.actionLabel', { action: t('versions.copy'), n: v.versionNo })} onClick={() => setCopyFrom(v.versionNo)}>
-                {t('versions.copy')}
-              </Button>
-            ) : null}
-          </div>
-        ),
+        // The same row actions as the Users table of Admin: the main action as a button, the others in a "More" menu.
+        render: (v) => {
+          const editDraft = v.status === 'draft' && editable;
+          const menu = [
+            ...(editDraft ? [{ value: 'publish', label: t('versions.publish') }] : []),
+            ...(editable ? [{ value: 'copy', label: t('versions.copy') }] : []),
+          ];
+          return (
+            <div className={styles.actions}>
+              <ButtonLink size="sm" to={`/flows/${flow.id}/versions/${v.versionNo}`} aria-label={t('versions.actionLabel', { action: editDraft ? t('versions.edit') : t('versions.view'), n: v.versionNo })}>
+                {editDraft ? t('versions.edit') : t('versions.view')}
+              </ButtonLink>
+              {menu.length > 0 ? (
+                <Dropdown
+                  compact
+                  width={96}
+                  label={t('versions.menu.moreFor', { n: v.versionNo })}
+                  buttonLabel={t('versions.menu.more')}
+                  options={menu}
+                  value=""
+                  onChange={(choice) => {
+                    if (choice === 'publish') {
+                      setPublishError(null);
+                      setPublishNo(v.versionNo);
+                    } else setCopyFrom(v.versionNo);
+                  }}
+                />
+              ) : null}
+            </div>
+          );
+        },
       },
     ];
     body = (
