@@ -1,9 +1,17 @@
-/* Global styles. Fonts are bundled with the app (decision D35), so no request leaves the origin. */
-@import '@fontsource/plus-jakarta-sans/latin-400.css';
-@import '@fontsource/plus-jakarta-sans/latin-500.css';
-@import '@fontsource/plus-jakarta-sans/latin-600.css';
-@import '@fontsource/plus-jakarta-sans/latin-700.css';
+/* Global styles. Fonts are bundled with the app through @fontsource (D35, D94), so no request leaves the origin. */
+@import '@fontsource/be-vietnam-pro/latin-400.css';
+@import '@fontsource/be-vietnam-pro/vietnamese-400.css';
+@import '@fontsource/be-vietnam-pro/latin-500.css';
+@import '@fontsource/be-vietnam-pro/vietnamese-500.css';
+@import '@fontsource/be-vietnam-pro/latin-600.css';
+@import '@fontsource/be-vietnam-pro/vietnamese-600.css';
+@import '@fontsource/be-vietnam-pro/latin-700.css';
+@import '@fontsource/be-vietnam-pro/vietnamese-700.css';
+@import '@fontsource/jetbrains-mono/latin-400.css';
+@import '@fontsource/jetbrains-mono/latin-500.css';
 @import './tokens.css';
+@import './type.css';
+@import './glass.css';
 
 *,
 *::before,
@@ -15,25 +23,34 @@ html,
 body {
   margin: 0;
   min-width: 1280px;
-  background: var(--color-bg);
-  color: var(--color-ink);
-  font-family: var(--font-sans);
+  background-color: var(--scene-100);
+  color: var(--ink);
+  font-family: var(--family-sans);
   font-size: 14px;
   line-height: 21px;
+}
+
+/* The scene: the page background, and the only gradient of the app (docs/DESIGN.md, "Glass, and where it is used"). */
+body {
+  background-image:
+    radial-gradient(60% 50% at 12% 0%, var(--scene-glow-blue), transparent 70%),
+    radial-gradient(50% 45% at 100% 100%, var(--scene-glow-warm), transparent 70%),
+    linear-gradient(160deg, var(--scene-200), var(--scene-100) 70%);
+  background-attachment: fixed;
 }
 
 h1 {
   margin: 0;
   font-size: 28px;
-  line-height: 36px;
-  font-weight: 700;
+  line-height: 38px;
+  font-weight: 600;
 }
 
 h2 {
   margin: 0;
   font-size: 16px;
   line-height: 24px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 button,
@@ -47,7 +64,7 @@ textarea {
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-focus);
+  outline: 2px solid var(--primary-text);
   outline-offset: 2px;
 }
 

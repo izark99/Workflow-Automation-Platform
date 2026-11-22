@@ -100,7 +100,7 @@ function Builder() {
   if (flow.error || (!flow.loading && !version)) {
     return (
       <main style={{ padding: '32px 40px' }}>
-        <ErrorState what={t('builder.notFound')} next={t('builder.notFoundNext')} actions={<ButtonLink compact to="/flows">{t('builder.flowsLink')}</ButtonLink>} />
+        <ErrorState what={t('builder.notFound')} next={t('builder.notFoundNext')} actions={<ButtonLink size="sm" to="/flows">{t('builder.flowsLink')}</ButtonLink>} />
       </main>
     );
   }
@@ -204,7 +204,7 @@ function Builder() {
             onChange={(no) => go(`/flows/${id}/versions/${no}`)}
           />
         ) : null}
-        {version ? <Badge>{published ? t('builder.versionBadgePublished') : t('builder.versionBadgeDraft')}</Badge> : null}
+        {version ? <Badge tone={published ? 'success' : 'accent'} icon={published ? 'circle-check' : 'pencil'}>{published ? t('builder.versionBadgePublished') : t('builder.versionBadgeDraft')}</Badge> : null}
         {dirty ? (
           <span className={styles.dirty} role="status">
             {t('builder.unsaved')}
@@ -219,17 +219,17 @@ function Builder() {
               <Button busy={busy === 'save'} disabled={!dirty} onClick={() => void save().then((ok) => ok && toast(t('builder.savedTitle', { n: version.versionNo })))}>
                 {busy === 'save' ? t('builder.saving') : t('builder.saveDraft')}
               </Button>
-              <Button variant="primary" onClick={() => { setDialogError(null); setDialog('publish'); }}>
+              <Button onClick={() => { setDialogError(null); setDialog('publish'); }}>
                 {t('builder.publish')}
               </Button>
             </>
           ) : null}
           {flow.data && canRunFlow(flow.data) ? (
-            <ButtonLink variant="cta" to={`/flows/${id}/run`} onClick={guard(`/flows/${id}/run`)}>
+            <ButtonLink variant="primary" to={`/flows/${id}/run`} onClick={guard(`/flows/${id}/run`)}>
               {t('builder.run')}
             </ButtonLink>
           ) : (
-            <Button variant="cta" disabled>
+            <Button variant="primary" disabled>
               {t('builder.run')}
             </Button>
           )}
@@ -238,7 +238,7 @@ function Builder() {
       {version && published && editable ? (
         <div className={styles.notice} role="status">
           <span>{t('builder.publishedNotice', { n: version.versionNo })}</span>
-          <Button compact onClick={() => { setDialogError(null); setDialog('newVersion'); }}>
+          <Button size="sm" onClick={() => { setDialogError(null); setDialog('newVersion'); }}>
             {t('builder.newVersion')}
           </Button>
         </div>
@@ -246,7 +246,7 @@ function Builder() {
       {version && me.data && !editable && flow.data ? (
         <div className={styles.notice} role="status">
           <span>{t('builder.noEditNotice')}</span>
-          <Button compact onClick={() => { setDialogError(null); setDialog('copyFlow'); }}>
+          <Button size="sm" onClick={() => { setDialogError(null); setDialog('copyFlow'); }}>
             {t('builder.copyFlow')}
           </Button>
         </div>

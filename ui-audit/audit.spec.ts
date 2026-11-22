@@ -38,7 +38,8 @@ async function measure(page: import('@playwright/test').Page): Promise<Finding[]
       if (px < 12) small.set(`${name(el)} ${px}px`, (small.get(`${name(el)} ${px}px`) ?? 0) + 1);
     }
     for (const [k, n] of small) out.push({ item: 9, what: `text under 12 px: ${k} (${n})` });
-    // 2 Spacing: padding, gap and margins that are not on the 4 px grid (1 and 2 px are borders and hairlines).
+    // 2 Spacing: padding, gap and margins that are not on the Harold scale: 4, 8, 12, 16, 24, 32, 48 and 64 px (1 and 2 px are borders and hairlines).
+    const SCALE = [4, 8, 12, 16, 24, 32, 48, 64];
     const off = new Map<string, number>();
     for (const el of Array.from(document.querySelectorAll('body *'))) {
       if (!visible(el) || el.closest('.react-flow__renderer, svg')) continue;
@@ -46,12 +47,14 @@ async function measure(page: import('@playwright/test').Page): Promise<Finding[]
       for (const prop of ['paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 'rowGap', 'columnGap', 'marginTop', 'marginBottom'] as const) {
         const v = s[prop];
         if (!v || v === 'normal' || v === 'auto') continue;
-        const px = parseFloat(v);
-        if (Number.isNaN(px) || px === 0 || px === 1 || px === 2) continue;
-        if (px % 4 !== 0) off.set(`${name(el)} ${prop}=${px}px`, (off.get(`${name(el)} ${prop}=${px}px`) ?? 0) + 1);
+        // Negative margins are the ones that pull the 24 px info button into its text line (and React Flow's own); a margin of more
+        // than 64 px is an `auto` margin that pushes a block to the end of a flex column.
+        const px = Math.abs(parseFloat(v));
+        if (Number.isNaN(px) || px === 0 || px === 1 || px === 2 || px > 64) continue;
+        if (!SCALE.includes(px)) off.set(`${name(el)} ${prop}=${px}px`, (off.get(`${name(el)} ${prop}=${px}px`) ?? 0) + 1);
       }
     }
-    for (const [k, n] of off) out.push({ item: 2, what: `off the 4 px grid: ${k} (${n})` });
+    for (const [k, n] of off) out.push({ item: 2, what: `off the Harold spacing scale (4, 8, 12, 16, 24, 32, 48, 64): ${k} (${n})` });
     // 3 Alignment: numbers in a table are right-aligned.
     for (const td of Array.from(document.querySelectorAll('td')).filter(visible)) {
       const t = (td.textContent ?? '').trim();
@@ -71,10 +74,12 @@ async function measure(page: import('@playwright/test').Page): Promise<Finding[]
     // The 24 px info button is not part of a set of controls, and the input inside a search field is drawn by its label.
     const isControl = (el: Element): boolean =>
       el.matches('button:not([role="tab"]):not([role="checkbox"]):not([role="option"]):not([role="switch"]):not([data-infotip]), a[class*="button"], label[class*="search"], input:not([type="hidden"]):not([type="checkbox"]):not([type="file"]):not([class*="searchInput"]), textarea, select');
+    // The input of a field is drawn inside its 40 px box: the box is the control that is measured.
+    const boxOf = (el: Element): Element => (el.matches('input') && el.parentElement && /_control_/.test(String(el.parentElement.className)) ? el.parentElement : el);
     const controlOf = (unit: Element): Element | null => {
-      if (isControl(unit)) return unit;
+      if (isControl(unit)) return boxOf(unit);
       const inside = Array.from(unit.querySelectorAll('button, a[class*="button"], label[class*="search"], input, textarea, select')).filter(isControl).filter(visible);
-      return inside.length === 1 ? inside[0]! : null;
+      return inside.length === 1 ? boxOf(inside[0]!) : null;
     };
     const skipParent = (p: Element): boolean => !!p.closest('table, [role="tablist"], .react-flow, [role="toolbar"], [role="listbox"], [role="group"][aria-label*="Insert"]') || p.matches('tr');
     const seenParents = new Set<Element>();
@@ -106,15 +111,15 @@ async function measure(page: import('@playwright/test').Page): Promise<Finding[]
       const all = Array.from(parent.querySelectorAll('button, a[class*="button"], label[class*="search"], input, textarea, select')).filter(isControl).filter(visible);
       return all.length === 1 && all[0] === control;
     }
-    // 10 Motion: transitions at most 200 ms.
+    // 10 Motion: transitions at most 260 ms (120 for hover and press, 200 for menus, 260 for dialogs).
     const slow = new Map<string, number>();
     for (const el of Array.from(document.querySelectorAll('body *'))) {
       const s = getComputedStyle(el);
       const ds = s.transitionDuration.split(',').map((x) => parseFloat(x) * (x.trim().endsWith('ms') ? 1 : 1000));
       const max = Math.max(...ds, 0);
-      if (max > 200) slow.set(`${name(el)} ${max}ms`, 1);
+      if (max > 260) slow.set(`${name(el)} ${max}ms`, 1);
     }
-    for (const k of slow.keys()) out.push({ item: 10, what: `transition over 200 ms: ${k}` });
+    for (const k of slow.keys()) out.push({ item: 10, what: `transition over 260 ms: ${k}` });
     // 8 Keyboard: controls reachable (a clickable element that is not a button, link or input and has no tabindex).
     for (const el of Array.from(document.querySelectorAll('[onclick], [role="button"]')).filter(visible)) {
       if (el.tagName !== 'BUTTON' && el.tagName !== 'A' && el.getAttribute('tabindex') === null) out.push({ item: 8, what: `clickable ${name(el)} without tabindex` });

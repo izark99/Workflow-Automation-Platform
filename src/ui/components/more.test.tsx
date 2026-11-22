@@ -75,6 +75,13 @@ describe('Toast', () => {
     expect(items[0]?.id).toBe(MAX_TOASTS + 2 - (MAX_TOASTS - 1));
     expect(toastReducer(items, { type: 'remove', id: items[0]!.id })).toHaveLength(MAX_TOASTS - 1);
   });
+  it('a toast is marked as closing before it is removed', () => {
+    const items = toastReducer([], { type: 'add', id: 1, message: 'a' });
+    expect(items[0]?.closing).toBeUndefined();
+    const closing = toastReducer(items, { type: 'closing', id: 1 });
+    expect(closing[0]?.closing).toBe(true);
+    expect(toastReducer(closing, { type: 'remove', id: 1 })).toEqual([]);
+  });
   it('the region is a polite live region', () => {
     const out = html(<ToastProvider>x</ToastProvider>);
     expect(out).toContain('role="status"');

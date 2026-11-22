@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Badge, Button, ButtonLink, Card, CrumbLink, DatePicker, ErrorState, ScreenFrame, SkeletonTable, Table, useDelayedLoading, useToast } from '../components';
+import { Badge, Button, ButtonLink, Card, CrumbLink, DatePicker, Dropdown, ErrorState, ScreenFrame, SkeletonTable, Table, useDelayedLoading, useToast } from '../components';
 import type { Column } from '../components';
 import { CopyVersionHost } from './versions-dialogs';
 import type { FlowDefinition } from '../../engine/flow/types';
@@ -10,7 +10,7 @@ import { canEditFlow, publishBlockers, publishSummary } from '../builder/version
 import { useLoad, useStore } from '../store-context';
 import { useT, errorText, formatDate } from '../i18n';
 import { todayIso } from './flows-logic';
-import { dateCheck, rangeEnd, stateText, timeline, timelineNote, versionState } from './versions-logic';
+import { STATE_BADGE, dateCheck, rangeEnd, stateText, timeline, timelineNote, versionState } from './versions-logic';
 import styles from './versions.module.css';
 
 const two = (iso: string): string => formatDate(iso).replace(/^(\d) /, '0$1 ');
@@ -66,7 +66,7 @@ export function VersionsScreen() {
 
   let body;
   if (data.error) {
-    body = <ErrorState what={t('versions.loadFailed')} next={t('versions.loadFailedNext')} actions={<ButtonLink compact to="/flows">{t('versions.screen.crumb')}</ButtonLink>} />;
+    body = <ErrorState what={t('versions.loadFailed')} next={t('versions.loadFailedNext')} actions={<ButtonLink size="sm" to="/flows">{t('versions.screen.crumb')}</ButtonLink>} />;
   } else if (!flow) {
     body = data.loading && showSkeleton ? <SkeletonTable weights={[8, 16, 12, 12, 30, 18]} rows={3} label={t('versions.loading')} /> : null;
   } else {
@@ -81,37 +81,51 @@ export function VersionsScreen() {
         header: t('versions.cols.status'),
         render: (v) => {
           const s = versionState(v, today);
-          return <Badge tone={s === 'in_effect' ? 'soft' : 'outline'}>{stateText(s)}</Badge>;
+          return <Badge tone={STATE_BADGE[s].tone} icon={STATE_BADGE[s].icon}>{stateText(s)}</Badge>;
         },
       },
       { key: 'from', header: t('versions.cols.from'), render: (v) => two(v.validFrom) },
       { key: 'to', header: t('versions.cols.to'), render: (v) => rangeEnd(v) },
-      { key: 'note', header: t('versions.cols.note'), render: (v) => <span data-user-content>{v.changeNote}</span> },
+      { key: 'note', header: t('versions.cols.note'), ellipsis: true, render: (v) => <span data-user-content title={v.changeNote}>{v.changeNote}</span> },
       {
         key: 'actions',
         header: t('versions.cols.actions'),
-        render: (v) => (
-          <div className={styles.actions}>
-            <ButtonLink compact to={`/flows/${flow.id}/versions/${v.versionNo}`} aria-label={t('versions.actionLabel', { action: v.status === 'draft' && editable ? t('versions.edit') : t('versions.view'), n: v.versionNo })}>
-              {v.status === 'draft' && editable ? t('versions.edit') : t('versions.view')}
-            </ButtonLink>
-            {editable && v.status === 'draft' ? (
-              <Button compact variant="primary" aria-label={t('versions.actionLabel', { action: t('versions.publish'), n: v.versionNo })} onClick={() => { setPublishError(null); setPublishNo(v.versionNo); }}>
-                {t('versions.publish')}
-              </Button>
-            ) : null}
-            {editable ? (
-              <Button compact aria-label={t('versions.actionLabel', { action: t('versions.copy'), n: v.versionNo })} onClick={() => setCopyFrom(v.versionNo)}>
-                {t('versions.copy')}
-              </Button>
-            ) : null}
-          </div>
-        ),
+        // The same row actions as the Users table of Admin: the main action as a button, the others in a "More" menu.
+        render: (v) => {
+          const editDraft = v.status === 'draft' && editable;
+          const menu = [
+            ...(editDraft ? [{ value: 'publish', label: t('versions.publish') }] : []),
+            ...(editable ? [{ value: 'copy', label: t('versions.copy') }] : []),
+          ];
+          return (
+            <div className={styles.actions}>
+              <ButtonLink size="sm" to={`/flows/${flow.id}/versions/${v.versionNo}`} aria-label={t('versions.actionLabel', { action: editDraft ? t('versions.edit') : t('versions.view'), n: v.versionNo })}>
+                {editDraft ? t('versions.edit') : t('versions.view')}
+              </ButtonLink>
+              {menu.length > 0 ? (
+                <Dropdown
+                  compact
+                  width={96}
+                  label={t('versions.menu.moreFor', { n: v.versionNo })}
+                  buttonLabel={t('versions.menu.more')}
+                  options={menu}
+                  value=""
+                  onChange={(choice) => {
+                    if (choice === 'publish') {
+                      setPublishError(null);
+                      setPublishNo(v.versionNo);
+                    } else setCopyFrom(v.versionNo);
+                  }}
+                />
+              ) : null}
+            </div>
+          );
+        },
       },
     ];
     body = (
       <>
-        <section aria-label={t('versions.timeline')} className="timeline-card" style={{ background: 'var(--color-card)', border: '1px solid var(--color-line)', borderRadius: 'var(--radius-card)', padding: 20, minWidth: 0 }}>
+        <section aria-label={t('versions.timeline')} className={styles.timelineCard}>
           <ol className={`${styles.bar} ${styles.list}`} aria-label={t('versions.timeline')}>
             {segments.map((s) => (
               <li key={s.versionNo} className={`${styles.segment} ${s.state === 'in_effect' ? styles.inEffect : ''} ${s.state === 'draft' ? styles.draft : ''}`} style={{ flex: `${s.weight} 1 0` }}>
@@ -161,7 +175,7 @@ export function VersionsScreen() {
       breadcrumb={crumb}
       title={t('versions.screen.title')}
       subtitle={t('versions.screen.subtitle')}
-      action={flow && editable ? <Button variant="primary" onClick={() => setCopyFrom([...flow.versions].sort((a, b) => b.versionNo - a.versionNo)[0]?.versionNo ?? 1)}>{t('versions.newVersion')}</Button> : undefined}
+      action={flow && editable ? <Button onClick={() => setCopyFrom([...flow.versions].sort((a, b) => b.versionNo - a.versionNo)[0]?.versionNo ?? 1)}>{t('versions.newVersion')}</Button> : undefined}
     >
       {body}
     </ScreenFrame>

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { Button, Dialog, Dropdown, ErrorState, Field, Icon, ToastProvider, useToast } from './components';
+import { Button, Dialog, Dropdown, ErrorState, Field, Icon, ToastProvider, useEscapeLayer, useToast } from './components';
 import type { IconName } from './components';
 import { useAuth } from './auth-gate';
 import { useLoad, useStore } from './store-context';
@@ -10,6 +10,7 @@ import { ThemeSwitch } from './theme-switch';
 import { useT, errorText } from './i18n';
 import { usePanel } from './panels/use-panel';
 import { PanelToggle } from './panels/panel-toggle';
+import { usePanelMotion } from './panels/use-panel-motion';
 import panelStyles from './panels/panel.module.css';
 import styles from './shell.module.css';
 
@@ -21,7 +22,7 @@ export interface ShellContext {
 function NavItem({ to, icon, children }: { to: string; icon: IconName; children: string }) {
   return (
     <NavLink to={to} className={styles.link}>
-      <Icon name={icon} size={18} />
+      <Icon name={icon} size={20} />
       {children}
     </NavLink>
   );
@@ -30,7 +31,7 @@ function NavItem({ to, icon, children }: { to: string; icon: IconName; children:
 function RailLink({ to, icon, label }: { to: string; icon: IconName; label: string }) {
   return (
     <NavLink to={to} className={styles.railLink} aria-label={label} title={label}>
-      <Icon name={icon} size={18} />
+      <Icon name={icon} size={20} />
     </NavLink>
   );
 }
@@ -81,18 +82,14 @@ function UserMenu({ name, role, onChangePassword }: { name: string; role: string
       if (!target || pop.current?.contains(target) || button.current?.contains(target) || target.closest('[role="listbox"]')) return;
       setOpen(false);
     };
-    const onKey = (e: KeyboardEvent): void => {
-      if (e.key !== 'Escape' || document.querySelector('[role="listbox"]')) return;
-      setOpen(false);
-      button.current?.focus();
-    };
     document.addEventListener('mousedown', onDown);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onDown);
-      document.removeEventListener('keydown', onKey);
-    };
+    return () => document.removeEventListener('mousedown', onDown);
   }, [open]);
+  // Escape closes the menu unless a list opened from it is on top: that one closes first.
+  useEscapeLayer(open, () => {
+    setOpen(false);
+    button.current?.focus();
+  });
   return (
     <>
       <Button ref={button} icon aria-haspopup="dialog" aria-expanded={open} aria-label={t('nav.userMenu')} title={t('nav.userMenu')} onClick={() => setOpen(!open)}>
@@ -198,23 +195,26 @@ export function Shell() {
   const [creating, setCreating] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
   const { collapsed, toggle } = usePanel('sidebar');
+  const navRef = useRef<HTMLElement>(null);
+  usePanelMotion(navRef);
   const me = user.data;
   const roleLabel = me ? t(me.role === 'admin' ? 'nav.role.admin' : 'nav.role.user') : '';
   return (
     <ToastProvider>
     <div className={styles.frame}>
-      <nav id="sidebar-body" aria-label={t('nav.label')} className={`${panelStyles.panel} ${styles.nav} ${collapsed ? styles.navRail : ''}`}>
+      <nav ref={navRef} id="sidebar-body" aria-label={t('nav.label')} className={`${panelStyles.panel} ${styles.nav} ${collapsed ? styles.navRail : ''}`}>
+        <span className={styles.glass} aria-hidden="true" />
         <div className={styles.toggle}>
           <PanelToggle panel="sidebar" collapsed={collapsed} onToggle={toggle} controls="sidebar-body" />
         </div>
         {collapsed ? (
           <>
             <div className={styles.railTop} />
-            <Button variant="cta" icon aria-label={t('nav.createFlow')} title={t('nav.createFlow')} onClick={() => setCreating(true)}>
-              <Icon name="plus" size={18} />
+            <Button variant="primary" icon aria-label={t('nav.createFlow')} title={t('nav.createFlow')} onClick={() => setCreating(true)}>
+              <Icon name="plus" size={20} />
             </Button>
-            <RailLink to="/flows" icon="flow" label={t('nav.flows')} />
-            <RailLink to="/reference-tables" icon="table" label={t('nav.refTables')} />
+            <RailLink to="/flows" icon="workflow" label={t('nav.flows')} />
+            <RailLink to="/reference-tables" icon="file-spreadsheet" label={t('nav.refTables')} />
             {me?.role === 'admin' ? <RailLink to="/admin" icon="shield" label={t('nav.admin')} /> : null}
             {me ? (
               <div className={styles.railUser}>
@@ -225,18 +225,18 @@ export function Shell() {
         ) : (
           <>
             <div className={styles.brand}>
-              <Icon name="flow" size={22} />
+              <span className={styles.mark} aria-hidden="true" />
               {t('app.brand')}
             </div>
             <div className={styles.create}>
-              <Button variant="cta" onClick={() => setCreating(true)}>
+              <Button variant="primary" onClick={() => setCreating(true)}>
                 {t('nav.createFlow')}
               </Button>
             </div>
-            <NavItem to="/flows" icon="flow">
+            <NavItem to="/flows" icon="workflow">
               {t('nav.flows')}
             </NavItem>
-            <NavItem to="/reference-tables" icon="table">
+            <NavItem to="/reference-tables" icon="file-spreadsheet">
               {t('nav.refTables')}
             </NavItem>
             {me?.role === 'admin' ? (

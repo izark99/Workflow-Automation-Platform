@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Card, ErrorState, Field, Icon, InfoTip } from './components';
+import { Button, Card, ErrorState, Field, InfoTip } from './components';
 import { errorText, useT } from './i18n';
 import { LanguageSwitch } from './language-switch';
 import { MIN_PASSWORD_LENGTH } from '../store/accounts';
@@ -64,7 +64,7 @@ export function ChangePasswordScreen({ onSave, onSignOut }: { onSave: (password:
       </div>
       <div className={styles.card}>
         <div className={styles.brand}>
-          <Icon name="flow" size={22} />
+          <span className={styles.mark} aria-hidden="true" />
           {t('app.brand')}
         </div>
         <Card>
@@ -74,7 +74,7 @@ export function ChangePasswordScreen({ onSave, onSignOut }: { onSave: (password:
               <InfoTip label={t('signIn.change.title')}>{t('signIn.change.subtitle')}</InfoTip>
             </div>
             <NewPasswordForm onSave={onSave} submitLabel={t('signIn.change.submit')} />
-            <Button compact onClick={onSignOut}>
+            <Button size="sm" onClick={onSignOut}>
               {t('nav.signOut')}
             </Button>
           </div>
@@ -95,7 +95,7 @@ export function LockedScreen({ onSignOut }: { onSignOut: () => void }) {
       </div>
       <div className={styles.card}>
         <div className={styles.brand}>
-          <Icon name="flow" size={22} />
+          <span className={styles.mark} aria-hidden="true" />
           {t('app.brand')}
         </div>
         <Card>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Badge, Button, Card, Checkbox, DatePicker, Dialog, Dropdown, EmptyState, ErrorState, Field, InfoTip, PageHeader, ProgressBar, SearchField, SkeletonTable, Tabs, ToastProvider, useToast } from '../components';
+import { Badge, Button, Icon, Card, Checkbox, Chip, ChipGroup, QuietWarning, Switch, DatePicker, Dialog, Dropdown, EmptyState, ErrorState, Field, InfoTip, PageHeader, ProgressBar, SearchField, SkeletonTable, Tabs, ToastProvider, useToast } from '../components';
 import { useT } from '../i18n';
 import { ParameterControl } from '../builder/parameter-control/parameter-control';
 import type { FlowParameter } from '../../engine/flow/parameters';
@@ -78,6 +78,7 @@ function Content() {
   const [checked, setChecked] = useState(true);
   const [tab, setTab] = useState('setup');
   const [confirm, setConfirm] = useState(false);
+  const [scope, setScope] = useState<'all' | 'personal' | 'shared'>('all');
   const toast = useToast();
 
   return (
@@ -87,19 +88,22 @@ function Content() {
         <Card title={t('dev.buttons')}>
           <div className={styles.row}>
             <span className={styles.rowLabel}>{t('dev.demo.default40Px')}</span>
-            <Button variant="cta">{t('dev.demo.run')}</Button>
-            <Button variant="primary">{t('dev.demo.newVersion')}</Button>
+            <Button variant="primary">{t('dev.demo.run')}</Button>
+            <Button>{t('dev.demo.newVersion')}</Button>
             <Button>{t('dev.demo.saveDraft')}</Button>
             <Button variant="danger">{t('dev.demo.deleteStep')}</Button>
             <Button disabled>{t('dev.demo.notAvailable')}</Button>
-            <Button variant="primary" busy>{t('dev.demo.running')}</Button>
+            <Button busy>{t('dev.demo.running')}</Button>
           </div>
           <div className={styles.row}>
             <span className={styles.rowLabel}>{t('dev.demo.compact36Px')}</span>
-            <Button compact variant="primary">{t('dev.demo.run')}</Button>
-            <Button compact>{t('dev.demo.open')}</Button>
-            <Button compact variant="danger">{t('dev.demo.delete')}</Button>
-            <Button compact disabled>{t('dev.demo.notAvailable')}</Button>
+            <Button size="sm">{t('dev.demo.run')}</Button>
+            <Button size="sm">{t('dev.demo.open')}</Button>
+            <Button size="sm" variant="danger">{t('dev.demo.delete')}</Button>
+            <Button size="sm" disabled>{t('dev.demo.notAvailable')}</Button>
+            <Button icon variant="ghost" aria-label={t('dev.demo.delete')}>
+              <Icon name="x" />
+            </Button>
           </div>
           <p className={styles.note}>{t('dev.buttonsNote')}</p>
         </Card>
@@ -108,6 +112,9 @@ function Content() {
             <div style={{ width: 240 }}>
               <Field label={t('dev.demo.newColumnName')} defaultValue="OT flag" />
             </div>
+            <div style={{ width: 240 }}>
+              <Field label={t('flows.createDialog.name')} defaultValue="" error={t('flows.createDialog.emptyName')} />
+            </div>
             <SearchField label={t('dev.demo.searchFlows')} placeholder={t('dev.demo.flowName')} />
           </div>
           <div className={styles.row}>
@@ -115,6 +122,7 @@ function Content() {
             <Checkbox checked={checked} onChange={setChecked}>{t('dev.demo.viewAndRun')}</Checkbox>
             <Checkbox checked={false} onChange={() => undefined}>{t('dev.demo.viewAndRun')}</Checkbox>
             <Checkbox checked={false} disabled onChange={() => undefined}>{t('dev.demo.notAvailable')}</Checkbox>
+            <Switch checked={checked} onChange={setChecked}>{t('dev.demo.viewAndRun')}</Switch>
           </div>
           <Tabs label={t('dev.demo.stepSettings')} tabs={[{ id: 'setup', label: t('dev.demo.setup') }, { id: 'configure', label: t('dev.demo.configure') }, { id: 'test', label: t('dev.demo.test') }]} selected={tab} onSelect={setTab}>
             <p className={styles.note}>{t('dev.demo.selectedTab')}{' '}<span data-code>{tab}</span></p>
@@ -122,7 +130,7 @@ function Content() {
           <div className={styles.row}>
             <Badge>{t('dev.demo.published')}</Badge>
             <Badge tone="outline">{t('dev.demo.shared')}</Badge>
-            <Button compact onClick={() => toast('Draft saved')}>{t('dev.demo.showToast')}</Button>
+            <Button size="sm" onClick={() => toast('Draft saved')}>{t('dev.demo.showToast')}</Button>
           </div>
         </Card>
         <div className={styles.mid} style={{ display: 'contents' }}>
@@ -160,7 +168,7 @@ function Content() {
           <p className={styles.note}>{t('dev.loadingNote')}</p>
         </Card>
         <Card title={t('dev.empty')}>
-          <EmptyState title={t('dev.demo.noFlowsYet')} text={t('dev.demo.createYourFirstFlow')} action={<Button variant="primary">{t('dev.demo.createFlow')}</Button>} />
+          <EmptyState title={t('dev.demo.noFlowsYet')} text={t('dev.demo.createYourFirstFlow')} action={<Button>{t('dev.demo.createFlow')}</Button>} />
         </Card>
         <Card title={t('dev.panels')}>
           <div className={styles.row} style={{ alignItems: 'flex-start', gap: 24 }}>
@@ -177,7 +185,7 @@ function Content() {
             <span>
               <b>{t('dev.demo.step7Of12')}</b>{t('dev.demo.groupOtHours')}
             </span>
-            <Button compact>{t('dev.demo.cancelRun')}</Button>
+            <Button size="sm">{t('dev.demo.cancelRun')}</Button>
           </div>
         </Card>
         <Card title={t('dev.error')}>
@@ -186,8 +194,8 @@ function Content() {
             next={t('dev.demo.row3HasNo')}
             actions={
               <>
-                <Button compact>{t('dev.demo.chooseAnotherFile')}</Button>
-                <Button compact>{t('dev.demo.openTheStep')}</Button>
+                <Button size="sm">{t('dev.demo.chooseAnotherFile')}</Button>
+                <Button size="sm">{t('dev.demo.openTheStep')}</Button>
               </>
             }
           />
@@ -198,6 +206,23 @@ function Content() {
               {t('dev.demo.deleteFlow')}
             </Button>
           </div>
+        </Card>
+        <Card>
+          <div className={styles.row}>
+            <Badge tone="success" icon="circle-check">{t('admin.status.active')}</Badge>
+            <Badge tone="accent" icon="pencil">{t('flows.draft')}</Badge>
+            <Badge tone="warning" icon="triangle-alert">{t('admin.status.mustChange')}</Badge>
+            <Badge tone="danger" icon="circle-x">{t('admin.status.locked')}</Badge>
+            <Badge tone="info" icon="info">{t('builder.analyze.confidence.medium')}</Badge>
+          </div>
+          <ChipGroup label={t('flows.filterLabel')}>
+            {([['all', t('flows.all')], ['personal', t('flows.personal')], ['shared', t('flows.shared')]] as const).map(([key, label]) => (
+              <Chip key={key} pressed={scope === key} onClick={() => setScope(key)}>
+                {label}
+              </Chip>
+            ))}
+          </ChipGroup>
+          <QuietWarning lines={[t('versions.state.upcoming')]} />
         </Card>
       </div>
       {confirm ? (

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import type { RefObject } from 'react';
 
 /**
@@ -30,4 +30,24 @@ export function opensUp(anchor: HTMLElement | null, popoverHeight: number): bool
   const r = anchor.getBoundingClientRect();
   const room = window.innerHeight - r.bottom;
   return room < popoverHeight + 8 && r.top > room;
+}
+
+/**
+ * Keeps a popover in the page for `exitMs` after it closes, so it can play its exit animation (Harold: 200 ms to open, 120 ms
+ * to close). `mounted` is true while it is open or leaving; `leaving` is true only while it leaves.
+ */
+export function usePresence(open: boolean, exitMs = 120): { mounted: boolean; leaving: boolean } {
+  const [exiting, setExiting] = useState(false);
+  const [wasOpen, setWasOpen] = useState(open);
+  // Adjusted while rendering (not in an effect), so there is no frame in which the popover is gone before it leaves.
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    setExiting(!open);
+  }
+  useEffect(() => {
+    if (!exiting) return undefined;
+    const timer = window.setTimeout(() => setExiting(false), exitMs);
+    return () => window.clearTimeout(timer);
+  }, [exiting, exitMs]);
+  return { mounted: open || exiting, leaving: !open && exiting };
 }

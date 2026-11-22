@@ -7,16 +7,16 @@ const signInAs = async (page: Page, userId: string) => {
   await page.addInitScript((s) => localStorage.setItem('dfw.seed', s), JSON.stringify(snapshot));
 };
 
-test('the sidebar is 232 px wide, marks the current screen and shows the signed-in user', async ({ page }) => {
+test('the sidebar is 240 px wide, marks the current screen and shows the signed-in user', async ({ page }) => {
   await page.goto('/flows');
   const nav = page.getByRole('navigation', { name: 'Main' });
-  expect((await nav.boundingBox())!.width).toBe(232);
+  expect((await nav.boundingBox())!.width).toBe(240);
   await expect(nav.getByRole('link', { name: 'Flows' })).toHaveAttribute('aria-current', 'page');
   await expect(nav.getByText('Harold')).toBeVisible();
   await expect(nav.getByText('Admin', { exact: true }).first()).toBeVisible();
 });
 
-test('the sidebar links open Reference tables and Admin, and the title stays at y 63', async ({ page }) => {
+test('the sidebar links open Reference tables and Admin, and the title stays at y 23', async ({ page }) => {
   await page.goto('/flows');
   const nav = page.getByRole('navigation', { name: 'Main' });
   const titleY = async () => (await page.getByRole('heading', { level: 1 }).boundingBox())!.y;
@@ -28,7 +28,7 @@ test('the sidebar links open Reference tables and Admin, and the title stays at 
   await nav.getByRole('link', { name: 'Admin' }).click();
   await expect(page).toHaveURL(/\/admin$/);
   await expect(page.getByRole('heading', { name: 'Admin', level: 1 })).toBeVisible();
-  expect(await titleY()).toBe(63);
+  expect(await titleY()).toBe(23);
 });
 
 test('a user who is not the admin has no Admin link', async ({ page }) => {
@@ -87,17 +87,17 @@ test.describe('sidebar rail', () => {
     const nav = page.getByRole('navigation', { name: 'Main' });
     const h1 = async () => (await page.getByRole('heading', { level: 1 }).boundingBox())!.y;
     const y = await h1();
-    expect(y).toBe(63);
+    expect(y).toBe(23);
     await nav.getByRole('button', { name: 'Collapse sidebar' }).click();
     await expect.poll(async () => (await nav.boundingBox())?.width).toBe(64);
-    expect(await h1()).toBe(63);
+    expect(await h1()).toBe(23);
     const first = async () => (await page.locator('[data-first-block]').first().boundingBox())!.y;
-    expect(await first()).toBe(123);
+    expect(await first()).toBe(88);
     await page.reload();
     await expect.poll(async () => (await page.getByRole('navigation', { name: 'Main' }).boundingBox())?.width).toBe(64);
     await expect(page.getByRole('navigation', { name: 'Main' }).getByRole('button', { name: 'Expand sidebar' })).toHaveAttribute('aria-expanded', 'false');
     await page.getByRole('navigation', { name: 'Main' }).getByRole('button', { name: 'Expand sidebar' }).click();
-    await expect.poll(async () => (await nav.boundingBox())?.width).toBe(232);
+    await expect.poll(async () => (await nav.boundingBox())?.width).toBe(240);
   });
 
   test('the toggle is centred over the icon buttons of the rail', async ({ page }) => {

@@ -20,7 +20,7 @@ function TextCellView({ cell }: { cell: TextCell }) {
       <span className={styles.clamp} title={cell.current} data-user-content>
         {cell.current}
       </span>
-      {cell.edited ? <Badge tone="soft">{t('admin.texts.edited')}</Badge> : null}
+      {cell.edited ? <Badge tone="soft" icon="pencil">{t('admin.texts.edited')}</Badge> : null}
     </div>
   );
 }
@@ -121,11 +121,11 @@ export function AdminTexts() {
       width: 180,
       render: (r) => (
         <div className={styles.actions}>
-          <Button compact aria-label={t('admin.texts.editLabel', { key: r.key })} onClick={() => startEdit(r)}>
+          <Button size="sm" aria-label={t('admin.texts.editLabel', { key: r.key })} onClick={() => startEdit(r)}>
             {t('admin.texts.edit')}
           </Button>
           {r.en.edited || r.vi.edited ? (
-            <Button compact aria-label={t('admin.texts.resetLabel', { key: r.key })} onClick={() => void resetBoth(r, false)}>
+            <Button size="sm" aria-label={t('admin.texts.resetLabel', { key: r.key })} onClick={() => void resetBoth(r, false)}>
               {t('admin.texts.reset')}
             </Button>
           ) : null}
@@ -135,7 +135,7 @@ export function AdminTexts() {
   ];
 
   let body;
-  if (data.error) body = <ErrorState what={t('admin.texts.loadFailed')} next={errorText(data.error)} actions={<Button compact onClick={data.reload}>{t('flows.retry')}</Button>} />;
+  if (data.error) body = <ErrorState what={t('admin.texts.loadFailed')} next={errorText(data.error)} actions={<Button size="sm" onClick={data.reload}>{t('flows.retry')}</Button>} />;
   else if (!data.data) body = showSkeleton ? <SkeletonTable weights={[22, 30, 30, 18]} rows={3} label={t('admin.texts.loading')} /> : null;
   else if (found.length === 0) body = <EmptyState title={t('admin.texts.noMatch')} text="" action={null} />;
   else body = <Table label={t('admin.texts.table')} columns={columns} rows={shown.rows} rowKey={(r) => r.key} />;
@@ -166,10 +166,10 @@ export function AdminTexts() {
             <span className={styles.note}>{t('admin.texts.showing', { from: shown.from.toLocaleString('en-US'), to: shown.to.toLocaleString('en-US'), total: found.length.toLocaleString('en-US') })}</span>
             {shown.pages > 1 ? (
               <>
-                <Button compact disabled={page <= 0} onClick={() => setPage(page - 1)}>
+                <Button size="sm" disabled={page <= 0} onClick={() => setPage(page - 1)}>
                   {t('admin.texts.previous')}
                 </Button>
-                <Button compact disabled={page >= shown.pages - 1} onClick={() => setPage(page + 1)}>
+                <Button size="sm" disabled={page >= shown.pages - 1} onClick={() => setPage(page + 1)}>
                   {t('admin.texts.next')}
                 </Button>
               </>
@@ -219,7 +219,7 @@ export function AdminTexts() {
               ))}
               {TEXT_LOCALES.map((locale) => (
                 <div key={`reset-${locale}`} style={{ gridColumn: locale === 'en' ? 1 : 2, gridRow: 2 }}>
-                  <Button compact disabled={values[locale] === editing[locale].defaultText} onClick={() => setValues({ ...values, [locale]: editing[locale].defaultText })}>
+                  <Button size="sm" disabled={values[locale] === editing[locale].defaultText} onClick={() => setValues({ ...values, [locale]: editing[locale].defaultText })}>
                     {t(locale === 'en' ? 'admin.texts.resetEnglish' : 'admin.texts.resetVietnamese')}
                   </Button>
                 </div>

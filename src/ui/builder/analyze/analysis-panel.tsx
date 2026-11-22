@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { columnLetters } from '../../../engine/input/region';
 import type { Grid } from '../../../engine/refimport/types';
-import { Badge, Button, ErrorState, Icon, InfoTip, ProgressBar, Table } from '../../components';
+import { Badge, Button, ErrorState, InfoTip, ProgressBar, Table } from '../../components';
 import type { Column } from '../../components';
 import { errorText, translate, useT } from '../../i18n';
 import type { MessageKey } from '../../i18n';
@@ -164,8 +164,7 @@ export function AnalysisPanel({ file, settings, onApply }: AnalysisPanelProps) {
                 </span>
                 {l.confidence ? (
                   <span className={styles.badges}>
-                    <Badge tone={l.confidence === 'high' ? 'soft' : 'outline'}>
-                      {l.confidence === 'low' ? <Icon name="alert" size={14} /> : null}
+                    <Badge tone={l.confidence === 'high' ? 'success' : l.confidence === 'low' ? 'warning' : 'info'} icon={l.confidence === 'high' ? 'circle-check' : l.confidence === 'low' ? 'triangle-alert' : 'info'}>
                       {t(`builder.analyze.confidence.${l.confidence}` as MessageKey)}
                     </Badge>
                     {l.reason ? <InfoTip label={l.label}>{l.reason}</InfoTip> : null}
@@ -175,7 +174,7 @@ export function AnalysisPanel({ file, settings, onApply }: AnalysisPanelProps) {
             ))}
           </ul>
           <div>
-            <h4 className={styles.sectionTitle}>{t('builder.analyze.leftOut')}</h4>
+            <h3 className={styles.sectionTitle}>{t('builder.analyze.leftOut')}</h3>
             {leftOutLines(state.result).length === 0 ? (
               <p className={styles.note}>{t('builder.analyze.leftOutNone')}</p>
             ) : (
@@ -192,7 +191,6 @@ export function AnalysisPanel({ file, settings, onApply }: AnalysisPanelProps) {
           </div>
           <div className={styles.actions}>
             <Button
-              variant="primary"
               onClick={() => {
                 onApply(applyProposal(settings, state.result));
                 setState({ status: 'idle' });

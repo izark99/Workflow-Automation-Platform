@@ -8,8 +8,8 @@ test('the toggle works with Tab, Space and Enter and keeps the focus', async ({ 
   const rail = page.locator('[data-demo-rail="demo-rail-open"]');
   const toggle = rail.getByRole('button', { name: 'Collapse step list' });
   await expect(toggle).toHaveAttribute('aria-expanded', 'true');
-  expect((await toggle.boundingBox())?.width).toBe(36);
-  expect((await toggle.boundingBox())?.height).toBe(36);
+  expect((await toggle.boundingBox())?.width).toBe(32);
+  expect((await toggle.boundingBox())?.height).toBe(32);
   await toggle.focus();
   await page.keyboard.press('Space');
   const expand = rail.getByRole('button', { name: 'Expand step list' });

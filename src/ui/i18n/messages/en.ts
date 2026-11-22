@@ -1026,6 +1026,8 @@ export const en = {
   'versions.problem.inside': '{date} is inside v{n} ({from} to {to}). Choose a day after {to}.',
   'versions.problem.notBefore': 'v{n} starts on {from}, which is not before {date}. Choose a day after {from}.',
   'versions.actionLabel': '{action} v{n}',
+  'versions.menu.more': 'More',
+  'versions.menu.moreFor': 'More actions for v{n}',
 
   // Added by T4.7c2
   'refTables.noVersion': 'No version',
@@ -1057,7 +1059,7 @@ export const en = {
   'dev.demo.deleteStep': 'Delete step',
   'dev.demo.notAvailable': 'Not available',
   'dev.demo.running': 'Running',
-  'dev.demo.compact36Px': 'Compact, 36 px',
+  'dev.demo.compact36Px': 'Small, 32 px',
   'dev.demo.open': 'Open',
   'dev.demo.delete': 'Delete',
   'dev.demo.newColumnName': 'New column name',

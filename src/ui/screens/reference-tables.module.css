@@ -56,18 +56,18 @@
   box-sizing: border-box;
   min-height: 56px;
   padding: 0 12px;
-  border: 1px solid var(--color-control);
-  border-radius: var(--radius-control);
-  background: var(--color-card);
-  color: var(--color-ink);
-  font-weight: 700;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-overlay);
+  color: var(--ink);
+  font-weight: 500;
   text-decoration: none;
 }
 
 .item[aria-current='true'] {
   /* A 2 px frame without a 2 px border, so the text does not move when a table is selected. */
-  border-color: var(--color-primary);
-  box-shadow: inset 0 0 0 1px var(--color-primary);
+  border-color: var(--primary-text);
+  box-shadow: inset 0 0 0 1px var(--primary);
 }
 
 .itemClip {
@@ -80,7 +80,7 @@
   font-size: 12px;
   line-height: 18px;
   font-weight: 500;
-  color: var(--color-muted);
+  color: var(--ink-muted);
 }
 
 .detail {
@@ -95,8 +95,8 @@
   justify-content: space-between;
   gap: 12px;
   min-height: 40px;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--color-rule);
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--border);
 }
 
 .headText {
@@ -122,12 +122,12 @@
   /* Centred, so the Draft or Published badge is not stretched to the height of the version chip with its text at the top. */
   align-items: center;
   gap: 8px;
-  padding: 16px 20px;
+  padding: var(--space-4) var(--space-5);
 }
 
 .notes {
-  padding: 12px 20px;
-  border-top: 1px solid var(--color-rule);
+  padding: var(--space-3) var(--space-5);
+  border-top: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -137,28 +137,28 @@
   margin: 0;
   font-size: 13px;
   line-height: 20px;
-  color: var(--color-muted);
+  color: var(--ink-muted);
 }
 
 .gridWrap {
-  border-top: 1px solid var(--color-rule);
+  border-top: 1px solid var(--border);
 }
 
 .cellInput {
   box-sizing: border-box;
   width: 100%;
   min-width: 90px;
-  height: var(--size-button);
+  height: var(--control-sm); /* a dense row: 36 px plus its divider */
   padding: 0 12px;
-  border-radius: var(--radius-control);
-  border: 1px solid var(--color-control);
-  background: var(--color-card);
-  color: var(--color-ink);
-  font: 400 14px var(--font-sans);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-strong);
+  background: var(--surface-overlay);
+  color: var(--ink);
+  font: 400 14px var(--family-sans);
 }
 
 .cellInput[aria-invalid='true'] {
-  border-color: var(--color-danger);
+  border-color: var(--danger);
 }
 
 .pager {
@@ -166,21 +166,21 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 12px;
-  padding: 12px 20px;
-  border-top: 1px solid var(--color-rule);
+  padding: var(--space-3) var(--space-5);
+  border-top: 1px solid var(--border);
 }
 
 .dirty {
   font-size: 12px;
   font-weight: 700;
-  color: var(--color-muted);
+  color: var(--ink-muted);
 }
 
 .dialogBody {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  color: var(--color-ink);
+  color: var(--ink);
 }
 
 .headerActions {
@@ -193,7 +193,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  color: var(--color-ink);
+  color: var(--ink);
 }
 
 .colsList {

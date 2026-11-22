@@ -1,14 +1,14 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { Badge, Button, Card, Field, SearchField, Table } from './index';
+import { Badge, Button, Card, Checkbox, Field, SearchField, Switch, Table } from './index';
 
 const html = (el: React.ReactElement): string => renderToStaticMarkup(el);
 
 describe('Button', () => {
   it('is a type=button button with the variant as data attribute', () => {
-    const out = html(<Button variant="cta">Run</Button>);
+    const out = html(<Button variant="primary">Run</Button>);
     expect(out).toContain('type="button"');
-    expect(out).toContain('data-variant="cta"');
+    expect(out).toContain('data-variant="primary"');
     expect(out).toContain('>Run<');
   });
   it('defaults to secondary and can submit when asked', () => {
@@ -21,8 +21,28 @@ describe('Button', () => {
     expect(out).toContain('<svg');
     expect(html(<Button>Idle</Button>)).not.toContain('aria-busy');
   });
+  it('has the four Harold variants', () => {
+    for (const v of ['primary', 'secondary', 'ghost', 'danger'] as const) {
+      expect(html(<Button variant={v}>x</Button>)).toContain(`data-variant="${v}"`);
+    }
+  });
+  it('has the sizes md (40 px) and sm (32 px): sm adds the small class', () => {
+    const md = html(<Button>x</Button>);
+    expect(html(<Button size="sm">x</Button>)).not.toBe(md);
+  });
+  it('an icon button carries its label as the tooltip text, and a plain button has no tooltip', () => {
+    const out = html(<Button icon aria-label="Close dialog">x</Button>);
+    expect(out).toContain('aria-label="Close dialog"');
+    expect(out).toContain('data-tooltip="Close dialog"');
+    expect(html(<Button>x</Button>)).not.toContain('data-tooltip');
+  });
+  it('keeps the label in the layout while busy, so the width does not change', () => {
+    const out = html(<Button busy>Running</Button>);
+    expect(out).toContain('Running');
+    expect(out).toContain('aria-busy="true"');
+  });
   it('keeps the disabled attribute and the aria-label of a row action', () => {
-    const out = html(<Button compact aria-label="Delete Monthly timesheet" disabled>Delete</Button>);
+    const out = html(<Button size="sm" aria-label="Delete Monthly timesheet" disabled>Delete</Button>);
     expect(out).toContain('disabled');
     expect(out).toContain('aria-label="Delete Monthly timesheet"');
   });
@@ -93,5 +113,41 @@ describe('Field and SearchField', () => {
     expect(out).toContain('type="text"');
     expect(out).not.toContain('type="search"');
     expect(out).toContain('aria-label="Search flows"');
+  });
+});
+
+describe('Field (T7.7a)', () => {
+  it('ties the label and the error to the input, and the error replaces nothing it must not: aria-invalid and role=alert', () => {
+    const out = html(<Field label="Flow name" error="Enter a name." defaultValue="" />);
+    expect(out).toContain('aria-invalid="true"');
+    expect(out).toContain('role="alert"');
+    expect(out).toContain('Enter a name.');
+    expect(out).toContain('<svg');
+  });
+  it('shows a suffix inside the box', () => {
+    expect(html(<Field label="Hours" suffix="h" defaultValue="12" />)).toContain('>h<');
+    expect(html(<Field label="Hours" defaultValue="12" />)).not.toContain('>h<');
+  });
+  it('marks a disabled field on its box', () => {
+    expect(html(<Field label="Hours" disabled defaultValue="12" />)).toContain('data-disabled="true"');
+  });
+});
+
+describe('Checkbox and Switch (T7.7a)', () => {
+  it('a checkbox is a role=checkbox button with aria-checked, a switch is a role=switch button', () => {
+    expect(html(<Checkbox checked onChange={() => undefined}>Keep</Checkbox>)).toContain('role="checkbox" aria-checked="true"');
+    const out = html(<Switch checked={false} onChange={() => undefined}>Lock</Switch>);
+    expect(out).toContain('role="switch"');
+    expect(out).toContain('aria-checked="false"');
+    expect(out).toContain('aria-label="Lock"');
+  });
+});
+
+describe('Table (T7.9b)', () => {
+  const rows = [{ id: 'a', n: 3 }];
+  const columns = [{ key: 'n', header: 'N', align: 'right' as const, render: (r: { n: number }) => r.n }];
+  it('marks a dense table so the row-height rule expects 37 px', () => {
+    expect(html(<Table label="x" columns={columns} rows={rows} rowKey={(r) => r.id} dense />)).toContain('data-dense');
+    expect(html(<Table label="x" columns={columns} rows={rows} rowKey={(r) => r.id} />)).not.toContain('data-dense');
   });
 });

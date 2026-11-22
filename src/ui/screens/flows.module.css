@@ -2,8 +2,8 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  min-height: var(--size-button);
+  gap: var(--space-2);
+  min-height: var(--control-md);
 }
 
 .search {
@@ -11,22 +11,20 @@
 }
 
 .sub {
-  font-size: 12px;
-  line-height: 18px;
-  color: var(--color-muted);
+  font: 400 12px/16px var(--family-sans);
+  color: var(--ink-muted);
 }
 
 .actions {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
   align-items: center;
 }
 
 .note {
   margin: 0;
-  font-size: 13px;
-  line-height: 20px;
-  color: var(--color-muted);
+  font: 400 13px/20px var(--family-sans);
+  color: var(--ink-muted);
 }
 
 .tableSlot {

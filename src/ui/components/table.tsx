@@ -11,6 +11,8 @@ export interface Column<T> {
   userContent?: boolean;
   /** A fixed width in px. When any column has one, the table uses a fixed layout and the other columns share the rest. */
   width?: number;
+  /** One line that is shortened with an ellipsis when the table is too narrow: the column gives up its width before the others do. The cell should carry the full text in a `title`. */
+  ellipsis?: boolean;
 }
 
 export interface TableProps<T> {
@@ -20,13 +22,18 @@ export interface TableProps<T> {
   rowKey: (row: T) => string;
   /** A long table that scrolls inside a box of this height (px). The box can take the focus, so the keyboard can scroll it. */
   maxHeight?: number;
+  /** 36 px rows (and a 1 px divider) for a grid where the same data is edited; 44 px rows otherwise. */
+  dense?: boolean;
 }
 
-/** Header cells 10/16 px, body rows 56 px plus a 1 px divider (57 px), cells do not wrap. */
-export function Table<T>({ label, columns, rows, rowKey, maxHeight }: TableProps<T>) {
+/**
+ * A sticky header of 40 px on `surface-overlay`, body rows of 44 px plus a 1 px divider (45 px; dense 36 plus 1), cells do not
+ * wrap, numbers are right-aligned in tabular figures.
+ */
+export function Table<T>({ label, columns, rows, rowKey, maxHeight, dense = false }: TableProps<T>) {
   const cls = (base: string, align?: string) => (align === 'right' ? `${base} ${styles.right}` : base);
   return (
-    <div className={styles.wrap} {...(maxHeight === undefined ? {} : { style: { maxHeight, overflowY: 'auto' as const }, tabIndex: 0, role: 'region', 'aria-label': label })}>
+    <div className={`${styles.wrap} ${dense ? styles.dense : ''}`} data-dense={dense ? '' : undefined} {...(maxHeight === undefined ? {} : { style: { maxHeight, overflowY: 'auto' as const }, tabIndex: 0, role: 'region', 'aria-label': label })}>
       <table className={styles.table} aria-label={label} style={columns.some((c) => c.width !== undefined) ? { tableLayout: 'fixed' } : undefined}>
         <thead>
           <tr>
@@ -41,7 +48,7 @@ export function Table<T>({ label, columns, rows, rowKey, maxHeight }: TableProps
           {rows.map((row) => (
             <tr key={rowKey(row)}>
               {columns.map((c) => (
-                <td key={c.key} className={cls(styles.td ?? '', c.align)} data-user-content={c.userContent ? '' : undefined}>
+                <td key={c.key} className={cls(styles.td ?? '', c.align)} style={c.ellipsis ? { maxWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }  : undefined} data-user-content={c.userContent ? '' : undefined}>
                   {c.render(row)}
                 </td>
               ))}

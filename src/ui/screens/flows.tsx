@@ -70,7 +70,7 @@ export function FlowsScreen() {
         const v = versionInEffect(f, today) ?? versionToOpen(f, today);
         return v ? (
           <>
-            {t('common.versionLabel', { n: v.versionNo })} <Badge tone="soft">{v.status === 'published' ? t('flows.published') : t('flows.draft')}</Badge>
+            {t('common.versionLabel', { n: v.versionNo })} <Badge tone={v.status === 'published' ? 'success' : 'accent'} icon={v.status === 'published' ? 'circle-check' : 'pencil'}>{v.status === 'published' ? t('flows.published') : t('flows.draft')}</Badge>
           </>
         ) : null;
       },
@@ -83,16 +83,16 @@ export function FlowsScreen() {
         const open = versionToOpen(f, today);
         return (
           <div className={styles.actions}>
-            <ButtonLink compact to={`/flows/${f.id}/versions/${open?.versionNo ?? 1}`} aria-label={t('flows.openFlow', { name: f.name })}>
+            <ButtonLink size="sm" to={`/flows/${f.id}/versions/${open?.versionNo ?? 1}`} aria-label={t('flows.openFlow', { name: f.name })}>
               {t('flows.open')}
             </ButtonLink>
             {canRunFlow(f) ? (
-              <ButtonLink compact variant="primary" to={`/flows/${f.id}/run`} aria-label={t('flows.runFlow', { name: f.name })}>
+              <ButtonLink size="sm" to={`/flows/${f.id}/run`} aria-label={t('flows.runFlow', { name: f.name })}>
                 {t('flows.run')}
               </ButtonLink>
             ) : null}
             {me && canDeleteFlow(me, f) ? (
-              <Button compact variant="danger" aria-label={t('flows.deleteFlow', { name: f.name })} onClick={() => { setDeleteError(null); setToDelete(f); }}>
+              <Button size="sm" variant="danger" aria-label={t('flows.deleteFlow', { name: f.name })} onClick={() => { setDeleteError(null); setToDelete(f); }}>
                 {t('flows.delete')}
               </Button>
             ) : null}
@@ -104,17 +104,17 @@ export function FlowsScreen() {
 
   let body;
   if (data.error) {
-    body = <ErrorState what={t('errors.loadFailed')} next={t('errors.loadFailedNext')} actions={<Button compact onClick={data.reload}>{t('flows.retry')}</Button>} />;
+    body = <ErrorState what={t('errors.loadFailed')} next={t('errors.loadFailedNext')} actions={<Button size="sm" onClick={data.reload}>{t('flows.retry')}</Button>} />;
   } else if (data.loading) {
     body = showSkeleton ? <SkeletonTable weights={[30, 16, 8, 14, 14, 18]} rows={3} label={t('flows.loading')} /> : null;
   } else if (flows.length === 0) {
-    body = <EmptyState title={t('flows.emptyTitle')} text={t('flows.emptyText')} action={<Button variant="primary" onClick={openCreateFlow}>{t('nav.createFlow')}</Button>} />;
+    body = <EmptyState title={t('flows.emptyTitle')} text={t('flows.emptyText')} action={<Button onClick={openCreateFlow}>{t('nav.createFlow')}</Button>} />;
   } else if (shown.length === 0) {
     body = (
       <EmptyState
         title={t('flows.noMatchTitle')}
         text={t('flows.noMatchText')}
-        action={<Button variant="primary" onClick={() => { setScope('all'); setSearch(''); }}>{t('flows.clear')}</Button>}
+        action={<Button onClick={() => { setScope('all'); setSearch(''); }}>{t('flows.clear')}</Button>}
       />
     );
   } else {

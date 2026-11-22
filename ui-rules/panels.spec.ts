@@ -11,7 +11,7 @@ interface PanelCase {
   selector: string;
   open: number;
   collapsed: number;
-  /** The screen has the page header (title y 63, first block y 123). */
+  /** The screen has the page header (title y 23, first block y 88). */
   header: boolean;
   /** A control of the open panel that must be visible after the panel is opened again (or, for the sidebar, in the rail). */
   reachable: (page: Page) => Promise<void>;
@@ -27,7 +27,7 @@ const CASES: PanelCase[] = [
     id: 'sidebar',
     path: '/flows',
     selector: 'nav[aria-label="Main"]',
-    open: 232,
+    open: 240,
     collapsed: 64,
     header: true,
     reachable: async (page) => {

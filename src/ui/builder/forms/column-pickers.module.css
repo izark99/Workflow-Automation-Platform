@@ -8,11 +8,11 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  height: var(--size-button-compact);
+  height: var(--control-sm);
   padding: 0 4px 0 12px;
-  border-radius: var(--radius-control);
-  background: var(--color-primary-soft);
-  color: var(--color-badge-ink);
+  border-radius: var(--radius-md);
+  background: var(--primary-soft);
+  color: var(--primary-text);
   font-weight: 600;
   font-size: 13px;
 }
@@ -31,14 +31,14 @@
 .label {
   display: block;
   margin-bottom: 8px;
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .note {
   margin: 0;
   font-size: 13px;
   line-height: 20px;
-  color: var(--color-muted);
+  color: var(--ink-muted);
 }
 
 .rowCard {
@@ -46,7 +46,7 @@
   flex-direction: column;
   gap: 8px;
   padding: 12px 0;
-  border-bottom: 1px solid var(--color-rule);
+  border-bottom: 1px solid var(--border);
 }
 
 .line {
@@ -65,9 +65,9 @@
   display: flex;
   align-items: center;
   margin-bottom: 8px;
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .labelText {
-  font-weight: 700;
+  font-weight: 500;
 }

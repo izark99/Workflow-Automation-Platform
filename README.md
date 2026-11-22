@@ -15,7 +15,9 @@ phase at a time.
 | `CLAUDE.md` | Standing rules and commands |
 | `docs/SPEC.md` | What to build |
 | `docs/DESIGN.md` | Design tokens, layout rules, components |
-| `design/screens/` | The seven target screens |
+| `design/harold/` | The Harold design system (tokens, brand book, components). Reference only |
+| `design/screens-harold/` | The seven screens as built, in both themes. Reference only |
+| `design/screens/` | The old target screens: structure and layout only |
 | `testcase/` | Acceptance data and expected results. Read-only |
 
 ## What the app does
@@ -25,7 +27,9 @@ phase at a time.
 - Versions with an effective date for flows and reference tables.
 - Accounts managed by an admin in the app: add a user, reset a password, lock and unlock. A new user changes the first
   password at the first sign-in.
-- A light and a dark theme, and every text in a catalog with English and Vietnamese. The admin can edit any text in
+- The look of the Harold design system: glass panels over a soft blue scene, a light and a dark theme (System uses dark when
+  the browser has no preference), Be Vietnam Pro and JetBrains Mono as the fonts (part of the build, no font host), and the Harold
+  icons. A status always has an icon and a word. Every text is in a catalog with English and Vietnamese. The admin can edit any text in
   the app.
 - Reference tables: import a csv or xlsx file into a new table, a new version or a draft; adjust a draft (cells, rows,
   columns, description). A user reads the tables that their own flows read, read-only, with the flows that use them.
@@ -46,6 +50,6 @@ phase at a time.
   row), rows to ignore, and the columns that the file must have. "Analyze file" on the Test tab reads a sample file in the
   browser and proposes these settings with a confidence and a reason; nothing is applied until you press "Apply to the step".
 
-To put the app online, see `docs/DEPLOY.md` (a first deployment, "Upgrade an existing deployment", "Upgrade from Phase 4" and "Upgrade from Phase 5").
+To put the app online, see `docs/DEPLOY.md` (a first deployment, "Upgrade an existing deployment", "Upgrade from Phase 4", "Upgrade from Phase 5" and "Upgrade from Phase 6").
 
 All data in `testcase/` and `design/` is sample data made for testing.

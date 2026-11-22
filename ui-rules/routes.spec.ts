@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { ROUTES } from './routes';
-import { COMMON_RULES, headerPosition, sidebarWidth } from './rules';
+import { COMMON_RULES, headerPosition, settleAnimations, sidebarWidth } from './rules';
 
 // The dark project must really run in the dark theme: otherwise a green run would prove nothing.
 test('the app runs in the theme of the project, and the page colours differ between themes', async ({ page }, testInfo) => {
@@ -8,7 +8,7 @@ test('the app runs in the theme of the project, and the page colours differ betw
   await page.goto('/flows');
   expect(await page.evaluate(() => document.documentElement.getAttribute('data-theme'))).toBe(wanted);
   const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-  expect(bg).toBe(wanted === 'dark' ? 'rgb(14, 26, 25)' : 'rgb(240, 253, 250)');
+  expect(bg).toBe(wanted === 'dark' ? 'rgb(10, 17, 29)' : 'rgb(230, 237, 247)');
 });
 
 for (const route of ROUTES) {
@@ -19,6 +19,7 @@ for (const route of ROUTES) {
         await page.goto(route.path);
         await page.waitForLoadState('networkidle');
         await route.prepare?.(page);
+        await settleAnimations(page);
         expect(await rule(page)).toEqual([]);
       });
     }
@@ -71,11 +72,11 @@ for (const route of ROUTES) {
       });
     }
     if (route.sidebar && route.nav !== false) {
-      test(route.railSidebar ? 'sidebar is 64 px wide' : 'sidebar is 232 px wide', async ({ page }) => {
+      test(route.railSidebar ? 'sidebar is 64 px wide' : 'sidebar is 240 px wide', async ({ page }) => {
         await route.before?.(page);
         await page.goto(route.path);
         await page.waitForLoadState('networkidle');
-        expect(await sidebarWidth(page, route.railSidebar ? 64 : 232)).toEqual([]);
+        expect(await sidebarWidth(page, route.railSidebar ? 64 : 240)).toEqual([]);
       });
     }
     if (route.sidebar) {

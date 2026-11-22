@@ -18,7 +18,7 @@ test('the table has the columns Key, English, Vietnamese and Actions, and no lan
   await search(page, 'nav.signOut');
   await expect(row(page, 'nav.signOut')).toContainText('Sign out');
   await expect(row(page, 'nav.signOut')).toContainText('Đăng xuất');
-  expect(Math.round((await row(page, 'nav.signOut').boundingBox())!.height)).toBe(57);
+  expect(Math.round((await row(page, 'nav.signOut').boundingBox())!.height)).toBe(45);
   // A long key is cut with an ellipsis and keeps its full text in the title, so it never runs into the next column.
   await search(page, 'common.datePicker.previousMonth');
   await expect(page.locator('[title="common.datePicker.previousMonth"]')).toBeVisible();
@@ -33,7 +33,7 @@ test('both languages are edited with one Save, and both show in the table and af
   await expect(page.getByRole('row')).toHaveCount(2); // header and one text
   await page.getByRole('button', { name: 'Edit nav.createFlow' }).click();
   const dialog = dialogOf(page);
-  expect(Math.round((await dialog.boundingBox())!.width)).toBe(880);
+  expect(await dialog.evaluate((el) => (el as HTMLElement).offsetWidth)).toBe(880);
   await expect(dialog).toContainText('Create flow'); // the default under the English text
   await english(page).fill('New pipeline');
   await vietnamese(page).fill('Quy trình mới');

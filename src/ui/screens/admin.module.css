@@ -5,8 +5,8 @@
   justify-content: space-between;
   gap: 12px;
   min-height: 40px;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--color-rule);
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--border);
 }
 
 .headText {
@@ -18,12 +18,12 @@
   margin: 0;
   font-size: 13px;
   line-height: 20px;
-  color: var(--color-muted);
+  color: var(--ink-muted);
 }
 
 .foot {
-  padding: 12px 20px;
-  border-top: 1px solid var(--color-rule);
+  padding: var(--space-3) var(--space-5);
+  border-top: 1px solid var(--border);
 }
 
 .actions {
@@ -41,7 +41,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  color: var(--color-ink);
+  color: var(--ink);
 }
 
 .groupBoxes {
@@ -57,7 +57,7 @@
 
 /* The search field and the dropdown are 40 px, so the chip next to them is 40 px too (checklist item 3: one height in a row). */
 .textsToolbar [aria-pressed] {
-  height: var(--size-button);
+  height: var(--control-md);
 }
 
 .textsSearch {
@@ -108,7 +108,7 @@
 .defaultText {
   font-size: 12px;
   line-height: 18px;
-  color: var(--color-muted);
+  color: var(--ink-muted);
   overflow-wrap: anywhere;
 }
 
@@ -125,7 +125,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-family: var(--font-mono);
+  font-family: var(--family-mono);
   font-size: 13px;
 }
 

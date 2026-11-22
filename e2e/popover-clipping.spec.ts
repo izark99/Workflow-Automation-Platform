@@ -3,16 +3,22 @@ import type { Locator, Page } from '@playwright/test';
 
 // A popover must never be cut off by the container of its button: a table that scrolls, a card, the settings panel.
 
+/** Waits for the finite animations of the page (a popover opens with a 200 ms fade, rise and scale). */
+async function settled(page: Page): Promise<void> {
+  await page.evaluate(() => Promise.all(document.getAnimations().filter((a) => a.effect?.getComputedTiming().iterations !== Infinity).map((a) => a.finished.catch(() => undefined))));
+}
+
 /** True when the point at the middle of each of the four edges of the element is the element itself (or inside it). */
 async function fullyVisible(el: Locator): Promise<boolean> {
+  await settled(el.page());
   return el.evaluate((node) => {
     const r = node.getBoundingClientRect();
     if (r.left < 0 || r.top < 0 || r.right > window.innerWidth || r.bottom > window.innerHeight) return false;
     const points: [number, number][] = [
-      [r.left + 4, r.top + 4],
-      [r.right - 4, r.top + 4],
-      [r.left + 4, r.bottom - 4],
-      [r.right - 4, r.bottom - 4],
+      [r.left + 8, r.top + 8],
+      [r.right - 8, r.top + 8],
+      [r.left + 8, r.bottom - 8],
+      [r.right - 8, r.bottom - 8],
       [r.left + r.width / 2, r.top + r.height / 2],
     ];
     return points.every(([x, y]) => {
@@ -113,9 +119,10 @@ test('the items of the More menu are on one line and start at the left padding, 
   await expect(menu).toBeVisible();
   const menuBox = (await menu.boundingBox())!;
   for (const name of ['Reset password', 'Lock account']) {
+    await settled(page);
     const item = page.getByRole('option', { name });
     const box = (await item.boundingBox())!;
-    expect(Math.round(box.height), `${name} is one line`).toBe(36);
+    expect(Math.round(box.height), `${name} is one line`).toBe(32);
     const fit = await item.evaluate((el) => ({ over: el.scrollWidth - el.clientWidth, lines: Math.round(el.getBoundingClientRect().height) }));
     expect(fit.over, `${name} is not cut off`).toBeLessThanOrEqual(0);
     // The text starts at the 12 px padding of the item: no icon or empty column before it.

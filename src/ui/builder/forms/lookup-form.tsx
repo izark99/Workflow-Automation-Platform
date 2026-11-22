@@ -63,13 +63,13 @@ export function LookupForm(props: FormProps) {
               <ColumnSelect label={t('builder.join.keyLeft')} value={k.left} columns={leftNames} disabled={readOnly} width={132} onChange={(x) => apply({ ...v, keys: v.keys.map((y, j) => (j === i ? { ...y, left: x } : y)) })} />
               <ColumnSelect label={t('builder.join.keyRight')} value={k.right} columns={rightNames} disabled={readOnly} width={132} onChange={(x) => apply({ ...v, keys: v.keys.map((y, j) => (j === i ? { ...y, right: x } : y)) })} />
               <Button icon disabled={readOnly} aria-label={t('builder.join.removeKey', { n: i + 1 })} onClick={() => apply({ ...v, keys: v.keys.filter((_, j) => j !== i) })}>
-                <Icon name="close" />
+                <Icon name="x" />
               </Button>
             </div>
           </div>
         ))}
         <div style={{ paddingTop: 8 }}>
-          <Button compact disabled={readOnly} onClick={() => apply({ ...v, keys: [...v.keys, { left: '', right: '' }] })}>
+          <Button size="sm" disabled={readOnly} onClick={() => apply({ ...v, keys: [...v.keys, { left: '', right: '' }] })}>
             {t('builder.join.addKey')}
           </Button>
         </div>
@@ -85,13 +85,13 @@ export function LookupForm(props: FormProps) {
                 <Field label={t('builder.join.bringAs')} value={b.as} placeholder={b.column} disabled={readOnly} onChange={(e) => apply({ ...v, bring: v.bring.map((y, j) => (j === i ? { ...y, as: e.target.value } : y)) })} />
               </div>
               <Button icon disabled={readOnly} aria-label={t('builder.join.removeBring', { n: i + 1 })} onClick={() => apply({ ...v, bring: v.bring.filter((_, j) => j !== i) })}>
-                <Icon name="close" />
+                <Icon name="x" />
               </Button>
             </div>
           </div>
         ))}
         <div style={{ paddingTop: 8 }}>
-          <Button compact disabled={readOnly} onClick={() => apply({ ...v, bring: [...v.bring, { column: '', as: '' }] })}>
+          <Button size="sm" disabled={readOnly} onClick={() => apply({ ...v, bring: [...v.bring, { column: '', as: '' }] })}>
             {t('builder.join.addBring')}
           </Button>
         </div>

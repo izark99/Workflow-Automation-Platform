@@ -40,7 +40,7 @@ test('with a test file the step shows its first rows as a table; numbers are rig
   await expect(panel(page).getByText('2 rows.')).toBeVisible();
   const align = await rows(page).first().locator('td').nth(1).evaluate((el) => getComputedStyle(el).textAlign);
   expect(align).toBe('right');
-  expect(Math.round((await rows(page).first().boundingBox())!.height)).toBe(57);
+  expect(Math.round((await rows(page).first().boundingBox())!.height)).toBe(45);
 });
 
 test('more than 100 rows: the table holds 100 and the text gives the full count', async ({ page }) => {

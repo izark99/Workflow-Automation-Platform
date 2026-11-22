@@ -5,7 +5,8 @@ import { useT, formatDate } from '../i18n';
 import { addMonths, dayLabel, monthCells, monthOf, monthTitle, moveDate, weekdays } from './date-logic';
 import type { DateKey } from './date-logic';
 import { Icon } from './icons';
-import { useOutsideClose } from './popover';
+import { useEscapeLayer } from './layers';
+import { useOutsideClose, usePresence } from './popover';
 import styles from './popover.module.css';
 
 export interface DatePickerProps {
@@ -34,14 +35,18 @@ export function DatePicker({ label, value, onChange, width = 180, disabled = fal
   const triggerRef = useRef<HTMLButtonElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const dialogId = useId();
+  const now = new Date();
+  const today = `${String(now.getFullYear()).padStart(4, '0')}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
   const close = useCallback((returnFocus: boolean) => {
     setOpen(false);
     if (returnFocus) triggerRef.current?.focus();
   }, []);
   const popRef = useRef<HTMLDivElement>(null);
-  const floating = useFloating(rootRef, popRef, open);
+  const { mounted, leaving } = usePresence(open);
+  const floating = useFloating(rootRef, popRef, mounted);
   useOutsideClose([rootRef, popRef], open, () => close(false));
+  useEscapeLayer(open, () => close(true));
 
   // Focus the focused day after every move.
   useEffect(() => {
@@ -71,10 +76,7 @@ export function DatePicker({ label, value, onChange, width = 180, disabled = fal
   };
 
   const onKey = (e: React.KeyboardEvent): void => {
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      close(true);
-    } else if ((KEYS as string[]).includes(e.key) && (e.target as HTMLElement).dataset.iso) {
+    if ((KEYS as string[]).includes(e.key) && (e.target as HTMLElement).dataset.iso) {
       e.preventDefault();
       show(moveDate(focused, e.key as DateKey));
     }
@@ -97,7 +99,7 @@ export function DatePicker({ label, value, onChange, width = 180, disabled = fal
         <Icon name="calendar" />
         {formatDate(value)}
       </button>
-      {open && popoverLayer()
+      {mounted && popoverLayer()
         ? createPortal(
         <div
           id={dialogId}
@@ -106,17 +108,19 @@ export function DatePicker({ label, value, onChange, width = 180, disabled = fal
           aria-label={t('common.datePicker.choose', { label: label.toLowerCase() })}
           className={`${styles.popover} ${styles.calendar}`}
           style={floating.style}
+          data-closing={leaving ? 'true' : undefined}
+          aria-hidden={leaving ? 'true' : undefined}
           onKeyDown={onKey}
         >
           <div className={styles.monthRow}>
             <button type="button" className={styles.nav} aria-label={t('common.datePicker.previousMonth')} onClick={() => step(-1)}>
-              <Icon name="chevronLeft" />
+              <Icon name="chevron-left" />
             </button>
-            <span style={{ fontWeight: 700 }} aria-live="polite">
+            <span className={styles.monthTitle} aria-live="polite">
               {monthTitle(shown)}
             </span>
             <button type="button" className={styles.nav} aria-label={t('common.datePicker.nextMonth')} onClick={() => step(1)}>
-              <Icon name="chevronRight" />
+              <Icon name="chevron-right" />
             </button>
           </div>
           <div className={styles.grid} ref={gridRef}>
@@ -136,6 +140,7 @@ export function DatePicker({ label, value, onChange, width = 180, disabled = fal
                   className={styles.day}
                   aria-label={dayLabel(iso)}
                   aria-pressed={iso === value}
+                  data-today={iso === today ? 'true' : undefined}
                   tabIndex={iso === focused ? 0 : -1}
                   onClick={() => pick(iso)}
                 >

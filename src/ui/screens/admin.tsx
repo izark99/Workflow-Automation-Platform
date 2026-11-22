@@ -78,14 +78,14 @@ export function AdminScreen() {
         header: t('admin.userCols.status'),
         render: (u) => (
           <div className={styles.actions}>
-            <Badge tone={u.locked ? 'outline' : 'soft'}>{u.locked ? t('admin.status.locked') : t('admin.status.active')}</Badge>
-            {u.mustChangePassword ? <Badge tone="outline">{t('admin.status.mustChange')}</Badge> : null}
+            <Badge tone={u.locked ? 'danger' : 'success'} icon={u.locked ? 'circle-x' : 'circle-check'}>{u.locked ? t('admin.status.locked') : t('admin.status.active')}</Badge>
+            {u.mustChangePassword ? <Badge tone="warning" icon="triangle-alert">{t('admin.status.mustChange')}</Badge> : null}
           </div>
         ),
       },
       { key: 'actions', header: t('admin.userCols.actions'), render: (u) => (
           <div className={styles.actions}>
-            <Button compact aria-label={t('admin.userDialogEdit', { name: u.name })} onClick={() => open({ kind: 'user', user: u })}>
+            <Button size="sm" aria-label={t('admin.userDialogEdit', { name: u.name })} onClick={() => open({ kind: 'user', user: u })}>
               {t('admin.edit')}
             </Button>
             <Dropdown
@@ -112,8 +112,8 @@ export function AdminScreen() {
         header: t('admin.groupCols.actions'),
         render: (g) => (
           <div className={styles.actions}>
-            <Button compact aria-label={t('admin.renameGroup', { name: g.name })} onClick={() => open({ kind: 'group', group: g })}>{t('admin.rename')}</Button>
-            <Button compact variant="danger" aria-label={t('admin.deleteGroupLabel', { name: g.name })} onClick={() => open({ kind: 'deleteGroup', group: g })}>{t('admin.delete')}</Button>
+            <Button size="sm" aria-label={t('admin.renameGroup', { name: g.name })} onClick={() => open({ kind: 'group', group: g })}>{t('admin.rename')}</Button>
+            <Button size="sm" variant="danger" aria-label={t('admin.deleteGroupLabel', { name: g.name })} onClick={() => open({ kind: 'deleteGroup', group: g })}>{t('admin.delete')}</Button>
           </div>
         ),
       },
@@ -145,8 +145,8 @@ export function AdminScreen() {
         header: t('admin.deletedCols.actions'),
         render: (f) => (
           <div className={styles.actions}>
-            <Button compact aria-label={t('admin.restoreFlow', { name: f.name })} onClick={() => void run(() => store.restoreFlow(f.id), t('admin.restored', { name: f.name }), t('admin.deletedFailed'), false)}>{t('admin.restore')}</Button>
-            <Button compact variant="danger" aria-label={t('admin.deleteForGoodFlow', { name: f.name })} onClick={() => open({ kind: 'purge', flow: f })}>{t('admin.deleteForGood')}</Button>
+            <Button size="sm" aria-label={t('admin.restoreFlow', { name: f.name })} onClick={() => void run(() => store.restoreFlow(f.id), t('admin.restored', { name: f.name }), t('admin.deletedFailed'), false)}>{t('admin.restore')}</Button>
+            <Button size="sm" variant="danger" aria-label={t('admin.deleteForGoodFlow', { name: f.name })} onClick={() => open({ kind: 'purge', flow: f })}>{t('admin.deleteForGood')}</Button>
           </div>
         ),
       },
@@ -310,11 +310,11 @@ function UserDialog({ user, groups, busy, error, onSave, onCancel }: { user: Use
         <Field label={t('admin.userName')} value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
         <Field label={t('admin.userEmail')} hint={user ? undefined : t('admin.inviteHint')} value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} />
         <div>
-          <span style={{ display: 'block', fontWeight: 700, marginBottom: 8 }}>{t('admin.userRole')}</span>
+          <span style={{ display: 'block', fontWeight: 500, marginBottom: 'var(--space-2)' }}>{t('admin.userRole')}</span>
           <Dropdown label={t('admin.userRole')} options={(['user', 'admin'] as const).map((r) => ({ value: r, label: t(`admin.roles.${r}` as MessageKey) }))} value={f.role} width="100%" onChange={(role) => setF({ ...f, role: role as UserForm['role'] })} />
         </div>
         <div className={styles.groupBoxes} role="group" aria-label={t('admin.userGroups')}>
-          <span style={{ display: 'flex', alignItems: 'center', fontWeight: 700 }}>
+          <span style={{ display: 'flex', alignItems: 'center', fontWeight: 500 }}>
             {t('admin.userGroups')}
             <InfoTip label={t('admin.userGroups')}>{t('admin.userGroupsHint')}</InfoTip>
           </span>

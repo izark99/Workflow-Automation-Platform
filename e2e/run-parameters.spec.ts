@@ -22,8 +22,10 @@ test('the Parameters card sits above the files; Run stays off until the values a
   const seen: string[] = [];
   page.on('request', (r) => seen.push(`${r.method()} ${r.url()} ${r.postData() ?? ''}`));
   await seed(page);
-  const headings = await page.getByRole('heading', { level: 2 }).allTextContents();
-  expect(headings.slice(0, 3)).toEqual(['1. Choose the effective date', '2. Enter the parameters', '3. Add the input files']);
+  // The cards load after the title: wait for them instead of reading the headings once.
+  await expect
+    .poll(async () => (await page.getByRole('heading', { level: 2 }).allTextContents()).slice(0, 3))
+    .toEqual(['1. Choose the effective date', '2. Enter the parameters', '3. Add the input files']);
 
   await page.locator('input[type=file]').setInputFiles(csv(DATA));
   await expect(page.getByText('people.csv, ')).toBeVisible();
@@ -67,8 +69,10 @@ test('the Parameters card sits above the files; Run stays off until the values a
 
 test('a flow without parameters has no Parameters card and keeps its three steps', async ({ page }) => {
   await seed(page, []);
-  const headings = await page.getByRole('heading', { level: 2 }).allTextContents();
-  expect(headings.slice(0, 2)).toEqual(['1. Choose the effective date', '2. Add the input files']);
+  // The cards load after the title: wait for them instead of reading the headings once.
+  await expect
+    .poll(async () => (await page.getByRole('heading', { level: 2 }).allTextContents()).slice(0, 2))
+    .toEqual(['1. Choose the effective date', '2. Add the input files']);
 });
 
 test('a switch has no "(optional)" suffix, an optional text field has', async ({ page }) => {

@@ -46,7 +46,7 @@ export function UnpivotForm(props: FormProps) {
       <ColumnList label={t('builder.reshape.unpivot')} hint={t('builder.reshape.unpivotHint')} values={v.unpivot} columns={offer(v.keep)} disabled={readOnly} onChange={pick('unpivot')} />
       {names ? (
         <div>
-          <Button compact disabled={readOnly} onClick={() => apply({ ...v, unpivot: names.filter((n) => !v.keep.includes(n)) })}>
+          <Button size="sm" disabled={readOnly} onClick={() => apply({ ...v, unpivot: names.filter((n) => !v.keep.includes(n)) })}>
             {t('builder.reshape.unpivotRest')}
           </Button>
         </div>

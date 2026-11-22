@@ -136,7 +136,7 @@ export function RunScreen() {
 
   let body;
   if (flow.error) {
-    body = <ErrorState what={t('run.loadFailed')} next={t('run.loadFailedNext')} actions={<ButtonLink compact to="/flows">{t('run.crumbFlows')}</ButtonLink>} />;
+    body = <ErrorState what={t('run.loadFailed')} next={t('run.loadFailedNext')} actions={<ButtonLink size="sm" to="/flows">{t('run.crumbFlows')}</ButtonLink>} />;
   } else if (flow.loading || !record) {
     body = showSkeleton ? <SkeletonTable weights={[30, 16, 8]} rows={3} label={t('run.loading')} /> : null;
   } else {
@@ -174,7 +174,7 @@ export function RunScreen() {
             <ErrorState
               what={prepared.noPublished ? t('run.noPublished') : t('run.versionsFailed')}
               next={prepared.noPublished ? t('run.noPublishedNext') : prepared.message}
-              actions={prepared.noPublished ? <ButtonLink compact to={`/flows/${record.id}/versions/${record.versions[0]?.versionNo ?? 1}`}>{t('run.openBuilder')}</ButtonLink> : undefined}
+              actions={prepared.noPublished ? <ButtonLink size="sm" to={`/flows/${record.id}/versions/${record.versions[0]?.versionNo ?? 1}`}>{t('run.openBuilder')}</ButtonLink> : undefined}
             />
           ) : null}
         </Card>
@@ -203,7 +203,7 @@ export function RunScreen() {
           </div>
           <PendingParametersNote parameters={parameters} errors={valueErrors} action="run" />
           <div className={styles.actions}>
-            <Button variant="primary" busy={running} disabled={!prepared?.ok || missing.length > 0 || Object.keys(valueErrors).length > 0 || bindingProblem} onClick={() => void run()}>
+            <Button busy={running} disabled={!prepared?.ok || missing.length > 0 || Object.keys(valueErrors).length > 0 || bindingProblem} onClick={() => void run()}>
               {running ? t('run.running') : state.status === 'idle' ? t('run.run') : t('run.runAgain')}
             </Button>
             {running ? (
@@ -249,7 +249,7 @@ function FileRow({ label, name, file, error, disabled, onFile }: { label: string
           {file ? <Badge>{t('run.ready')}</Badge> : null}
           {/* The native file input stays hidden behind the button (DESIGN allows a hidden input[type=file]). */}
           <input ref={input} type="file" hidden accept=".xlsx,.xlsm,.csv" aria-label={t('run.fileLabel', { action: t('run.chooseFile'), name })} onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ''; }} />
-          <Button compact disabled={disabled} aria-label={t('run.fileLabel', { action: file ? t('run.changeFile') : t('run.chooseFile'), name: label })} onClick={() => input.current?.click()}>
+          <Button size="sm" disabled={disabled} aria-label={t('run.fileLabel', { action: file ? t('run.changeFile') : t('run.chooseFile'), name: label })} onClick={() => input.current?.click()}>
             {file ? t('run.changeFile') : t('run.chooseFile')}
           </Button>
         </span>
@@ -271,7 +271,7 @@ function Result({ outcome, tab, onTab }: { outcome: RunOutcome; tab: string; onT
       <div className={styles.split}>
         <div className={styles.downloads}>
           {outcome.files.map((f) => (
-            <Button key={f.name} variant="primary" onClick={() => download(f.name, f.mimeType, f.bytes)}>
+            <Button key={f.name} onClick={() => download(f.name, f.mimeType, f.bytes)}>
               {t('run.download', { name: f.name })}
             </Button>
           ))}

@@ -1,86 +1,172 @@
-/* Design tokens (docs/DESIGN.md). Components use these variables and never a raw hex value. */
+/* Design tokens (docs/DESIGN.md). Components use these variables and never a raw colour, radius or shadow value. The Harold tokens
+   below have the names and values of design/harold/tokens.json (src/ui/tokens.test.ts keeps them equal). The three widths of the
+   panels are layout, not part of the design system: the names start with --layout-. */
 :root {
-  --color-bg: #f0fdfa;
-  --color-card: #ffffff;
-  --color-ink: #134e4a;
-  --color-muted: #475569;
-  --color-line: #99f6e4;
-  --color-rule: #e8f1f4;
-  --color-control: #6f918d;
-  --color-primary: #0f766e;
-  --color-primary-soft: #ccfbf1;
-  --color-focus: #0d9488;
-  --color-cta: #c2410c;
-  --color-accent: #ea580c;
-  --color-danger: #b91c1c;
-  --color-skeleton: #dce7ea;
-  --color-on-primary: #ffffff;
-  --color-on-cta: #ffffff;
-
-  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
-  --font-mono: ui-monospace, Menlo, Consolas, monospace;
-
-  --radius-control: 8px;
-  --radius-step: 10px;
-  --radius-card: 12px;
-
-  --size-button: 40px;
-  --size-button-compact: 36px;
-  --size-sidebar: 232px;
-  --size-step-list: 184px;
-  --size-settings: 380px;
-  --size-builder-header: 64px;
+  --layout-sidebar: 240px;
+  --layout-step-list: 184px;
+  --layout-settings: 380px;
 }
 
-/* Extra tokens taken from the screens: text on soft fills, error panel, popover shadow. */
-:root {
-  --color-badge-ink: #115e59;
-  --color-danger-soft: #fef2f2;
-  --color-danger-ink: #7f1d1d;
-  --shadow-popover: 0 8px 24px rgb(19 78 74 / 14%);
-  --color-overlay: rgb(19 78 74 / 35%);
-}
-
-/* Version timeline and notes (screen 4). */
-:root {
-  --color-note-bg: #fff7ed;
-  --color-note-ink: #7c2d12;
-  --color-draft-ink: #9a3412;
-  --color-ended-ink: #334155;
-}
-
-/* Dark theme (docs/DESIGN.md, "Tokens for both themes"). Same names, other values. */
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --color-bg: #0e1a19;
-  --color-card: #152422;
-  --color-ink: #e3f2ef;
-  --color-muted: #a7bdb9;
-  --color-line: #2a4a46;
-  --color-rule: #1d302d;
-  --color-control: #6e938e;
-  --color-primary: #2dd4bf;
-  --color-on-primary: #04201d;
-  --color-primary-soft: #123f3b;
-  --color-focus: #5eead4;
-  --color-cta: #fb923c;
-  --color-on-cta: #2a1003;
-  --color-accent: #fb923c;
-  --color-danger: #f87171;
-  --color-skeleton: #22362f;
-
-  --color-badge-ink: #99f6e4;
-  --color-danger-soft: #3a1717;
-  --color-danger-ink: #fecaca;
-  --shadow-popover: 0 8px 24px rgb(0 0 0 / 50%);
-  --color-overlay: rgb(0 0 0 / 60%);
-
-  --color-note-bg: #2b1a0e;
-  --color-note-ink: #fed7aa;
-  --color-draft-ink: #fdba74;
-  --color-ended-ink: #cbd5e1;
 }
 
 :root[data-theme='light'] {
   color-scheme: light;
+}
+
+/* Harold tokens: theme-independent tokens live in plain :root so that a page with no data-theme attribute still has them. Light is
+   also the fallback of a page with no data-theme attribute. */
+:root {
+  /* Families and type styles (design/harold/tokens.json, "type"). src/ui/type.css builds the classes on these. */
+  --family-sans: "Be Vietnam Pro", "Segoe UI", system-ui, sans-serif;
+  --family-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  --type-display-xl-size: 56px;
+  --type-display-xl-line-height: 68px;
+  --type-display-xl-weight: 700;
+  --type-display-xl-letter-spacing: -0.02em;
+  --type-display-size: 40px;
+  --type-display-line-height: 50px;
+  --type-display-weight: 700;
+  --type-display-letter-spacing: -0.015em;
+  --type-kpi-size: 36px;
+  --type-kpi-line-height: 44px;
+  --type-kpi-weight: 600;
+  --type-kpi-letter-spacing: -0.01em;
+  --type-h1-size: 28px;
+  --type-h1-line-height: 38px;
+  --type-h1-weight: 600;
+  --type-h2-size: 22px;
+  --type-h2-line-height: 32px;
+  --type-h2-weight: 600;
+  --type-h3-size: 18px;
+  --type-h3-line-height: 28px;
+  --type-h3-weight: 600;
+  --type-body-lg-size: 18px;
+  --type-body-lg-line-height: 28px;
+  --type-body-lg-weight: 400;
+  --type-body-size: 16px;
+  --type-body-line-height: 24px;
+  --type-body-weight: 400;
+  --type-label-size: 14px;
+  --type-label-line-height: 20px;
+  --type-label-weight: 500;
+  --type-small-size: 14px;
+  --type-small-line-height: 20px;
+  --type-small-weight: 400;
+  --type-caption-size: 12px;
+  --type-caption-line-height: 16px;
+  --type-caption-weight: 500;
+  --type-caption-letter-spacing: 0.02em;
+  --type-mono-size: 13px;
+  --type-mono-line-height: 20px;
+  --type-mono-weight: 400;
+
+  /* spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  /* radius */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
+  --radius-xl: 32px;
+  --radius-full: 999px;
+
+  /* size */
+  --control-sm: 32px;
+  --control-md: 40px;
+  --control-lg: 48px;
+
+  /* blur */
+  --blur-sm: 12px;
+  --blur-md: 24px;
+  --blur-lg: 40px;
+}
+
+:root,
+:root[data-theme='light'] {
+  --scene-100: #e6edf7;
+  --scene-200: #f7faff;
+  --scene-glow-blue: rgba(47,111,232,0.12);
+  --scene-glow-warm: rgba(255,150,90,0.12);
+  --surface-100: var(--scene-100);
+  --surface-200: rgba(255,255,255,0.72);
+  --surface-300: rgba(15,26,43,0.05);
+  --surface-overlay: rgba(255,255,255,0.95);
+  --border: rgba(15,26,43,0.10);
+  --border-strong: rgba(15,26,43,0.55);
+  --neutral-fill: rgba(15,26,43,0.08);
+  --neutral-fill-hover: rgba(15,26,43,0.12);
+  --ink: #0f1a2b;
+  --ink-muted: #465468;
+  --primary: #1d5fd1;
+  --primary-hover: #164bb0;
+  --primary-text: #1a56c0;
+  --primary-soft: rgba(47,111,232,0.14);
+  --on-primary: #ffffff;
+  --accent: #9e3f0c;
+  --accent-soft: rgba(158,63,12,0.10);
+  --on-accent: #ffffff;
+  --success: #17683a;
+  --warning: #7a4f00;
+  --danger: #b3261e;
+  --on-danger: #ffffff;
+  --info: #1a559a;
+  --scrim: rgba(15,26,43,0.35);
+  --thumb: #ffffff;
+  --chart-1: #1d5fd1;
+  --chart-2: var(--accent);
+  --chart-3: #0f8f84;
+  --chart-4: #6a5acd;
+  --chart-5: #7b8aa0;
+  --shadow-sm: 0 2px 8px rgba(15,26,43,0.08), inset 0 1px 0 rgba(255,255,255,0.85);
+  --shadow-md: 0 12px 32px rgba(15,26,43,0.14), inset 0 1px 0 rgba(255,255,255,0.9);
+  --shadow-lg: 0 24px 64px rgba(15,26,43,0.22), inset 0 1px 0 rgba(255,255,255,0.95);
+}
+
+:root[data-theme='dark'] {
+  --scene-100: #0a111d;
+  --scene-200: #14233d;
+  --scene-glow-blue: rgba(61,131,255,0.22);
+  --scene-glow-warm: rgba(255,150,90,0.10);
+  --surface-100: var(--scene-100);
+  --surface-200: rgba(22,31,48,0.78);
+  --surface-300: rgba(255,255,255,0.07);
+  --surface-overlay: rgba(24,34,54,0.95);
+  --border: rgba(255,255,255,0.14);
+  --border-strong: rgba(255,255,255,0.55);
+  --neutral-fill: rgba(255,255,255,0.12);
+  --neutral-fill-hover: rgba(255,255,255,0.18);
+  --ink: #f4f7fc;
+  --ink-muted: #c3cee0;
+  --primary: #2f6fe8;
+  --primary-hover: #2560d0;
+  --primary-text: #8cc4ff;
+  --primary-soft: rgba(76,141,255,0.18);
+  --on-primary: #ffffff;
+  --accent: #ffae82;
+  --accent-soft: rgba(255,174,130,0.16);
+  --on-accent: #1a0e08;
+  --success: #7ee0a6;
+  --warning: #f2c94c;
+  --danger: #ffb0a9;
+  --on-danger: #1a0a09;
+  --info: #9cc9ff;
+  --scrim: rgba(4,9,18,0.6);
+  --thumb: #ffffff;
+  --chart-1: #4d94ff;
+  --chart-2: var(--accent);
+  --chart-3: #5ed0c4;
+  --chart-4: #a79bff;
+  --chart-5: #8191a8;
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,255,255,0.10);
+  --shadow-md: 0 12px 32px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,255,255,0.12);
+  --shadow-lg: 0 24px 64px rgba(0,0,0,0.50), inset 0 1px 0 rgba(255,255,255,0.14);
 }

@@ -13,7 +13,7 @@ test('a fixed field has the link button beside its box: same height, haspopup li
   const button = useButton(page, 'pcFixed');
   await expect(button).toHaveAttribute('aria-haspopup', 'listbox');
   await expect(button).toBeEnabled();
-  const [b, input] = [await button.boundingBox(), await demo(page, 'pcFixed').getByRole('textbox').boundingBox()];
+  const [b, input] = [await button.boundingBox(), await demo(page, 'pcFixed').getByRole('textbox').locator('..').boundingBox()];
   expect(Math.round(b!.height)).toBe(Math.round(input!.height));
   expect(Math.round(b!.width)).toBe(Math.round(b!.height));
   await button.click();
@@ -54,7 +54,7 @@ test('a bound field is one row: the chip with the parameter, "Use a fixed value"
   await expect(d.getByText('Period', { exact: true })).toBeVisible();
   await expect(d.getByRole('button', { name: 'Use a fixed value' })).toBeEnabled();
   await expect(d.getByText('Now: July')).toBeVisible();
-  expect(Math.round((await d.getByRole('button', { name: 'Use a fixed value' }).boundingBox())!.height)).toBe(36);
+  expect(Math.round((await d.getByRole('button', { name: 'Use a fixed value' }).boundingBox())!.height)).toBe(32);
 });
 
 test('an error is shown under the field, and a deleted parameter says so', async ({ page }) => {

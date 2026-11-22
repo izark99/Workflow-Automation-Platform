@@ -5,7 +5,8 @@ import { Icon } from './icons';
 import type { IconName } from './icons';
 import { isTypeAheadKey, moveIndex, typeAhead } from './list-keys';
 import type { ListKey } from './list-keys';
-import { useOutsideClose } from './popover';
+import { useEscapeLayer } from './layers';
+import { useOutsideClose, usePresence } from './popover';
 import styles from './popover.module.css';
 
 export interface DropdownOption {
@@ -48,13 +49,15 @@ export function Dropdown({ label, options, value, onChange, width = 260, disable
   const listId = useId();
   const selected = options.findIndex((o) => o.value === value);
   const popRef = useRef<HTMLDivElement>(null);
-  const floating = useFloating(rootRef, popRef, open);
+  const { mounted, leaving } = usePresence(open);
+  const floating = useFloating(rootRef, popRef, mounted);
 
   const close = useCallback((returnFocus: boolean) => {
     setOpen(false);
     if (returnFocus) triggerRef.current?.focus();
   }, []);
   useOutsideClose([rootRef, popRef], open, () => close(false));
+  useEscapeLayer(open, () => close(true));
 
   useEffect(() => {
     if (skipFocus.current) {
@@ -82,10 +85,7 @@ export function Dropdown({ label, options, value, onChange, width = 260, disable
   };
 
   const onListKey = (e: React.KeyboardEvent): void => {
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      close(true);
-    } else if (e.key === 'Tab') {
+    if (e.key === 'Tab') {
       close(true); // focus goes back to the button, so the Tab that follows moves on from it
 
     } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Home' || e.key === 'End') {
@@ -109,7 +109,7 @@ export function Dropdown({ label, options, value, onChange, width = 260, disable
       <button
         ref={triggerRef}
         type="button"
-        className={`${styles.trigger} ${iconTrigger ? styles.iconTrigger : styles.between} ${compact ? styles.compactTrigger : ''}`}
+        className={`${styles.trigger} ${iconTrigger ? styles.iconTrigger : styles.between} ${buttonLabel !== undefined || iconTrigger ? styles.menuTrigger : ''} ${compact ? styles.compactTrigger : ''}`}
         style={iconTrigger ? undefined : { width }}
         data-user-content={userContent ? '' : undefined}
         aria-haspopup="listbox"
@@ -120,9 +120,9 @@ export function Dropdown({ label, options, value, onChange, width = 260, disable
         onClick={() => (open ? close(false) : openList())}
         onKeyDown={onTriggerKey}
       >
-        {iconTrigger ? <Icon name={iconTrigger} /> : <>{buttonLabel ?? current}<Icon name="chevronDown" /></>}
+        {iconTrigger ? <Icon name={iconTrigger} /> : <>{buttonLabel ?? current}<Icon name="chevron-down" /></>}
       </button>
-      {open && popoverLayer()
+      {mounted && popoverLayer()
         ? createPortal(
         <div
           id={listId}
@@ -130,6 +130,8 @@ export function Dropdown({ label, options, value, onChange, width = 260, disable
           role="listbox"
           aria-label={label}
           className={styles.popover}
+          data-closing={leaving ? 'true' : undefined}
+          aria-hidden={leaving ? 'true' : undefined}
           // As wide as the button plus 20 px at least, and wider when an option needs it, but never wider than the window.
           style={{ ...floating.style, minWidth: (floating.anchorWidth || (typeof width === 'number' ? width : 0)) + 20, width: 'max-content', maxWidth: 'calc(100vw - 16px)' }}
           onKeyDown={onListKey}
@@ -148,10 +150,10 @@ export function Dropdown({ label, options, value, onChange, width = 260, disable
               data-user-content={userContent ? '' : undefined}
               onClick={() => choose(i)}
             >
-              {/* A menu of actions (a button label that stays the same) has no selected item, so it has no check column. */}
-              {buttonLabel !== undefined ? null : i === selected ? <Icon name="check" /> : <span className={styles.check} />}
               {o.label}
               {o.hint ? <span className={styles.optionHint}>{o.hint}</span> : null}
+              {/* A menu of actions (a button label that stays the same) has no selected item, so it has no check. */}
+              {buttonLabel === undefined && i === selected ? <Icon name="check" /> : null}
             </button>
           ))}
         </div>,

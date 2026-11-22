@@ -28,7 +28,7 @@ test('a user has no Import button', async ({ page }) => {
 
 test('a csv file goes into a new table: preview, guessed types, a draft that is not published, and a toast', async ({ page }) => {
   await open(page);
-  expect(Math.round((await dialog(page).boundingBox())!.width)).toBe(720);
+  expect(await dialog(page).evaluate((el) => (el as HTMLElement).offsetWidth)).toBe(720);
   await expect(importButton(page)).toBeDisabled();
   await expect(dialog(page)).toContainText('Choose a file to import.');
   await choose(page, csv(CSV));

@@ -17,7 +17,7 @@ export function PanelToggle({ panel, collapsed, onToggle, controls }: PanelToggl
   const t = useT();
   const name = t(collapsed ? 'panels.expand' : 'panels.collapse', { panel: t(PANEL_NAME_KEYS[panel]) });
   return (
-    <Button compact icon aria-expanded={!collapsed} aria-controls={controls} aria-label={name} title={name} onClick={onToggle} data-panel-toggle={panel}>
+    <Button size="sm" icon aria-expanded={!collapsed} aria-controls={controls} aria-label={name} title={name} onClick={onToggle} data-panel-toggle={panel}>
       <Icon name={toggleIcon(PANEL_SIDES[panel], collapsed)} />
     </Button>
   );

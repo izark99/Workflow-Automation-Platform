@@ -84,7 +84,7 @@ export function OutputForm(props: FormProps) {
                 )}
               </div>
               <Button icon disabled={readOnly} aria-label={t('builder.output.removeSort', { n: i + 1 })} onClick={() => apply({ ...v, sort: v.sort.filter((_, j) => j !== i) })}>
-                <Icon name="close" />
+                <Icon name="x" />
               </Button>
             </div>
             <div>
@@ -94,7 +94,7 @@ export function OutputForm(props: FormProps) {
           </div>
         ))}
         <div style={{ paddingTop: 8 }}>
-          <Button compact disabled={readOnly} onClick={() => apply({ ...v, sort: [...v.sort, { kind: 'column', column: '', expression: '', direction: 'asc' }] })}>
+          <Button size="sm" disabled={readOnly} onClick={() => apply({ ...v, sort: [...v.sort, { kind: 'column', column: '', expression: '', direction: 'asc' }] })}>
             {t('builder.output.addSort')}
           </Button>
         </div>

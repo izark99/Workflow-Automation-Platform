@@ -44,9 +44,10 @@ test('operating system dark, app Light: the canvas background, dots, edges and a
   await openCanvasWithEdge(page);
   const c = await colours(page);
   expect(c.scheme).toBe('light');
-  expect(c.background).toBe('rgb(240, 253, 250)');
-  expect(c.dots).toBe('rgb(153, 246, 228)');
-  expect(c.edge).toBe('rgb(111, 145, 141)');
+  // The canvas is transparent: the page draws the scene behind it. Dots and edges are Harold `border` and `ink-muted`.
+  expect(c.background).toBe('rgba(0, 0, 0, 0)');
+  expect(c.dots).toBe('rgba(15, 26, 43, 0.1)');
+  expect(c.edge).toBe('rgb(70, 84, 104)');
   expect(c.attribution).not.toBe('rgba(150, 150, 150, 0.25)');
 });
 
@@ -56,9 +57,9 @@ test('operating system light, app Dark: the canvas is dark', async ({ page }) =>
   await openCanvasWithEdge(page);
   const c = await colours(page);
   expect(c.scheme).toBe('dark');
-  expect(c.background).toBe('rgb(14, 26, 25)');
-  expect(c.dots).toBe('rgb(42, 74, 70)');
-  expect(c.edge).toBe('rgb(110, 147, 142)');
+  expect(c.background).toBe('rgba(0, 0, 0, 0)');
+  expect(c.dots).toBe('rgba(255, 255, 255, 0.14)');
+  expect(c.edge).toBe('rgb(195, 206, 224)');
 });
 
 test('after fit to screen no step card sits under the control bar, on load and after the Fit button', async ({ page }) => {

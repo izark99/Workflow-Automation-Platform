@@ -118,14 +118,14 @@ export function InputFileForm(props: FormProps) {
                 <Field label={t('common.numbered', { label: t('builder.form.input.ignoreText'), n: i + 1 })} value={r.text} disabled={readOnly} onChange={(e) => change({ ignoreRows: values.ignoreRows.map((x, j) => (j === i ? { ...x, text: e.target.value } : x)) })} />
               </div>
               <Button icon disabled={readOnly} aria-label={t('builder.form.input.ignoreRemove', { n: i + 1 })} onClick={() => change({ ignoreRows: values.ignoreRows.filter((_, j) => j !== i) })}>
-                <Icon name="close" />
+                <Icon name="x" />
               </Button>
             </div>
           </div>
         ))}
         {errors.ignoreRows ? <p className={pickers.note} role="alert">{errors.ignoreRows}</p> : null}
         <div style={{ paddingTop: 8 }}>
-          <Button compact disabled={readOnly} onClick={() => change({ ignoreRows: [...values.ignoreRows, { column: '', text: '' }] })}>
+          <Button size="sm" disabled={readOnly} onClick={() => change({ ignoreRows: [...values.ignoreRows, { column: '', text: '' }] })}>
             {t('builder.form.input.ignoreAdd')}
           </Button>
         </div>

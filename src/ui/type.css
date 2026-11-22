@@ -1,0 +1,94 @@
+/* Type styles of docs/DESIGN.md ("Type"), built on the variables of tokens.css. One class per style of the Harold scale. */
+
+.type-display-xl {
+  font-family: var(--family-sans);
+  font-size: var(--type-display-xl-size);
+  line-height: var(--type-display-xl-line-height);
+  font-weight: var(--type-display-xl-weight);
+  letter-spacing: var(--type-display-xl-letter-spacing);
+}
+
+.type-display {
+  font-family: var(--family-sans);
+  font-size: var(--type-display-size);
+  line-height: var(--type-display-line-height);
+  font-weight: var(--type-display-weight);
+  letter-spacing: var(--type-display-letter-spacing);
+}
+
+.type-kpi {
+  font-family: var(--family-sans);
+  font-size: var(--type-kpi-size);
+  line-height: var(--type-kpi-line-height);
+  font-weight: var(--type-kpi-weight);
+  letter-spacing: var(--type-kpi-letter-spacing);
+}
+
+.type-h1 {
+  font-family: var(--family-sans);
+  font-size: var(--type-h1-size);
+  line-height: var(--type-h1-line-height);
+  font-weight: var(--type-h1-weight);
+}
+
+.type-h2 {
+  font-family: var(--family-sans);
+  font-size: var(--type-h2-size);
+  line-height: var(--type-h2-line-height);
+  font-weight: var(--type-h2-weight);
+}
+
+.type-h3 {
+  font-family: var(--family-sans);
+  font-size: var(--type-h3-size);
+  line-height: var(--type-h3-line-height);
+  font-weight: var(--type-h3-weight);
+}
+
+.type-body-lg {
+  font-family: var(--family-sans);
+  font-size: var(--type-body-lg-size);
+  line-height: var(--type-body-lg-line-height);
+  font-weight: var(--type-body-lg-weight);
+}
+
+.type-body {
+  font-family: var(--family-sans);
+  font-size: var(--type-body-size);
+  line-height: var(--type-body-line-height);
+  font-weight: var(--type-body-weight);
+}
+
+.type-label {
+  font-family: var(--family-sans);
+  font-size: var(--type-label-size);
+  line-height: var(--type-label-line-height);
+  font-weight: var(--type-label-weight);
+}
+
+.type-small {
+  font-family: var(--family-sans);
+  font-size: var(--type-small-size);
+  line-height: var(--type-small-line-height);
+  font-weight: var(--type-small-weight);
+}
+
+.type-caption {
+  font-family: var(--family-sans);
+  font-size: var(--type-caption-size);
+  line-height: var(--type-caption-line-height);
+  font-weight: var(--type-caption-weight);
+  letter-spacing: var(--type-caption-letter-spacing);
+}
+
+.type-mono {
+  font-family: var(--family-mono);
+  font-size: var(--type-mono-size);
+  line-height: var(--type-mono-line-height);
+  font-weight: var(--type-mono-weight);
+}
+
+/* Numbers in a table, a progress text or a changing value. */
+.type-tabular {
+  font-variant-numeric: tabular-nums;
+}

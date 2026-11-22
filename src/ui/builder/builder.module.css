@@ -8,24 +8,24 @@
 .bar {
   display: flex;
   align-items: center;
-  gap: 12px;
-  height: var(--size-builder-header);
-  padding: 0 24px;
-  background: var(--color-card);
-  border-bottom: 1px solid var(--color-line);
+  gap: var(--space-3);
+  height: var(--space-8);
+  padding: 0 var(--space-5);
+  background: var(--surface-overlay);
+  box-shadow: inset 0 -1px 0 var(--border);
 }
 
 .crumb {
   display: inline-flex;
   align-items: center;
-  height: var(--size-button);
-  font-weight: 700;
-  color: var(--color-ink);
+  height: var(--control-md);
+  font-weight: 500;
+  color: var(--ink-muted);
   text-decoration: none;
 }
 
 .slash {
-  color: var(--color-muted);
+  color: var(--ink-muted);
 }
 
 .title {
@@ -34,14 +34,13 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 18px;
-  line-height: 24px;
+  font: 600 18px/28px var(--family-sans);
 }
 
 .dirty {
   font-size: 12px;
   font-weight: 700;
-  color: var(--color-muted);
+  color: var(--ink-muted);
   white-space: nowrap;
 }
 
@@ -50,17 +49,17 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 8px 24px;
-  background: var(--color-primary-soft);
-  border-bottom: 1px solid var(--color-line);
-  color: var(--color-badge-ink);
+  padding: var(--space-2) var(--space-5);
+  background: var(--primary-soft);
+  border-bottom: 1px solid var(--border);
+  color: var(--primary-text);
 }
 
 .dialogBody {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  color: var(--color-ink);
+  color: var(--ink);
 }
 
 .barActions {
@@ -79,19 +78,49 @@
 .stepList {
   position: relative;
   flex: none;
-  width: var(--size-step-list);
+  width: var(--layout-step-list);
   box-sizing: border-box;
-  padding: 16px 12px;
-  background: var(--color-card);
-  border-right: 1px solid var(--color-line);
+  isolation: isolate;
+  padding: var(--space-4) var(--space-3);
+  border-right: 1px solid var(--border);
   overflow-x: hidden;
   overflow-y: auto;
   transition: width 200ms ease-out;
 }
 
+/* The step list is glass as its own layer, with no blur while its width changes (usePanelMotion). */
+.glass {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--surface-200);
+  -webkit-backdrop-filter: blur(var(--blur-md)) saturate(1.5);
+  backdrop-filter: blur(var(--blur-md)) saturate(1.5);
+}
+
+.stepList[data-moving] .glass {
+  background: var(--surface-overlay);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass {
+    background: var(--surface-overlay);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass {
+    background: var(--surface-overlay);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
 .stepListBody {
   /* A fixed width, so the contents are clipped and never wrapped while the panel changes width. */
-  width: calc(var(--size-step-list) - 24px - 1px);
+  width: calc(var(--layout-step-list) - 2 * var(--space-3) - 1px);
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -129,14 +158,13 @@
   margin: 0;
   font-size: 13px;
   line-height: 20px;
-  color: var(--color-muted);
+  color: var(--ink-muted);
 }
 
 .group {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--color-muted);
-  padding: 8px 4px 2px;
+  font: 500 12px/16px var(--family-sans);
+  color: var(--ink-muted);
+  padding: var(--space-2) var(--space-1) var(--space-1);
 }
 
 .stepButton {
@@ -153,34 +181,38 @@
 
 /* React Flow gets its colours from the tokens, so its own light-dark() defaults never decide (docs/DESIGN.md, Theme rules). */
 .canvas :global(.react-flow) {
-  --xy-background-color: var(--color-bg);
-  --xy-background-pattern-color: var(--color-line);
-  --xy-edge-stroke: var(--color-control);
-  --xy-edge-stroke-selected: var(--color-primary);
-  --xy-connectionline-stroke: var(--color-primary);
-  --xy-handle-background-color: var(--color-card);
-  --xy-handle-border-color: var(--color-control);
-  --xy-selection-background-color: var(--color-primary-soft);
-  --xy-selection-border: 1px dotted var(--color-primary);
-  --xy-attribution-background-color: var(--color-card);
+  --xy-background-color: transparent;
+  --xy-background-pattern-color: var(--border);
+  --xy-edge-stroke: var(--ink-muted);
+  --xy-edge-stroke-selected: var(--primary-text);
+  --xy-connectionline-stroke: var(--primary-text);
+  --xy-handle-background-color: var(--surface-overlay);
+  --xy-handle-border-color: var(--border-strong);
+  --xy-selection-background-color: var(--primary-soft);
+  --xy-selection-border: 1px dotted var(--primary-text);
+  --xy-attribution-background-color: var(--surface-overlay);
 }
 
 .canvas :global(.react-flow__attribution) {
-  color: var(--color-muted);
+  color: var(--ink-muted);
+  font-size: 12px;
+  line-height: 16px;
 }
 
 .canvas :global(.react-flow__attribution a) {
-  color: var(--color-muted);
+  color: var(--ink-muted);
 }
 
 .toolbar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px;
-  background: var(--color-card);
-  border: 1px solid var(--color-control);
-  border-radius: var(--radius-card);
+  gap: var(--space-2);
+  padding: var(--space-2);
+  /* surface-overlay, not glass: the canvas moves under the controls during a drag, and a blur there is repainted every frame */
+  background: var(--surface-overlay);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
 }
 
 .zoom {
@@ -191,7 +223,7 @@
 
 .summary {
   padding: 0 8px;
-  color: var(--color-muted);
+  color: var(--ink-muted);
   font-size: 13px;
 }
 
@@ -204,7 +236,7 @@
   max-width: 560px;
 }
 
-/* Step card: 240 x 56 px, 10 px radius, 2 px accent border when selected. */
+/* Step card: 240 x 56 px on surface-overlay (not glass: it moves in a drag), radius-md, a 2 px primary-text ring when selected. */
 .card {
   box-sizing: border-box;
   width: 240px;
@@ -212,30 +244,30 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 0 12px;
-  background: var(--color-card);
-  border: 1px solid var(--color-control);
-  border-radius: var(--radius-step);
-  color: var(--color-ink);
+  padding: 0 var(--space-3);
+  background: var(--surface-overlay);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  color: var(--ink);
 }
 
+/* The ring is a shadow, so the card does not change size when it is selected. */
 .cardSelected {
-  border: 2px solid var(--color-accent);
-  padding: 0 11px;
+  box-shadow: 0 0 0 2px var(--primary-text);
 }
 
 .number {
   flex: none;
   width: 24px;
   height: 24px;
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: var(--color-primary-soft);
-  color: var(--color-badge-ink);
-  font-size: 12px;
-  font-weight: 700;
+  background: var(--primary-soft);
+  color: var(--primary-text);
+  font: 600 12px/16px var(--family-sans);
 }
 
 .cardText {
@@ -245,7 +277,7 @@
 }
 
 .cardTitle {
-  font-weight: 700;
+  font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -253,8 +285,8 @@
 
 .cardSub {
   font-size: 12px;
-  line-height: 18px;
-  color: var(--color-muted);
+  line-height: 16px;
+  color: var(--ink-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -265,8 +297,8 @@
   font-size: 12px;
   line-height: 16px;
   padding: 0 2px;
-  background: var(--color-card);
-  color: var(--color-muted);
+  background: var(--surface-overlay);
+  color: var(--ink-muted);
   white-space: nowrap;
   pointer-events: none;
 }

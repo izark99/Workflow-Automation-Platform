@@ -67,13 +67,13 @@ export function ColumnMappingForm({ step, definition, onSettings, readOnly, cont
     >
       <SectionLabel label={t('builder.form.mapping.list')} hint={t('builder.form.mapping.hint')} />
       <div className={styles.toolbar}>
-        <Button compact disabled={readOnly || loading} busy={loading} onClick={() => void load()}>
+        <Button size="sm" disabled={readOnly || loading} busy={loading} onClick={() => void load()}>
           {t('builder.form.mapping.load')}
         </Button>
-        <Button compact disabled={readOnly} onClick={() => { setPasteText(''); setPasteError(null); setPasteOpen(true); }}>
+        <Button size="sm" disabled={readOnly} onClick={() => { setPasteText(''); setPasteError(null); setPasteOpen(true); }}>
           {t('builder.form.mapping.paste')}
         </Button>
-        <Button compact disabled={readOnly} onClick={() => apply([...rows, emptyRow()])}>
+        <Button size="sm" disabled={readOnly} onClick={() => apply([...rows, emptyRow()])}>
           {t('builder.form.mapping.add')}
         </Button>
       </div>
@@ -93,7 +93,7 @@ export function ColumnMappingForm({ step, definition, onSettings, readOnly, cont
                 <Field label={t('builder.form.mapping.source')} value={r.source} disabled={readOnly} onChange={(e) => patch(i, { source: e.target.value })} />
               </div>
               <Button icon aria-label={t('builder.form.mapping.remove', { name: r.source || t('builder.form.mapping.thisRow') })} disabled={readOnly} onClick={() => apply(rows.filter((_, j) => j !== i))}>
-                <Icon name="close" />
+                <Icon name="x" />
               </Button>
             </div>
             <div className={styles.line}>

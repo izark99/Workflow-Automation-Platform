@@ -19,10 +19,10 @@ describe('PanelToggle', () => {
     expect(shut).toContain('aria-label="Expand settings panel"');
   });
   it('points the chevron to the edge when open and away from it when collapsed', () => {
-    expect(toggleIcon('left', false)).toBe('chevronLeft');
-    expect(toggleIcon('left', true)).toBe('chevronRight');
-    expect(toggleIcon('right', false)).toBe('chevronRight');
-    expect(toggleIcon('right', true)).toBe('chevronLeft');
+    expect(toggleIcon('left', false)).toBe('chevron-left');
+    expect(toggleIcon('left', true)).toBe('chevron-right');
+    expect(toggleIcon('right', false)).toBe('chevron-right');
+    expect(toggleIcon('right', true)).toBe('chevron-left');
   });
   it('has a catalog name for every panel in both languages', () => {
     for (const id of PANEL_IDS) {

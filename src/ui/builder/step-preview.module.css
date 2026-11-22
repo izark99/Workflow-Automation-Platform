@@ -5,7 +5,7 @@
 }
 
 .label {
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .fileRow {
@@ -25,12 +25,12 @@
 .muted {
   font-size: 13px;
   line-height: 20px;
-  color: var(--color-muted);
+  color: var(--ink-muted);
 }
 
 .result {
-  border: 1px solid var(--color-rule);
-  border-radius: var(--radius-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
   overflow: hidden;
 }
 

@@ -13,7 +13,7 @@
   align-items: center;
   justify-content: center;
   padding: 32px 16px;
-  background: var(--color-bg);
+  /* the scene shows through: the page has no fill of its own */
 }
 
 .card {
@@ -21,7 +21,15 @@
   max-width: 400px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: var(--space-5);
+}
+
+.mark {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-sm);
+  background: var(--primary);
 }
 
 .brand {
@@ -34,8 +42,7 @@
 
 .title {
   margin: 0;
-  font-size: 28px;
-  line-height: 36px;
+  font: 600 28px/38px var(--family-sans);
 }
 
 .titleRow {
@@ -55,7 +62,7 @@
   align-items: flex-start;
   gap: 8px;
   margin: 0;
-  color: var(--color-muted);
+  color: var(--ink-muted);
   font-size: 13px;
   line-height: 20px;
 }

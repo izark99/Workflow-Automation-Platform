@@ -1,34 +1,45 @@
+/* Table (design/harold/components/Table): a sticky header of 40 px (41 with its divider) on surface-overlay, rows of 44 px plus a
+   1 px divider (45 px), dense rows of 36 px plus 1 px (37 px). Numbers are right-aligned in tabular figures. */
 .wrap {
   overflow-x: auto;
 }
 
 .table {
   width: 100%;
-  /* Separate borders, so heights are exact: header 41 px (10 + 20 + 10 + 1), body rows 57 px (56 + 1 divider). */
+  /* Separate borders, so heights are exact: header 41 px (40 + 1 divider), body rows 45 px (44 + 1 divider). */
   border-collapse: separate;
   border-spacing: 0;
-  font-size: 14px;
+  font: 400 14px/20px var(--family-sans);
+  color: var(--ink);
 }
 
 .th {
-  padding: 8px 16px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  height: 41px;
+  padding: 0 var(--space-4);
+  background: var(--surface-overlay);
   text-align: left;
-  font-size: 12px;
-  line-height: 24px; /* 8 + 24 + 8 keeps the 40 px header that 10 + 20 + 10 gave */
-  font-weight: 700;
-  color: var(--color-muted);
-  border-bottom: 1px solid var(--color-line);
+  font: 500 13px/20px var(--family-sans);
+  color: var(--ink-muted);
+  border-bottom: 1px solid var(--border);
   white-space: nowrap;
 }
 
 .td {
-  height: 57px;
-  padding: 0 16px;
+  height: 45px;
+  padding: 0 var(--space-4);
   text-align: left;
   white-space: nowrap;
-  border-bottom: 1px solid var(--color-rule);
+  border-bottom: 1px solid var(--border);
+}
+
+.dense .td {
+  height: 37px;
 }
 
 .right {
   text-align: right;
+  font-variant-numeric: tabular-nums;
 }

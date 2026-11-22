@@ -1,0 +1,37 @@
+/* Glass (docs/DESIGN.md, "Glass, and where it is used"; design/harold/README.md, "Glass rules").
+   .glass          a panel: translucent fill, blur, a lit edge, a soft shadow
+   .glass-overlay  what floats, and dense data: a nearly opaque fill, no blur
+   .glass-inset    a tint inside a panel (a second blur is never used)
+   There is no limit on how many surfaces are glass. A blurred element never changes size by animation (rule noBlurAnimation of
+   ui-rules). Without backdrop-filter, and under prefers-reduced-transparency, glass is the overlay fill with no blur. */
+.glass {
+  background: var(--surface-200);
+  -webkit-backdrop-filter: blur(var(--blur-md)) saturate(1.5);
+  backdrop-filter: blur(var(--blur-md)) saturate(1.5);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+
+.glass-overlay {
+  background: var(--surface-overlay);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-md);
+}
+
+.glass-inset {
+  background: var(--surface-300);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass {
+    background: var(--surface-overlay);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass {
+    background: var(--surface-overlay);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}

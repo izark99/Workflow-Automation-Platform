@@ -1,6 +1,8 @@
+/* Skeleton (design/harold/components/Skeleton): blocks in the final layout on the inset tint, radius-sm, with a shimmer of 1.4 s.
+   The shimmer also runs under reduced motion (it is not movement of the content). */
 .box {
-  background: var(--color-card);
-  border-radius: var(--radius-card);
+  background: var(--surface-200);
+  border-radius: var(--radius-lg);
   overflow: hidden;
 }
 
@@ -8,18 +10,22 @@
 .row {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 0 16px;
+  gap: var(--space-4);
+  padding: 0 var(--space-4);
 }
 
 .head {
   height: 41px;
-  border-bottom: 1px solid var(--color-line);
+  border-bottom: 1px solid var(--border);
 }
 
 .row {
-  height: 57px;
-  border-bottom: 1px solid var(--color-rule);
+  height: 45px;
+  border-bottom: 1px solid var(--border);
+}
+
+.dense {
+  height: 37px;
 }
 
 .cell {
@@ -27,21 +33,48 @@
 }
 
 .bar {
+  position: relative;
   display: block;
   height: 12px;
-  border-radius: 6px;
-  background: var(--color-skeleton);
-  animation: pulse 1.2s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+  background: var(--surface-300);
+  overflow: hidden;
+}
+
+.bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 40%;
+  transform: translateX(-100%);
+  /* A soft band of the text colour: no gradient (the scene is the only one). */
+  background: color-mix(in srgb, var(--ink) 7%, transparent);
+  animation: shimmer 1.4s ease-in-out infinite;
 }
 
 .headBar {
   height: 8px;
-  border-radius: 4px;
+}
+
+.headBar::after {
   animation: none;
 }
 
-@keyframes pulse {
-  50% {
-    opacity: 0.5;
+@keyframes shimmer {
+  to {
+    transform: translateX(250%);
+  }
+}
+
+/* Reduced motion keeps the shimmer: it tells that something is loading and moves nothing that can be read. */
+@media (prefers-reduced-motion: reduce) {
+  .bar::after {
+    animation: shimmer 1.4s ease-in-out infinite !important;
+  }
+
+  .headBar::after {
+    animation: none !important;
   }
 }

@@ -26,7 +26,8 @@
   },
   "dependencies": {
     "@duckdb/duckdb-wasm": "1.33.1-dev57.0",
-    "@fontsource/plus-jakarta-sans": "5.3.0",
+    "@fontsource/be-vietnam-pro": "5.3.0",
+    "@fontsource/jetbrains-mono": "5.3.0",
     "@supabase/supabase-js": "2.118.0",
     "@xyflow/react": "13.0.1",
     "apache-arrow": "17.0.0",

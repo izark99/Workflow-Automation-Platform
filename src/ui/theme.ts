@@ -38,10 +38,16 @@ export function applyTheme(root: HTMLElement, theme: Theme): void {
   root.style.colorScheme = theme;
 }
 
-const DARK_QUERY = '(prefers-color-scheme: dark)';
+const LIGHT_QUERY = '(prefers-color-scheme: light)';
 
-function systemPrefersDark(): boolean {
-  return typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia(DARK_QUERY).matches;
+/** System uses dark unless the browser says it prefers light, so a browser with no preference gets dark (SPEC 14). */
+export function systemPrefersDark(matches: (query: string) => boolean): boolean {
+  return !matches(LIGHT_QUERY);
+}
+
+function browserPrefersDark(): boolean {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return true;
+  return systemPrefersDark((q) => window.matchMedia(q).matches);
 }
 
 /** The current choice and the resolved theme. Applies the theme to <html> and follows the operating system for `system`. */
@@ -49,12 +55,12 @@ export function useTheme(): { choice: ThemeChoice; theme: Theme; setChoice: (cho
   const [choice, setChoiceState] = useState<ThemeChoice>(() =>
     typeof localStorage === 'undefined' ? 'system' : readChoice(localStorage),
   );
-  const [dark, setDark] = useState(systemPrefersDark);
+  const [dark, setDark] = useState(browserPrefersDark);
 
   useEffect(() => {
     if (typeof window.matchMedia !== 'function') return undefined;
-    const query = window.matchMedia(DARK_QUERY);
-    const onChange = (): void => setDark(query.matches);
+    const query = window.matchMedia(LIGHT_QUERY);
+    const onChange = (): void => setDark(!query.matches);
     onChange();
     query.addEventListener('change', onChange);
     return () => query.removeEventListener('change', onChange);

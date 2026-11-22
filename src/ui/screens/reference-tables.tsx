@@ -160,8 +160,8 @@ export function ReferenceTablesScreen() {
         })),
         ...(editable
           ? [{ key: 'remove', header: '', render: (row: { index: number; cells: string[] }) => (
-              <Button compact aria-label={t('refTables.removeRow', { n: row.index + 1 })} onClick={() => edit((g) => g.filter((_, i) => i !== row.index))}>
-                <Icon name="close" />
+              <Button size="sm" aria-label={t('refTables.removeRow', { n: row.index + 1 })} onClick={() => edit((g) => g.filter((_, i) => i !== row.index))}>
+                <Icon name="x" />
               </Button>
             ) }]
           : []),
@@ -232,11 +232,11 @@ export function ReferenceTablesScreen() {
 
   let body;
   if (data.error) {
-    body = <ErrorState what={t('refTables.loadFailed')} next={t('refTables.loadFailedNext')} actions={<Button compact onClick={data.reload}>{t('flows.retry')}</Button>} />;
+    body = <ErrorState what={t('refTables.loadFailed')} next={t('refTables.loadFailedNext')} actions={<Button size="sm" onClick={data.reload}>{t('flows.retry')}</Button>} />;
   } else if (data.loading && !data.data) {
-    body = showSkeleton ? <SkeletonTable weights={[10, 16, 12, 12, 14]} rows={3} label={t('refTables.loading')} /> : null;
+    body = showSkeleton ? <SkeletonTable dense weights={[10, 16, 12, 12, 14]} rows={3} label={t('refTables.loading')} /> : null;
   } else if (tables.length === 0 || !table || !version) {
-    body = <EmptyState title={t('refTables.emptyTitle')} text={isAdmin ? t('refTables.emptyText') : t('refTables.emptyReader')} action={isAdmin ? <Button variant="primary" onClick={() => { setDialogError(null); setDialog('newTable'); }}>{t('refTables.newTable')}</Button> : null} />;
+    body = <EmptyState title={t('refTables.emptyTitle')} text={isAdmin ? t('refTables.emptyText') : t('refTables.emptyReader')} action={isAdmin ? <Button onClick={() => { setDialogError(null); setDialog('newTable'); }}>{t('refTables.newTable')}</Button> : null} />;
   } else {
     const sorted = [...table.versions].sort((a, b) => b.versionNo - a.versionNo);
     body = (
@@ -277,7 +277,7 @@ export function ReferenceTablesScreen() {
                 {/* A draft shows what the admin does most: save, then publish. The rest is in the menu. */}
                 {editable ? (
                   <>
-                    <Button variant="primary" busy={busy === 'save'} disabled={!dirty} onClick={() => void save()}>
+                    <Button busy={busy === 'save'} disabled={!dirty} onClick={() => void save()}>
                       {busy === 'save' ? t('refTables.saving') : t('refTables.save')}
                     </Button>
                     <Button disabled={dirty} onClick={() => { setDialogError(null); setDialog('publish'); }}>
@@ -318,41 +318,41 @@ export function ReferenceTablesScreen() {
                   {versionOptionLabel(v)}
                 </Chip>
               ))}
-              <Badge tone={version.status === 'draft' ? 'outline' : 'soft'}>{version.status === 'draft' ? t('refTables.badge.draft') : t('refTables.badge.published')}</Badge>
+              <Badge tone={version.status === 'draft' ? 'accent' : 'success'} icon={version.status === 'draft' ? 'pencil' : 'circle-check'}>{version.status === 'draft' ? t('refTables.badge.draft') : t('refTables.badge.published')}</Badge>
             </div>
-            {dirty && editable ? <p className={styles.note} style={{ padding: '0 20px 12px' }}>{t('refTables.publishNeedsSave')}</p> : null}
+            {dirty && editable ? <p className={styles.note} style={{ padding: '0 var(--space-5) var(--space-3)' }}>{t('refTables.publishNeedsSave')}</p> : null}
             {info ? (
-              <p className={styles.note} style={{ padding: '0 20px 12px' }} role="status">
+              <p className={styles.note} style={{ padding: '0 var(--space-5) var(--space-3)' }} role="status">
                 {info}
               </p>
             ) : null}
             {errors.length > 0 ? (
-              <div style={{ padding: '0 20px 12px' }}>
+              <div style={{ padding: '0 var(--space-5) var(--space-3)' }}>
                 <ErrorState what={t('refTables.rowErrors', { n: errors.length })} next={t('refTables.cellError', { row: errors[0]!.row, column: errors[0]!.column, message: errors[0]!.message })} />
               </div>
             ) : null}
             {saveError ? (
-              <div style={{ padding: '0 20px 12px' }}>
+              <div style={{ padding: '0 var(--space-5) var(--space-3)' }}>
                 <ErrorState what={t('refTables.saveFailed')} next={saveError} />
               </div>
             ) : null}
             <div className={styles.gridWrap} onPaste={onPaste}>
-              {grid.length === 0 ? <p className={styles.note} style={{ padding: 20 }}>{t('refTables.noRows')}</p> : <Table label={t('refTables.grid', { name: table.name })} columns={columns} rows={pageRows} rowKey={(r) => String(r.index)} />}
+              {grid.length === 0 ? <p className={styles.note} style={{ padding: 'var(--space-5)' }}>{t('refTables.noRows')}</p> : <Table dense label={t('refTables.grid', { name: table.name })} columns={columns} rows={pageRows} rowKey={(r) => String(r.index)} />}
             </div>
             {editable || range.pages > 1 ? (
               <div className={styles.pager}>
                 {editable ? (
-                  <Button compact onClick={() => { edit((g) => [...g, cols.map(() => '')]); setPage(pageRange(grid.length + 1, 999).page); }}>
+                  <Button size="sm" onClick={() => { edit((g) => [...g, cols.map(() => '')]); setPage(pageRange(grid.length + 1, 999).page); }}>
                     {t('refTables.addRow')}
                   </Button>
                 ) : null}
                 {grid.length > 0 ? <span className={styles.note}>{t('refTables.showing', { from: (range.from + 1).toLocaleString('en-US'), to: range.to.toLocaleString('en-US'), total: grid.length.toLocaleString('en-US') })}</span> : null}
                 {range.pages > 1 ? (
                   <>
-                    <Button compact disabled={range.page === 0} onClick={() => setPage(range.page - 1)}>
+                    <Button size="sm" disabled={range.page === 0} onClick={() => setPage(range.page - 1)}>
                       {t('refTables.previous')}
                     </Button>
-                    <Button compact disabled={range.page >= range.pages - 1} onClick={() => setPage(range.page + 1)}>
+                    <Button size="sm" disabled={range.page >= range.pages - 1} onClick={() => setPage(range.page + 1)}>
                       {t('refTables.next')}
                     </Button>
                   </>
@@ -416,7 +416,7 @@ export function ReferenceTablesScreen() {
           isAdmin ? (
             <div className={styles.headerActions}>
               <Button onClick={() => setDialog('import')}>{t('refTables.importFile')}</Button>
-              <Button variant="primary" onClick={() => { setDialogError(null); setDialog('newTable'); }}>{t('refTables.newTable')}</Button>
+              <Button onClick={() => { setDialogError(null); setDialog('newTable'); }}>{t('refTables.newTable')}</Button>
             </div>
           ) : undefined
         }
@@ -540,7 +540,7 @@ function ColumnsDialog({ initial, onApply, onCancel }: { initial: Column[]; onAp
                 onChange={(v) => set(i, { type: v as ColumnType })}
               />
               <Button aria-label={t('refTables.cols.remove', { n: i + 1 })} onClick={() => setPlan((p) => p.filter((_, ci) => ci !== i))}>
-                <Icon name="close" />
+                <Icon name="x" />
               </Button>
             </li>
           ))}

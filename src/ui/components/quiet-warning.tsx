@@ -9,7 +9,7 @@ export function QuietWarning({ lines }: { lines: string[] }) {
   if (lines.length === 0) return null;
   return (
     <div className={styles.warning} role="status">
-      <Icon name="alert" size={16} />
+      <Icon name="circle-alert" size={16} />
       <ul className={styles.lines}>
         {lines.map((line, i) => (
           <li key={i}>{line}</li>

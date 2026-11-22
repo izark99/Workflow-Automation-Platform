@@ -1,6 +1,7 @@
 import { useId, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { nextTab } from './tab-keys';
+import { Icon } from './icons';
 import styles from './tabs.module.css';
 
 export interface TabItem {
@@ -63,6 +64,7 @@ export function Tabs({ label, tabs, selected, onSelect, children }: TabsProps) {
 export function Chip({ pressed, onClick, children }: { pressed: boolean; onClick: () => void; children: ReactNode }) {
   return (
     <button type="button" aria-pressed={pressed} className={styles.chip} onClick={onClick}>
+      {pressed ? <Icon name="check" size={16} /> : null}
       {children}
     </button>
   );

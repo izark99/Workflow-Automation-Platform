@@ -1,11 +1,15 @@
 # Design reference
 
-The seven screens in `design/screens/` are the visual target. Each screen has a
-plain HTML file (exact markup, sizes and colors) and a PNG screenshot at 1440 px.
-`design/build_demo.py` generated them from one set of component functions. Read
-it for exact values, but do not copy its inline-style approach into the app.
+The look of the app is the design system "Harold" (Spatial): glass panels over a soft blue scene, in the style of visionOS. Its
+snapshot is in `design/harold/` (`README.md`, `tokens.json`, `components/<Name>/README.md`, and `components/bundle.css` and
+`bundle.js` for exact sizes, states, motion and markup: read them, do not import them, because the bundle is React 18 and the app is
+React 19 with CSS modules). This file records what the build adopted; where Harold and this file differ, this file says why.
 
-| Screen | File | Route |
+`design/screens-harold/` has a PNG of each of the seven routes in both themes at 1440 px, made from the running app with the UI audit
+(reference only). `design/screens/` is the **old reference, kept for structure and layout only**: its colours, radii and fonts are
+superseded.
+
+| Screen | Old reference (`design/screens/`) | Route |
 | --- | --- | --- |
 | Flows | `1-flows` | `/flows` |
 | Flow builder | `2-flow-builder` | `/flows/:id/versions/:versionNo` |
@@ -15,65 +19,36 @@ it for exact values, but do not copy its inline-style approach into the app.
 | Admin | `6-admin` | `/admin` |
 | Components and states | `7-components-and-states` | `/dev/components` (development only) |
 
-The look takes its structure from step-based automation tools: numbered step
-cards that run top to bottom, a settings panel with Setup, Configure and Test
-tabs, and one strong action per screen. Do not copy the branding of any
-existing product.
+The structure comes from step-based automation tools: numbered step cards that run top to bottom, a settings panel with Setup,
+Configure and Test tabs, and one strong action per screen. Do not copy the branding of any existing product.
 
-## Harold design system (Phase 7)
+## Harold design system
 
-From Phase 7 (SPEC 14) the look of the app is the design system "Harold" (Spatial). Its snapshot is in `design/harold/`:
-`README.md` (principles and rules), `tokens.json` (every value), `components/<Name>/README.md` (guidelines), and
-`components/bundle.css` and `bundle.js` (exact sizes, states, motion and markup; read them, do not import them: the bundle is
-React 18 and the app is React 19 with CSS modules). **Where this section and an older section of this file disagree, this
-section wins.** Task T7.18 rewrites the older sections to the final values and removes this note. `design/screens/` stays as the
-reference for structure and layout only; its colours, radii and fonts are superseded.
+The Harold tokens are CSS variables with the token name of `design/harold/tokens.json`: `--ink`, `--primary-text`, `--surface-200`,
+`--space-4`, `--radius-md`, `--shadow-sm`, `--control-md`, `--blur-md`. They are defined once in `src/ui/tokens.css`, for both themes
+under `:root[data-theme]`; the theme-independent ones (type, spacing, radius, size, blur) are in plain `:root`. The Harold font
+families are `--family-sans` and `--family-mono`, a type style is four variables (`--type-h1-size`, `-line-height`, `-weight`, and
+`-letter-spacing` where there is one) and `src/ui/type.css` has a class for each. Three widths are layout and not design tokens:
+`--layout-sidebar` (240 px), `--layout-step-list` (184 px) and `--layout-settings` (380 px). Components never use a raw colour,
+radius or shadow; tests fail when one appears (D114).
 
-### Rules that changed
+The tokens the app uses as they are: the scene (`scene-100`, `scene-200` and the two glows), the surfaces (`surface-200` glass,
+`surface-300` inset tint, `surface-overlay` for what floats and for dense data), `border`, `border-strong`, `neutral-fill`, `ink`,
+`ink-muted`, `primary` (fills), `primary-text` (blue as text or line, and the focus ring), `primary-soft`, `accent` and `accent-soft`
+(Ember, used for the Draft state and nowhere else), `success`, `warning`, `danger`, `info`, `thumb`, the radii, the three shadows and
+the three blurs, and `control-sm`, `control-md`. The chart tokens are not used: the app has no chart.
 
-| Before (Phases 2 to 6) | From Phase 7 |
-| --- | --- |
-| Teal palette, orange `cta` button, orange accent | Harold tokens (below). One `primary` blue button per screen. Ember (`accent`) at most once per screen, never for a warning or an error |
-| Font Plus Jakarta Sans | Be Vietnam Pro 400, 500, 600 and 700 (Latin and Vietnamese subsets) and JetBrains Mono 400 and 500, both from `@fontsource`, served by the app |
-| Text 14 px on 21 px | The Harold type table below |
-| Buttons 40 px and compact 36 px, border on secondary | 40 px (`md`) and 32 px (`sm`). No variant has a border. The 24 px info button stays |
-| Table header 40 px, rows 56 px plus 1 px | Header 40 px, rows 44 px plus a 1 px divider (45 px), dense rows 36 px plus 1 px |
-| Sidebar 232 px | 240 px. The 64 px rail and the builder widths (184, 380, 48 px rails) do not change |
-| Radius 8 px controls, 10 px step cards, 12 px cards | 8 (checkbox, badge, skeleton), 14 (button, input, select, menu, step card), 22 (card, panel, dialog), 32 (outer window, hero panel), pills |
-| Cards: white with a 1 px line | Glass: translucent fill, blur, 1 px `border`, `shadow-sm` |
-| Spacing 4, 8, 12, 16, 20, 24, 32, 40 | 4, 8, 12, 16, 24, 32, 48, 64 (`space-1` to `space-8`). 20 and 40 px are gone |
-| Transitions at most 200 ms | 120 ms (hover, press, toggles), 200 ms (menus, popovers), 260 ms (dialogs); closing about two thirds. Only opacity and transform move. The width of a collapsing panel keeps 200 ms and the panel has no blur while it moves |
-| Focus ring 2 px `--color-focus`, offset 2 px | 2 px `primary-text`, 2 px gap in the scene colour. Same geometry |
-| Default theme System | System stays. With no browser preference the app uses dark |
-| Title at y 63, first block at y 123, rows 57 | Measured again in T7.10 with the 64 px page header and recorded in `docs/DECISIONS.md`; the rule that every sidebar screen has them at the same y stays |
+Contrast is tested, not assumed (`src/ui/tokens.test.ts`): every text and ground pair of both themes is computed with each translucent
+surface composited over `scene-100` and `scene-200` (and over each glow), at 4.5:1 for text and 3:1 for `border-strong`, the focus ring
+and meaningful icons. Every pair passes.
 
-### Token mapping
+Theme rules:
 
-The Harold names are the CSS variable names (`--surface-200`, `--ink`, `--primary`, `--space-4`, `--radius-md`, ...), for both
-themes under `:root[data-theme]`. While the screens are moved, the old names may exist as aliases that point to a Harold token;
-the last Phase 7 tasks remove them.
-
-| Old name | Harold token |
-| --- | --- |
-| `--color-bg` | `scene-100` (the page also draws the scene: `scene-200` fading to `scene-100` with the two glows) |
-| `--color-card` | `surface-200` (glass), or `surface-overlay` for what floats and for dense data |
-| `--color-ink`, `--color-muted` | `ink`, `ink-muted` |
-| `--color-line`, `--color-rule` | `border` |
-| `--color-control` | `border-strong` |
-| `--color-primary`, `--color-on-primary`, `--color-primary-soft` | `primary` (fill), `on-primary`, `primary-soft` |
-| `--color-focus`, `--color-badge-ink` and other blue text | `primary-text` |
-| `--color-cta`, `--color-on-cta` | removed: the `primary` button |
-| `--color-accent` | `accent` (Ember), one highlight per screen; the build uses it for the Draft state of a version and nowhere else |
-| `--color-danger`, `--color-danger-soft`, `--color-danger-ink` | `danger`, `on-danger` (fill text); the soft background is `surface-300` with a `danger` border |
-| `--color-skeleton` | `surface-300` and `neutral-fill` |
-| `--color-overlay`, `--shadow-popover` | `scrim` (with `blur-sm`), `shadow-md` |
-| `--color-note-*`, `--color-draft-*`, `--color-ended-*` | `info`, `accent`, `ink-muted` on `surface-300` |
-| `--font-sans`, `--font-mono` | the Harold families `sans` and `mono` |
-| `--radius-control` | `radius-md` |
-
-The extra tokens of Harold that the app uses as they are: `surface-100`, `surface-300`, `neutral-fill`, `neutral-fill-hover`,
-`primary-hover`, `accent-soft`, `on-accent`, `success`, `warning`, `info`, `thumb`, `shadow-sm`, `shadow-md`, `shadow-lg`,
-`blur-sm`, `blur-md`, `blur-lg`, `control-sm`, `control-md`. The chart tokens (`chart-1` to `chart-5`) are not used: the app has no chart.
+- `<html data-theme="light|dark">` is set by a small inline script in `index.html` before the CSS loads, from the saved choice or, for
+  System, from `prefers-color-scheme`. System uses dark unless the browser says it prefers light, so a browser with no preference gets
+  dark. `color-scheme` is set to match, so scrollbars and native text fields follow.
+- React Flow gets its colours from the tokens (dots, edges, handles, selection, controls). Its own defaults never decide a colour.
+- No raw colour anywhere outside `tokens.css`.
 
 ### Type
 
@@ -155,105 +130,46 @@ no logo: the app name is set in `sans` 700 next to a `radius-sm` blue square.
 - Empty text says why it is empty and what to do; an error says what failed and what to do (already a rule here).
 - No filler numbers and no marketing words ("seamless", "unlock", "empower") in any text.
 
-## Tokens
-
-Define these once as CSS variables. Components never use raw hex values.
-
-| Token | Value | Use |
-| --- | --- | --- |
-| `--color-bg` | `#F0FDFA` | Page background |
-| `--color-card` | `#FFFFFF` | Cards, panels, fields |
-| `--color-ink` | `#134E4A` | Text |
-| `--color-muted` | `#475569` | Secondary text |
-| `--color-line` | `#99F6E4` | Card borders, table header rule |
-| `--color-rule` | `#E8F1F4` | Row dividers, quiet fills |
-| `--color-control` | `#6F918D` | Borders of buttons, fields, popovers (3:1 on white) |
-| `--color-primary` | `#0F766E` | Primary buttons, selected states |
-| `--color-primary-soft` | `#CCFBF1` | Active nav item, selected option, badges |
-| `--color-focus` | `#0D9488` | Focus ring, 2 px, offset 2 px |
-| `--color-cta` | `#C2410C` | The one main action per screen |
-| `--color-accent` | `#EA580C` | Selected step border, active tab underline |
-| `--color-danger` | `#B91C1C` | Destructive actions, errors |
-| `--color-skeleton` | `#DCE7EA` | Skeleton bars |
-| `--font-sans` | `'Plus Jakarta Sans', system-ui, sans-serif` | All text |
-| `--font-mono` | `ui-monospace, Menlo, Consolas, monospace` | Formulas, function chips |
-| `--radius-control` | `8px` | Buttons, fields, step cards use 10 px, cards 12 px |
-
-### Tokens for both themes (Phase 4)
-
-The table above is the light theme. The dark theme redefines the same names under `:root[data-theme="dark"]`.
-Components never test the theme; they only use tokens. Two new tokens carry the text colour on filled buttons, because
-the dark fills are light:
-
-| Token | Light | Dark |
-| --- | --- | --- |
-| `--color-bg` | `#F0FDFA` | `#0E1A19` |
-| `--color-card` | `#FFFFFF` | `#152422` |
-| `--color-ink` | `#134E4A` | `#E3F2EF` |
-| `--color-muted` | `#475569` | `#A7BDB9` |
-| `--color-line` | `#99F6E4` | `#2A4A46` |
-| `--color-rule` | `#E8F1F4` | `#1D302D` |
-| `--color-control` | `#6F918D` | `#6E938E` |
-| `--color-primary` | `#0F766E` | `#2DD4BF` |
-| `--color-on-primary` (new) | `#FFFFFF` | `#04201D` |
-| `--color-primary-soft` | `#CCFBF1` | `#123F3B` |
-| `--color-focus` | `#0D9488` | `#5EEAD4` |
-| `--color-cta` | `#C2410C` | `#FB923C` |
-| `--color-on-cta` (new) | `#FFFFFF` | `#2A1003` |
-| `--color-accent` | `#EA580C` | `#FB923C` |
-| `--color-danger` | `#B91C1C` | `#F87171` |
-| `--color-skeleton` | `#DCE7EA` | `#22362F` |
-
-The extra tokens of the screens follow the same rule. Dark values: `--color-badge-ink` `#99F6E4`, `--color-danger-soft`
-`#3A1717`, `--color-danger-ink` `#FECACA`, `--color-note-bg` `#2B1A0E`, `--color-note-ink` `#FED7AA`,
-`--color-draft-ink` `#FDBA74`, `--color-ended-ink` `#CBD5E1`, `--color-overlay` `rgb(0 0 0 / 60%)` (light: the teal
-at 35%), `--shadow-popover` black at 50%. The toast uses `--color-bg` as its text colour on `--color-ink`, so it
-inverts in both themes. `--color-on-fill` is gone: filled primary buttons, selected days, checked boxes and the
-in-effect segment use `--color-on-primary`; the CTA button uses `--color-on-cta`.
-
-The dark values were checked for these pairs (WCAG contrast): ink on bg 15.4, ink on card 13.9, muted on card 8.1,
-control on card 4.8, focus on card 10.9, on-primary on primary 9.2, on-cta on cta 7.9, danger on card 5.8, ink on
-primary-soft 10.1. Task T4.1 adds a unit test that computes every pair of both themes, so a later change cannot
-break contrast. If the test needs a value changed, change it here first.
-
-Theme rules:
-
-- `<html data-theme="light|dark">` is set by a small inline script in `index.html` before the CSS loads, from the saved choice or, for System, from `prefers-color-scheme`. `color-scheme` is set to match, so scrollbars and native text fields follow.
-- React Flow gets `colorMode` from the app theme, and its colours (background dots, edges, handles, selection, controls) map to tokens. Its own default styles must not decide any colour.
-- Shadows, if any, are tokens too. No raw colour anywhere outside `tokens.css`.
-
-Text is 14 px with 21 px line height. Small text is 12 or 13 px, never smaller.
-Page title 28 px bold. Section title (h2) 16 px bold. Icons are 2 px stroke
-line icons; an icon library with that style is fine.
-
 ## Buttons
 
 | Size | Height | Padding | Font | Where |
 | --- | --- | --- | --- | --- |
-| Default | 40 px | 0 16 px | 600 14 px | Page and section actions, sidebar, dialogs |
-| Compact | 36 px | 0 12 px | 600 13 px | Table rows, toolbars, filter chips, function chips |
+| `md` (default) | 40 px (`control-md`) | 0 16 px | 500 14 px | Page and section actions, sidebar, dialogs |
+| `sm` | 32 px (`control-sm`) | 0 12 px | 500 13 px | Table rows, toolbars, the step list, function chips |
 
-Variants: `cta` (orange fill), `primary` (teal fill), `secondary` (white with
-control border), `danger` (red text, no border), `disabled`. A button that waits
-shows a spinner and `aria-busy="true"`.
+Variants: `primary` (blue fill), `secondary` (default, `neutral-fill`), `ghost` (transparent, `surface-300` on hover) and `danger`
+(the `danger` fill). No variant has a border. Disabled is 40 % opacity on the whole control. Press scales to 0.98 over 120 ms (not
+under reduced motion). A button that waits (`busy`) keeps its width, shows a spinner over its label and sets `aria-busy="true"`. An
+icon button is as wide as it is high, always has a label, and shows it as a tooltip after 400 ms of hover and at once on keyboard
+focus; Escape hides the tooltip.
 
 Rules:
 
-- One `cta` button per screen at most. On screens with the sidebar it is "Create flow"; in the builder it is "Run".
-- No other button height exists. Breadcrumb links are text links, 24 px high.
+- At most one `primary` button per screen. On screens with the sidebar it is "Create flow" in the sidebar; in the builder it is "Run";
+  in a modal dialog it is the confirming button of the footer, last. The other buttons are `secondary`.
+- No other button height exists (the 24 px info button and the 40 x 24 px switch are the two exceptions the UI rules know).
 - Buttons with the same visible name in a table carry an `aria-label` that names the row.
 - Destructive buttons sit 8 px away from their neighbours and open a confirm dialog.
 
 ## Layout
 
 - Minimum window width 1280 px. No horizontal page scroll at 1280 or 1440.
-- Sidebar 232 px open (64 px as a rail, Phase 5), white, the same on every screen except the builder.
-- Main column: padding 32 px 40 px, 24 px between blocks.
-- Page header has a fixed structure and height on every screen: breadcrumb line 24 px, title 36 px with an info button after it (the old subtitle text, SPEC 11.2), one action on the right. The title sits at the same y on every screen (63 px), and the first block starts at the same y on every screen: **123 px** from Phase 4 (it was 148 px when a 21 px subtitle sat under the title). The header is 67 px high (24 + 4 + 3 + 36). The UI rule `headerPosition` checks both values.
-- Cards: white, 1 px line border, radius 12 px, padding 20 px, or no padding when they hold a table.
-- Tables: header cell padding 8 px 16 px with a 24 px line (a 40 px header; it was 10 px 16 px with a 20 px line), 12 px bold muted text; body rows 56 px high plus a 1 px divider; numbers right-aligned; cells do not wrap.
-- Builder: header bar 64 px, step list 184 px, settings panel 380 px (each 48 px as a rail, Phase 5), canvas in between. Step cards 240 x 56 px, 40 px apart, selected card with a 2 px accent border.
-- The widths above are the open widths. Collapsing a panel changes only its width and the width of what is next to it: the header, the title y (63 px) and the first block y (123 px) do not move (SPEC 12.4).
+- Sidebar 240 px open (64 px as a rail, Phase 5), glass, the same on every screen except the builder.
+- The page header is 64 px high, sticky, on `surface-overlay`: the breadcrumb line (20 px), the title (28 px on 38 px) with its info
+  button, and one action on the right. The content below it is up to 1200 px wide with `space-7` (48 px) side margins and 24 px
+  between blocks. On every screen with the sidebar the title is at the same y (**23 px**) and the first block starts at the same y
+  (**88 px**); the UI rule `headerPosition` checks both (measured in T7.10, D106).
+- Cards are glass (`surface-200`, blur, 1 px `border`, `shadow-sm`), `radius-lg` (22 px), `space-5` (24 px) padding, or no padding
+  when they hold a table. No card sits inside a card, and none has a coloured stripe on one side.
+- Tables: a sticky header of 40 px (41 with its divider) on `surface-overlay`, 13 px text at 500 in `ink-muted`; body rows 44 px plus a
+  1 px divider (45 px; dense rows, for a grid where the same data is edited, 36 px plus 1); numbers right-aligned in tabular figures;
+  cells do not wrap.
+- Builder: header bar 64 px on `surface-overlay`, step list 184 px and settings panel 380 px on glass (each 48 px as a rail), canvas on
+  the scene in between. Step cards are 240 x 56 px on `surface-overlay`, 40 px apart, `radius-md`, with a 2 px `primary-text` ring when
+  selected. The panels have no blur while their width changes.
+- The widths above are the open widths. Collapsing a panel changes only its width and the width of what is next to it: the header, the
+  title y (23 px) and the first block y (88 px) do not move (SPEC 12.4).
+- Radii: 8 px (checkbox, badge, skeleton), 14 px (button, field, select, menu, step card), 22 px (card, panel), 32 px (dialog), pills.
 
 ## Components built for this app
 
@@ -262,13 +178,13 @@ accessibility library is allowed, a styled UI kit is not):
 
 | Component | Requirements |
 | --- | --- |
-| Dropdown | Button with chevron, popover list, check mark on the selected option, arrow keys, Enter, Escape, type-ahead |
+| Dropdown | A 40 px field box with a chevron that turns, a `surface-overlay` list (opens in 200 ms, closes in 120 ms), the selected option in `primary-text` with a check at its end, arrow keys, Enter, Escape, type-ahead |
 | Date picker | Button showing `30 Sep 2026`, popover with month grid starting Monday, previous and next month, arrow keys, Escape. Opens upward when there is no room below |
-| Checkbox | Drawn box, `role="checkbox"`, Space toggles |
+| Checkbox and Switch | Drawn 18 px box with `role="checkbox"`, Space toggles. The switch (`role="switch"`, 40 x 24 px) is for a setting that applies at once; no screen has one, because every yes/no is saved later |
 | Search field | Field with a search icon inside, no browser clear button |
 | Tabs and filter chips | Buttons with a pressed or selected state |
-| Dialog | Focus trap, Escape closes, focus returns to the opener |
-| Table, Card, Badge, Skeleton, Toast | As drawn on screen 7 |
+| Dialog | `surface-overlay`, `radius-xl`, `shadow-lg` over a blurred scrim; enters in 260 ms, leaves in 170 ms; focus trap, Escape closes (the top layer only), focus returns to the opener |
+| Table, Card, Badge, Skeleton, Toast | As drawn on `/dev/components`. A status badge has an icon and a word; the Draft state is `accent`. The skeleton has the row heights of the table and a 1.4 s shimmer, also under reduced motion. A toast is fixed at the bottom right, at most 3, 5 s |
 | Info button (Phase 4) | See "Info button" below |
 | Panel toggle (Phase 5) | See "Collapsible panels" below |
 | Theme switch and language switch (Phase 4) | In the sidebar footer, above Sign out: two compact dropdowns, "Theme" (Light, Dark, System) and "Language" (English, Tiếng Việt). The sign-in screen has the same two controls in its top right corner |
@@ -282,11 +198,11 @@ and `<textarea>` are allowed; textareas are not resizable.
 
 Explanations live behind an info button (SPEC 11.2), not as visible paragraphs.
 
-- A 24 x 24 px icon button with a 16 px "i" in a circle, `--color-muted`, placed 4 px after the title or label it explains. Its accessible name is "About {label}" (from the catalog). This is the one exception to the 40 and 36 px button rule; the UI rule allows it by its `data-infotip` attribute and checks that it is exactly 24 x 24 px (WCAG 2.2 target size).
+- A 24 x 24 px icon button with a 16 px "i" in a circle, `ink-muted`, placed 4 px after the title or label it explains. Its accessible name is "About {label}" (from the catalog). This is the one exception to the 40 and 32 px button rule; the UI rule allows it by its `data-infotip` attribute and checks that it is exactly 24 x 24 px (WCAG 2.2 target size).
 - It is a toggletip: click, Enter or Space opens a popover, a second click closes it; it also opens on hover after 300 ms and closes when the pointer leaves both the button and the popover; Escape or a click outside closes it; focus stays on the button. The popover text is announced through a polite live region.
-- Popover: card colours, control border, radius 8 px, padding 12 px, max width 320 px, 13 px text, may hold a short list and links. It opens below, or above when there is no room, and never covers the field it explains.
+- Popover: `surface-overlay`, 1 px `border`, `radius-md`, `shadow-md`, padding 12 px, max width 320 px, 13 px text, may hold a short list and links. It opens below, or above when there is no room, and never covers the field it explains.
 - Never for errors, warnings that block an action, or anything the user must read to finish a task. Those stay visible.
-- Info buttons do not count as `cta`, and a screen has no more than one per label.
+- Info buttons do not count as `primary`, and a screen has no more than one per label.
 
 ## Account dialogs (Phase 4)
 
@@ -303,14 +219,17 @@ Explanations live behind an info button (SPEC 11.2), not as visible paragraphs.
 
 ## Spacing
 
-Gaps, margins and padding are on the 4 px grid (4, 8, 12, 16, 20, 24, 32, 40). The exceptions are 1 and 2 px hairlines and borders, the styles that React Flow owns (its panel margins), the negative 2 px offset that draws a focus ring around a control, and the 3 px that aligns the title with its info button in the page header. Do not add other values; `ui-audit/audit.spec.ts` lists the ones that are left.
+Gaps, margins and padding are on the Harold scale: 4, 8, 12, 16, 24, 32, 48 and 64 px (`space-1` to `space-8`). 20 px and 40 px are gone.
+The exceptions are 1 and 2 px hairlines and borders, the styles that React Flow owns (its panel margins), and the negative offset that
+draws a focus ring around a control. A test (`src/ui/tokens.test.ts`) fails on any other value in a CSS module; `ui-audit/audit.spec.ts`
+lists the computed ones on every route.
 
 ## UI quality checklist (Phase 4)
 
 Used by the review of SPEC 11.6. Each item is checked on every route in both themes at 1280 and 1440 px.
 
 1. Hierarchy: one h1 per page, h2 for card titles, no skipped levels. The one main action stands out; secondary actions are quieter.
-2. Spacing on a 4 px grid (4, 8, 12, 16, 20, 24, 32, 40). Equal gaps between equal things.
+2. Spacing on the Harold scale (4, 8, 12, 16, 24, 32, 48, 64). Equal gaps between equal things.
 3. Alignment: labels, fields and table columns line up; numbers right-aligned; long names truncate with an ellipsis and show the full name on hover and to screen readers.
 4. Every data region has its loading, empty and error state, as in the section below.
 5. Feedback within 100 ms for every action: pressed state, busy state, or a toast for a finished background action. A toast is never the only place an error appears.
@@ -318,12 +237,12 @@ Used by the review of SPEC 11.6. Each item is checked on every route in both the
 7. Unsaved changes: leaving the builder or a reference table grid with unsaved changes asks first.
 8. Keyboard: every action reachable; visible focus in both themes; Escape closes the top layer; Delete removes the selected step; the builder lists its keyboard keys in an info button.
 9. Text: no text under 12 px; sentence case; numbers and dates in one format; no explanation visible that belongs in an info button.
-10. Motion: transitions at most 200 ms, none with `prefers-reduced-motion`.
+10. Motion: 120 ms for hover, press and toggles, 200 ms for menus and popovers, 260 ms for dialogs (closing about two thirds); only opacity and transform move, except the width of a collapsing panel (200 ms, no blur while it moves). Nothing moves with `prefers-reduced-motion` but short fades.
 11. Both themes: no element keeps a light-only or dark-only colour; images and icons stay visible.
 
 ## Loading, empty, and error states
 
-- Skeleton: a placeholder with the same header and row heights as the real table, so nothing moves when data arrives. Show it only when loading takes longer than 300 ms. The region has `aria-busy="true"` while loading. Bars pulse; with `prefers-reduced-motion` they do not move.
+- Skeleton: a placeholder with the same header and row heights as the real table, so nothing moves when data arrives. Show it only when loading takes longer than 300 ms. The region has `aria-busy="true"` while loading. A soft band sweeps over the bars every 1.4 s, also with `prefers-reduced-motion`.
 - Run in progress: progress bar with `Step n of m` and the step name, plus Cancel run.
 - Empty state: icon, one line of text, one action.
 - Error state: says what failed and what to do next, next to the place where it failed. Never only a toast.
@@ -331,16 +250,16 @@ Used by the review of SPEC 11.6. Each item is checked on every route in both the
 
 ## Accessibility
 
-- Text contrast 4.5:1 or more. Control borders 3:1 or more. In both themes.
+- Text contrast 4.5:1 or more. Control borders 3:1 or more. In both themes, on the glass over the scene.
 - Every control is reachable and usable with the keyboard, with a visible focus ring.
 - No information by color alone: breaches show a word, not only a red number.
 
 ## Collapsible panels (Phase 5)
 
-- Four panels collapse (SPEC 12.4): the sidebar (232 to 64 px), the builder step list (184 to 48 px), the builder settings panel (380 to 48 px) and the Reference tables list (to 48 px).
-- The toggle is a compact (36 px) secondary icon button with `aria-expanded` and `aria-controls`, at the top of the panel on its inner edge: a chevron that points to the edge the panel sits on when it is open (left chevron for a left panel) and away from it when collapsed. Its accessible name says what it does and which panel: "Collapse sidebar", "Expand settings panel". The toggle sits 12 px from the top and 8 px from the inner edge.
+- Four panels collapse (SPEC 12.4): the sidebar (240 to 64 px), the builder step list (184 to 48 px), the builder settings panel (380 to 48 px) and the Reference tables list (to 48 px).
+- The toggle is a small (32 px) secondary icon button with `aria-expanded` and `aria-controls`, at the top of the panel on its inner edge: a chevron that points to the edge the panel sits on when it is open (left chevron for a left panel) and away from it when collapsed. Its accessible name says what it does and which panel: "Collapse sidebar", "Expand settings panel". The toggle sits 12 px from the top and 8 px from the inner edge.
 - A rail has the card colour, a 1 px line on its inner edge, and no padding other than 8 px; it never scrolls.
-- Sidebar rail (64 px): the toggle, then the "Create flow" button as a 40 x 40 px `cta` icon button, then the three navigation items as 40 x 40 px icon buttons (the current one with the soft primary background, `aria-current`), and at the bottom one 40 x 40 px user button (the first letter of the name) that opens a popover with the name, the role, Language, Theme, Change password and Sign out. Every icon button has an accessible name and a `title` from the catalog.
+- Sidebar rail (64 px): the toggle, then the "Create flow" button as a 40 x 40 px `primary` icon button, then the three navigation items as 40 x 40 px icon buttons (the current one with the soft primary background, `aria-current`), and at the bottom one 40 x 40 px user button (the first letter of the name) that opens a popover with the name, the role, Language, Theme, Change password and Sign out. Every icon button has an accessible name and a `title` from the catalog.
 - Step list rail: the toggle only. Settings panel rail: the toggle, and below it the step name written upright (`writing-mode: vertical-rl`, 13 px, muted, one line, truncated with an ellipsis, full name in `title`); with no step selected the rail shows only the toggle.
 - Motion: the width changes in at most 200 ms (`ease-out`); with `prefers-reduced-motion` it changes at once. Contents that do not fit while the width changes are clipped, never wrapped.
 - Both themes: the rail and the toggle use the tokens of the card and the line; no new colour.
@@ -383,7 +302,7 @@ Used by the review of SPEC 11.6. Each item is checked on every route in both the
 
 A single-value input box of a step (SPEC 13.3) can take a parameter. The Parameters panel itself does not change.
 
-- A 36 px icon button (a link icon) at the end of the input box row, with the accessible name "Use a parameter for {field}" and `aria-haspopup="listbox"`. It does not count as `cta`, and it is one height with the box beside it. A read-only version shows it disabled. When the flow has no parameter that fits the setting the button is disabled and its tooltip says so.
+- A 40 px icon button (a link icon) at the end of the input box row, with the accessible name "Use a parameter for {field}" and `aria-haspopup="listbox"`. It does not count as `cta`, and it is one height with the box beside it. A read-only version shows it disabled. When the flow has no parameter that fits the setting the button is disabled and its tooltip says so.
 - It opens a dropdown list (the Dropdown component) of the parameters whose type fits the setting: label first, the key in muted text after it. Choosing one binds the field.
 - A bound field is not an input any more: it is one row with the chip "Parameter: {label}" (the link icon in front, `data-user-content` on the label) and a compact "Use a fixed value" button that gives the field back with its last fixed value. Under it, 12 px muted text "Now: {value}" in the Test tab and on the Run screen (`data-user-content`); when the value cannot be resolved the line is an error under the field that says what failed and what to do. A parameter that is deleted from the flow leaves the field with the chip in the error state "Parameter {key} no longer exists".
 - Errors are shown under the field, never in the dropdown only. The dropdown closes with Escape and the focus returns to its button.

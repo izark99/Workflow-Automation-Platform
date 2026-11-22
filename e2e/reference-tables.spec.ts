@@ -64,7 +64,7 @@ test('choosing another table shows its rows; numbers are right-aligned', async (
   await expect(gridRows(page, 'OT types')).toHaveCount(4);
   const align = await gridRows(page, 'OT types').first().locator('td').nth(2).evaluate((el) => getComputedStyle(el).textAlign);
   expect(align).toBe('right');
-  expect(Math.round((await gridRows(page, 'OT types').first().boundingBox())!.height)).toBe(57);
+  expect(Math.round((await gridRows(page, 'OT types').first().boundingBox())!.height)).toBe(37); // the grid uses dense rows
 });
 
 test('New version copies the version as a draft; its cells are editable; save keeps them; publish ends the previous version and makes it read-only', async ({ page }) => {
@@ -318,7 +318,7 @@ test.describe('adjust a draft', () => {
     await page.goto(SMALL);
     await fromMenu(page, 'Columns');
     const d = dialogOf(page);
-    expect(Math.round((await d.boundingBox())!.width)).toBe(640);
+    expect(await d.evaluate((el) => (el as HTMLElement).offsetWidth)).toBe(640);
     await d.getByRole('textbox', { name: 'Name of column 1' }).fill('Code of day');
     await d.getByRole('button', { name: /^Type of column 2/ }).click();
     await page.getByRole('option', { name: 'Text' }).click();
