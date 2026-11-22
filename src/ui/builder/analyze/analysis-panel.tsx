@@ -174,7 +174,7 @@ export function AnalysisPanel({ file, settings, onApply }: AnalysisPanelProps) {
             ))}
           </ul>
           <div>
-            <h4 className={styles.sectionTitle}>{t('builder.analyze.leftOut')}</h4>
+            <h3 className={styles.sectionTitle}>{t('builder.analyze.leftOut')}</h3>
             {leftOutLines(state.result).length === 0 ? (
               <p className={styles.note}>{t('builder.analyze.leftOutNone')}</p>
             ) : (

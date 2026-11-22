@@ -1,4 +1,4 @@
-/* The timeline of versions: one segment per version. The version in effect is the primary fill; the Draft state is Ember (accent). */
+/* The timeline of versions: one segment per version. The version in effect is the primary fill; a draft is a dashed outline (Ember is kept for the Draft badge). */
 .bar {
   display: flex;
   gap: var(--space-1);
@@ -34,9 +34,9 @@
 }
 
 .draft {
-  border: 1px dashed var(--accent);
-  background: var(--accent-soft);
-  color: var(--accent);
+  border: 1px dashed var(--border-strong);
+  background: var(--surface-300);
+  color: var(--ink);
 }
 
 .axis {

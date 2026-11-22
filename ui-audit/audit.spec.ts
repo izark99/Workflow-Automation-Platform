@@ -47,8 +47,10 @@ async function measure(page: import('@playwright/test').Page): Promise<Finding[]
       for (const prop of ['paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 'rowGap', 'columnGap', 'marginTop', 'marginBottom'] as const) {
         const v = s[prop];
         if (!v || v === 'normal' || v === 'auto') continue;
-        const px = parseFloat(v);
-        if (Number.isNaN(px) || px === 0 || px === 1 || px === 2) continue;
+        // Negative margins are the ones that pull the 24 px info button into its text line (and React Flow's own); a margin of more
+        // than 64 px is an `auto` margin that pushes a block to the end of a flex column.
+        const px = Math.abs(parseFloat(v));
+        if (Number.isNaN(px) || px === 0 || px === 1 || px === 2 || px > 64) continue;
         if (!SCALE.includes(px)) off.set(`${name(el)} ${prop}=${px}px`, (off.get(`${name(el)} ${prop}=${px}px`) ?? 0) + 1);
       }
     }
@@ -72,10 +74,12 @@ async function measure(page: import('@playwright/test').Page): Promise<Finding[]
     // The 24 px info button is not part of a set of controls, and the input inside a search field is drawn by its label.
     const isControl = (el: Element): boolean =>
       el.matches('button:not([role="tab"]):not([role="checkbox"]):not([role="option"]):not([role="switch"]):not([data-infotip]), a[class*="button"], label[class*="search"], input:not([type="hidden"]):not([type="checkbox"]):not([type="file"]):not([class*="searchInput"]), textarea, select');
+    // The input of a field is drawn inside its 40 px box: the box is the control that is measured.
+    const boxOf = (el: Element): Element => (el.matches('input') && el.parentElement && /_control_/.test(String(el.parentElement.className)) ? el.parentElement : el);
     const controlOf = (unit: Element): Element | null => {
-      if (isControl(unit)) return unit;
+      if (isControl(unit)) return boxOf(unit);
       const inside = Array.from(unit.querySelectorAll('button, a[class*="button"], label[class*="search"], input, textarea, select')).filter(isControl).filter(visible);
-      return inside.length === 1 ? inside[0]! : null;
+      return inside.length === 1 ? boxOf(inside[0]!) : null;
     };
     const skipParent = (p: Element): boolean => !!p.closest('table, [role="tablist"], .react-flow, [role="toolbar"], [role="listbox"], [role="group"][aria-label*="Insert"]') || p.matches('tr');
     const seenParents = new Set<Element>();
