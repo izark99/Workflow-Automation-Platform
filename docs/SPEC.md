@@ -96,7 +96,7 @@ effective date per run, and the app selects the versions valid on that date.
 
 | Table | Key fields | Purpose |
 | --- | --- | --- |
-| `profiles` | id, name, role (`admin` or `user`) | One row per signed-in user |
+| `profiles` | id, name, role (`admin` or `user`), max_flows | One row per signed-in user. `max_flows` is the number of flows the user may own at one time (empty means no limit), set by the admin |
 | `groups`, `group_members` | group id, user id | User groups managed by the admin |
 | `flows` | id, name, owner_id, scope (`personal` or `shared`), deleted_at | One row per flow |
 | `flow_versions` | flow_id, version_no, valid_from, valid_to, status (`draft` or `published`), change_note, definition (JSON) | Nodes, edges, and settings of one version |
@@ -155,8 +155,10 @@ translated to DuckDB SQL and has unit tests with the result Excel gives.
 | Personal flow | Full rights | Full rights | No access | No access |
 | Shared flow | Full rights | Not applicable. Only the admin creates shared flows | View and run | No access |
 | Reference table: name and description | Full rights | Read | Read | Read |
+| Reference table: delete | Full rights, only a table that no live flow reads (the message names the flows) | No access | No access | No access |
 | Reference table: versions and rows | Full rights (import, edit a draft, publish) | Read, only the tables that a flow they can view or run uses | Same | No access |
 | Users and groups | Full rights | No access | No access | No access |
+| Number of flows a user may create (a limit per user) | Sets it for any user; has none themselves | Reads its effect only: a new flow or a copy is refused at the limit | Same | No access |
 | User accounts (create, reset password, lock, unlock) | Full rights, except locking themselves or the last active admin | Change own password | Change own password | Change own password |
 | UI texts | Edit | Read | Read | Read (also before sign-in) |
 | App settings (idle sign-out) | Edit | Read | Read | Read |
@@ -165,6 +167,9 @@ translated to DuckDB SQL and has unit tests with the result Excel gives.
 - A deleted flow is hidden, kept for 30 days, and can be restored by the admin.
 - A user can copy a shared flow into a personal flow, then edit the copy.
 - Every signed-in user can read the name and the description of every reference table, so the Lookup and Pivot steps can offer it. The versions and rows of a table are read only by the admin and by a user for whom a flow uses that table (section 12.1).
+- The admin deletes a reference table from the "More" menu of the table, after a confirmation. The table goes for good with all of its versions. It is refused while a live flow reads it (flows point to a table by its name), and the message names the flows; a deleted flow does not count (migration 19, `delete_ref_table`).
+- The admin sets, per user, how many flows that user may own at one time (Admin, Users, Edit, "Flows this user may create"; empty means no limit, 0 means none). A flow that is deleted does not count; an admin has no limit. A new flow and a copy of a shared flow are refused at the limit, with a message that says how to go on. The database enforces it with a trigger on `flows` (migration 20), so no path around the app can pass it.
+- A person who is not the admin does not get the Admin screen: opening it sends them to the Flows list, with no message. The sidebar has no Admin link for them either.
 - Row-level security in Postgres enforces all of this. The client is never trusted.
 
 ## 8. Limits and performance

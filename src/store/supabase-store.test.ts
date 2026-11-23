@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { StoreError } from './types';
 import { storeErrorFrom } from './supabase-store';
+import { storeText } from './messages';
 
 describe('storeErrorFrom', () => {
   it('maps a permission error to forbidden', () => {
@@ -42,5 +43,13 @@ describe('storeErrorFrom', () => {
     const other = storeErrorFrom({ code: '08006', message: 'connection failure' }, 'load the flows');
     expect(other.code).toBe('invalid');
     expect(other.message).toBe('Could not load the flows: connection failure. Check the connection and try again.');
+  });
+
+  it('keeps the message of a table that is in use (P0001), the same words as the local store', () => {
+    const fromDatabase = 'The reference table "Limits" is read by Alpha, Zeta. Remove it from those flows first, then delete it.';
+    const e = storeErrorFrom({ code: 'P0001', message: fromDatabase }, 'delete the table');
+    expect(e.code).toBe('conflict');
+    expect(e.message).toBe(fromDatabase);
+    expect(storeText('errors.refTableInUse', { name: 'Limits', flows: 'Alpha, Zeta' })).toBe(fromDatabase);
   });
 });

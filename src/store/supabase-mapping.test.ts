@@ -31,6 +31,12 @@ describe('userFromRows', () => {
     expect(u).toMatchObject({ locked: true, mustChangePassword: true });
   });
 
+  it('maps the number of flows of a profile: a number is the limit, a missing value is no limit', () => {
+    expect(userFromRows({ id: 'u3', name: 'Cy', email: 'cy@example.test', role: 'user', max_flows: 7 }, []).maxFlows).toBe(7);
+    expect(userFromRows({ id: 'u3', name: 'Cy', email: 'cy@example.test', role: 'user', max_flows: 0 }, []).maxFlows).toBe(0);
+    expect(userFromRows({ id: 'u3', name: 'Cy', email: 'cy@example.test', role: 'user', max_flows: null }, []).maxFlows).toBeNull();
+  });
+
   it('maps a profile and its group ids', () => {
     expect(userFromRows({ id: 'u1', name: 'Ann', email: 'ann@example.test', role: 'admin' }, ['g1', 'g2'])).toEqual({
       id: 'u1',
@@ -39,6 +45,7 @@ describe('userFromRows', () => {
       role: 'admin',
       groupIds: ['g1', 'g2'],
       locked: false,
+      maxFlows: null,
       mustChangePassword: false,
     });
   });

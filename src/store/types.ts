@@ -20,7 +20,16 @@ export interface User {
   locked?: boolean;
   /** The user must choose a new password at the next sign-in. */
   mustChangePassword?: boolean;
+  /**
+   * How many flows this user may own at one time (the admin sets it). A deleted flow does not count. Null or missing means no
+   * limit; an admin has none whatever the value.
+   */
+  maxFlows?: number | null;
 }
+
+/** The most that an admin can set as the number of flows of a user. */
+export const MAX_FLOWS_LIMIT = 10_000;
+export const isValidFlowLimit = (v: unknown): v is number | null | undefined => v == null || (typeof v === 'number' && Number.isInteger(v) && v >= 0 && v <= MAX_FLOWS_LIMIT);
 
 export interface Group {
   id: string;
@@ -221,6 +230,11 @@ export interface DataStore {
   publishRefTableVersion(tableId: string, versionNo: number): Promise<RefTableRecord>;
   /** Admin only. Changes the description of a table. The name does not change: flows point to a table by its name. */
   updateRefTable(tableId: string, patch: { description: string }): Promise<RefTableRecord>;
+  /**
+   * Admin only. Removes a table for good, with all of its versions. It is refused while a live flow reads the table: the error
+   * names the flows. A deleted flow does not count.
+   */
+  deleteRefTable(tableId: string): Promise<void>;
   /** Admin only. Makes or fills a draft from a read file; never publishes. */
   importRefTable(input: RefImportInput): Promise<RefImportResult>;
 

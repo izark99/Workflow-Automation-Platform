@@ -225,12 +225,18 @@ test('a flow deleted more than 30 days ago is removed when the admin opens the s
   await expect(rows(page, 'Deleted flows').first()).toContainText('Payroll export check');
 });
 
-test('a user who is not the admin cannot open the screen and is told why', async ({ page }) => {
+test('a user who is not the admin does not get the screen: they are sent to the Flows list, with no message', async ({ page }) => {
   await seed(page, (s) => (s.currentUserId = 'user-lan'));
   await page.goto(URL);
-  await expect(page.getByRole('alert')).toContainText('Only the admin can open this screen.');
-  await expect(page.getByRole('alert')).toContainText('Go back to the Flows list');
+  await expect(page).toHaveURL(/\/flows$/);
+  await expect(page.getByRole('heading', { name: 'Flows', level: 1 })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Admin', level: 1 })).toHaveCount(0);
+  await expect(page.getByRole('alert')).toHaveCount(0);
   await expect(page.getByRole('table', { name: 'Users' })).toHaveCount(0);
+  // The browser's back button does not return to a closed door either.
+  await page.goBack();
+  await page.goForward();
+  await expect(page).toHaveURL(/\/flows$/);
 });
 
 test('the explanations of "Access to shared flows" and "Deleted flows" are behind info buttons, not under the titles', async ({ page }) => {
@@ -243,4 +249,49 @@ test('the explanations of "Access to shared flows" and "Deleted flows" are behin
   await page.keyboard.press('Escape');
   await page.getByRole('button', { name: 'About Deleted flows' }).click();
   await expect(page.getByText('A deleted flow is kept for 30 days.')).toBeVisible();
+});
+
+test('the admin sets how many flows a user may create: the field takes a number or nothing, and the value is kept', async ({ page }) => {
+  await page.goto(URL);
+  await page.getByRole('button', { name: 'Edit Lan' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Edit Lan' });
+  const field = dialog.getByRole('textbox', { name: 'Flows this user may create' });
+  await expect(field).toHaveValue('');
+  await field.fill('three');
+  await dialog.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(dialog).toContainText('The number of flows must be a whole number from 0 to 10000, or empty for no limit.');
+  await field.fill('2');
+  await dialog.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+  await page.getByRole('button', { name: 'Edit Lan' }).click();
+  await expect(page.getByRole('dialog', { name: 'Edit Lan' }).getByRole('textbox', { name: 'Flows this user may create' })).toHaveValue('2');
+  await page.reload();
+  await page.getByRole('button', { name: 'Edit Lan' }).click();
+  await expect(page.getByRole('dialog', { name: 'Edit Lan' }).getByRole('textbox', { name: 'Flows this user may create' })).toHaveValue('2');
+});
+
+test('an admin has no limit: the field is not shown when the role is Admin', async ({ page }) => {
+  await page.goto(URL);
+  await page.getByRole('button', { name: 'Edit Lan' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Edit Lan' });
+  await expect(dialog.getByRole('textbox', { name: 'Flows this user may create' })).toBeVisible();
+  await dialog.getByRole('button', { name: /^Role: User/ }).click();
+  await page.getByRole('option', { name: 'Admin' }).click();
+  await expect(dialog.getByRole('textbox', { name: 'Flows this user may create' })).toHaveCount(0);
+});
+
+test('a user who has reached the limit cannot create a flow: the dialog says why and no flow is made', async ({ page }) => {
+  await seed(page, (s) => {
+    s.currentUserId = 'user-lan';
+    s.users.find((u) => u.id === 'user-lan')!.maxFlows = 0;
+  });
+  await page.goto('/flows');
+  await page.getByRole('button', { name: 'Create flow' }).click();
+  const dialog = page.getByRole('dialog', { name: /Create flow/ });
+  await dialog.getByRole('textbox', { name: 'Flow name' }).fill('Too many');
+  await dialog.getByRole('button', { name: 'Create flow' }).click();
+  await expect(dialog.getByRole('alert')).toContainText('You have reached the limit of 0 flows that the admin set for you.');
+  await expect(page).toHaveURL(/\/flows$/);
+  await dialog.getByRole('button', { name: 'Cancel' }).click();
+  await expect(page.getByRole('link', { name: 'Too many' })).toHaveCount(0);
 });
