@@ -225,12 +225,18 @@ test('a flow deleted more than 30 days ago is removed when the admin opens the s
   await expect(rows(page, 'Deleted flows').first()).toContainText('Payroll export check');
 });
 
-test('a user who is not the admin cannot open the screen and is told why', async ({ page }) => {
+test('a user who is not the admin does not get the screen: they are sent to the Flows list, with no message', async ({ page }) => {
   await seed(page, (s) => (s.currentUserId = 'user-lan'));
   await page.goto(URL);
-  await expect(page.getByRole('alert')).toContainText('Only the admin can open this screen.');
-  await expect(page.getByRole('alert')).toContainText('Go back to the Flows list');
+  await expect(page).toHaveURL(/\/flows$/);
+  await expect(page.getByRole('heading', { name: 'Flows', level: 1 })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Admin', level: 1 })).toHaveCount(0);
+  await expect(page.getByRole('alert')).toHaveCount(0);
   await expect(page.getByRole('table', { name: 'Users' })).toHaveCount(0);
+  // The browser's back button does not return to a closed door either.
+  await page.goBack();
+  await page.goForward();
+  await expect(page).toHaveURL(/\/flows$/);
 });
 
 test('the explanations of "Access to shared flows" and "Deleted flows" are behind info buttons, not under the titles', async ({ page }) => {

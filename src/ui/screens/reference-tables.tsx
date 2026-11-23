@@ -20,7 +20,7 @@ import { PanelToggle } from '../panels/panel-toggle';
 import { ImportDialog } from './ref-import-dialog';
 import styles from './reference-tables.module.css';
 
-type Dialogs = 'paste' | 'newVersion' | 'publish' | 'newTable' | 'import' | 'columns' | 'description' | null;
+type Dialogs = 'paste' | 'newVersion' | 'publish' | 'newTable' | 'import' | 'columns' | 'description' | 'delete' | null;
 
 /** The shared reference tables: the list, the versions of one table, and its rows (editable while a version is a draft). */
 const pastedText = (t: ReturnType<typeof useT>, n: number): string => t('refTables.pasted', { n, nText: n.toLocaleString('en-US') });
@@ -301,6 +301,7 @@ export function ReferenceTablesScreen() {
                             { value: 'newVersion', label: t('refTables.newVersion') },
                           ]
                         : []),
+                      { value: 'delete', label: t('refTables.delete.button') },
                     ]}
                     value=""
                     onChange={(v) => {
@@ -460,6 +461,32 @@ export function ReferenceTablesScreen() {
           }}
         />
       ) : null}
+      {dialog === 'delete' && table ? (
+        <DeleteTableDialog
+          name={table.name}
+          busy={busy === 'table'}
+          error={dialogError}
+          onCancel={() => setDialog(null)}
+          onConfirm={() => {
+            setBusy('table');
+            setDialogError(null);
+            store.deleteRefTable(table.id).then(
+              () => {
+                setDialog(null);
+                setBusy(null);
+                toast(t('refTables.delete.done', { name: table.name }));
+                loadedKey.current = '';
+                data.reload();
+                void navigate('/reference-tables');
+              },
+              (e: unknown) => {
+                setDialogError(errorText(e, t('refTables.delete.failed')));
+                setBusy(null);
+              },
+            );
+          }}
+        />
+      ) : null}
       {dialog === 'import' ? (
         <ImportDialog
           tables={tables}
@@ -549,6 +576,29 @@ function ColumnsDialog({ initial, onApply, onCancel }: { initial: Column[]; onAp
           <Button onClick={() => setPlan((p) => [...p, { from: null, name: '', type: 'text' }])}>{t('refTables.cols.add')}</Button>
         </div>
         {problem ? <ErrorState what={t('refTables.cols.problemTitle')} next={t(problem.key, problem.params)} /> : null}
+      </div>
+    </Dialog>
+  );
+}
+
+function DeleteTableDialog({ name, busy, error, onConfirm, onCancel }: { name: string; busy: boolean; error: string | null; onConfirm: () => void; onCancel: () => void }) {
+  const t = useT();
+  return (
+    <Dialog
+      title={t('refTables.delete.title', { name })}
+      onClose={onCancel}
+      actions={
+        <>
+          <Button onClick={onCancel}>{t('refTables.cancel')}</Button>
+          <Button variant="danger" busy={busy} onClick={onConfirm}>
+            {t('refTables.delete.confirm')}
+          </Button>
+        </>
+      }
+    >
+      <div className={styles.colsBody}>
+        <p className={styles.note}>{t('refTables.delete.text')}</p>
+        {error ? <ErrorState what={t('refTables.delete.failed')} next={error} /> : null}
       </div>
     </Dialog>
   );

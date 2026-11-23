@@ -38,6 +38,7 @@ export const STORE_MESSAGES = {
   'errors.flowNeedsName': 'A flow needs a name. Type a name and try again.',
   'errors.refTableNotFound': 'This reference table does not exist. Go back to the Reference tables list.',
   'errors.refTableNeedsName': 'A reference table needs a name. Type a name and try again.',
+  'errors.refTableInUse': 'The reference table "{name}" is read by {flows}. Remove it from those flows first, then delete it.',
   'errors.refTableExists': 'A reference table named "{name}" exists. Choose another name.',
   'errors.userNotFound': 'There is no user "{id}".',
   'errors.userGone': 'This user does not exist any more. Reload the page.',

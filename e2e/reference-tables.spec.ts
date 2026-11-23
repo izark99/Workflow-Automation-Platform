@@ -424,14 +424,14 @@ test.describe('the toolbar of a table is short: the main action, and a More menu
     const names = await toolbar(page).evaluateAll((els) => els.map((e) => (e.getAttribute('aria-label') ?? e.textContent ?? '').trim()).filter((n) => !/^(Remove row|Add row|v\d)/.test(n)));
     expect(names).toEqual(['Save changes', 'Publish', 'More actions for this table']);
     await page.getByRole('button', { name: /^More actions for this table/ }).click();
-    await expect(page.getByRole('option')).toHaveText(['Edit description', 'Columns', 'Paste from Excel', 'New version']);
+    await expect(page.getByRole('option')).toHaveText(['Edit description', 'Columns', 'Paste from Excel', 'New version', 'Delete table']);
   });
 
-  test('a published version shows New version and More, and More holds only Edit description', async ({ page }) => {
+  test('a published version shows New version and More, and More holds Edit description and Delete table', async ({ page }) => {
     await page.goto(URL);
     await expect(page.getByRole('button', { name: 'New version', exact: true })).toBeVisible();
     await page.getByRole('button', { name: /^More actions for this table/ }).click();
-    await expect(page.getByRole('option')).toHaveText(['Edit description']);
+    await expect(page.getByRole('option')).toHaveText(['Edit description', 'Delete table']);
   });
 
   test('the menu opens New version for a draft too', async ({ page }) => {
@@ -448,4 +448,43 @@ test.describe('the toolbar of a table is short: the main action, and a More menu
     const more = await page.getByRole('button', { name: /^More actions for this table/ }).boundingBox();
     expect(Math.abs((name!.y + name!.height / 2) - (more!.y + more!.height / 2))).toBeLessThan(40);
   });
+});
+
+test('the admin deletes a table that no flow reads, after a confirmation that names it', async ({ page }) => {
+  await page.goto(`${URL}?table=ref-ot-types`);
+  await expect(page.getByText('No flow reads this table yet.')).toBeVisible();
+  await fromMenu(page, 'Delete table');
+  const dialog = page.getByRole('dialog', { name: 'Delete OT types?' });
+  await expect(dialog).toContainText('removes the table with all of its versions and rows for good');
+  // Cancel and Escape leave the table where it is.
+  await dialog.getByRole('button', { name: 'Cancel' }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(list(page).getByRole('link', { name: /OT types/ })).toBeVisible();
+  await fromMenu(page, 'Delete table');
+  await dialog.getByRole('button', { name: 'Delete table' }).click();
+  await expect(toastWith(page, 'Deleted OT types.')).toBeVisible();
+  await expect(list(page).getByRole('link')).toHaveCount(2);
+  await expect(list(page).getByRole('link', { name: /OT types/ })).toHaveCount(0);
+  // It is gone for good: after a reload too.
+  await page.reload();
+  await expect(list(page).getByRole('link')).toHaveCount(2);
+});
+
+test('a table that a flow reads is not deleted: the dialog names the flow and the table stays', async ({ page }) => {
+  await seedRunnableFlow(page);
+  await page.goto(`${URL}?table=ref-ot-limits`);
+  await fromMenu(page, 'Delete table');
+  const dialog = page.getByRole('dialog', { name: 'Delete OT limits?' });
+  await dialog.getByRole('button', { name: 'Delete table' }).click();
+  await expect(dialog.getByRole('alert')).toContainText('The reference table "OT limits" is read by Run test flow. Remove it from those flows first, then delete it.');
+  await dialog.getByRole('button', { name: 'Cancel' }).click();
+  await expect(list(page).getByRole('link', { name: /OT limits/ })).toBeVisible();
+});
+
+test('a user who is not the admin has no way to delete a table', async ({ page }) => {
+  await seedRunnableFlow(page);
+  await seed(page, (s) => (s.currentUserId = 'user-lan'));
+  await page.goto(URL);
+  await expect(page.getByRole('button', { name: /^More actions for this table/ })).toHaveCount(0);
+  await expect(page.getByRole('option', { name: 'Delete table' })).toHaveCount(0);
 });

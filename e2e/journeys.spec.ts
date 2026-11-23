@@ -206,7 +206,7 @@ test('journey 4: the admin shares a flow with a group; a member can view and run
   await expect(page.getByRole('status').filter({ hasText: 'only the admin can change it' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Add step Filter' })).toBeDisabled();
   await page.goto('/admin');
-  await expect(page.getByRole('alert')).toContainText('Only the admin can open this screen.');
+  await expect(page).toHaveURL(/\/flows$/); // no Admin screen for a user who is not the admin
 
   // Minh deletes a personal flow after a confirmation that names it.
   await page.goto('/flows');

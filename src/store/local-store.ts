@@ -474,6 +474,16 @@ export class LocalStore implements DataStore {
     return structuredClone(t);
   }
 
+  async deleteRefTable(tableId: string): Promise<void> {
+    const s = await this.open();
+    const table = this.tableFor(s, tableId);
+    // A live flow that reads the table (in any version) keeps it: flows point to a table by its name.
+    const readers = s.flows.filter((f) => !f.deletedAt && f.versions.some((v) => referencedTables(v.definition).includes(table.name))).map((f) => f.name);
+    if (readers.length > 0) fail('conflict', 'errors.refTableInUse', { name: table.name, flows: [...new Set(readers)].sort((a, b) => a.localeCompare(b)).join(', ') });
+    s.refTables = s.refTables.filter((x) => x.id !== tableId);
+    await this.commit(s);
+  }
+
   async importRefTable(input: RefImportInput): Promise<RefImportResult> {
     this.mustBeAdmin(await this.open(), 'import reference tables');
     return importRefTableVia(this, input);
