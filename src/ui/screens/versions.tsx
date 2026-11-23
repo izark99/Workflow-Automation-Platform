@@ -99,7 +99,7 @@ export function VersionsScreen() {
           ];
           return (
             <div className={styles.actions}>
-              <ButtonLink size="sm" to={`/flows/${flow.id}/versions/${v.versionNo}`} aria-label={t('versions.actionLabel', { action: editDraft ? t('versions.edit') : t('versions.view'), n: v.versionNo })}>
+              <ButtonLink size="sm" className={styles.mainAction} to={`/flows/${flow.id}/versions/${v.versionNo}`} aria-label={t('versions.actionLabel', { action: editDraft ? t('versions.edit') : t('versions.view'), n: v.versionNo })}>
                 {editDraft ? t('versions.edit') : t('versions.view')}
               </ButtonLink>
               {menu.length > 0 ? (

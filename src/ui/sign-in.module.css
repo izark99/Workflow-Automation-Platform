@@ -26,10 +26,13 @@
 
 .mark {
   flex: none;
+  display: grid;
+  place-items: center;
   width: 24px;
   height: 24px;
   border-radius: var(--radius-sm);
   background: var(--primary);
+  color: var(--on-primary);
 }
 
 .brand {

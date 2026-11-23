@@ -225,7 +225,7 @@ export function Shell() {
         ) : (
           <>
             <div className={styles.brand}>
-              <span className={styles.mark} aria-hidden="true" />
+              <span className={styles.mark} aria-hidden="true"><Icon name="workflow" size={16} /></span>
               {t('app.brand')}
             </div>
             <div className={styles.create}>

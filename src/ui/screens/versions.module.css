@@ -92,3 +92,9 @@
   backdrop-filter: blur(var(--blur-md)) saturate(1.5);
   box-shadow: var(--shadow-sm);
 }
+
+/* Edit and View have one width, so the More menu of every row starts at the same x. */
+.mainAction {
+  min-width: 64px;
+  justify-content: center;
+}
