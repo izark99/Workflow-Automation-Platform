@@ -476,3 +476,60 @@ describe('deleting a reference table (admin only)', () => {
     expect((await store.listRefTables()).some((t) => t.id === made.id)).toBe(true);
   });
 });
+
+describe('the number of flows of a user (set by the admin)', () => {
+  const setLimit = async (id: string, maxFlows: number | null) => {
+    const user = (await store.listUsers()).find((u) => u.id === id)!;
+    await store.saveUser({ ...user, maxFlows });
+  };
+
+  it('refuses a new flow and a copy when a user owns as many flows as the limit, with the words of the app', async () => {
+    const lan = (await store.listUsers()).find((u) => u.id === 'user-lan')!;
+    await as('user-harold');
+    await setLimit('user-lan', 2);
+    await as('user-lan');
+    const before = (await store.listFlows()).filter((f) => f.ownerId === lan.id).length;
+    const room = Math.max(0, 2 - before);
+    for (let i = 0; i < room; i += 1) await store.createFlow({ name: `Mine ${i}`, scope: 'personal' });
+    await expect(store.createFlow({ name: 'One too many', scope: 'personal' })).rejects.toThrow('You have reached the limit of 2 flows that the admin set for you. Delete a flow, or ask the admin to raise the limit.');
+    expect(await code(store.createFlow({ name: 'One too many', scope: 'personal' }))).toBe('conflict');
+    const shared = (await store.listFlows()).find((f) => f.scope === 'shared')!;
+    expect(await code(store.copyFlow(shared.id, 'My copy'))).toBe('conflict');
+  });
+
+  it('does not count a deleted flow, and lets the admin raise or remove the limit', async () => {
+    await as('user-harold');
+    await setLimit('user-minh', 1);
+    await as('user-minh');
+    const mine = (await store.listFlows()).filter((f) => f.ownerId === 'user-minh' && f.scope === 'personal');
+    for (const f of mine.slice(1)) await store.deleteFlow(f.id);
+    if (mine.length === 0) await store.createFlow({ name: 'First', scope: 'personal' });
+    expect(await code(store.createFlow({ name: 'Second', scope: 'personal' }))).toBe('conflict');
+    await store.deleteFlow((await store.listFlows()).find((f) => f.ownerId === 'user-minh')!.id);
+    await store.createFlow({ name: 'Again', scope: 'personal' });
+    await as('user-harold');
+    await setLimit('user-minh', 5);
+    await as('user-minh');
+    await store.createFlow({ name: 'Raised', scope: 'personal' });
+    await as('user-harold');
+    await setLimit('user-minh', null);
+    expect((await store.listUsers()).find((u) => u.id === 'user-minh')!.maxFlows).toBeNull();
+  });
+
+  it('is not a limit for an admin, and a limit of 0 means no flow at all', async () => {
+    await as('user-harold');
+    await setLimit('user-harold', 0);
+    await store.createFlow({ name: 'Admin flow', scope: 'shared' });
+    await setLimit('user-thu', 0);
+    await as('user-thu');
+    expect(await code(store.createFlow({ name: 'Nope', scope: 'personal' }))).toBe('conflict');
+  });
+
+  it('checks the value when the admin saves it, and only the admin can save it', async () => {
+    await as('user-harold');
+    const lan = (await store.listUsers()).find((u) => u.id === 'user-lan')!;
+    for (const bad of [-1, 1.5, 10_001]) expect(await code(store.saveUser({ ...lan, maxFlows: bad })), String(bad)).toBe('invalid');
+    await as('user-lan');
+    expect(await code(store.saveUser({ ...lan, maxFlows: 99 }))).toBe('forbidden');
+  });
+});

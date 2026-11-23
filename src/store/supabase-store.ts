@@ -28,6 +28,7 @@ import {
 import {
   StoreError,
   storeError,
+  isValidFlowLimit,
   isValidIdleHours,
   type AppSettingKey,
   type AppSettings,
@@ -112,7 +113,7 @@ export class SupabaseStore implements DataStore {
     const { data, error } = await this.client.auth.getUser();
     const id = data.user?.id;
     if (error || !id) throw storeError('forbidden', 'errors.noUser');
-    const profile = await this.client.from('profiles').select('id, name, email, role, locked_at, must_change_password').eq('id', id).maybeSingle();
+    const profile = await this.client.from('profiles').select('id, name, email, role, locked_at, must_change_password, max_flows').eq('id', id).maybeSingle();
     const row = this.ok<ProfileRow | null>(profile, 'read your profile');
     if (!row) {
       // A locked account cannot read its own profile (D75); say so instead of "no profile".
@@ -127,7 +128,7 @@ export class SupabaseStore implements DataStore {
   async listUsers(): Promise<User[]> {
     await this.mustBeAdmin('see the user list');
     const [profiles, members] = await Promise.all([
-      this.client.from('profiles').select('id, name, email, role, locked_at, must_change_password').order('name'),
+      this.client.from('profiles').select('id, name, email, role, locked_at, must_change_password, max_flows').order('name'),
       this.client.from('group_members').select('group_id, user_id'),
     ]);
     const memberRows = this.ok<{ group_id: string; user_id: string }[]>(members, 'read the group members');
@@ -271,7 +272,8 @@ export class SupabaseStore implements DataStore {
     if (!user.id) {
       throw storeError('invalid', 'errors.userViaAuth');
     }
-    await this.updateRow('profiles', { id: user.id }, { name: user.name.trim(), email: user.email.trim(), role: user.role }, 'save the user', 'this user');
+    if (!isValidFlowLimit(user.maxFlows)) throw storeError('invalid', 'errors.flowLimitInvalid');
+    await this.updateRow('profiles', { id: user.id }, { name: user.name.trim(), email: user.email.trim(), role: user.role, max_flows: user.maxFlows ?? null }, 'save the user', 'this user');
     await this.rpc('set_user_groups', { p_user_id: user.id, p_group_ids: user.groupIds }, 'save the groups of the user');
     const saved = (await this.listUsers()).find((u) => u.id === user.id);
     if (!saved) throw storeError('not_found', 'errors.userGone');

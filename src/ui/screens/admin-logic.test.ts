@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { seedSnapshot } from '../../store/seed';
-import { deletedOn, groupsText, keptUntil, memberCount, toggleGroup, userFormProblem } from './admin-logic';
+import { deletedOn, groupsText, keptUntil, memberCount, parseFlowLimit, toggleGroup, userFormProblem } from './admin-logic';
 
 const snap = seedSnapshot();
 const user = (id: string) => snap.users.find((u) => u.id === id)!;
@@ -37,13 +37,31 @@ describe('group access', () => {
   });
 });
 
+describe('the number of flows of a user', () => {
+  it('reads an empty field as no limit and a whole number from 0 to 10000 as the limit', () => {
+    expect(parseFlowLimit('')).toBeNull();
+    expect(parseFlowLimit('   ')).toBeNull();
+    expect(parseFlowLimit('0')).toBe(0);
+    expect(parseFlowLimit(' 25 ')).toBe(25);
+    expect(parseFlowLimit('10000')).toBe(10000);
+  });
+  it('says NaN for anything else', () => {
+    for (const bad of ['10001', '-1', '1.5', 'ten', '1e3', '12345678']) expect(Number.isNaN(parseFlowLimit(bad)), bad).toBe(true);
+  });
+});
+
 describe('user form', () => {
-  const ok = { name: 'Lan', email: 'lan@example.com', role: 'user' as const, groupIds: [] };
+  const ok = { name: 'Lan', email: 'lan@example.com', role: 'user' as const, groupIds: [], maxFlows: '' };
   it('needs a name and an email address, and says what to type', () => {
     expect(userFormProblem(ok)).toBeUndefined();
     expect(userFormProblem({ ...ok, name: '  ' })).toMatch(/name is empty/);
     expect(userFormProblem({ ...ok, email: 'nope' })).toMatch(/"nope" is not an email address.*name@example\.com/);
     expect(userFormProblem({ ...ok, email: 'a@b' })).toBeDefined();
     expect(userFormProblem({ ...ok, email: ' a@b.co ' })).toBeUndefined();
+  });
+  it('checks the number of flows of a user, and ignores it for an admin', () => {
+    expect(userFormProblem({ ...ok, maxFlows: '5' })).toBeUndefined();
+    expect(userFormProblem({ ...ok, maxFlows: 'x' })).toMatch(/whole number from 0 to 10000/);
+    expect(userFormProblem({ ...ok, role: 'admin', maxFlows: 'x' })).toBeUndefined();
   });
 });

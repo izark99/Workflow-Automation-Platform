@@ -2,7 +2,7 @@ import { planPublish, referencedTables } from '../engine/versions';
 import type { VersionRange } from '../engine/versions';
 import { checkRange, checkRowCap } from './checks';
 import { importRefTable as importRefTableVia } from './ref-import';
-import { DEFAULT_IDLE_TIMEOUT_HOURS, KEEP_DELETED_DAYS, StoreError, isValidIdleHours, storeError, type StoreErrorCode } from './types';
+import { DEFAULT_IDLE_TIMEOUT_HOURS, KEEP_DELETED_DAYS, StoreError, isValidFlowLimit, isValidIdleHours, storeError, type StoreErrorCode } from './types';
 import type { StoreMessageId } from './messages';
 import type {
   DataStore,
@@ -162,6 +162,7 @@ export class LocalStore implements DataStore {
     const s = await this.open();
     this.mustBeAdmin(s, 'change users');
     if (!user.name.trim() || !user.email.includes('@')) fail('invalid', 'errors.userNeedsNameEmail');
+    if (!isValidFlowLimit(user.maxFlows)) fail('invalid', 'errors.flowLimitInvalid');
     const i = s.users.findIndex((u) => u.id === user.id);
     if (user.role !== 'admin' && i >= 0 && s.users[i]!.role === 'admin' && !s.users.some((u, j) => j !== i && u.role === 'admin')) {
       fail('conflict', 'errors.lastAdmin');
@@ -169,7 +170,7 @@ export class LocalStore implements DataStore {
     if (s.users.some((u, j) => j !== i && u.email.toLowerCase() === user.email.trim().toLowerCase())) {
       fail('conflict', 'errors.emailExists', { email: user.email.trim() });
     }
-    const saved = { ...user, name: user.name.trim(), email: user.email.trim(), groupIds: user.groupIds.filter((g) => s.groups.some((x) => x.id === g)), id: user.id || this.nextId(s, 'user') };
+    const saved = { ...user, maxFlows: user.maxFlows ?? null, name: user.name.trim(), email: user.email.trim(), groupIds: user.groupIds.filter((g) => s.groups.some((x) => x.id === g)), id: user.id || this.nextId(s, 'user') };
     if (i >= 0) s.users[i] = saved;
     else s.users.push(saved);
     await this.commit(s);
@@ -283,11 +284,19 @@ export class LocalStore implements DataStore {
     return this.view(s, this.flowFor(s, id, false));
   }
 
+  /** The limit that the admin set on this user: the flows they own that are not deleted. An admin has none. */
+  private checkFlowLimit(s: Snapshot, u: User): void {
+    if (u.role === 'admin' || u.maxFlows == null) return;
+    const owned = s.flows.filter((f) => f.ownerId === u.id && !f.deletedAt).length;
+    if (owned >= u.maxFlows) fail('conflict', 'errors.flowLimit', { max: u.maxFlows });
+  }
+
   async createFlow({ name, scope }: { name: string; scope: Scope }): Promise<FlowRecord> {
     const s = await this.open();
     const u = this.who(s);
     if (!name.trim()) fail('invalid', 'errors.flowNeedsName');
     if (scope === 'shared' && u.role !== 'admin') fail('forbidden', 'errors.sharedFlowAdminOnly');
+    this.checkFlowLimit(s, u);
     const flow: FlowRecord = {
       id: this.nextId(s, 'flow'),
       name: name.trim(),
@@ -306,6 +315,7 @@ export class LocalStore implements DataStore {
     const s = await this.open();
     const u = this.who(s);
     const src = this.flowFor(s, id, false);
+    this.checkFlowLimit(s, u);
     const latest = [...src.versions].sort((a, b) => b.versionNo - a.versionNo)[0];
     const copy: FlowRecord = {
       id: this.nextId(s, 'flow'),

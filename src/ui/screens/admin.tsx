@@ -10,7 +10,7 @@ import type { MessageKey } from '../i18n';
 import { CreateAccountDialog, LockDialog, ResetPasswordDialog } from './admin-accounts';
 import { AdminSettings } from './admin-settings';
 import { AdminTexts } from './admin-texts';
-import { deletedOn, groupsText, keptUntil, memberCount, toggleGroup, userFormProblem } from './admin-logic';
+import { deletedOn, groupsText, keptUntil, memberCount, parseFlowLimit, toggleGroup, userFormProblem } from './admin-logic';
 import type { UserForm } from './admin-logic';
 import styles from './admin.module.css';
 
@@ -226,7 +226,7 @@ export function AdminScreen() {
             busy={busy}
             error={dialogError}
             onCancel={() => setDialog(null)}
-            onSave={(f) => void run(() => store.saveUser({ id: dialog.user?.id ?? '', name: f.name, email: f.email, role: f.role, groupIds: f.groupIds }), dialog.user ? null : t('admin.userAdded', { name: f.name.trim() }), t('admin.userSaveFailed'), true)}
+            onSave={(f) => void run(() => store.saveUser({ id: dialog.user?.id ?? '', name: f.name, email: f.email, role: f.role, groupIds: f.groupIds, maxFlows: f.role === 'admin' ? null : parseFlowLimit(f.maxFlows) }), dialog.user ? null : t('admin.userAdded', { name: f.name.trim() }), t('admin.userSaveFailed'), true)}
           />
         ) : null}
         {dialog?.kind === 'group' ? <GroupDialog group={dialog.group} busy={busy} error={dialogError} onCancel={() => setDialog(null)} onSave={(name) => void run(() => store.saveGroup({ id: dialog.group?.id, name }), null, t('admin.groupSaveFailed'), true)} /> : null}
@@ -282,7 +282,7 @@ export function AdminScreen() {
 
 function UserDialog({ user, groups, busy, error, onSave, onCancel }: { user: User | null; groups: Group[]; busy: boolean; error: string | null; onSave: (f: UserForm) => void; onCancel: () => void }) {
   const t = useT();
-  const [f, setF] = useState<UserForm>({ name: user?.name ?? '', email: user?.email ?? '', role: user?.role ?? 'user', groupIds: user?.groupIds ?? [] });
+  const [f, setF] = useState<UserForm>({ name: user?.name ?? '', email: user?.email ?? '', role: user?.role ?? 'user', groupIds: user?.groupIds ?? [], maxFlows: user?.maxFlows == null ? '' : String(user.maxFlows) });
   const [local, setLocal] = useState<string | null>(null);
   return (
     <Dialog
@@ -312,6 +312,7 @@ function UserDialog({ user, groups, busy, error, onSave, onCancel }: { user: Use
           <span style={{ display: 'block', fontWeight: 500, marginBottom: 'var(--space-2)' }}>{t('admin.userRole')}</span>
           <Dropdown label={t('admin.userRole')} options={(['user', 'admin'] as const).map((r) => ({ value: r, label: t(`admin.roles.${r}` as MessageKey) }))} value={f.role} width="100%" onChange={(role) => setF({ ...f, role: role as UserForm['role'] })} />
         </div>
+        {f.role === 'user' ? <Field label={t('admin.userMaxFlows')} hint={t('admin.userMaxFlowsHint')} inputMode="numeric" value={f.maxFlows} onChange={(e) => setF({ ...f, maxFlows: e.target.value })} /> : null}
         <div className={styles.groupBoxes} role="group" aria-label={t('admin.userGroups')}>
           <span style={{ display: 'flex', alignItems: 'center', fontWeight: 500 }}>
             {t('admin.userGroups')}

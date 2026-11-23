@@ -24,6 +24,7 @@ export interface ProfileRow {
   role: Role;
   locked_at?: string | null;
   must_change_password?: boolean;
+  max_flows?: number | null;
 }
 
 export interface GroupRow {
@@ -105,6 +106,7 @@ export const userFromRows = (p: ProfileRow, groupIds: string[]): User => ({
   groupIds,
   locked: p.locked_at != null,
   mustChangePassword: p.must_change_password === true,
+  maxFlows: p.max_flows ?? null,
 });
 
 export const groupFromRow = (g: GroupRow): Group => ({ id: g.id, name: g.name });
