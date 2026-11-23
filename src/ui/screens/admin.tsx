@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Navigate } from 'react-router-dom';
 import { Badge, Button, Card, Checkbox, Dialog, Dropdown, EmptyState, ErrorState, Field, InfoTip, ScreenFrame, SkeletonTable, Table, Tabs, useDelayedLoading, useToast } from '../components';
 import type { Column } from '../components';
 import { StoreError } from '../../store/types';
@@ -62,8 +63,7 @@ export function AdminScreen() {
 
   let body;
   if (data.error) {
-    const forbidden = data.error instanceof StoreError && data.error.code === 'forbidden';
-    body = <ErrorState what={forbidden ? t('admin.forbidden') : t('admin.loadFailed')} next={forbidden ? t('admin.forbiddenNext') : errorText(data.error)} />;
+    body = <ErrorState what={t('admin.loadFailed')} next={errorText(data.error)} />;
   } else if (!d) {
     body = showSkeleton ? <SkeletonTable weights={[16, 24, 10, 20, 12]} rows={3} label={t('admin.loading')} /> : null;
   } else {
@@ -268,15 +268,14 @@ export function AdminScreen() {
     );
   }
 
+  // A person who is not an admin does not get this screen at all: they are sent to the Flows list, with no message.
+  if (data.error instanceof StoreError && data.error.code === 'forbidden') return <Navigate to="/flows" replace />;
+
   return (
     <ScreenFrame breadcrumb={<span>{t('admin.screen.crumb')}</span>} title={t('admin.screen.title')} subtitle={t('admin.screen.subtitle')}>
-      {data.error && data.error instanceof StoreError && data.error.code === 'forbidden' ? (
-        body
-      ) : (
-        <Tabs label={t('admin.tabs.label')} tabs={[{ id: 'users', label: t('admin.tabs.users') }, { id: 'texts', label: t('admin.tabs.texts') }, { id: 'settings', label: t('admin.tabs.settings') }]} selected={tab} onSelect={setTab}>
+      <Tabs label={t('admin.tabs.label')} tabs={[{ id: 'users', label: t('admin.tabs.users') }, { id: 'texts', label: t('admin.tabs.texts') }, { id: 'settings', label: t('admin.tabs.settings') }]} selected={tab} onSelect={setTab}>
           <div className={styles.panel}>{tab === 'texts' ? <AdminTexts /> : tab === 'settings' ? <AdminSettings /> : body}</div>
-        </Tabs>
-      )}
+      </Tabs>
     </ScreenFrame>
   );
 }

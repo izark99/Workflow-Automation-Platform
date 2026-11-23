@@ -429,3 +429,50 @@ describe('listRefTables: rows only where a flow reads the table (SPEC 12.1)', ()
     expect((await rowsOf('OT types')).usedBy.filter((n) => n === 'Two versions')).toHaveLength(1);
   });
 });
+
+describe('deleting a reference table (admin only)', () => {
+  const lookupFlowOn = (table: string) => ({
+    schemaVersion: 1,
+    nodes: [{ id: 'in', type: 'input_file', settings: { key: 'Data' } }, { id: 'out', type: 'reference_table', settings: { table } }],
+    edges: [],
+  });
+
+  it('removes a table that no flow reads, with its versions', async () => {
+    const made = await store.createRefTable({ name: 'Temp', description: '', columns: [{ name: 'id', type: 'text' }] });
+    await store.deleteRefTable(made.id);
+    expect((await store.listRefTables()).some((t) => t.id === made.id)).toBe(false);
+    expect(await code(store.deleteRefTable(made.id))).toBe('not_found');
+  });
+
+  it('refuses a table that a live flow reads, and the message names the flows', async () => {
+    const made = await store.createRefTable({ name: 'Temp', description: '', columns: [] });
+    const flow = await store.createFlow({ name: 'Zeta reader', scope: 'personal' });
+    await store.saveFlowVersion(flow.id, 1, { definition: lookupFlowOn('Temp') });
+    const other = await store.createFlow({ name: 'Alpha reader', scope: 'personal' });
+    await store.saveFlowVersion(other.id, 1, { definition: lookupFlowOn('Temp') });
+    await expect(store.deleteRefTable(made.id)).rejects.toThrow('The reference table "Temp" is read by Alpha reader, Zeta reader. Remove it from those flows first, then delete it.');
+    expect(await code(store.deleteRefTable(made.id))).toBe('conflict');
+    expect((await store.listRefTables()).some((t) => t.id === made.id)).toBe(true);
+  });
+
+  it('lets a table go when the only flow that read it is deleted, or no longer reads it', async () => {
+    const made = await store.createRefTable({ name: 'Temp', description: '', columns: [] });
+    const flow = await store.createFlow({ name: 'Reader', scope: 'personal' });
+    await store.saveFlowVersion(flow.id, 1, { definition: lookupFlowOn('Temp') });
+    await store.saveFlowVersion(flow.id, 1, { definition: { schemaVersion: 1, nodes: [], edges: [] } });
+    await store.deleteRefTable(made.id);
+    const again = await store.createRefTable({ name: 'Temp2', description: '', columns: [] });
+    await store.saveFlowVersion(flow.id, 1, { definition: lookupFlowOn('Temp2') });
+    await store.deleteFlow(flow.id);
+    await store.deleteRefTable(again.id);
+    expect((await store.listRefTables()).some((t) => t.name.startsWith('Temp'))).toBe(false);
+  });
+
+  it('is for the admin only', async () => {
+    const made = await store.createRefTable({ name: 'Temp', description: '', columns: [] });
+    await as('user-lan');
+    expect(await code(store.deleteRefTable(made.id))).toBe('forbidden');
+    await as('user-harold');
+    expect((await store.listRefTables()).some((t) => t.id === made.id)).toBe(true);
+  });
+});

@@ -412,6 +412,12 @@ export class SupabaseStore implements DataStore {
     return this.refTable(tableId);
   }
 
+  async deleteRefTable(tableId: string): Promise<void> {
+    await this.mustBeAdmin('delete reference tables');
+    // The database refuses while a live flow reads the table and says which flows (migration 19).
+    await this.rpc('delete_ref_table', { p_ref_table_id: tableId }, 'delete the table');
+  }
+
   async importRefTable(input: RefImportInput): Promise<RefImportResult> {
     await this.mustBeAdmin('import reference tables');
     return importRefTableVia(this, input);

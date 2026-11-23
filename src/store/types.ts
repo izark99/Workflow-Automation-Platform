@@ -221,6 +221,11 @@ export interface DataStore {
   publishRefTableVersion(tableId: string, versionNo: number): Promise<RefTableRecord>;
   /** Admin only. Changes the description of a table. The name does not change: flows point to a table by its name. */
   updateRefTable(tableId: string, patch: { description: string }): Promise<RefTableRecord>;
+  /**
+   * Admin only. Removes a table for good, with all of its versions. It is refused while a live flow reads the table: the error
+   * names the flows. A deleted flow does not count.
+   */
+  deleteRefTable(tableId: string): Promise<void>;
   /** Admin only. Makes or fills a draft from a read file; never publishes. */
   importRefTable(input: RefImportInput): Promise<RefImportResult>;
 

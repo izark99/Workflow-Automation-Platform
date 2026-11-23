@@ -155,6 +155,7 @@ translated to DuckDB SQL and has unit tests with the result Excel gives.
 | Personal flow | Full rights | Full rights | No access | No access |
 | Shared flow | Full rights | Not applicable. Only the admin creates shared flows | View and run | No access |
 | Reference table: name and description | Full rights | Read | Read | Read |
+| Reference table: delete | Full rights, only a table that no live flow reads (the message names the flows) | No access | No access | No access |
 | Reference table: versions and rows | Full rights (import, edit a draft, publish) | Read, only the tables that a flow they can view or run uses | Same | No access |
 | Users and groups | Full rights | No access | No access | No access |
 | User accounts (create, reset password, lock, unlock) | Full rights, except locking themselves or the last active admin | Change own password | Change own password | Change own password |
@@ -165,6 +166,8 @@ translated to DuckDB SQL and has unit tests with the result Excel gives.
 - A deleted flow is hidden, kept for 30 days, and can be restored by the admin.
 - A user can copy a shared flow into a personal flow, then edit the copy.
 - Every signed-in user can read the name and the description of every reference table, so the Lookup and Pivot steps can offer it. The versions and rows of a table are read only by the admin and by a user for whom a flow uses that table (section 12.1).
+- The admin deletes a reference table from the "More" menu of the table, after a confirmation. The table goes for good with all of its versions. It is refused while a live flow reads it (flows point to a table by its name), and the message names the flows; a deleted flow does not count (migration 19, `delete_ref_table`).
+- A person who is not the admin does not get the Admin screen: opening it sends them to the Flows list, with no message. The sidebar has no Admin link for them either.
 - Row-level security in Postgres enforces all of this. The client is never trusted.
 
 ## 8. Limits and performance
