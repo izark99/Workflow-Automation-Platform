@@ -20,7 +20,16 @@ export interface User {
   locked?: boolean;
   /** The user must choose a new password at the next sign-in. */
   mustChangePassword?: boolean;
+  /**
+   * How many flows this user may own at one time (the admin sets it). A deleted flow does not count. Null or missing means no
+   * limit; an admin has none whatever the value.
+   */
+  maxFlows?: number | null;
 }
+
+/** The most that an admin can set as the number of flows of a user. */
+export const MAX_FLOWS_LIMIT = 10_000;
+export const isValidFlowLimit = (v: unknown): v is number | null | undefined => v == null || (typeof v === 'number' && Number.isInteger(v) && v >= 0 && v <= MAX_FLOWS_LIMIT);
 
 export interface Group {
   id: string;
