@@ -43,7 +43,7 @@ export function SignInScreen({ auth, ended, idleHours }: { auth: AuthService; en
       </div>
       <div className={styles.card}>
         <div className={styles.brand}>
-          <span className={styles.mark} aria-hidden="true" />
+          <span className={styles.mark} aria-hidden="true"><Icon name="workflow" size={16} /></span>
           {t('app.brand')}
         </div>
         <Card>

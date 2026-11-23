@@ -68,7 +68,10 @@
 }
 
 .hidden {
-  position: absolute;
+  /* fixed, not absolute: an absolute 1 px box at the end of the page made a 1 px scroll height, so a scroll bar came and went with the popover */
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 1px;
   height: 1px;
   overflow: hidden;
