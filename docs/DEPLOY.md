@@ -317,6 +317,44 @@ does not need any of it.
 6. **If something is wrong,** roll back the app in Cloudflare Pages. Nothing in the database or in a saved flow depends on the new
    look, so a rollback is safe at any time. Do not undo a migration: there is none.
 
+## Upgrade from Phase 7
+
+After Phase 7 the admin got three changes: delete a reference table, set how many flows each user may own, and a user who is not
+an admin is sent away from the Admin screen (no error page). A deployment that is on Phase 7 (migrations 1 to 18) needs these
+steps, in this order. A fresh deployment does not: "Apply the migrations" already applies all of them.
+
+1. **Back up first.** In the Supabase dashboard, Database, Backups: take a backup if your plan has one, and write down the time.
+   Migration 20 adds a column to `profiles`, and the new delete removes a reference table and its versions for good.
+2. **Apply the new migrations** from your computer (`npx supabase link --project-ref <ref>` once, if you have not):
+
+   ```bash
+   npx supabase db push
+   ```
+
+   It lists three files and asks you to confirm:
+   - `20261118000018_ref_table_names_reference_step.sql`: a Reference table step counts as reading its table. (A deployment that
+     already followed "Upgrade from Phase 5" has this one; it is then not listed.)
+   - `20261118000019_delete_ref_table.sql`: the function `delete_ref_table`. It refuses a table that a live flow reads and names
+     the flows.
+   - `20261118000020_max_flows.sql`: the column `profiles.max_flows` (empty means no limit) and a trigger that refuses a new
+     flow when the owner is at the limit. Admins have no limit. Existing users stay without a limit until the admin sets one.
+
+   If the push fails, stop and read the first error; do not edit tables by hand.
+   If you cannot use the CLI, run each file in the SQL editor in order and add its row to `supabase_migrations.schema_migrations`
+   (the version is the number at the start of the file name, the name is the rest) so that a later `db push` does not run it twice.
+3. **There is no new function.** `admin-users` stays as it is; do not deploy it again.
+4. **Deploy the app.** Pushing to the branch that Cloudflare Pages builds starts the build (`npm run build:pages`). Wait for it
+   to finish. Do step 2 before this one, so the new app finds the new database.
+5. **Check it**, in this order:
+   - Redirect: sign in as a user who is not the admin and open `/admin`. The app goes to the Flows list; no error text shows.
+   - Flow limit: as admin, Admin, Users, edit a user and set "Flow limit" to a number at or below the flows that person has. As
+     that user, create a flow: the app says that the limit is reached and what to do. Clear the field to remove the limit.
+   - Delete a table: as admin, in Reference tables, delete a table that no flow reads. It disappears with its versions. Try one
+     that a flow reads: the message names the flows and nothing is deleted.
+6. **If something is wrong,** think before you roll back the app in Cloudflare Pages. The Phase 7 app does not know the new
+   column or function, but it does not break on them, so a rollback of the app is safe. A limit that the admin already set
+   still holds in the database. Do not undo a migration by hand.
+
 ## Limits
 
 - There is no sign-up and no email invitation. The admin creates accounts in the app (Admin, Users, Add user) with a
