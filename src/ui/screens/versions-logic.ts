@@ -112,3 +112,20 @@ export function suggestStart(versions: VersionLike[], today: string): string {
   const latest = marks.sort().at(-1);
   return latest !== undefined && latest >= today ? dayAfter(latest) : today;
 }
+
+/**
+ * Why the dates of a draft cannot be used, or undefined. The end is optional (null: no end). The draft may not share a day with a
+ * published version; a published version with no end that starts before the draft is fine, because publishing the draft ends it the
+ * day before (SPEC section 4, rule 6).
+ */
+export function draftRangeProblem(versions: VersionLike[], versionNo: number, validFrom: string, validTo: string | null): string | undefined {
+  if (validTo !== null && validTo < validFrom) return translate('versions.problem.endBeforeStart', { from: two(validFrom), to: two(validTo) });
+  for (const p of versions.filter((v) => v.status === 'published' && v.versionNo !== versionNo)) {
+    if (p.validTo === null && p.validFrom < validFrom) continue;
+    const shares = validFrom <= (p.validTo ?? '9999-12-31') && p.validFrom <= (validTo ?? '9999-12-31');
+    if (shares) {
+      return translate(p.validTo === null ? 'versions.problem.rangeOpen' : 'versions.problem.range', { n: p.versionNo, from: two(p.validFrom), to: p.validTo === null ? '' : two(p.validTo) });
+    }
+  }
+  return undefined;
+}

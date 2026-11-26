@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { seedSnapshot } from '../../store/seed';
 import type { FlowVersionRecord } from '../../store/types';
-import { dateCheck, newVersionProblem, stateText, suggestStart, timeline, timelineNote, versionState } from './versions-logic';
+import { dateCheck, draftRangeProblem, newVersionProblem, stateText, suggestStart, timeline, timelineNote, versionState } from './versions-logic';
 
 const flow = seedSnapshot().flows.find((f) => f.id === 'flow-timesheet')!;
 const v = flow.versions;
@@ -78,5 +78,20 @@ describe('start of a new version', () => {
     expect(suggestStart([mk(1, '2026-11-17', null)], TODAY)).toBe('2026-11-18');
     expect(suggestStart([mk(1, '2026-01-01', '2026-12-31')], TODAY)).toBe('2027-01-01');
     expect(suggestStart([], TODAY)).toBe(TODAY);
+  });
+});
+
+describe('draftRangeProblem', () => {
+  const list = [mk(1, '2026-01-01', '2026-06-30'), mk(2, '2026-07-01', null), mk(3, '2026-09-01', null, 'draft')];
+  it('accepts dates that share no day with a published version', () => {
+    expect(draftRangeProblem(list, 3, '2026-10-01', null)).toBeUndefined();
+    expect(draftRangeProblem(list, 3, '2026-08-01', '2026-12-31')).toBeUndefined();
+  });
+  it('says when the end is before the start', () => {
+    expect(draftRangeProblem(list, 3, '2026-10-01', '2026-09-30')).toMatch(/before the start/);
+  });
+  it('names the published version it would overlap', () => {
+    expect(draftRangeProblem(list, 3, '2026-06-30', null)).toMatch(/overlap v2|overlap v1/);
+    expect(draftRangeProblem(list, 3, '2026-03-01', '2026-03-31')).toMatch(/v1 \(01 Jan 2026 to 30 Jun 2026\)/);
   });
 });

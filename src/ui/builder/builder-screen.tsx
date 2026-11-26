@@ -8,7 +8,7 @@ import { Badge, Button, ButtonLink, Dropdown, ErrorState, ToastProvider, useToas
 import { canRunFlow, todayIso } from '../screens/flows-logic';
 import { useLoad, useStore } from '../store-context';
 import { useT, errorText } from '../i18n';
-import { CopyFlowDialog, DiscardDialog, NewVersionDialog, PublishDialog } from './builder-dialogs';
+import { CopyFlowDialog, DiscardDialog, EditDatesDialog, NewVersionDialog, PublishDialog } from './builder-dialogs';
 import { Canvas } from './canvas';
 import type { Selection } from './canvas';
 import { emptyDefinition } from './graph';
@@ -16,13 +16,13 @@ import { SettingsPanel } from './settings-panel';
 import { StepList } from './step-list';
 import { dateCheck } from '../../engine/versions';
 import { gapLine } from '../date-check';
-import { newVersionProblem, suggestStart } from '../screens/versions-logic';
+import { draftRangeProblem, newVersionProblem, suggestStart } from '../screens/versions-logic';
 import { canEditFlow, isDirty, publishBlockers, publishSummary, versionOptionLabel } from './version-logic';
 import { countRender } from './render-counter';
 import styles from './builder.module.css';
 
 
-type Dialogs = 'publish' | 'newVersion' | 'copyFlow' | null;
+type Dialogs = 'publish' | 'newVersion' | 'copyFlow' | 'editDates' | null;
 
 /** The flow builder: header bar (64 px), step list (184 px), canvas and settings panel. No sidebar on this screen. */
 export function BuilderScreen() {
@@ -56,7 +56,7 @@ function Builder() {
   const [addRequest, setAddRequest] = useState<{ type: NodeType; n: number } | null>(null);
   const [dialog, setDialog] = useState<Dialogs>(null);
   const [pendingNav, setPendingNav] = useState<string | null>(null);
-  const [busy, setBusy] = useState<'save' | 'publish' | 'version' | 'copy' | null>(null);
+  const [busy, setBusy] = useState<'save' | 'publish' | 'version' | 'copy' | 'dates' | null>(null);
   const [error, setError] = useState<{ what: string; next: string } | null>(null);
   const [dialogError, setDialogError] = useState<string | null>(null);
 
@@ -164,6 +164,22 @@ function Builder() {
     }
   };
 
+  const saveDates = async (validFrom: string, validTo: string | null): Promise<void> => {
+    if (!version) return;
+    setBusy('dates');
+    setDialogError(null);
+    try {
+      await store.saveFlowVersion(id, version.versionNo, { validFrom, validTo });
+      setDialog(null);
+      flow.reload();
+      toast(t('builder.datesSaved', { n: version.versionNo }));
+    } catch (e) {
+      setDialogError(errorText(e, t('builder.datesFailed')));
+    } finally {
+      setBusy(null);
+    }
+  };
+
   const copyFlow = async (name: string): Promise<void> => {
     setBusy('copy');
     setDialogError(null);
@@ -218,6 +234,9 @@ function Builder() {
             <>
               <Button busy={busy === 'save'} disabled={!dirty} onClick={() => void save().then((ok) => ok && toast(t('builder.savedTitle', { n: version.versionNo })))}>
                 {busy === 'save' ? t('builder.saving') : t('builder.saveDraft')}
+              </Button>
+              <Button onClick={() => { setDialogError(null); setDialog('editDates'); }}>
+                {t('builder.editDates')}
               </Button>
               <Button onClick={() => { setDialogError(null); setDialog('publish'); }}>
                 {t('builder.publish')}
@@ -298,6 +317,9 @@ function Builder() {
       ) : null}
       {dialog === 'newVersion' && version && flow.data ? (
         <NewVersionDialog fromNo={version.versionNo} suggested={suggestStart(flow.data.versions, todayIso())} check={(d) => newVersionProblem(flow.data!.versions, d)} busy={busy === 'version'} error={dialogError} onCreate={(d) => void createVersion(d)} onCancel={() => setDialog(null)} />
+      ) : null}
+      {dialog === 'editDates' && version && flow.data ? (
+        <EditDatesDialog versionNo={version.versionNo} from={version.validFrom} to={version.validTo} check={(f, e) => draftRangeProblem(flow.data!.versions, version.versionNo, f, e)} busy={busy === 'dates'} error={dialogError} onSave={(f, e) => void saveDates(f, e)} onCancel={() => setDialog(null)} />
       ) : null}
       {dialog === 'copyFlow' && flow.data ? (
         <CopyFlowDialog suggested={`${flow.data.name} (copy)`} busy={busy === 'copy'} error={dialogError} onCreate={(n) => void copyFlow(n)} onCancel={() => setDialog(null)} />
