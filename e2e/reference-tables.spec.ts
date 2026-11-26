@@ -424,7 +424,7 @@ test.describe('the toolbar of a table is short: the main action, and a More menu
     const names = await toolbar(page).evaluateAll((els) => els.map((e) => (e.getAttribute('aria-label') ?? e.textContent ?? '').trim()).filter((n) => !/^(Remove row|Add row|v\d)/.test(n)));
     expect(names).toEqual(['Save changes', 'Publish', 'More actions for this table']);
     await page.getByRole('button', { name: /^More actions for this table/ }).click();
-    await expect(page.getByRole('option')).toHaveText(['Edit description', 'Columns', 'Paste from Excel', 'New version', 'Delete table']);
+    await expect(page.getByRole('option')).toHaveText(['Edit description', 'Columns', 'Paste from Excel', 'Edit dates', 'New version', 'Delete table']);
   });
 
   test('a published version shows New version and More, and More holds Edit description and Delete table', async ({ page }) => {

@@ -1192,3 +1192,23 @@ What it still lists on the new screens is the pattern of the earlier phases (D83
 - Enforced in the database by a trigger `flows_enforce_limit` (before insert on `flows`, `security definer`, so the count is exact and does not depend on what row-level security shows the caller), not in `create_flow` and `copy_flow`: a direct insert is covered too. Only an admin can write a profile (policy of migration 4), so a user cannot raise their own limit. The message is the same in the trigger, in `LocalStore` and in both catalogs (`errors.flowLimit`): "You have reached the limit of {max} flows that the admin set for you. Delete a flow, or ask the admin to raise the limit." The trigger function is `security definer`, so the list of reviewed definer functions in `120-account-lock.test.sql` has it, and `010-tables.test.sql` has the new column.
 - Tests: `supabase/tests/database/190-max-flows.test.sql` (21 assertions), `src/store/local-store.test.ts`, `supabase-mapping.test.ts`, `admin-logic.test.ts`, and three e2e journeys in `e2e/admin.spec.ts`.
 - Not done on purpose: a column with the number of flows and the limit in the Users table (a seventh column does not fit at 1280 px), and a warning before the limit is reached.
+
+## D122 Dates of a draft version can be edited, and chosen when a flow or table is made
+
+- Request: flows and reference tables can have their effective dates adjusted, when made and later, as long as versions do not overlap. Decided with the user: draft versions and the first day of a new flow or table; a published version stays read-only (rule 5 is unchanged, so no migration and no change of `guard_published_version`).
+- UI: "Edit dates" in the bar of the builder (draft versions of a flow) and in the More menu of a draft table version. The dialog `EditDatesDialog` has "Valid from", a switch "No end date" and "Valid to" (when the switch is off it starts at the first day). `draftRangeProblem` (`versions-logic.ts`) says why dates cannot be used, in the words of the other version checks. The Create flow dialog and the New reference table dialog have a "Valid from" field (today by default): the version 1 draft is made, then its first day is set with `saveFlowVersion` / `saveRefTableVersion`.
+- Store: `checkDraftRange` (`src/store/checks.ts`), run by `LocalStore` and `SupabaseStore` when a save changes `validFrom` or `validTo`. It asks the question a publish asks (`planPublish`), so a draft that can be saved can be published; the message is `errors.datesOverlap`. Only published versions count, a draft never blocks another draft. The database already lets a draft's `valid_from` and `valid_to` change; the exclusion constraint on published versions stays the last guard at publish.
+- Tests: `src/store/checks.test.ts`, `versions-logic.test.ts`, `e2e/version-dates.spec.ts` (4 journeys).
+- Not done on purpose: dates of a published version, and creating a flow or table with an end date (the end is set with "Edit dates").
+
+## D123 Preview of the last 100 rows in the builder
+
+- Request: in the Designer, see the last 100 rows to check how the end of a file was read (for example that a footer or a total row is not in the data).
+- The Test tab has a second button, "Preview last rows", next to "Preview first rows" (whose text and behaviour do not change). `runPreview` takes `part: 'first' | 'last'`; for `last` it reads `LIMIT 100 OFFSET rowCount - 100` (`RunResult.preview` got an `offset` argument). The text under the button says "Showing the last 100 of 250 rows (rows 151 to 250)." (`builder.preview.showingLast`); with 100 rows or fewer both buttons show all rows. The whole flow runs again for each click, as it does for the first rows.
+- Tests: `src/engine/run.test.ts` (offset), `e2e/preview.spec.ts` (250-row file, last and first part).
+
+## D124 The scene is a fixed layer, not a fixed background
+
+- Report: on a long page a glass panel showed a hard horizontal seam in its fill ("panel bị đứt background"), across the whole width.
+- The scene gradient was `background-attachment: fixed` on `body`. It is now `body::before` (`position: fixed; inset: 0; z-index: -1`) with the same three gradients, and `body` is `isolation: isolate` so the layer is painted over the body colour and under the page. The colours, the tokens and the look do not change; the browser no longer paints the scene in bands behind a panel that blurs it. `e2e/theme.spec.ts` reads the gradient from `body::before`.
+- Not reproduced in the headless browser used here (it has no GPU compositing): the fix follows the known cause, and the check is a screenshot on the user's machine.

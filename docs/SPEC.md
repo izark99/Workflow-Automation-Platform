@@ -91,6 +91,7 @@ effective date per run, and the app selects the versions valid on that date.
 4. If no version covers the effective date, the run stops with a clear message. The app never picks the nearest version.
 5. A published version is read-only. A change means a new version, copied from the old one.
 6. Publishing a new open-ended version sets `valid_to` of the previous open-ended version to the day before the new `valid_from`.
+7. The first and the last day of a draft version can be changed at any time ("Edit dates"), and the first day is chosen when a flow or a reference table is made. The dates may not share a day with a published version (a published version with no end that starts earlier is fine: publishing ends it, rule 6). A published version keeps its dates (rule 5).
 
 **Tables**
 

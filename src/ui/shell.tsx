@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { Button, Dialog, Dropdown, ErrorState, Field, Icon, ToastProvider, useEscapeLayer, useToast } from './components';
+import { Button, DatePicker, Dialog, Dropdown, ErrorState, Field, Icon, ToastProvider, useEscapeLayer, useToast } from './components';
 import type { IconName } from './components';
 import { useAuth } from './auth-gate';
 import { useLoad, useStore } from './store-context';
@@ -8,6 +8,7 @@ import { NewPasswordForm } from './change-password';
 import { LanguageSwitch } from './language-switch';
 import { ThemeSwitch } from './theme-switch';
 import { useT, errorText } from './i18n';
+import { todayIso } from './screens/flows-logic';
 import { usePanel } from './panels/use-panel';
 import { PanelToggle } from './panels/panel-toggle';
 import { usePanelMotion } from './panels/use-panel-motion';
@@ -130,6 +131,7 @@ function CreateFlowDialog({ admin, onClose }: { admin: boolean; onClose: () => v
   const t = useT();
   const [name, setName] = useState('');
   const [scope, setScope] = useState<'personal' | 'shared'>('personal');
+  const [validFrom, setValidFrom] = useState(todayIso());
   const [error, setError] = useState<{ what: string; next: string } | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -141,6 +143,7 @@ function CreateFlowDialog({ admin, onClose }: { admin: boolean; onClose: () => v
     setBusy(true);
     try {
       const flow = await store.createFlow({ name, scope });
+      if (validFrom !== todayIso()) await store.saveFlowVersion(flow.id, 1, { validFrom });
       navigate(`/flows/${flow.id}/versions/1`);
       onClose();
     } catch (e) {
@@ -170,6 +173,7 @@ function CreateFlowDialog({ admin, onClose }: { admin: boolean; onClose: () => v
         }}
       >
         <Field label={t('flows.createDialog.name')} placeholder={t('flows.createDialog.namePlaceholder')} value={name} onChange={(e) => setName(e.target.value)} />
+        <DatePicker label={t('builder.validFrom')} value={validFrom} onChange={setValidFrom} width={200} />
         {admin ? (
           <Dropdown
             label={t('flows.createDialog.scope')}

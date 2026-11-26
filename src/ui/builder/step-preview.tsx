@@ -20,7 +20,7 @@ import { ParameterInputs, PendingParametersNote } from '../parameter-inputs';
 import { initialValues, parameterValueErrors } from '../parameter-logic';
 import { formatCell, neededFiles, previewKey, previewTarget } from './preview-logic';
 import { runPreview } from './preview-runner';
-import type { PreviewData } from './preview-runner';
+import type { PreviewData, PreviewPart } from './preview-runner';
 import styles from './step-preview.module.css';
 
 export interface StepPreviewProps {
@@ -68,7 +68,7 @@ export function StepPreview({ definition, step, files, onFile, refTables, parame
   const bound = stepBindingResults(step, parametersOf(definition), values);
   const key = previewKey(target.definition, target.nodeId, target.handle, date) + JSON.stringify(values);
 
-  const run = async (): Promise<void> => {
+  const run = async (part: PreviewPart = 'first'): Promise<void> => {
     abort.current?.abort();
     const controller = new AbortController();
     abort.current = controller;
@@ -82,7 +82,7 @@ export function StepPreview({ definition, step, files, onFile, refTables, parame
         if (!guard.ok) throw new EngineError('file_too_large', t('engine.fileTooLarge', { fileName: f.name, size: megabytes(guard.sizeBytes), limit: megabytes(guard.limitBytes) }));
         sources[n.key] = asSource(f);
       }
-      const data = await runPreview({ definition: target.definition, nodeId: target.nodeId, handle: target.handle, files: sources, refTables, effectiveDate: date, parameterValues: values, signal: controller.signal });
+      const data = await runPreview({ definition: target.definition, nodeId: target.nodeId, handle: target.handle, files: sources, refTables, effectiveDate: date, parameterValues: values, part, signal: controller.signal });
       if (!controller.signal.aborted) setState({ status: 'ready', data, key });
     } catch (e) {
       if (!controller.signal.aborted) setState({ status: 'error', message: errorText(e) });
@@ -156,9 +156,12 @@ export function StepPreview({ definition, step, files, onFile, refTables, parame
           </ChipGroup>
         </div>
       ) : null}
-      <div>
-        <Button busy={state.status === 'loading'} disabled={missing.length > 0 || invalid} onClick={() => void run()}>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <Button busy={state.status === 'loading'} disabled={missing.length > 0 || invalid} onClick={() => void run('first')}>
           {state.status === 'loading' ? t('builder.preview.busy') : t('builder.preview.button')}
+        </Button>
+        <Button disabled={state.status === 'loading' || missing.length > 0 || invalid} onClick={() => void run('last')}>
+          {t('builder.preview.buttonLast')}
         </Button>
       </div>
       {missing.length > 0 && state.status === 'idle' ? <EmptyState title={t('builder.preview.empty')} text={t('builder.preview.emptyText')} action={null} /> : null}
@@ -168,7 +171,7 @@ export function StepPreview({ definition, step, files, onFile, refTables, parame
         <div className={styles.block}>
           {state.key !== key ? <p className={styles.muted} role="status">{t('builder.preview.stale')}</p> : null}
           <QuietWarning lines={state.data.warnings} />
-          <span className={styles.muted}>{state.data.totalRows === 0 ? t('builder.preview.noRows') : (state.data.totalRows > state.data.rows.length ? t('builder.preview.showing', { shown: state.data.rows.length.toLocaleString('en-US'), total: state.data.totalRows.toLocaleString('en-US') }) : t('builder.preview.rowCount', { total: state.data.totalRows, totalText: state.data.totalRows.toLocaleString('en-US') }))}</span>
+          <span className={styles.muted}>{state.data.totalRows === 0 ? t('builder.preview.noRows') : (state.data.totalRows > state.data.rows.length ? (state.data.part === 'last' ? t('builder.preview.showingLast', { shown: state.data.rows.length.toLocaleString('en-US'), total: state.data.totalRows.toLocaleString('en-US'), from: state.data.fromRow.toLocaleString('en-US') }) : t('builder.preview.showing', { shown: state.data.rows.length.toLocaleString('en-US'), total: state.data.totalRows.toLocaleString('en-US') })) : t('builder.preview.rowCount', { total: state.data.totalRows, totalText: state.data.totalRows.toLocaleString('en-US') }))}</span>
           {state.data.rows.length > 0 ? (
             <div className={styles.result}>
               <Table label={t('builder.preview.table')} columns={columns} rows={rows} rowKey={(r) => String(r.i)} />

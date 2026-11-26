@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, DatePicker, Dialog, ErrorState, Field, QuietWarning } from '../components';
+import { Button, DatePicker, Dialog, ErrorState, Field, QuietWarning, Switch } from '../components';
 import { useT } from '../i18n';
 import styles from './builder.module.css';
 
@@ -72,6 +72,41 @@ export function NewVersionDialog({ fromNo, suggested, busy, error, check, onCrea
         <DatePicker label={t('builder.validFrom')} value={date} onChange={setDate} width={200} />
         {problem ? <ErrorState what={t('builder.startClash')} next={problem} /> : null}
         {error ? <ErrorState what={t('builder.versionFailed')} next={error} /> : null}
+      </div>
+    </Dialog>
+  );
+}
+
+/** Changes the first and the last day of a draft version (flows and reference tables). A published version has no such dialog: it is read-only. */
+export function EditDatesDialog({ versionNo, from, to, busy, error, check, onSave, onCancel }: { versionNo: number; from: string; to: string | null; busy: boolean; error: string | null; /** Why these dates cannot be used (versions cannot overlap), or undefined. */ check: (validFrom: string, validTo: string | null) => string | undefined; onSave: (validFrom: string, validTo: string | null) => void; onCancel: () => void }) {
+  const t = useT();
+  const [validFrom, setValidFrom] = useState(from);
+  const [open, setOpen] = useState(to === null);
+  const [validTo, setValidTo] = useState(to ?? from);
+  const end = open ? null : validTo;
+  const problem = check(validFrom, end);
+  return (
+    <Dialog
+      title={t('builder.editDatesTitle', { n: versionNo })}
+      onClose={onCancel}
+      actions={
+        <>
+          <Button onClick={onCancel}>{t('builder.cancel')}</Button>
+          <Button variant="primary" busy={busy} disabled={!!problem || !validFrom} onClick={() => onSave(validFrom, end)}>
+            {t('builder.datesSave')}
+          </Button>
+        </>
+      }
+    >
+      <div className={styles.dialogBody}>
+        <span>{t('builder.editDatesText')}</span>
+        <DatePicker label={t('builder.validFrom')} value={validFrom} onChange={setValidFrom} width={200} />
+        <Switch checked={open} onChange={(on) => { setOpen(on); if (!on) setValidTo(validFrom); }}>
+          {t('builder.noEnd')}
+        </Switch>
+        {open ? null : <DatePicker label={t('builder.validTo')} value={validTo} onChange={setValidTo} width={200} />}
+        {problem ? <ErrorState what={t('builder.startClash')} next={problem} /> : null}
+        {error ? <ErrorState what={t('builder.datesFailed')} next={error} /> : null}
       </div>
     </Dialog>
   );

@@ -107,7 +107,7 @@ test("the three choices show the scene and Harold colours on the Flows screen an
   const inkOf = () =>
     page.evaluate(() => getComputedStyle(document.querySelector("h1")!).color);
   const imageOf = () =>
-    page.evaluate(() => getComputedStyle(document.body).backgroundImage);
+    page.evaluate(() => getComputedStyle(document.body, "::before").backgroundImage);
   const pick = async (name: string) => {
     await nav.getByRole("button", { name: /^Theme/ }).click();
     await page.getByRole("option", { name, exact: true }).click();

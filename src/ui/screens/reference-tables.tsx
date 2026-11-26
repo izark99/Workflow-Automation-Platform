@@ -3,10 +3,10 @@ import { useEffect, useRef, useState } from 'react';
 import type { ClipboardEvent, MouseEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import type { Column as TableColumn } from '../components';
-import { Badge, Button, Card, Chip, Dialog, Dropdown, EmptyState, ErrorState, Field, Icon, ScreenFrame, SkeletonTable, Table, TextAreaField, useDelayedLoading, useToast } from '../components';
+import { Badge, Button, Card, Chip, Dialog, DatePicker, Dropdown, EmptyState, ErrorState, Field, Icon, ScreenFrame, SkeletonTable, Table, TextAreaField, useDelayedLoading, useToast } from '../components';
 import type { Cell, Column, ColumnType } from '../../engine/types';
 import type { RefTableVersionRecord } from '../../store/types';
-import { NewVersionDialog, PublishDialog } from '../builder/builder-dialogs';
+import { EditDatesDialog, NewVersionDialog, PublishDialog } from '../builder/builder-dialogs';
 import { publishSummaryFor, versionOptionLabel } from '../builder/version-logic';
 import { useT, errorText } from '../i18n';
 import type { MessageKey } from '../i18n';
@@ -14,13 +14,13 @@ import { useLoad, useStore } from '../store-context';
 import { todayIso } from './flows-logic';
 import { columnsProblem, planOf, reshapeGrid, looksLikeGrid, newTableFromPaste, pageRange, pasteAt, pasteIntoGrid, pastedCells, rowsToText, textToRows, tooManyRows, usedByParts, versionToShow, tableSummary } from './reftable-logic';
 import type { ColumnPlan, RowErrors } from './reftable-logic';
-import { newVersionProblem, suggestStart } from './versions-logic';
+import { draftRangeProblem, newVersionProblem, suggestStart } from './versions-logic';
 import { usePanel } from '../panels/use-panel';
 import { PanelToggle } from '../panels/panel-toggle';
 import { ImportDialog } from './ref-import-dialog';
 import styles from './reference-tables.module.css';
 
-type Dialogs = 'paste' | 'newVersion' | 'publish' | 'newTable' | 'import' | 'columns' | 'description' | 'delete' | null;
+type Dialogs = 'paste' | 'newVersion' | 'publish' | 'newTable' | 'import' | 'columns' | 'description' | 'delete' | 'editDates' | null;
 
 /** The shared reference tables: the list, the versions of one table, and its rows (editable while a version is a draft). */
 const pastedText = (t: ReturnType<typeof useT>, n: number): string => t('refTables.pasted', { n, nText: n.toLocaleString('en-US') });
@@ -178,7 +178,7 @@ export function ReferenceTablesScreen() {
     setInfo(pastedText(t, pastedCells(text).length));
   };
 
-  const createTable = async (name: string, description: string, text: string): Promise<void> => {
+  const createTable = async (name: string, description: string, text: string, validFrom: string): Promise<void> => {
     const parsed = newTableFromPaste(text);
     if (!parsed.ok) {
       setDialogError(parsed.message);
@@ -193,13 +193,29 @@ export function ReferenceTablesScreen() {
     setDialogError(null);
     try {
       const created = await store.createRefTable({ name, description, columns: parsed.columns });
-      await store.saveRefTableVersion(created.id, 1, { rows: parsed.rows });
+      await store.saveRefTableVersion(created.id, 1, { rows: parsed.rows, validFrom });
       setDialog(null);
       loadedKey.current = '';
       data.reload();
       void navigate(url(created.id, 1));
     } catch (e) {
       setDialogError(errorText(e, t('refTables.createFailed')));
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const saveDates = async (validFrom: string, validTo: string | null): Promise<void> => {
+    if (!table || !version) return;
+    setBusy('version');
+    setDialogError(null);
+    try {
+      await store.saveRefTableVersion(table.id, version.versionNo, { validFrom, validTo });
+      toast(t('builder.datesSaved', { n: version.versionNo }));
+      setDialog(null);
+      data.reload();
+    } catch (e) {
+      setDialogError(errorText(e));
     } finally {
       setBusy(null);
     }
@@ -298,6 +314,7 @@ export function ReferenceTablesScreen() {
                         ? [
                             { value: 'columns', label: t('refTables.cols.button') },
                             { value: 'paste', label: t('refTables.paste') },
+                            { value: 'editDates', label: t('builder.editDates') },
                             { value: 'newVersion', label: t('refTables.newVersion') },
                           ]
                         : []),
@@ -400,6 +417,9 @@ export function ReferenceTablesScreen() {
         {dialog === 'newVersion' ? (
           <NewVersionDialog fromNo={version.versionNo} suggested={suggestStart(table.versions, today)} check={(d) => newVersionProblem(table.versions, d)} busy={busy === 'version'} error={dialogError} onCreate={(d) => void mutateVersion('newVersion', d)} onCancel={() => setDialog(null)} />
         ) : null}
+        {dialog === 'editDates' ? (
+          <EditDatesDialog versionNo={version.versionNo} from={version.validFrom} to={version.validTo} check={(f, e) => draftRangeProblem(table.versions, version.versionNo, f, e)} busy={busy === 'version'} error={dialogError} onSave={(f, e) => void saveDates(f, e)} onCancel={() => setDialog(null)} />
+        ) : null}
         {dialog === 'publish' ? (
           <PublishDialog versionNo={version.versionNo} text={publishSummaryFor(table.versions, version.versionNo, `reference table "${table.name}"`).text} dirty={false} busy={busy === 'publish'} error={dialogError} onConfirm={() => void mutateVersion('publish')} onCancel={() => setDialog(null)} />
         ) : null}
@@ -501,7 +521,7 @@ export function ReferenceTablesScreen() {
           }}
         />
       ) : null}
-      {dialog === 'newTable' ? <NewTableDialog busy={busy === 'table'} error={dialogError} onCreate={(n, d, x) => void createTable(n, d, x)} onCancel={() => setDialog(null)} /> : null}
+      {dialog === 'newTable' ? <NewTableDialog busy={busy === 'table'} error={dialogError} onCreate={(n, d, x, f) => void createTable(n, d, x, f)} onCancel={() => setDialog(null)} /> : null}
       {pendingNav ? (
         <Dialog
           title={t('refTables.discardTitle')}
@@ -628,11 +648,12 @@ function DescriptionDialog({ initial, busy, error, onSave, onCancel }: { initial
   );
 }
 
-function NewTableDialog({ busy, error, onCreate, onCancel }: { busy: boolean; error: string | null; onCreate: (name: string, description: string, text: string) => void; onCancel: () => void }) {
+function NewTableDialog({ busy, error, onCreate, onCancel }: { busy: boolean; error: string | null; onCreate: (name: string, description: string, text: string, validFrom: string) => void; onCancel: () => void }) {
   const t = useT();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [text, setText] = useState('');
+  const [validFrom, setValidFrom] = useState(todayIso());
   const [local, setLocal] = useState<string | null>(null);
   return (
     <Dialog
@@ -648,7 +669,7 @@ function NewTableDialog({ busy, error, onCreate, onCancel }: { busy: boolean; er
               if (!name.trim()) setLocal(t('common.pair', { a: t('refTables.emptyName'), b: t('refTables.emptyNameNext') }));
               else {
                 setLocal(null);
-                onCreate(name, description, text);
+                onCreate(name, description, text, validFrom);
               }
             }}
           >
@@ -660,6 +681,7 @@ function NewTableDialog({ busy, error, onCreate, onCancel }: { busy: boolean; er
       <div className={styles.dialogBody}>
         <Field label={t('refTables.tableName')} value={name} onChange={(e) => setName(e.target.value)} />
         <Field label={t('refTables.tableDescription')} value={description} onChange={(e) => setDescription(e.target.value)} />
+        <DatePicker label={t('builder.validFrom')} value={validFrom} onChange={setValidFrom} width={200} />
         <TextAreaField label={t('refTables.tablePaste')} hint={t('refTables.tablePasteHelp')} mono rows={6} value={text} onChange={(e) => setText(e.target.value)} />
         {local ? <ErrorState what={t('refTables.createFailed')} next={local} /> : null}
         {error ? <ErrorState what={t('refTables.createFailed')} next={error} /> : null}

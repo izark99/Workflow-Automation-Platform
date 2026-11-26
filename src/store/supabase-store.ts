@@ -3,7 +3,7 @@
 // The read side is T3.6a, the write side T3.6b2. The multi-row writes are database functions (D62).
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { planPublish } from '../engine/versions';
-import { checkRange, checkRowCap } from './checks';
+import { checkDraftRange, checkRange, checkRowCap } from './checks';
 import { importRefTable as importRefTableVia } from './ref-import';
 import {
   appSettingsFromRows,
@@ -352,6 +352,7 @@ export class SupabaseStore implements DataStore {
       throw storeError('conflict', 'errors.versionReadOnly', { n: versionNo });
     }
     checkRange(patch.validFrom ?? v.validFrom, patch.validTo === undefined ? v.validTo : patch.validTo);
+    if (patch.validFrom !== undefined || patch.validTo !== undefined) checkDraftRange(flow.versions, versionNo, patch.validFrom ?? v.validFrom, patch.validTo === undefined ? v.validTo : patch.validTo);
     await this.updateRow('flow_versions', { flow_id: flowId, version_no: versionNo }, versionPatchToRow(patch), 'save the version', `version v${versionNo}`);
     return this.getFlow(flowId);
   }
@@ -393,6 +394,7 @@ export class SupabaseStore implements DataStore {
     }
     if (patch.rows) checkRowCap(patch.rows.length);
     checkRange(patch.validFrom ?? v.validFrom, patch.validTo === undefined ? v.validTo : patch.validTo);
+    if (patch.validFrom !== undefined || patch.validTo !== undefined) checkDraftRange(table.versions, versionNo, patch.validFrom ?? v.validFrom, patch.validTo === undefined ? v.validTo : patch.validTo);
     await this.updateRow('ref_table_versions', { ref_table_id: tableId, version_no: versionNo }, refPatchToRow(patch), 'save the version', `version v${versionNo}`);
     return this.refTable(tableId);
   }

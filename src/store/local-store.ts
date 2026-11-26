@@ -1,6 +1,6 @@
 import { planPublish, referencedTables } from '../engine/versions';
 import type { VersionRange } from '../engine/versions';
-import { checkRange, checkRowCap } from './checks';
+import { checkDraftRange, checkRange, checkRowCap } from './checks';
 import { importRefTable as importRefTableVia } from './ref-import';
 import { DEFAULT_IDLE_TIMEOUT_HOURS, KEEP_DELETED_DAYS, StoreError, isValidFlowLimit, isValidIdleHours, storeError, type StoreErrorCode } from './types';
 import type { StoreMessageId } from './messages';
@@ -395,6 +395,7 @@ export class LocalStore implements DataStore {
     const f = this.flowFor(s, flowId, true);
     const v = this.versionOf(f.versions, versionNo, true);
     checkRange(patch.validFrom ?? v.validFrom, patch.validTo === undefined ? v.validTo : patch.validTo);
+    if (patch.validFrom !== undefined || patch.validTo !== undefined) checkDraftRange(f.versions, versionNo, patch.validFrom ?? v.validFrom, patch.validTo === undefined ? v.validTo : patch.validTo);
     Object.assign(v, patch);
     await this.commit(s);
     return structuredClone(f);
@@ -459,6 +460,7 @@ export class LocalStore implements DataStore {
     const v = this.versionOf(t.versions, versionNo, true);
     if (patch.rows) checkRowCap(patch.rows.length);
     checkRange(patch.validFrom ?? v.validFrom, patch.validTo === undefined ? v.validTo : patch.validTo);
+    if (patch.validFrom !== undefined || patch.validTo !== undefined) checkDraftRange(t.versions, versionNo, patch.validFrom ?? v.validFrom, patch.validTo === undefined ? v.validTo : patch.validTo);
     Object.assign(v, patch);
     await this.commit(s);
     return structuredClone(t);

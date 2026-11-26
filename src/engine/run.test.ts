@@ -80,6 +80,8 @@ describe('runFlow', () => {
       expect(preview.rows).toHaveLength(100);
       expect(preview.columns.map((c) => c.name)).toEqual(['n', 'Label', 'day']);
       expect(preview.rows[0]).toEqual([1, 'row 1', '2026-09-30']);
+      const tail = await result.preview('b', 'out', 3, 97);
+      expect(tail.rows.map((r) => r[0])).toEqual([98, 99, 100]);
       const small = await result.preview('b', 'out', 3);
       expect(small.rows).toHaveLength(3);
       expect(calls).toEqual(['b']);
