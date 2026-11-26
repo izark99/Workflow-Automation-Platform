@@ -30,13 +30,24 @@ body {
   line-height: 21px;
 }
 
-/* The scene: the page background, and the only gradient of the app (docs/DESIGN.md, "Glass, and where it is used"). */
+/* The scene: the page background, and the only gradient of the app (docs/DESIGN.md, "Glass, and where it is used").
+   It is a layer fixed to the window behind the page, not `background-attachment: fixed` on the body: on a long page that made the
+   browser paint the scene in bands, and a glass panel (it blurs what is behind it) showed a hard seam where a band ended.
+   The body is its own stacking context, so the layer (z-index -1) is painted over the body colour and under everything else. */
 body {
+  isolation: isolate;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
   background-image:
     radial-gradient(60% 50% at 12% 0%, var(--scene-glow-blue), transparent 70%),
     radial-gradient(50% 45% at 100% 100%, var(--scene-glow-warm), transparent 70%),
     linear-gradient(160deg, var(--scene-200), var(--scene-100) 70%);
-  background-attachment: fixed;
 }
 
 h1 {

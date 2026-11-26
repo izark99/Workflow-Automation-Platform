@@ -1206,3 +1206,9 @@ What it still lists on the new screens is the pattern of the earlier phases (D83
 - Request: in the Designer, see the last 100 rows to check how the end of a file was read (for example that a footer or a total row is not in the data).
 - The Test tab has a second button, "Preview last rows", next to "Preview first rows" (whose text and behaviour do not change). `runPreview` takes `part: 'first' | 'last'`; for `last` it reads `LIMIT 100 OFFSET rowCount - 100` (`RunResult.preview` got an `offset` argument). The text under the button says "Showing the last 100 of 250 rows (rows 151 to 250)." (`builder.preview.showingLast`); with 100 rows or fewer both buttons show all rows. The whole flow runs again for each click, as it does for the first rows.
 - Tests: `src/engine/run.test.ts` (offset), `e2e/preview.spec.ts` (250-row file, last and first part).
+
+## D124 The scene is a fixed layer, not a fixed background
+
+- Report: on a long page a glass panel showed a hard horizontal seam in its fill ("panel bị đứt background"), across the whole width.
+- The scene gradient was `background-attachment: fixed` on `body`. It is now `body::before` (`position: fixed; inset: 0; z-index: -1`) with the same three gradients, and `body` is `isolation: isolate` so the layer is painted over the body colour and under the page. The colours, the tokens and the look do not change; the browser no longer paints the scene in bands behind a panel that blurs it. `e2e/theme.spec.ts` reads the gradient from `body::before`.
+- Not reproduced in the headless browser used here (it has no GPU compositing): the fix follows the known cause, and the check is a screenshot on the user's machine.
