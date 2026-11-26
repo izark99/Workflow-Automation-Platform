@@ -139,6 +139,7 @@
   color: var(--ink-muted);
 }
 
+/* A dialog layer is also a child of main (it is fixed and fills the window), so it is not a content block: no width, no margin, no padding. */
 /* The content is up to 1200 px wide with space-7 margins; the page header is full width and sticky above it. */
 .main {
   flex: 1;
@@ -149,7 +150,7 @@
   gap: var(--space-5);
 }
 
-.main > :not(header) {
+.main > :not(header):not([data-dialog-layer]) {
   box-sizing: border-box;
   width: 100%;
   max-width: calc(1200px + 2 * var(--space-7));

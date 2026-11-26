@@ -71,3 +71,20 @@ test('the Edit and View buttons of the Versions table have one width and the Mor
   expect(new Set(cells.map((c) => c.moreX)).size).toBe(1);
   for (const c of cells) expect(c.linkY).toBe(c.moreY);
 });
+
+// A dialog is drawn inside main, and `.main > :not(header)` gave it a width, a margin and a padding: the scrim then covered only the middle of the window.
+for (const url of ['/reference-tables', '/flows']) {
+  test(`${url}: the scrim of a dialog covers the whole window`, async ({ page }) => {
+    await page.setViewportSize({ width: 1832, height: 952 });
+    await page.goto(url);
+    await page.getByRole('button', { name: /^(New table|Create flow)$/ }).first().click();
+    const layer = page.locator('[data-dialog-layer]');
+    await expect(layer).toBeVisible();
+    await page.waitForFunction(() => document.getAnimations().every((a) => a.effect?.getTiming().iterations === Infinity || a.playState === 'finished'));
+    const box = await layer.evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      return { x: Math.round(r.x), y: Math.round(r.y), width: Math.round(r.width), height: Math.round(r.height) };
+    });
+    expect(box).toEqual({ x: 0, y: 0, width: 1832, height: 952 });
+  });
+}

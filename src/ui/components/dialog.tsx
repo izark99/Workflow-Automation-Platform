@@ -67,7 +67,7 @@ export function Dialog({ title, onClose, children, actions, width }: DialogProps
   }, []);
 
   return (
-    <div ref={layerRef} className={styles.backdrop}>
+    <div ref={layerRef} className={styles.backdrop} data-dialog-layer>
       <div ref={ref} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1} className={styles.dialog} style={width ? { width } : undefined}>
         <span id={titleId} className={styles.title}>
           {title}
