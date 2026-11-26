@@ -52,6 +52,21 @@ test('more than 100 rows: the table holds 100 and the text gives the full count'
   await expect(rows(page)).toHaveCount(100);
 });
 
+test('"Preview last rows" shows the last 100 rows, to see how the end of the file was read', async ({ page }) => {
+  await inputThenMapping(page);
+  const lines = Array.from({ length: 250 }, (_, i) => `row${i},${i}`).join('\n');
+  await chooseFile(page, csv(`k,v\n${lines}\n`, 'big.csv'));
+  await panel(page).getByRole('button', { name: 'Preview last rows' }).click();
+  await expect(panel(page).getByText('Showing the last 100 of 250 rows (rows 151 to 250).')).toBeVisible({ timeout: 30_000 });
+  await expect(rows(page)).toHaveCount(100);
+  await expect(rows(page).first()).toContainText('row150');
+  await expect(rows(page).last()).toContainText('row249');
+  // The first rows are still one click away.
+  await panel(page).getByRole('button', { name: 'Preview first rows' }).click();
+  await expect(panel(page).getByText('Showing the first 100 of 250 rows.')).toBeVisible({ timeout: 30_000 });
+  await expect(rows(page).first()).toContainText('row0');
+});
+
 test('dates are shown as 30 Sep 2026', async ({ page }) => {
   await inputThenMapping(page);
   await chooseFile(page, csv('day,hours\n2026-09-30,8\n'));

@@ -426,6 +426,8 @@ export const en = {
   'builder.append.byPosition': 'By position (every input needs the same number of columns)',
   'builder.sql.query': 'SQL query',
   'builder.sql.hint': 'One SELECT query. The inputs are tables called in1, in2, ... in the order of the input ports on the Setup tab.',
+  'builder.preview.buttonLast': 'Preview last rows',
+  'builder.preview.showingLast': 'Showing the last {shown} of {total} rows (rows {from} to {total}).',
   'builder.preview.showing': 'Showing the first {shown} of {total} rows.',
   'builder.preview.rowCount': '{total, plural, one {{totalText} row} other {{totalText} rows}}.',
   'builder.form.mapping.loadedNone': 'All columns of the test file are already listed.',

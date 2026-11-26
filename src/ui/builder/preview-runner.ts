@@ -1,5 +1,5 @@
 import { warningText } from '../i18n';
-import { runFlow } from '../../engine/run';
+import { PREVIEW_ROWS, runFlow } from '../../engine/run';
 import { createBrowserRunner } from '../../engine/runner/browser-runner';
 import type { FileSource } from '../../engine/input/load';
 import type { FlowDefinition } from '../../engine/flow/types';
@@ -12,11 +12,17 @@ import type { Cell, Column, SqlRunner } from '../../engine/types';
 import { prepareRun } from '../../engine/versions';
 import type { RefTable } from '../../engine/versions';
 
+export type PreviewPart = 'first' | 'last';
+
 export interface PreviewData {
   columns: Column[];
   rows: Cell[][];
   /** Rows in the whole table; the preview holds at most 100. */
   totalRows: number;
+  /** Which rows these are: the first 100 of the table, or the last 100. */
+  part: PreviewPart;
+  /** The number of the first row shown (1 for the first part). */
+  fromRow: number;
   /** What the load of the files did that the person should know (a stop text that was never found), in the current language. */
   warnings: string[];
 }
@@ -44,6 +50,8 @@ export interface PreviewRequest {
   effectiveDate: string;
   /** Test values of the parameters, by key. A parameter without a value uses its default. */
   parameterValues?: ParameterValues;
+  /** The first 100 rows (the default) or the last 100, to see how the end of the file was read. */
+  part?: PreviewPart;
   signal?: AbortSignal;
   /** Tests pass a Node runner here. */
   runner?: SqlRunner;
@@ -66,8 +74,11 @@ export async function runPreview(req: PreviewRequest): Promise<PreviewData> {
   const result = await runFlow(runner, { flow: definition, parameterValues, effectiveDate: req.effectiveDate, files: req.files, refTables: prepared.refTables, signal: req.signal });
   try {
     const table = result.tables.get(`${req.nodeId}/${req.handle}`);
-    const data = await result.preview(req.nodeId, req.handle);
-    return { columns: data.columns, rows: data.rows, totalRows: table?.rowCount ?? data.rows.length, warnings: result.warnings.map(warningText) };
+    const part = req.part ?? 'first';
+    const total = table?.rowCount ?? 0;
+    const offset = part === 'last' ? Math.max(0, total - PREVIEW_ROWS) : 0;
+    const data = await result.preview(req.nodeId, req.handle, PREVIEW_ROWS, offset);
+    return { columns: data.columns, rows: data.rows, totalRows: table?.rowCount ?? data.rows.length, part, fromRow: offset + 1, warnings: result.warnings.map(warningText) };
   } finally {
     await result.dispose();
   }

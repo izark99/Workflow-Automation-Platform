@@ -419,6 +419,8 @@ export const vi: Record<MessageKey, string> = {
   'builder.append.byPosition': 'Theo vị trí (mọi đầu vào phải có cùng số cột)',
   'builder.sql.query': 'Truy vấn SQL',
   'builder.sql.hint': 'Một truy vấn SELECT. Các đầu vào là các bảng tên in1, in2, ... theo thứ tự các cổng đầu vào ở tab Thiết lập.',
+  'builder.preview.buttonLast': 'Xem thử các dòng cuối',
+  'builder.preview.showingLast': 'Đang hiển thị {shown} dòng cuối trong tổng số {total} dòng (dòng {from} đến {total}).',
   'builder.preview.showing': 'Đang hiển thị {shown} dòng đầu trong tổng số {total} dòng.',
   'builder.preview.rowCount': '{total, plural, other {{totalText} dòng}}.',
   'builder.form.mapping.loadedNone': 'Tất cả các cột của tệp thử đã có trong danh sách.',

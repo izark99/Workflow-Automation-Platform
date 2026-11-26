@@ -1200,3 +1200,9 @@ What it still lists on the new screens is the pattern of the earlier phases (D83
 - Store: `checkDraftRange` (`src/store/checks.ts`), run by `LocalStore` and `SupabaseStore` when a save changes `validFrom` or `validTo`. It asks the question a publish asks (`planPublish`), so a draft that can be saved can be published; the message is `errors.datesOverlap`. Only published versions count, a draft never blocks another draft. The database already lets a draft's `valid_from` and `valid_to` change; the exclusion constraint on published versions stays the last guard at publish.
 - Tests: `src/store/checks.test.ts`, `versions-logic.test.ts`, `e2e/version-dates.spec.ts` (4 journeys).
 - Not done on purpose: dates of a published version, and creating a flow or table with an end date (the end is set with "Edit dates").
+
+## D123 Preview of the last 100 rows in the builder
+
+- Request: in the Designer, see the last 100 rows to check how the end of a file was read (for example that a footer or a total row is not in the data).
+- The Test tab has a second button, "Preview last rows", next to "Preview first rows" (whose text and behaviour do not change). `runPreview` takes `part: 'first' | 'last'`; for `last` it reads `LIMIT 100 OFFSET rowCount - 100` (`RunResult.preview` got an `offset` argument). The text under the button says "Showing the last 100 of 250 rows (rows 151 to 250)." (`builder.preview.showingLast`); with 100 rows or fewer both buttons show all rows. The whole flow runs again for each click, as it does for the first rows.
+- Tests: `src/engine/run.test.ts` (offset), `e2e/preview.spec.ts` (250-row file, last and first part).

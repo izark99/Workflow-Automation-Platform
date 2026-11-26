@@ -42,7 +42,8 @@ export interface RunResult {
   /** Every output of every node, keyed `nodeId/handle`. */
   tables: Map<string, ResultTable>;
   /** First rows of an output as boundary cells: numbers, ISO date text, text, booleans. */
-  preview(nodeId: string, handle?: string, limit?: number): Promise<TableData>;
+  /** `offset` skips that many rows first: a preview of the end of a table reads from `rowCount - limit`. */
+  preview(nodeId: string, handle?: string, limit?: number, offset?: number): Promise<TableData>;
   /** Every row of an output, in the stored order. For writing files. */
   rows(nodeId: string, handle?: string): Promise<TableData>;
   /** Drops every table of this run. */
@@ -177,13 +178,13 @@ export async function runFlow(runner: SqlRunner, options: RunOptions): Promise<R
     options.signal?.removeEventListener('abort', onAbort);
   }
 
-  const read = async (nodeId: string, handle: string | undefined, limit: number | undefined): Promise<TableData> => {
+  const read = async (nodeId: string, handle: string | undefined, limit: number | undefined, offset = 0): Promise<TableData> => {
     const table = handle ? tables.get(`${nodeId}/${handle}`) : [...tables.values()].find((t) => t.nodeId === nodeId);
     if (!table) {
       throw coded('node_failed', 'engine.noResult', { step: nodeId }, nodeId);
     }
     const columns: Column[] = table.columns;
-    const cap = limit === undefined ? '' : ` LIMIT ${Math.max(0, Math.floor(limit))}`;
+    const cap = (limit === undefined ? '' : ` LIMIT ${Math.max(0, Math.floor(limit))}`) + (offset > 0 ? ` OFFSET ${Math.floor(offset)}` : '');
     const result = await runner.query(`SELECT ${boundarySelectList(columns)} FROM ${quoteIdent(table.relation)}${cap}`);
     return { columns, rows: result.rows as TableData['rows'] };
   };
@@ -192,7 +193,7 @@ export async function runFlow(runner: SqlRunner, options: RunOptions): Promise<R
     tables,
     warnings,
     dispose,
-    preview: (nodeId, handle, limit = PREVIEW_ROWS) => read(nodeId, handle, limit),
+    preview: (nodeId, handle, limit = PREVIEW_ROWS, offset = 0) => read(nodeId, handle, limit, offset),
     rows: (nodeId, handle) => read(nodeId, handle, undefined),
   };
 }
