@@ -149,3 +149,25 @@ test('the skeleton region is aria-busy and the progress bar reports 7 of 12', as
   await expect(page.getByRole('status', { name: 'Loading flows' })).toHaveAttribute('aria-busy', 'true');
   await expect(page.getByRole('progressbar', { name: 'Run progress' })).toHaveAttribute('aria-valuenow', '7');
 });
+
+test('a list that is taller than the window scrolls inside the window and every option can be reached', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 100 });
+  await open(page);
+  // The window is shorter than the list: open it with the keyboard, as the button may be under the page header.
+  await page.getByRole('button', { name: /^Version: v3/ }).focus();
+  await page.keyboard.press('Enter');
+  const list = page.getByRole('listbox', { name: 'Version', exact: true });
+  await expect(list).toBeVisible();
+  await page.waitForFunction(() => document.getAnimations().every((a) => a.playState === 'finished' || a.effect?.getTiming().iterations === Infinity));
+  const box = await list.evaluate((el) => {
+    const r = el.getBoundingClientRect();
+    return { top: r.top, bottom: r.bottom, scrolls: el.scrollHeight > el.clientHeight, vh: window.innerHeight };
+  });
+  expect(box.top).toBeGreaterThanOrEqual(0);
+  expect(box.bottom).toBeLessThanOrEqual(box.vh);
+  expect(box.scrolls).toBe(true);
+  await page.keyboard.press('End');
+  const last = list.getByRole('option').last();
+  await expect(last).toBeFocused();
+  await expect(last).toBeInViewport();
+});

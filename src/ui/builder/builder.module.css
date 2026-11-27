@@ -81,11 +81,19 @@
   width: var(--layout-step-list);
   box-sizing: border-box;
   isolation: isolate;
-  padding: var(--space-4) var(--space-3);
   border-right: 1px solid var(--border);
+  /* The panel does not scroll: the glass fill (.glass) would scroll away with the content and leave the rest of the panel bare.
+     The content scrolls in .stepListScroll, which is on top of the fill. */
+  overflow: hidden;
+  transition: width 200ms ease-out;
+}
+
+.stepListScroll {
+  height: 100%;
+  box-sizing: border-box;
+  padding: var(--space-4) var(--space-3);
   overflow-x: hidden;
   overflow-y: auto;
-  transition: width 200ms ease-out;
 }
 
 /* The step list is glass as its own layer, with no blur while its width changes (usePanelMotion). */
@@ -132,6 +140,9 @@
 
 .stepListRail {
   width: 48px;
+}
+
+.stepListRail .stepListScroll {
   padding: 8px;
   overflow: hidden;
 }

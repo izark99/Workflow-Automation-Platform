@@ -211,6 +211,7 @@ export function Shell() {
         <div className={styles.toggle}>
           <PanelToggle panel="sidebar" collapsed={collapsed} onToggle={toggle} controls="sidebar-body" />
         </div>
+        <div className={styles.navScroll}>
         {collapsed ? (
           <>
             <div className={styles.railTop} />
@@ -257,6 +258,7 @@ export function Shell() {
             ) : null}
           </>
         )}
+        </div>
       </nav>
       <main className={styles.main}>
         <Outlet context={{ openCreateFlow: () => setCreating(true) } satisfies ShellContext} />
