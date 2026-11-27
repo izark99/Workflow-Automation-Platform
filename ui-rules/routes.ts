@@ -607,6 +607,39 @@ export const ROUTES: RuleRoute[] = [
   ...(['/flows', '/admin', '/flows/flow-timesheet/run'] as const).map(
     (path): RuleRoute => ({ path, name: `${path} (sidebar rail)`, sidebar: true, railSidebar: true, before: collapsePanels('sidebar') }),
   ),
+  // The card and the Configure form of the Sort step (T8.9), with no key and with two keys.
+  ...(
+    [
+      ['no key', []],
+      ['two keys', [{ column: 'hours', direction: 'desc' }, { expression: '[hours] + 1' }]],
+    ] as const
+  ).map(
+    ([state, keys]): RuleRoute => ({
+      path: '/flows/flow-sort-form/versions/1',
+      name: `/flows/flow-sort-form/versions/1 (Sort: ${state})`,
+      sidebar: false,
+      before: async (page) => {
+        const s = seedSnapshot();
+        s.flows.push({
+          id: 'flow-sort-form', name: 'Sort form', ownerId: 'user-harold', scope: 'personal', deletedAt: null, groupIds: [],
+          versions: [{ versionNo: 1, validFrom: '2026-01-01', validTo: null, status: 'draft', changeNote: '', definition: {
+            schemaVersion: 4,
+            nodes: [
+              { id: 'a', type: 'input_file', label: 'Alpha', position: { x: 0, y: 100 }, settings: { key: 'a', headerRow: 1 } },
+              { id: 's', type: 'sort', label: 'Sorted', position: { x: 400, y: 100 }, settings: { keys: JSON.parse(JSON.stringify(keys)) } },
+            ],
+            edges: [{ source: 'a', target: 's' }],
+          } }],
+        });
+        await page.addInitScript((json) => localStorage.setItem('dfw.seed', json), JSON.stringify(s));
+      },
+      prepare: async (page) => {
+        await page.locator('.react-flow__node').nth(1).click();
+        await page.getByRole('complementary', { name: 'Step settings' }).getByRole('tab').nth(1).click();
+        await page.getByRole('complementary', { name: 'Step settings' }).getByRole('tabpanel').waitFor();
+      },
+    }),
+  ),
   // The preview popup (SPEC 15.3) in its states. Selectors are structural: the pseudo-locale check changes every name.
   ...(
     [

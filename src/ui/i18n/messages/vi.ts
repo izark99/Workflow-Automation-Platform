@@ -885,6 +885,7 @@ export const vi: Record<MessageKey, string> = {
   'builder.stepGroup.text': 'Văn bản',
   'builder.stepGroup.quality': 'Chất lượng',
   'builder.form.notYet': 'Thiết lập của bước này chưa có.',
+  'builder.sort.noKeys': 'Hãy thêm một cột hoặc một công thức để sắp xếp. Giá trị trống xếp cuối, các dòng bằng nhau giữ nguyên thứ tự.',
   'builder.dedupe.keep': 'Giữ',
   'builder.topN.n': 'Số dòng (N)',
   'builder.topN.order': 'Thứ tự',

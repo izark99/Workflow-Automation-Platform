@@ -9,6 +9,7 @@ import { OutputForm } from './output-form';
 import { NotYetForm } from './not-yet-form';
 import { PivotForm } from './pivot-form';
 import { ReferenceTableForm } from './reference-table-form';
+import { SortForm } from './sort-form';
 import { SqlForm } from './sql-form';
 import { UnpivotForm } from './unpivot-form';
 import type { FormRegistry } from './types';
@@ -27,7 +28,7 @@ export const FORMS: FormRegistry = {
   append: AppendForm,
   output: OutputForm,
   sql: SqlForm,
-  sort: NotYetForm,
+  sort: SortForm,
   dedupe: NotYetForm,
   top_n: NotYetForm,
   split_column: NotYetForm,

@@ -910,6 +910,7 @@ export const en = {
   'builder.stepGroup.text': 'Text',
   'builder.stepGroup.quality': 'Quality',
   'builder.form.notYet': 'The settings of this step are not available yet.',
+  'builder.sort.noKeys': 'Add a column or a formula to sort by. Empty values go last, and rows with equal values keep their order.',
   'builder.dedupe.keep': 'Keep',
   'builder.topN.n': 'Number of rows (N)',
   'builder.topN.order': 'Order',
