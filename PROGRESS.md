@@ -1,4 +1,4 @@
-STATUS: IN PROGRESS
+STATUS: COMPLETE
 
 # Progress
 
@@ -341,7 +341,7 @@ Quality pass
 - [x] T8.19c Preview popup: "Show more" is 40 px like the Find field (finding 3).
 - [x] T8.19d Test tab and popup: the `muted` text has no margin of its own (finding 4).
 - [x] T8.19e Check form: one "Load columns" button, not two (finding 5).
-- [ ] T8.20 Final run: `npm ci`, then `npm run gates` (seven gates) and `npm run test:acceptance:pages`; set `STATUS: COMPLETE` only if both pass. Consult the advisor before the last tick.
+- [x] T8.20 Final run: `npm ci`, then `npm run gates` (seven gates) and `npm run test:acceptance:pages`; set `STATUS: COMPLETE` only if both pass. Consult the advisor before the last tick.
 
 ## Phase 9: Print layout and linked reference tables (gates G1 to G6)
 
@@ -438,6 +438,10 @@ Decisions with a default. Build with the default unless this list says otherwise
 | Phase 8: Split column and Clean text | Cut at the last space is the Vietnamese name mode. Marks are removed with the Unicode decomposition plus `đ` to `d`; precomposed and combining forms give the same result |
 | Phase 8: Check | A rule is a condition that is true when the row is fine; a row that fails two rules is two rows in `errors`; the run goes on unless "Stop the run when a rule fails" is on |
 | Phase 8: Compare | Keys must be unique in both inputs; values are compared typed; the columns that exist on one side only are not compared |
+| Phase 8: icons drawn for the canvas (D128) | Ten icons (six align, two distribute, grid, maximize) are drawn in the Harold style because the set has none. CLAUDE.md says icons only from the Harold set, and the icon test names these ten as the exception. Harold decides: keep them, or swap them for the nearest Harold icons and close the test again (a change of code and tests, then a new run of the gates) |
+| Phase 8: icons on every card | Every card and step list button shows the Harold icon of its type (the nearest in the set: Sort `chevrons-up-down`, Check `circle-check`, Compare `chart-column`). The cards of Phase 7 had none; DESIGN names an icon only on the new ones |
+| Phase 8: shortcut of Auto arrange | Alt+Shift+A, shown in the name of the button. Ctrl+Shift+A opens the tab search of Chrome, so it was not used |
+| Phase 8: toast of Auto arrange | Stays 8 seconds; it is not kept longer while it has focus (DESIGN says longer) |
 | Phase 9: print layout format | xlsx through ExcelJS, only for a sheet with the layout on, loaded as a separate file; no PDF; a workbook with no layout is written as before |
 | Phase 9: header lines and tokens | Up to 6 lines; tokens `{effective_date}` (`30/09/2026`), `{month_year}` (`09/2026`), `{run_date}`, `{flow}`, `{rows}`, `{param:key}`, `{day}`, `{month}`, `{year}`; dates in the printed form `dd/mm/yyyy` whatever the language of the app |
 | Phase 9: signature block | At the end of the report after the last row, 1 to 5 signers, a date line on the right; never cut by a page break (an estimate of the rows of a page decides) |
@@ -453,6 +457,11 @@ Decisions with a default. Build with the default unless this list says otherwise
 None. The Pages file size blocker of T3.9 is solved by D71.
 
 ## Log
+
+### 2026-11-27 T8.20 Final run: Phase 8 complete
+Two runs of `npm run gates`, each started after `npm ci` (exit 0). The first stopped at the e2e gate on one test, `e2e/fields.spec.ts` (the checkbox colours read part of the way through a 120 ms transition after a fixed wait); the spec now waits for the transitions to finish and passed 20 repeats. The second run passed all seven gates: check (126 files, 2,578 tests, 1 lint warning), spike (wrote `docs/SPIKE_RESULTS.md`), acceptance (41 tests: both datasets, the layout files, privacy and the generated flow of each new step), e2e (500 tests, `canvas-drag.spec.ts` inside and unchanged), ui-rules (5,925 tests: light 1280, light 1440, dark 1440, with the canvas controls, the selection toolbar, the popup and the card and form of every new step, and the pseudo-locale check), db (20 files, 541 tests, migrations 1 to 20 from zero), functions (14 tests). `npm run test:acceptance:pages`: 42 tests PASS. `git diff --exit-code main -- supabase src/store`, `-- flows/monthly-timesheet.flow.json` and `-- e2e/canvas-drag.spec.ts` all exit 0 (`main` and `origin/main` are the same commit `b6fe9ce`); `git status --porcelain testcase` is empty.
+Open for Harold (Needs Harold, four new rows): the ten icons that are drawn because the Harold set has none (they are an exception to the rule "icons only from the Harold set", named in the icon test), the icons on every card, the shortcut Alt+Shift+A, and the toast that is not kept longer on focus.
+Phase 8 is complete. Phase 9 is not started.
 
 ### 2026-11-27 T8.20 first run of the gates (not complete)
 `npm ci` PASS, then `npm run gates`: check, spike and acceptance passed, the e2e gate failed on one test: `e2e/fields.spec.ts` (the checkbox colours) read the border colour `rgba(16, 31, 56, 0.57)` part of the way through its 120 ms transition after a fixed 250 ms wait; it had passed in three full e2e runs before. The spec now waits for the transitions to finish (`getAnimations().finished`) instead of a fixed time; 20 runs of the spec PASS. The gates start again from `npm ci`.
