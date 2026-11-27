@@ -47,13 +47,17 @@ test('journey 1: a user builds a flow on an empty canvas, previews a step, publi
   await expect(cards(page)).toHaveCount(0);
   await expect(panel(page)).toContainText('Select a step on the canvas');
 
-  // Add the steps; each one is connected to the step that was selected.
+  // Add the first two apart and connect them with the mouse; the others are added with the step before them selected,
+  // so they are connected to it (SPEC 15.2): Filter after Formula column, Output after the Filter through match.
   await addStep(page, 'Input file');
+  await page.locator('.react-flow__pane').click({ position: { x: 5, y: 5 } });
   await addStep(page, 'Formula column');
+  await expect(page.locator('.react-flow__edge')).toHaveCount(0);
+  await connect(page, 'Input file', 'Formula column');
+  await expect(page.locator('.react-flow__edge')).toHaveCount(1);
   await addStep(page, 'Filter');
   await addStep(page, 'Output');
   await expect(cards(page)).toHaveCount(4);
-  // Each step was added with the one before it selected, so it is connected to it (SPEC 15.2): Filter through match.
   await expect(page.locator('.react-flow__edge')).toHaveCount(3);
 
   // Configure each step.

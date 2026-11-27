@@ -1,0 +1,37 @@
+/* The table of a preview (SPEC 15.3): the header row and the first column of row numbers stay in place; it scrolls both ways. */
+.fill {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+/* Row numbers: right aligned, ink-muted, sticky at the left edge on the same surface as the header. */
+.number.number {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  min-width: 64px;
+  padding: 0 var(--space-4);
+  background: var(--surface-overlay);
+  border-right: 1px solid var(--border);
+  text-align: right;
+  font: 400 13px/20px var(--family-sans);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-muted);
+}
+
+/* The corner is above both the header (z 1) and the numbers (z 1). */
+.number.corner {
+  z-index: 2;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

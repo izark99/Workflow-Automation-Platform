@@ -454,6 +454,7 @@ Changed: `Dialog` has a `wide` variant (window minus 96 px each way, at least 96
 Found by the full e2e run (the first one of the phase): T8.4 made the add buttons connect to the selected step, which broke steps of `e2e/preview.spec.ts`, `journeys.spec.ts`, `output.spec.ts` and `parameters-panel.spec.ts` that connected steps by hand afterwards. Fixed in the specs (they now expect the connection); no test was skipped or loosened (the same edge counts are asserted).
 Known, not caused by Phase 8: `e2e/info-tip.spec.ts` "hover opens after 300 ms" fails on the commit before Phase 8 as well (b6fe9ce, checked by checking out `src` and `e2e` of it). It must be fixed or explained in T8.17, because the goal needs `npm run test:e2e` to exit 0.
 Gates run: check PASS (2409 tests, 1 lint warning); full e2e: 452 passed, 6 failed before the spec fixes (5 of them fixed and re-run PASS, info-tip as above); components, preview, dialog-toast, table, canvas-drag, input-region PASS; ui-rules for the new route PASS (light 1280 and 1440, dark 1440, pseudo-locale).
+Correction: the first push of T8.6 (commit before this one) left out `preview-table.tsx` and `preview-table.module.css`, because a `git clean` of an experiment removed the two untracked files before the commit. The next commit adds them back; the journey spec keeps its mouse connection of the first two steps. `npm run check` and the specs above were run on this state.
 Next: T8.7.
 
 ### 2026-11-27 T8.5 Duplicate, copy and paste
