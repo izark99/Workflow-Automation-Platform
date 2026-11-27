@@ -78,7 +78,7 @@ export function OutputForm(props: FormProps) {
               </div>
               <div className={styles.grow}>
                 {k.kind === 'column' ? (
-                  <ColumnSelect label={t('common.numbered', { label: t('builder.output.sortColumn'), n: i + 1 })} value={k.column} columns={names} disabled={readOnly} width={150} onChange={(column) => patchSort(i, { column })} />
+                  <ColumnSelect label={t('common.numbered', { label: t('builder.output.sortColumn'), n: i + 1 })} value={k.column} columns={names} disabled={readOnly} onChange={(column) => patchSort(i, { column })} />
                 ) : (
                   <Field label={t('common.numbered', { label: t('builder.output.sortFormula'), n: i + 1 })} value={k.expression} disabled={readOnly} onChange={(e) => patchSort(i, { expression: e.target.value })} />
                 )}

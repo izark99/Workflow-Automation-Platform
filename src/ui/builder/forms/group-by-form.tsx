@@ -36,7 +36,7 @@ export function GroupByForm(props: FormProps) {
                 <span className={styles.label}>{t('builder.group.fn')}</span>
                 <Dropdown label={t('common.numbered', { label: t('builder.group.fn'), n: i + 1 })} options={AGG_FNS.map((f) => ({ value: f, label: t(`builder.group.fnLabels.${f}` as MessageKey) }))} value={a.fn} disabled={readOnly} width={110} onChange={(f) => patch(i, { fn: f as AggFn })} />
               </div>
-              <ColumnSelect label={t('common.numbered', { label: t('builder.group.column'), n: i + 1 })} value={a.column} columns={names} disabled={readOnly} width={150} onChange={(column) => patch(i, { column })} />
+              <ColumnSelect label={t('common.numbered', { label: t('builder.group.column'), n: i + 1 })} value={a.column} columns={names} disabled={readOnly} onChange={(column) => patch(i, { column })} />
               <Button icon disabled={readOnly} aria-label={t('builder.group.remove', { n: i + 1 })} onClick={() => apply({ ...v, aggregations: v.aggregations.filter((_, j) => j !== i) })}>
                 <Icon name="x" />
               </Button>

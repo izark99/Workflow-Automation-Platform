@@ -71,3 +71,13 @@
 .labelText {
   font-weight: 500;
 }
+
+/* A column name (ColumnSelect): the cell is as wide as its place. In a row (.line) the cells share the room equally, so two
+   columns side by side are the same width with the columns loaded or not. */
+.cell {
+  min-width: 0;
+}
+
+.line > .cell {
+  flex: 1 1 0;
+}

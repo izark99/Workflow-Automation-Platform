@@ -60,8 +60,8 @@ export function LookupForm(props: FormProps) {
         {v.keys.map((k, i) => (
           <div key={i} className={styles.rowCard}>
             <div className={styles.line}>
-              <ColumnSelect label={t('builder.join.keyLeft')} value={k.left} columns={leftNames} disabled={readOnly} width={132} onChange={(x) => apply({ ...v, keys: v.keys.map((y, j) => (j === i ? { ...y, left: x } : y)) })} />
-              <ColumnSelect label={t('builder.join.keyRight')} value={k.right} columns={rightNames} disabled={readOnly} width={132} onChange={(x) => apply({ ...v, keys: v.keys.map((y, j) => (j === i ? { ...y, right: x } : y)) })} />
+              <ColumnSelect label={t('builder.join.keyLeft')} value={k.left} columns={leftNames} disabled={readOnly} onChange={(x) => apply({ ...v, keys: v.keys.map((y, j) => (j === i ? { ...y, left: x } : y)) })} />
+              <ColumnSelect label={t('builder.join.keyRight')} value={k.right} columns={rightNames} disabled={readOnly} onChange={(x) => apply({ ...v, keys: v.keys.map((y, j) => (j === i ? { ...y, right: x } : y)) })} />
               <Button icon disabled={readOnly} aria-label={t('builder.join.removeKey', { n: i + 1 })} onClick={() => apply({ ...v, keys: v.keys.filter((_, j) => j !== i) })}>
                 <Icon name="x" />
               </Button>
@@ -80,7 +80,7 @@ export function LookupForm(props: FormProps) {
         {v.bring.map((b, i) => (
           <div key={i} className={styles.rowCard}>
             <div className={styles.line}>
-              <ColumnSelect label={t('builder.join.bringColumn')} value={b.column} columns={rightNames} disabled={readOnly} width={132} onChange={(x) => apply({ ...v, bring: v.bring.map((y, j) => (j === i ? { ...y, column: x } : y)) })} />
+              <ColumnSelect label={t('builder.join.bringColumn')} value={b.column} columns={rightNames} disabled={readOnly} onChange={(x) => apply({ ...v, bring: v.bring.map((y, j) => (j === i ? { ...y, column: x } : y)) })} />
               <div className={styles.grow}>
                 <Field label={t('builder.join.bringAs')} value={b.as} placeholder={b.column} disabled={readOnly} onChange={(e) => apply({ ...v, bring: v.bring.map((y, j) => (j === i ? { ...y, as: e.target.value } : y)) })} />
               </div>
