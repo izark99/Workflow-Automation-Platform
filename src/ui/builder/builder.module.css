@@ -306,9 +306,17 @@
 }
 
 .cardText {
+  flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
+}
+
+/* The icon of the step type, at the end of the card; it takes no room from the name beyond its own 16 px. */
+.cardIcon {
+  flex: none;
+  display: inline-flex;
+  color: var(--ink-muted);
 }
 
 .cardTitle {

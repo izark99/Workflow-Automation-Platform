@@ -4,7 +4,9 @@ import type { Node, NodeProps } from '@xyflow/react';
 import type { FlowNode } from '../../engine/flow/types';
 import { translate } from '../i18n';
 import type { MessageKey } from '../i18n';
+import { Icon } from '../components';
 import { STEP_CATALOG } from './graph';
+import { STEP_ICONS } from './step-icons';
 import { countRender } from './render-counter';
 import styles from './builder.module.css';
 
@@ -45,6 +47,9 @@ function StepCardView({ data, selected }: NodeProps<StepCardNode>) {
         ) : (
           <span className={styles.cardSub}>{STEP_CATALOG[step.type].label}</span>
         )}
+      </span>
+      <span className={styles.cardIcon} aria-hidden="true">
+        <Icon name={STEP_ICONS[step.type]} />
       </span>
       {outputs.map((h, i) => (
         <Handle key={`out-${h}`} id={h} type="source" position={Position.Bottom} style={{ left: at(i, outputs.length) }} />

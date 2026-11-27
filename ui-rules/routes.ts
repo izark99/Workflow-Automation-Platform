@@ -3,6 +3,7 @@ import type { Page } from '@playwright/test';
 import { seedParameterFlow } from '../e2e/parameter-flow';
 import { REF_FLOW, seedReferenceStep } from '../e2e/reference-step-flow';
 import { ambiguousLayouts, clearLayouts } from '../scripts/lib/layout-fixtures';
+import { seedAllSteps } from '../e2e/all-steps-flow';
 import { seedRunnableFlow } from '../e2e/runnable-flow';
 import { seedSnapshot } from '../src/store/seed';
 
@@ -667,6 +668,9 @@ export const ROUTES: RuleRoute[] = [
   stepRoute('Top N: smallest by a formula, grouped', 'top_n', { n: 3, order: 'smallest', by: { expression: '[hours] * 2' }, groupBy: ['dept'] }, 'configure'),
   stepRoute('Top N: first rows', 'top_n', { n: 5, order: 'first', groupBy: [] }, 'configure'),
   stepRoute('Top N: N from a parameter', 'top_n', { n: { $param: 'n' }, order: 'first', groupBy: [] }, 'configure', [{ key: 'n', label: 'How many', type: 'number', required: true }]),
+  // The canvas with the cards of all seven new steps (the icons, the names of the handles), and the step list with its seven groups.
+  { path: '/flows/flow-all-steps/versions/1', name: '/flows/flow-all-steps/versions/1 (the cards of the new steps)', sidebar: false, before: seedAllSteps, prepare: async (page) => { await page.locator('.react-flow__node').nth(8).waitFor(); } },
+  { path: '/flows/flow-all-steps/run', name: '/flows/flow-all-steps/run (a flow of the new steps)', sidebar: true, busy: true, before: seedAllSteps },
   // The preview popup (SPEC 15.3) in its states. Selectors are structural: the pseudo-locale check changes every name.
   ...(
     [
