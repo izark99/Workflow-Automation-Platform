@@ -90,7 +90,7 @@ test('the Filter condition is checked as you type, and it splits the rows into M
   await preview(page, csv('name,age\nAnn,31\nBob,42\nCy,36\n'));
   await expect(rows(page)).toHaveCount(2, { timeout: 30_000 });
   await expect(rows(page).first()).toContainText('Bob');
-  await panel(page).getByRole('group', { name: 'Output of the step' }).getByRole('button', { name: 'No match', exact: true }).click();
+  await panel(page).getByRole('group', { name: 'Output of the step' }).getByRole('button', { name: /^No match/ }).click();
   await panel(page).getByRole('button', { name: 'Preview first rows' }).click();
   await expect(rows(page)).toHaveCount(1, { timeout: 30_000 });
   await expect(rows(page).first()).toContainText('Ann');

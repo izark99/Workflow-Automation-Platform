@@ -452,6 +452,7 @@ None. The Pages file size blocker of T3.9 is solved by D71.
 ### 2026-11-27 T8.13b Clean text, card and form
 Changed: `forms/clean-form.tsx` and `clean-logic.ts` (the text columns as a list, only text columns offered once the columns are loaded; Trim, Collapse, Characters that do not print and Vietnamese marks as checkboxes; the letter case; where the result goes and its suffix; every one has its parameter button; what is still missing), catalog keys (en, vi), 3 logic tests, `e2e/clean-step.spec.ts` (4 journeys: a new step and its defaults, Proper Case with marks removed on Vietnamese names with the empty name staying empty, a suffix column next to the original, everything off), three routes in `ui-rules/routes.ts`.
 Gates run: check PASS (2534 tests, 1 lint warning); e2e clean-step, split-step, canvas-drag (unchanged), forms, builder PASS; ui-rules for the Clean text routes PASS (135 tests, light 1280 and 1440, dark 1440, pseudo-locale).
+Correction: the run for this commit showed `e2e/forms.spec.ts` (the Filter test) failing and the commit was made anyway. The cause is T8.10: after a preview the output chips carry the row count ("No match (1)"), so a name match with `exact: true` no longer found the chip. The test now matches the start of the name (`/^No match/`); `forms` and `preview` specs pass (16). The full e2e run in T8.17 will show anything else of this kind.
 Next: T8.14a.
 
 ### 2026-11-27 T8.13a Clean text, engine
