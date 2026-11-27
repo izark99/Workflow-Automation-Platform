@@ -3,7 +3,7 @@ import { createNodeRunner } from '../../engine/runner/node-runner';
 import type { SqlRunner } from '../../engine/types';
 import type { FlowDefinition } from '../../engine/flow/types';
 import { addStep, connectSteps, defaultSettings, emptyDefinition, upstreamOf } from './graph';
-import { capRows, findRows, formatCell, neededFiles, previewKey, previewTarget } from './preview-logic';
+import { capRows, findRows, outputChipText, formatCell, neededFiles, previewKey, previewTarget } from './preview-logic';
 import { MAX_PREVIEW_ROWS, runPreview } from './preview-runner';
 
 const chain = (types: Parameters<typeof addStep>[1][]): FlowDefinition => {
@@ -173,7 +173,7 @@ describe('findRows', () => {
 
 describe('capRows', () => {
   const rows = Array.from({ length: 300 }, (_, i) => [i]);
-  const base = { columns: [{ name: 'n', type: 'number' as const }], rows, totalRows: 1500, warnings: [] };
+  const base = { columns: [{ name: 'n', type: 'number' as const }], rows, totalRows: 1500, counts: {}, warnings: [] };
   it('keeps the first rows of the first part, the last rows of the last part with their real start', () => {
     const first = capRows({ ...base, part: 'first', fromRow: 1 }, 100);
     expect(first.rows).toHaveLength(100);
@@ -186,5 +186,15 @@ describe('capRows', () => {
   it('returns the same object when there is nothing to drop', () => {
     const small = { ...base, rows: rows.slice(0, 50), part: 'first' as const, fromRow: 1 };
     expect(capRows(small, 100)).toBe(small);
+  });
+});
+
+describe('outputChipText', () => {
+  it('names an output in the catalog language and adds the row count when it is known', () => {
+    expect(outputChipText('match', undefined)).toBe('Match');
+    expect(outputChipText('kept', 1234)).toBe('Kept (1,234)');
+    expect(outputChipText('errors', 0)).toBe('Errors (0)');
+    expect(outputChipText('changed', undefined)).toBe('Changed');
+    expect(outputChipText('out', 5)).toBe('out (5)');
   });
 });

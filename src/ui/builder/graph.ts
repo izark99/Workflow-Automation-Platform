@@ -309,7 +309,7 @@ export interface SourceOption {
 }
 
 const handleTitle = (handle: string): string | undefined => {
-  const keys: Record<string, MessageKey> = { in: 'builder.port.input', left: 'builder.port.left', right: 'builder.port.right', match: 'builder.port.match', nomatch: 'builder.port.noMatch' };
+  const keys: Record<string, MessageKey> = { in: 'builder.port.input', left: 'builder.port.left', right: 'builder.port.right', match: 'builder.port.match', nomatch: 'builder.port.noMatch', kept: 'builder.port.kept', removed: 'builder.port.removed', ok: 'builder.port.ok', errors: 'builder.port.errors', added: 'builder.port.added', changed: 'builder.port.changed', new: 'builder.port.new', old: 'builder.port.old' };
   return keys[handle] ? translate(keys[handle]!) : undefined;
 };
 

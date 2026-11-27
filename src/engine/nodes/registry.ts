@@ -6,6 +6,7 @@ import { groupByNode } from './group-by';
 import { appendNode } from './append';
 import { outputNode } from './output';
 import { pivotNode } from './pivot';
+import { dedupeNode } from './dedupe';
 import { sortNode } from './sort';
 import { sqlNode } from './sql-node';
 import { unpivotNode } from './unpivot';
@@ -28,4 +29,5 @@ export const defaultRegistry: NodeRegistry = {
   sql: sqlNode,
   output: outputNode,
   sort: sortNode,
+  dedupe: dedupeNode,
 };

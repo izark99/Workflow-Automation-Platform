@@ -90,3 +90,63 @@ test.describe('Sort', () => {
     expect(() => expectWorkbook(reply, [{ name: 'Sorted', columns: data.columns, rows: sorted(data.rows, [{ col: 3, desc: true }]) }])).toThrow();
   });
 });
+
+/** Remove duplicates as a plain loop: rows with the same key are the same row; an empty value equals an empty value. */
+function dedupeRows(rows: FixtureCell[][], cols: number[], keep: 'first' | 'last'): { kept: FixtureCell[][]; removed: FixtureCell[][] } {
+  const keyOf = (r: FixtureCell[]): string => JSON.stringify(cols.map((c) => (r[c] === null || r[c] === '' ? null : r[c])));
+  const winner = new Map<string, number>();
+  rows.forEach((r, i) => {
+    const k = keyOf(r);
+    if (keep === 'first') {
+      if (!winner.has(k)) winner.set(k, i);
+    } else winner.set(k, i);
+  });
+  const kept: FixtureCell[][] = [];
+  const removed: FixtureCell[][] = [];
+  rows.forEach((r, i) => (winner.get(keyOf(r)) === i ? kept : removed).push(r));
+  return { kept, removed };
+}
+
+test.describe('Remove duplicates', () => {
+  const data = people(11);
+  const file = { File: { name: 'people.csv', text: csvOf(data.columns, data.rows) } };
+  const run = (page: Parameters<typeof runGenerated>[0], settings: Record<string, unknown>) =>
+    runGenerated(page, {
+      inputs: ['File'],
+      files: file,
+      nodes: [{ id: 'dd', type: 'dedupe', settings }],
+      edges: [{ source: 'in_File', target: 'dd' }],
+      outputs: [{ sheet: 'Kept', from: 'dd', handle: 'kept' }, { sheet: 'Removed', from: 'dd', handle: 'removed' }],
+    });
+
+  for (const keep of ['first', 'last'] as const) {
+    test(`on Dept and Hours, keep the ${keep}: kept and removed equal the loop, with empty values and Vietnamese text`, async ({ page }) => {
+      const reply = await run(page, { columns: ['Dept', 'Hours'], keep });
+      const { kept, removed } = dedupeRows(data.rows, [2, 3], keep);
+      expect(kept.length + removed.length).toBe(data.rows.length);
+      expect(removed.length).toBeGreaterThan(100);
+      expectWorkbook(reply, [
+        { name: 'Kept', columns: data.columns, rows: kept },
+        { name: 'Removed', columns: data.columns, rows: removed },
+      ]);
+    });
+  }
+
+  test('on all columns nothing is removed when every row has its own Id, and the Removed sheet is empty', async ({ page }) => {
+    const reply = await run(page, {});
+    expectWorkbook(reply, [
+      { name: 'Kept', columns: data.columns, rows: data.rows },
+      { name: 'Removed', columns: data.columns, rows: [] },
+    ]);
+  });
+
+  test('on Name, with empty names equal to each other', async ({ page }) => {
+    const reply = await run(page, { columns: ['Name'] });
+    const { kept, removed } = dedupeRows(data.rows, [1], 'first');
+    expect(kept.length).toBe(NAMES.length + 1);
+    expectWorkbook(reply, [
+      { name: 'Kept', columns: data.columns, rows: kept },
+      { name: 'Removed', columns: data.columns, rows: removed },
+    ]);
+  });
+});

@@ -6,6 +6,40 @@ import { ambiguousLayouts, clearLayouts } from '../scripts/lib/layout-fixtures';
 import { seedRunnableFlow } from '../e2e/runnable-flow';
 import { seedSnapshot } from '../src/store/seed';
 
+/**
+ * A route with a flow of an Input file step and one new step that reads it, the new step selected, on its Configure or Test tab.
+ * Selectors are structural: the pseudo-locale check changes every name.
+ */
+function stepRoute(name: string, type: string, settings: Record<string, unknown>, tab: 'configure' | 'test'): RuleRoute {
+  const id = `flow-step-${type}`;
+  return {
+    path: `/flows/${id}/versions/1`,
+    name: `/flows/${id}/versions/1 (${name})`,
+    sidebar: false,
+    before: async (page) => {
+      const s = seedSnapshot();
+      s.flows.push({
+        id, name: `Step ${type}`, ownerId: 'user-harold', scope: 'personal', deletedAt: null, groupIds: [],
+        versions: [{ versionNo: 1, validFrom: '2026-01-01', validTo: null, status: 'draft', changeNote: '', definition: {
+          schemaVersion: 4,
+          nodes: [
+            { id: 'a', type: 'input_file', label: 'Alpha', position: { x: 0, y: 100 }, settings: { key: 'a', headerRow: 1 } },
+            { id: 's', type, label: 'Beta', position: { x: 400, y: 100 }, settings: JSON.parse(JSON.stringify(settings)) },
+          ],
+          edges: [{ source: 'a', target: 's' }],
+        } }],
+      });
+      await page.addInitScript((json) => localStorage.setItem('dfw.seed', json), JSON.stringify(s));
+    },
+    prepare: async (page) => {
+      await page.locator('.react-flow__node').nth(1).click();
+      const panel = page.getByRole('complementary', { name: 'Step settings' });
+      await panel.getByRole('tab').nth(tab === 'configure' ? 1 : 2).click();
+      await panel.getByRole('tabpanel').waitFor();
+    },
+  };
+}
+
 /** A csv of n rows for the preview popup routes. */
 function bigCsv(n: number): string {
   return `k,v\n${Array.from({ length: n }, (_, i) => `row${i + 1},${i + 1}`).join('\n')}\n`;
@@ -607,39 +641,12 @@ export const ROUTES: RuleRoute[] = [
   ...(['/flows', '/admin', '/flows/flow-timesheet/run'] as const).map(
     (path): RuleRoute => ({ path, name: `${path} (sidebar rail)`, sidebar: true, railSidebar: true, before: collapsePanels('sidebar') }),
   ),
-  // The card and the Configure form of the Sort step (T8.9), with no key and with two keys.
-  ...(
-    [
-      ['no key', []],
-      ['two keys', [{ column: 'hours', direction: 'desc' }, { expression: '[hours] + 1' }]],
-    ] as const
-  ).map(
-    ([state, keys]): RuleRoute => ({
-      path: '/flows/flow-sort-form/versions/1',
-      name: `/flows/flow-sort-form/versions/1 (Sort: ${state})`,
-      sidebar: false,
-      before: async (page) => {
-        const s = seedSnapshot();
-        s.flows.push({
-          id: 'flow-sort-form', name: 'Sort form', ownerId: 'user-harold', scope: 'personal', deletedAt: null, groupIds: [],
-          versions: [{ versionNo: 1, validFrom: '2026-01-01', validTo: null, status: 'draft', changeNote: '', definition: {
-            schemaVersion: 4,
-            nodes: [
-              { id: 'a', type: 'input_file', label: 'Alpha', position: { x: 0, y: 100 }, settings: { key: 'a', headerRow: 1 } },
-              { id: 's', type: 'sort', label: 'Sorted', position: { x: 400, y: 100 }, settings: { keys: JSON.parse(JSON.stringify(keys)) } },
-            ],
-            edges: [{ source: 'a', target: 's' }],
-          } }],
-        });
-        await page.addInitScript((json) => localStorage.setItem('dfw.seed', json), JSON.stringify(s));
-      },
-      prepare: async (page) => {
-        await page.locator('.react-flow__node').nth(1).click();
-        await page.getByRole('complementary', { name: 'Step settings' }).getByRole('tab').nth(1).click();
-        await page.getByRole('complementary', { name: 'Step settings' }).getByRole('tabpanel').waitFor();
-      },
-    }),
-  ),
+  // The card and the Configure form (or the Test tab) of the new steps of Phase 8, each in its states (SPEC 15.4).
+  stepRoute('Sort: no key', 'sort', {}, 'configure'),
+  stepRoute('Sort: two keys', 'sort', { keys: [{ column: 'hours', direction: 'desc' }, { expression: '[hours] + 1' }] }, 'configure'),
+  stepRoute('Remove duplicates: all columns', 'dedupe', {}, 'configure'),
+  stepRoute('Remove duplicates: two columns, keep the last', 'dedupe', { columns: ['name', 'hours'], keep: 'last' }, 'configure'),
+  stepRoute('Remove duplicates: Test tab with two outputs', 'dedupe', {}, 'test'),
   // The preview popup (SPEC 15.3) in its states. Selectors are structural: the pseudo-locale check changes every name.
   ...(
     [

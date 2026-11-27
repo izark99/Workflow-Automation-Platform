@@ -1,5 +1,6 @@
 import { AppendForm } from './append-form';
 import { ColumnMappingForm } from './column-mapping-form';
+import { DedupeForm } from './dedupe-form';
 import { FilterForm } from './filter-form';
 import { FormulaColumnForm } from './formula-column-form';
 import { GroupByForm } from './group-by-form';
@@ -29,7 +30,7 @@ export const FORMS: FormRegistry = {
   output: OutputForm,
   sql: SqlForm,
   sort: SortForm,
-  dedupe: NotYetForm,
+  dedupe: DedupeForm,
   top_n: NotYetForm,
   split_column: NotYetForm,
   clean_text: NotYetForm,

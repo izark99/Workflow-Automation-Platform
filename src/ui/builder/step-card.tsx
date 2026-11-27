@@ -17,7 +17,7 @@ export interface StepCardData extends Record<string, unknown> {
 
 export type StepCardNode = Node<StepCardData, 'step'>;
 
-const HANDLE_NAMES: Record<string, MessageKey | ''> = { in: '', out: '', in1: '', in2: '', in3: '', match: 'builder.port.match', nomatch: 'builder.port.noMatch', left: 'builder.handle.left', right: 'builder.handle.right' };
+const HANDLE_NAMES: Record<string, MessageKey | ''> = { in: '', out: '', in1: '', in2: '', in3: '', match: 'builder.port.match', nomatch: 'builder.port.noMatch', left: 'builder.handle.left', right: 'builder.handle.right', kept: 'builder.port.kept', removed: 'builder.port.removed', ok: 'builder.port.ok', errors: 'builder.port.errors', added: 'builder.port.added', changed: 'builder.port.changed', new: 'builder.port.new', old: 'builder.port.old' };
 const handleName = (h: string): string => (HANDLE_NAMES[h] === undefined ? h : HANDLE_NAMES[h] === '' ? '' : translate(HANDLE_NAMES[h] as MessageKey));
 const at = (i: number, n: number): string => `${((i + 1) / (n + 1)) * 100}%`;
 

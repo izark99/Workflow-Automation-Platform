@@ -2,6 +2,7 @@ import { warningText } from '../i18n';
 import { PREVIEW_ROWS, runFlow } from '../../engine/run';
 import { createBrowserRunner } from '../../engine/runner/browser-runner';
 import type { FileSource } from '../../engine/input/load';
+import { NODE_PORTS } from '../../engine/flow/types';
 import type { FlowDefinition } from '../../engine/flow/types';
 import type { ParameterValues } from '../../engine/flow/parameter-values';
 import { parametersOf } from '../../engine/flow/parameters';
@@ -26,6 +27,8 @@ export interface PreviewData {
   part: PreviewPart;
   /** The number of the first row shown (1 for the first part). */
   fromRow: number;
+  /** The rows of each output of the step, for the chips of a step with several outputs. Empty for a step with one table. */
+  counts: Record<string, number>;
   /** What the load of the files did that the person should know (a stop text that was never found), in the current language. */
   warnings: string[];
 }
@@ -84,7 +87,13 @@ export async function runPreview(req: PreviewRequest): Promise<PreviewData> {
     const limit = Math.min(MAX_PREVIEW_ROWS, Math.max(1, Math.floor(req.limit ?? PREVIEW_ROWS)));
     const offset = part === 'last' ? Math.max(0, total - limit) : 0;
     const data = await result.preview(req.nodeId, req.handle, limit, offset);
-    return { columns: data.columns, rows: data.rows, totalRows: table?.rowCount ?? data.rows.length, part, fromRow: offset + 1, warnings: result.warnings.map(warningText) };
+    const counts: Record<string, number> = {};
+    const type = definition.nodes.find((n) => n.id === req.nodeId)?.type;
+    for (const h of type ? NODE_PORTS[type].outputs : []) {
+      const t = result.tables.get(`${req.nodeId}/${h}`);
+      if (t) counts[h] = t.rowCount;
+    }
+    return { columns: data.columns, rows: data.rows, totalRows: table?.rowCount ?? data.rows.length, part, fromRow: offset + 1, counts, warnings: result.warnings.map(warningText) };
   } finally {
     await result.dispose();
   }

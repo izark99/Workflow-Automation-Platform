@@ -16,7 +16,7 @@ import { settingLabel } from './parameter-control/setting-labels';
 import { useT, errorText } from '../i18n';
 import { ParameterInputs, PendingParametersNote } from '../parameter-inputs';
 import { initialValues, parameterValueErrors } from '../parameter-logic';
-import { capRows, neededFiles, previewKey, previewTableData, previewTarget } from './preview-logic';
+import { capRows, neededFiles, outputChipText, previewKey, previewTableData, previewTarget } from './preview-logic';
 import { PreviewDialog } from './preview-dialog';
 import type { PopupState } from './preview-dialog';
 import { MAX_PREVIEW_ROWS, runPreview } from './preview-runner';
@@ -155,7 +155,7 @@ export function StepPreview({ definition, step, files, onFile, refTables, parame
           <ChipGroup label={t('builder.preview.output')}>
             {target.handles.map((h) => (
               <Chip key={h} pressed={h === target.handle} onClick={() => setHandle(h)}>
-                {h === 'nomatch' ? t('builder.preview.noMatch') : h === 'match' ? t('builder.preview.match') : h}
+                {outputChipText(h, state.status === 'ready' ? state.data.counts[h] : undefined)}
               </Chip>
             ))}
           </ChipGroup>

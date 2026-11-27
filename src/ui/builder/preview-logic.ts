@@ -1,6 +1,7 @@
 import type { Cell, ColumnType } from '../../engine/types';
 import type { FlowDefinition, FlowNode } from '../../engine/flow/types';
 import { translate, formatDate } from '../i18n';
+import type { MessageKey } from '../i18n';
 import { outputHandlesOf, resolvedEdges, upstreamOf } from './graph';
 import type { PreviewTableColumn } from '../components';
 import type { PreviewData } from './preview-runner';
@@ -75,4 +76,22 @@ export function capRows(data: PreviewData, max: number): PreviewData {
   if (data.rows.length <= max) return data;
   const drop = data.rows.length - max;
   return data.part === 'last' ? { ...data, rows: data.rows.slice(drop), fromRow: data.fromRow + drop } : { ...data, rows: data.rows.slice(0, max) };
+}
+
+const OUTPUT_LABELS: Readonly<Record<string, MessageKey>> = {
+  match: 'builder.preview.match',
+  nomatch: 'builder.preview.noMatch',
+  kept: 'builder.preview.kept',
+  removed: 'builder.preview.removed',
+  ok: 'builder.preview.ok',
+  errors: 'builder.preview.errors',
+  added: 'builder.preview.added',
+  changed: 'builder.preview.changed',
+};
+
+/** The text of the chip of an output on the Test tab: its name in the current language and, once a preview ran, its row count. */
+export function outputChipText(handle: string, count: number | undefined): string {
+  const key = OUTPUT_LABELS[handle];
+  const name = key ? translate(key) : handle;
+  return count === undefined ? name : `${name} (${count.toLocaleString('en-US')})`;
 }
