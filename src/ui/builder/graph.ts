@@ -1,4 +1,5 @@
 // Pure operations on the flow definition. The canvas reads and writes the same JSON that the engine runs (one format).
+import { arrangeLayout, pointOf } from '../../engine/flow/arrange';
 import { BASE_SCHEMA_VERSION, NODE_PORTS, NODE_TYPES, VARIADIC_HANDLE } from '../../engine/flow/types';
 import { translate } from '../i18n';
 import type { MessageKey } from '../i18n';
@@ -155,6 +156,44 @@ export function addStep(def: FlowDefinition, type: NodeType, position: { x: numb
 
 export function moveStep(def: FlowDefinition, id: string, position: { x: number; y: number }): FlowDefinition {
   return { ...def, nodes: def.nodes.map((n) => (n.id === id ? { ...n, position: { x: Math.round(position.x), y: Math.round(position.y) } } : n)) };
+}
+
+export interface ArrangeResult {
+  definition: FlowDefinition;
+  /** The positions before, for Undo. A step that had none is not in the map. */
+  previous: Record<string, { x: number; y: number } | undefined>;
+  /** True when no step has to move. */
+  unchanged: boolean;
+}
+
+/** Auto arrange: the whole flow, or only the selected steps when two or more are selected (SPEC 15.1). One change. */
+export function arrangeSteps(def: FlowDefinition, selection: readonly string[]): ArrangeResult {
+  const positions = arrangeLayout(def, { width: CARD_WIDTH, height: CARD_HEIGHT, selection });
+  const previous: ArrangeResult['previous'] = {};
+  let unchanged = true;
+  const nodes = def.nodes.map((n) => {
+    if (!(n.id in positions)) return n;
+    const p = pointOf(positions, n.id);
+    const next = { x: Math.round(p.x), y: Math.round(p.y) };
+    previous[n.id] = n.position;
+    if (n.position?.x !== next.x || n.position?.y !== next.y) unchanged = false;
+    return { ...n, position: next };
+  });
+  return { definition: unchanged ? def : { ...def, nodes }, previous, unchanged };
+}
+
+/** Undo of Auto arrange: every position goes back. */
+export function restorePositions(def: FlowDefinition, previous: ArrangeResult['previous']): FlowDefinition {
+  return {
+    ...def,
+    nodes: def.nodes.map((n) => {
+      if (!(n.id in previous)) return n;
+      const { position: _drop, ...rest } = n;
+      void _drop;
+      const before = previous[n.id];
+      return before ? { ...rest, position: before } : rest;
+    }),
+  };
 }
 
 export interface ConnectionLike {

@@ -308,7 +308,7 @@ is not edited, `npm run test:e2e` keeps the canvas drag spec unchanged, and ever
 
 Canvas (SPEC 15.1, 15.2)
 - [x] T8.1 The arrange layout as pure functions in `src/engine/flow/arrange.ts` (no React): `arrangeLayout(definition, options)` (layers by the longest path, order inside a layer by the average row of the neighbours, `match` above `nomatch`, gaps of 80 and 40 px, layers centred on one axis, flows that are not connected stacked 120 px apart, a selection keeps the top left of its box, the same result when run twice), `alignNodes`, `distributeNodes`. Unit tests for each rule, an empty flow, one step, a diamond, two Filter outputs that join again, a flow of 60 steps in under 50 ms.
-- [ ] T8.2 Auto arrange on the canvas: the control button, the shortcut, the whole flow or the selection, one change of the definition ("unsaved changes" once), fit view, the toast with Undo (puts every position back, goes with the next change), disabled on a published version. e2e (a messy flow becomes ordered, Undo, selection only) and the routes of the UI rules. `e2e/canvas-drag.spec.ts` is not touched and still passes.
+- [x] T8.2 Auto arrange on the canvas: the control button, the shortcut, the whole flow or the selection, one change of the definition ("unsaved changes" once), fit view, the toast with Undo (puts every position back, goes with the next change), disabled on a published version. e2e (a messy flow becomes ordered, Undo, selection only) and the routes of the UI rules. `e2e/canvas-drag.spec.ts` is not touched and still passes.
 - [ ] T8.3 Align and distribute and Snap to grid: the selection toolbar (`role="toolbar"`), the six align and two distribute actions as one change each, the Snap switch kept per user in the browser. e2e for each action and a keyboard path; the routes of the UI rules.
 - [ ] T8.4 Adding after the selected step: the connection rules of SPEC 15.2 as a pure function with unit tests (every node type as the new step and as the selected one, Filter `match`, Lookup left input, no free output, several selected), the placement to the right, the polite announcement, and a step dropped on an edge splits it (with the cases where it must not). e2e: a flow of five steps is built by buttons and by keyboard only, no drag; a drop on an edge.
 - [ ] T8.5 Duplicate, copy and paste: Ctrl+D, Ctrl+C, Ctrl+V and the Duplicate button as in SPEC 15.2 (copy of the settings and bindings, " (copy)", a unique Input file key, edges between copied steps only, offset 40 px, paste into another flow or version in the same tab, nothing sent anywhere, no action while a field has focus, read-only versions refuse). Unit tests for the copy function, e2e for each path and the toast, the info button of the step list lists the shortcuts.
@@ -448,6 +448,12 @@ Decisions with a default. Build with the default unless this list says otherwise
 None. The Pages file size blocker of T3.9 is solved by D71.
 
 ## Log
+
+### 2026-11-27 T8.2 Auto arrange on the canvas
+Changed: `src/ui/builder/graph.ts` (`arrangeSteps`, `restorePositions`), `canvas.tsx`, `zoom-controls.tsx` (icon button, `workflow` icon), the Toast (`action` button, `useDismissToast`, duration option), catalog keys `builder.arrange`, `builder.arranged`, `builder.undo` (en, vi), `e2e/arrange.spec.ts` (5 journeys), a route in `ui-rules/routes.ts`. Shortcut: Alt+Shift+A (not while a field, menu or dialog has focus). Card size on screen checked: 240 px wide, gaps of 40 and 80 px hold, so `arrangeLayout` needs no per-node size.
+Gates run: check PASS (2358 tests); e2e arrange, canvas-drag (unchanged), builder, components, dialog-toast, builder-look PASS; ui-rules for the new route PASS (light 1280 and 1440, dark 1440, pseudo-locale).
+Gap: the toast stays 8 s but is not extended while it has focus (DESIGN says longer); left for the T8.19 review.
+Next: T8.3.
 
 ### 2026-11-27 T8.1 Arrange layout
 Changed: `src/engine/flow/arrange.ts` (`arrangeLayout`, `alignNodes`, `distributeNodes`, `pointOf`), `src/engine/flow/arrange.test.ts` (17 tests).

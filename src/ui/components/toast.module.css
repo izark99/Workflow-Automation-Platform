@@ -33,6 +33,11 @@
   animation: toast-out 170ms ease-in forwards;
 }
 
+.toast > span {
+  flex: 1;
+  min-width: 0;
+}
+
 .dismiss {
   flex: none;
   display: inline-flex;

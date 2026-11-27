@@ -219,6 +219,17 @@ export const ROUTES: RuleRoute[] = [
     },
   },
   {
+    path: '/flows/flow-timesheet/versions/4',
+    name: '/flows/flow-timesheet/versions/4 (Auto arrange: toast with Undo)',
+    sidebar: false,
+    // The canvas controls with the Auto arrange button, and the toast with its compact Undo button.
+    prepare: async (page) => {
+      // By position, not by name: the pseudo-locale check runs this route with every text changed. The buttons are zoom out, zoom in, Auto arrange, fit.
+      await page.getByRole('toolbar').getByRole('button').nth(2).click();
+      await page.locator('[role=status] button').nth(1).waitFor();
+    },
+  },
+  {
     path: REF_FLOW,
     name: `${REF_FLOW} (Reference table cards)`,
     sidebar: false,

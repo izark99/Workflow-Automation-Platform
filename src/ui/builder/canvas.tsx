@@ -5,10 +5,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { usePanel } from '../panels/use-panel';
 import type { FlowDefinition, NodeType } from '../../engine/flow/types';
 import { NODE_TYPES } from '../../engine/flow/types';
-import { ErrorState } from '../components';
+import { ErrorState, useDismissToast, useToast } from '../components';
 import { translate, useT } from '../i18n';
 import { useAppTheme } from '../theme-context';
-import { addStep, STEP_CATALOG, CARD_HEIGHT, CARD_WIDTH, connectSteps, deleteEdges, deleteSteps, inputHandlesOf, moveStep, nextFreePosition, outputHandlesOf, resolvedEdges, stepNumbers } from './graph';
+import { addStep, STEP_CATALOG, CARD_HEIGHT, CARD_WIDTH, arrangeSteps, restorePositions, connectSteps, deleteEdges, deleteSteps, inputHandlesOf, moveStep, nextFreePosition, outputHandlesOf, resolvedEdges, stepNumbers } from './graph';
 import { StepCard } from './step-card';
 import type { StepCardNode } from './step-card';
 import { DRAG_TYPE } from './step-list';
@@ -38,7 +38,9 @@ export interface CanvasProps {
 function Inner({ definition, onChange, selection, onSelect, message, onMessage, readOnly, addRequest }: CanvasProps) {
   // A click on a step card opens a collapsed settings panel.
   const { expand: expandSettings } = usePanel('settings');
-  const { screenToFlowPosition, getInternalNode } = useReactFlow();
+  const { screenToFlowPosition, getInternalNode, fitView } = useReactFlow();
+  const toast = useToast();
+  const dismissToast = useDismissToast();
   // Positions of the cards that are held. A drag moves the card here and writes the definition once, on the drop (SPEC 13.1).
   const [held, setHeld] = useState<Record<string, { x: number; y: number }>>({});
   // @xyflow/react 13 has no colorMode prop: its stylesheet reads a `light` or `dark` class on an ancestor of .react-flow.
@@ -129,16 +131,65 @@ function Inner({ definition, onChange, selection, onSelect, message, onMessage, 
 
   // The keyboard path of the step list: add below the lowest step, once per request.
   const handled = useRef(0);
-  const latest = useRef({ definition, place });
+  const latest = useRef({ definition, place, arrange: (): void => undefined });
+
+  // Auto arrange (SPEC 15.1): one change, a fitted view, a toast with Undo that goes away with the next change.
+  const arranged = useRef<{ toastId: number; after: FlowDefinition } | null>(null);
+  const fitPending = useRef(false);
+  const arrange = (): void => {
+    if (readOnly || definition.nodes.length === 0) return;
+    const r = arrangeSteps(definition, selection.nodes);
+    fitPending.current = true;
+    if (r.unchanged) {
+      void fitView({ ...FIT_VIEW_OPTIONS });
+      return;
+    }
+    setHeld({});
+    onChange(r.definition);
+    const toastId = toast(t('builder.arranged'), {
+      durationMs: 8000,
+      action: {
+        label: t('builder.undo'),
+        onAct: () => {
+          fitPending.current = true;
+          onChange(restorePositions(latest.current.definition, r.previous));
+        },
+      },
+    });
+    arranged.current = { toastId, after: r.definition };
+  };
   useEffect(() => {
-    latest.current = { definition, place };
+    latest.current = { definition, place, arrange };
   });
+  useEffect(() => {
+    if (arranged.current && definition !== arranged.current.after) {
+      dismissToast(arranged.current.toastId);
+      arranged.current = null;
+    }
+    if (fitPending.current) {
+      fitPending.current = false;
+      // Wait for the cards to move to their new places; the view then fits at once (no animation).
+      requestAnimationFrame(() => void fitView({ ...FIT_VIEW_OPTIONS }));
+    }
+  }, [definition, dismissToast, fitView]);
   useEffect(() => {
     if (!addRequest || addRequest.n === handled.current || readOnly) return;
     handled.current = addRequest.n;
     const { definition: d, place: p } = latest.current;
     p(addRequest.type, nextFreePosition(d));
   }, [addRequest, readOnly]);
+  // The shortcut Alt+Shift+A never acts while a field, a menu or a dialog has focus.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent): void => {
+      if (!(e.altKey && e.shiftKey && e.code === 'KeyA')) return;
+      const el = e.target instanceof HTMLElement ? e.target : null;
+      if (el?.closest('input, textarea, select, [contenteditable="true"], [role="dialog"], [role="menu"], [role="listbox"]')) return;
+      e.preventDefault();
+      latest.current.arrange();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   return (
     <div className={`${styles.canvas} ${theme}`} onDragOver={(e) => { if (e.dataTransfer.types.includes(DRAG_TYPE)) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; } }} onDrop={(e) => {
@@ -177,7 +228,7 @@ function Inner({ definition, onChange, selection, onSelect, message, onMessage, 
         aria-label={t('builder.canvas')}
       >
         <Background variant={BackgroundVariant.Dots} gap={20} />
-        <ZoomControls summary={summary(definition)} />
+        <ZoomControls summary={summary(definition)} onArrange={arrange} arrangeDisabled={readOnly || definition.nodes.length === 0} />
       </ReactFlow>
       {message ? (
         <div className={styles.message}>

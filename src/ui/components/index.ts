@@ -19,7 +19,7 @@ export { EmptyState, ErrorState } from './states';
 export { SKELETON_DELAY_MS, SkeletonTable, useDelayedLoading } from './skeleton';
 export { Chip, ChipGroup, Tabs } from './tabs';
 export type { TabItem } from './tabs';
-export { ToastProvider, useToast } from './toast';
+export { ToastProvider, useToast, useDismissToast } from './toast';
 export { ProgressBar } from './progress';
 export { PageHeader } from './page-header';
 export { ScreenFrame } from './screen-frame';
