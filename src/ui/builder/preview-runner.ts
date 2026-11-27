@@ -79,7 +79,7 @@ export async function runPreview(req: PreviewRequest): Promise<PreviewData> {
     // The builder's test runs read a draft version of a table that covers the date (DECISIONS: includeDrafts is for them).
     includeDrafts: true,
   });
-  const result = await runFlow(runner, { flow: definition, parameterValues, effectiveDate: req.effectiveDate, files: req.files, refTables: prepared.refTables, signal: req.signal });
+  const result = await runFlow(runner, { flow: definition, parameterValues, effectiveDate: req.effectiveDate, files: req.files, refTables: prepared.refTables, signal: req.signal, stopChecks: false });
   try {
     const table = result.tables.get(`${req.nodeId}/${req.handle}`);
     const part = req.part ?? 'first';

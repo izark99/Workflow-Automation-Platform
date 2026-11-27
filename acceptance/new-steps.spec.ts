@@ -321,3 +321,48 @@ test.describe('Clean text', () => {
     expectWorkbook(suffix, [{ name: 'Clean', columns: ['Id', 'Name', 'Name (clean)', 'Note'], rows: rows.map((r) => [r[0]!, r[1]!, cleanText(r[1]!, { collapse: true, trim: true, marks: true, mode: 'lower' }), r[2]!]) }]);
   });
 });
+
+test.describe('Check', () => {
+  const data = people(53);
+  const file = { File: { name: 'people.csv', text: csvOf(data.columns, data.rows) } };
+  const rules = [
+    { name: 'Hours range', condition: 'AND([Hours] >= 0, [Hours] <= 6)', message: 'Hours must be from 0 to 6.' },
+    { name: 'Department', condition: 'NOT(ISBLANK([Dept]))', message: 'A department is required.' },
+    { name: 'Day set', condition: '[Day] >= DATE(2026, 9, 10)', message: 'The day is empty or too early.' },
+  ];
+  // The same rules as a plain loop. A blank number counts as 0 in a comparison; a blank date makes the condition null, which fails.
+  const verdicts = (r: FixtureCell[]): boolean[] => [
+    ((r[3] as number | null) ?? 0) >= 0 && ((r[3] as number | null) ?? 0) <= 6,
+    r[2] !== null && r[2] !== '',
+    r[4] !== null && String(r[4]) >= '2026-09-10',
+  ];
+  const run = (page: Parameters<typeof runGenerated>[0], stop: boolean) =>
+    runGenerated(page, {
+      inputs: ['File'],
+      files: file,
+      nodes: [{ id: 'chk', type: 'check', settings: { rules, stop } }],
+      edges: [{ source: 'in_File', target: 'chk' }],
+      outputs: [{ sheet: 'Passed', from: 'chk', handle: 'ok' }, { sheet: 'Errors', from: 'chk', handle: 'errors' }],
+    });
+
+  test('ok and errors equal the loop: a row that fails two rules appears twice, in the order of the rows and then the rules', async ({ page }) => {
+    const ok = data.rows.filter((r) => verdicts(r).every(Boolean));
+    const errors: FixtureCell[][] = [];
+    for (const r of data.rows) verdicts(r).forEach((good, i) => { if (!good) errors.push([...r, rules[i]!.name, rules[i]!.message]); });
+    expect(errors.length).toBeGreaterThan(ok.length / 4);
+    expect(new Set(errors.map((e) => e[0])).size).toBeLessThan(errors.length);
+    expectWorkbook(await run(page, false), [
+      { name: 'Passed', columns: data.columns, rows: ok },
+      { name: 'Errors', columns: [...data.columns, 'Rule', 'Message'], rows: errors },
+    ]);
+  });
+
+  test('with "stop the run" on, a run that has failures stops with the count of each rule', async ({ page }) => {
+    const reply = await run(page, true);
+    expect(reply.ok).toBe(false);
+    if (reply.ok) return;
+    expect(reply.code).toBe('check_failed');
+    const counts = rules.map((_, i) => data.rows.filter((r) => !verdicts(r)[i]).length);
+    for (const [i, rule] of rules.entries()) expect(reply.message).toContain(`"${rule.name}" (${counts[i]})`);
+  });
+});

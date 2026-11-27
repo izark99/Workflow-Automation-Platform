@@ -1447,6 +1447,8 @@ export const vi: Record<MessageKey, string> = {
   'engine.paramNeedsV2': 'Luồng có "parameters" nhưng schemaVersion là {version}. Hãy đặt schemaVersion là 2 để dùng tham số.',
   'engine.bindNeedsV3': 'Bước "{step}" dùng tham số trong "{setting}", nên cần schemaVersion 3. Hãy đặt schemaVersion là 3, hoặc nhập một giá trị cố định cho thiết lập.',
   'engine.stepNeedsV4': 'Bước "{step}" là bước {type}, nên cần schemaVersion 4. Hãy đặt schemaVersion là 4, hoặc xoá bước đó.',
+  'engine.checkStopped': 'Bước Kiểm tra "{step}" đã dừng lượt chạy. Số dòng không đạt từng quy tắc: {summary}. Hãy sửa các dòng hoặc các quy tắc, hoặc tắt "Dừng lượt chạy khi một quy tắc không đạt".',
+  'engine.checkFailedRule': 'Kiểm tra "{step}", quy tắc "{rule}": số dòng không đạt: {n}. {message}',
   'engine.bindShape': 'Thiết lập "{setting}" của bước "{step}" có "$param" không phải là đối tượng chỉ có một khoá dạng văn bản. Hãy viết $param với khoá của một tham số, hoặc nhập một giá trị cố định.',
   'engine.bindUnknown': 'Thiết lập "{setting}" của bước "{step}" dùng tham số "{key}", nhưng luồng không có tham số này. Hãy thêm tham số đó, hoặc chọn tham số khác.',
   'engine.bindNotHere': 'Thiết lập "{setting}" của bước "{step}" không dùng được tham số. Hãy nhập giá trị cố định; công thức và SQL đọc tham số bằng PARAM("key").',

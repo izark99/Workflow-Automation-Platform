@@ -326,7 +326,7 @@ Definition and the three groups of steps (SPEC 15.4)
 - [x] T8.12b Split column, card and form, with the Load columns bar and ColumnSelect; e2e.
 - [x] T8.13a Clean text, engine: trim, collapse spaces, non-printing characters, case, remove Vietnamese marks (`đ`, `Đ` included), replace the column or write a suffix column. Unit tests with a full Vietnamese alphabet, mixed marks (precomposed and combining), null and numbers in a text column.
 - [x] T8.13b Clean text, card and form; e2e.
-- [ ] T8.14a Check, engine: the rules (name, Tier 1 condition, message), `ok` and `errors` (one row per failed rule, `Rule` and `Message` added), a null condition fails, the optional stop with the count per rule, an invalid formula says which rule and where. Unit tests.
+- [x] T8.14a Check, engine: the rules (name, Tier 1 condition, message), `ok` and `errors` (one row per failed rule, `Rule` and `Message` added), a null condition fails, the optional stop with the count per rule, an invalid formula says which rule and where. Unit tests.
 - [ ] T8.14b Check, card and form (the rule list), the counts per rule on the Test tab and as a quiet warning on the Run screen; e2e: a flow with two rules and a row that fails both.
 - [ ] T8.15a Compare, engine: key columns (a repeated key stops the run and names it), columns to compare, `added`, `removed`, `changed` with `Changed columns` and the old values, typed comparison, empty equals empty, columns that exist on one side only. Unit tests.
 - [ ] T8.15b Compare, card (two inputs, three outputs) and form (key pairs, compared columns); e2e with last month and this month.
@@ -448,6 +448,12 @@ Decisions with a default. Build with the default unless this list says otherwise
 None. The Pages file size blocker of T3.9 is solved by D71.
 
 ## Log
+
+### 2026-11-27 T8.14a Check, engine
+Changed: `src/engine/nodes/check.ts` (`checkNode`, `parseCheckSettings`: the rules with a name, a condition and a message, `ok` and `errors` with `Rule` and `Message`, a row that fails two rules twice, a null condition fails, the optional stop with the count per rule, an invalid formula says which rule and where), registered. The engine got two small hooks that the step needs: `CompileContext.warn` (a quiet warning of a step lands in `RunResult.warnings`), `RunOptions.stopChecks` (default true; the preview of the builder passes false), the error code `check_failed` and the messages `engine.checkStopped` and `engine.checkFailedRule` (engine, en, vi). 13 unit tests (`check.test.ts`), two generated acceptance flows (300 rows against three rules, `ok` and `errors` against a plain loop with a row that fails two rules; a run with stop on stops and names the count of each rule). D133 records the rules.
+Not done in this task, by the split of the plan: the card and the form, the counts on the Test tab and the quiet warning of the Run screen (T8.14b).
+Gates run: check PASS (2550 tests, 1 lint warning); test:acceptance PASS (39 tests: both datasets, layouts, privacy and the new-steps file).
+Next: T8.14b.
 
 ### 2026-11-27 T8.13b Clean text, card and form
 Changed: `forms/clean-form.tsx` and `clean-logic.ts` (the text columns as a list, only text columns offered once the columns are loaded; Trim, Collapse, Characters that do not print and Vietnamese marks as checkboxes; the letter case; where the result goes and its suffix; every one has its parameter button; what is still missing), catalog keys (en, vi), 3 logic tests, `e2e/clean-step.spec.ts` (4 journeys: a new step and its defaults, Proper Case with marks removed on Vietnamese names with the empty name staying empty, a suffix column next to the original, everything off), three routes in `ui-rules/routes.ts`.

@@ -27,6 +27,8 @@ export interface RunOptions {
   parameterValues?: ParameterValues;
   registry?: NodeRegistry;
   signal?: AbortSignal;
+  /** A Check step with "stop the run" stops this run. True by default; a preview passes false and reports the failures as warnings. */
+  stopChecks?: boolean;
   onNode?: (event: { nodeId: string; status: 'start' | 'done' }) => void;
 }
 
@@ -147,6 +149,8 @@ export async function runFlow(runner: SqlRunner, options: RunOptions): Promise<R
         effectiveDate: options.effectiveDate,
         parameters,
         query: (sql) => runner.query(sql),
+        stopChecks: options.stopChecks ?? true,
+        warn: (w) => warnings.push(w),
       });
 
       // A node returns a table for each of its output handles. An Output step returns its table as `result`.

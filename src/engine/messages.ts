@@ -26,6 +26,8 @@ export const ENGINE_MESSAGES = {
   'engine.paramNeedsV2': 'The flow has "parameters" but schemaVersion {version}. Set schemaVersion to 2 to use parameters.',
   'engine.bindNeedsV3': 'Step "{step}" uses a parameter in "{setting}", which needs schemaVersion 3. Set schemaVersion to 3, or give the setting a fixed value.',
   'engine.stepNeedsV4': 'Step "{step}" is a {type} step, which needs schemaVersion 4. Set schemaVersion to 4, or remove the step.',
+  'engine.checkStopped': 'Check "{step}" stopped the run. Rows that failed each rule: {summary}. Fix the rows or the rules, or turn off "Stop the run when a rule fails".',
+  'engine.checkFailedRule': 'Check "{step}", rule "{rule}": rows that failed: {n}. {message}',
   'engine.bindShape': 'The setting "{setting}" of step "{step}" has a "$param" that is not an object with one text key. Write it as $param with the key of a parameter, or give the setting a fixed value.',
   'engine.bindUnknown': 'The setting "{setting}" of step "{step}" uses the parameter "{key}", which the flow does not define. Add that parameter, or choose another one.',
   'engine.bindNotHere': 'The setting "{setting}" of step "{step}" cannot take a parameter. Use a fixed value there; formulas and SQL read parameters with PARAM("key").',
