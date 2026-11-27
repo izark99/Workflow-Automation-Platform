@@ -23,6 +23,7 @@
 }
 
 .muted {
+  margin: 0;
   font-size: 13px;
   line-height: 20px;
   color: var(--ink-muted);

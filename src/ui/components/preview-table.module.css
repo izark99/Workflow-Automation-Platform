@@ -12,6 +12,8 @@
   position: sticky;
   left: 0;
   z-index: 1;
+  /* As narrow as its numbers: a table with few columns must not give the extra room to the row numbers. */
+  width: 1%;
   min-width: 64px;
   padding: 0 var(--space-4);
   background: var(--surface-overlay);

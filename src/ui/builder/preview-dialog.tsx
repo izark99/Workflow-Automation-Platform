@@ -52,7 +52,7 @@ export function PreviewDialog({ stepName, state, onClose, onPart, onShowMore }: 
         <span className={styles.muted} role="status">
           {data && filtering ? t('builder.preview.findCount', { n: num(kept.length), total: data.rows.length }) : ''}
         </span>
-        <Button size="sm" disabled={!canLoadMore} onClick={onShowMore}>
+        <Button disabled={!canLoadMore} onClick={onShowMore}>
           {t('builder.preview.showMore')}
         </Button>
       </div>

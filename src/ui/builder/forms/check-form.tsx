@@ -3,7 +3,7 @@ import { parametersOf } from '../../../engine/flow/parameters';
 import { Button, Checkbox, Field, Icon } from '../../components';
 import { useT } from '../../i18n';
 import { Bind } from '../parameter-control/bind';
-import { LoadColumnsBar, SectionLabel } from './column-pickers';
+import { SectionLabel } from './column-pickers';
 import { checkFromSettings, checkMissing, checkToSettings, emptyRule } from './check-logic';
 import type { CheckRuleRow, CheckValues } from './check-logic';
 import { FormulaEditor } from './formula-editor';
@@ -25,7 +25,6 @@ export function CheckForm(props: FormProps) {
   const missing = checkMissing(v);
   return (
     <div className={styles.rowCard} style={{ gap: 16, borderBottom: 0, padding: 0 }}>
-      <LoadColumnsBar source={source} />
       <div role="group" aria-label={t('builder.check.rules')} style={{ display: 'flex', flexDirection: 'column' }}>
         <SectionLabel label={t('builder.check.rules')} hint={t('builder.check.rulesHint')} flush />
         {v.rules.map((r, i) => (

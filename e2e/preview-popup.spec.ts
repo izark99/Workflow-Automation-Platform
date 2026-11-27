@@ -31,6 +31,8 @@ test('Expand opens the popup with the same rows, row numbers and the count; Esca
   await expect(popup(page)).toBeVisible();
   await expect(popupRows(page)).toHaveCount(100);
   await expect(popup(page).getByRole('rowheader').first()).toHaveText('1');
+  // The row numbers take the room of their digits, not an equal share of the table.
+  expect((await popup(page).getByRole('rowheader').first().boundingBox())!.width).toBeLessThan(120);
   await expect(popup(page).getByText('Showing the first 100 of 250 rows.')).toBeVisible();
   await expect(popup(page).getByRole('button', { name: 'First rows' })).toHaveAttribute('aria-pressed', 'true');
   await page.keyboard.press('Escape');

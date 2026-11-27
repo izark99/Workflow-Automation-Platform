@@ -1,4 +1,4 @@
-import { NodeToolbar, Position } from '@xyflow/react';
+import { NodeToolbar, Position, useReactFlow, useViewport } from '@xyflow/react';
 import { useRef } from 'react';
 import type { KeyboardEvent } from 'react';
 import type { AlignMode } from '../../../engine/flow/arrange';
@@ -27,8 +27,17 @@ export interface SelectionToolbarProps {
 }
 
 /** The toolbar above the box of the selected steps (SPEC 15.1 item 4). Left and Right move between its buttons. */
+/** The toolbar is 40 px high and 12 px from the box; with less room than that above the box it goes below it (it never leaves the canvas). */
+const ROOM_ABOVE = 40 + 12 + 8;
+
 export function SelectionToolbar({ ids, visible, onAlign, onDistribute }: SelectionToolbarProps) {
   const t = useT();
+  const { getNodes } = useReactFlow();
+  const { y, zoom } = useViewport();
+  // The top of the box of the selected steps in the frame of the canvas.
+  const tops = getNodes().filter((n) => ids.includes(n.id)).map((n) => n.position.y);
+  const boxTop = tops.length > 0 ? Math.min(...tops) * zoom + y : ROOM_ABOVE;
+  const position = boxTop < ROOM_ABOVE ? Position.Bottom : Position.Top;
   const root = useRef<HTMLDivElement>(null);
   const move = (e: KeyboardEvent<HTMLDivElement>): void => {
     if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight' && e.key !== 'Home' && e.key !== 'End') return;
@@ -40,7 +49,7 @@ export function SelectionToolbar({ ids, visible, onAlign, onDistribute }: Select
     buttons[to]?.focus();
   };
   return (
-    <NodeToolbar nodeId={ids} isVisible={visible && ids.length >= 2} position={Position.Top} offset={12}>
+    <NodeToolbar nodeId={ids} isVisible={visible && ids.length >= 2} position={position} offset={12}>
       <div ref={root} className={styles.selectionToolbar} role="toolbar" aria-label={t('builder.selectionTools')} onKeyDown={move}>
         {ALIGN.map((a) => (
           <Button key={a.mode} size="sm" icon aria-label={t(a.message)} onClick={() => onAlign(a.mode)}>

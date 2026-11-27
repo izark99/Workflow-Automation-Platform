@@ -141,3 +141,21 @@ test('a published version has no toolbar', async ({ page }) => {
   await select(page, ['a', 'b'], false);
   await expect(tools(page)).toHaveCount(0);
 });
+
+test('the toolbar stays inside the canvas: with the steps at its top edge it goes below them', async ({ page }) => {
+  await open(page);
+  // Pan the canvas so that the highest step is at its top edge.
+  const first = (await node(page, 'a').boundingBox())!;
+  const pane = (await page.locator('.react-flow__pane').boundingBox())!;
+  await page.mouse.move(pane.x + pane.width - 40, pane.y + pane.height - 120);
+  await page.mouse.down();
+  await page.mouse.move(pane.x + pane.width - 40, pane.y + pane.height - 120 - (first.y - pane.y) + 10, { steps: 6 });
+  await page.mouse.up();
+  await select(page, ['a', 'b']);
+  const canvas = (await page.locator('.react-flow').boundingBox())!;
+  const bar = (await tools(page).boundingBox())!;
+  const a = (await node(page, 'a').boundingBox())!;
+  expect(a.y - canvas.y).toBeLessThan(40);
+  expect(bar.y).toBeGreaterThanOrEqual(canvas.y);
+  expect(bar.y).toBeGreaterThan(a.y);
+});

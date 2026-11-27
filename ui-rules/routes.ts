@@ -273,9 +273,27 @@ export const ROUTES: RuleRoute[] = [
     },
   },
   {
-    path: '/flows/flow-timesheet/versions/4',
-    name: '/flows/flow-timesheet/versions/4 (selection toolbar, Snap to grid on)',
+    path: '/flows/flow-toolbar/versions/1',
+    name: '/flows/flow-toolbar/versions/1 (selection toolbar, Snap to grid on)',
     sidebar: false,
+    // Three steps in a row, far enough apart that the toolbar over them does not cover the next one to click (the toolbar is a fixed
+    // size, so on a zoomed-out canvas it would cover its neighbours).
+    before: async (page) => {
+      const s = seedSnapshot();
+      s.flows.push({
+        id: 'flow-toolbar', name: 'Toolbar', ownerId: 'user-harold', scope: 'personal', deletedAt: null, groupIds: [],
+        versions: [{ versionNo: 1, validFrom: '2026-01-01', validTo: null, status: 'draft', changeNote: '', definition: {
+          schemaVersion: 1,
+          nodes: [
+            { id: 'a', type: 'input_file', label: 'Alpha', position: { x: 0, y: 100 }, settings: { key: 'a', headerRow: 1 } },
+            { id: 'b', type: 'input_file', label: 'Bravo', position: { x: 360, y: 220 }, settings: { key: 'b', headerRow: 1 } },
+            { id: 'c', type: 'input_file', label: 'Charlie', position: { x: 760, y: 100 }, settings: { key: 'c', headerRow: 1 } },
+          ],
+          edges: [],
+        } }],
+      });
+      await page.addInitScript((json) => localStorage.setItem('dfw.seed', json), JSON.stringify(s));
+    },
     // Three steps selected: the align and distribute toolbar over their box, and the Snap switch pressed.
     prepare: async (page) => {
       const cards = page.locator('.react-flow__node');

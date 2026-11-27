@@ -335,7 +335,12 @@ Definition and the three groups of steps (SPEC 15.4)
 Quality pass
 - [x] T8.17 Unit and integration sweep: `npm run check`, `test:acceptance` (both datasets and the layout files with the same flow file), `test:db` with the migrations 1 to 20 from zero, `test:functions`, `test:e2e` (the canvas drag spec inside it and unchanged); `npm run perf:canvas` still within its budgets after Auto arrange and paste exist. Fix what the sweep finds.
 - [x] T8.18 `docs/DEPLOY.md`: a section "Upgrade to Phase 8" (no migration, no function, only the app: back up is not needed; deploy the app; a check list: Auto arrange and Undo, add after the selected step, copy and paste, the preview popup, one of the new steps in a run). `docs/DESIGN.md` is already written; update it where the build chose something else and say so in `docs/DECISIONS.md`.
-- [ ] T8.19 UI review of the new and changed screens in both themes: the canvas with its controls and the selection toolbar, the toast, a dropped step over an edge, the popup in each state, the card and form of each new step in each state, the step list with three more groups. Findings go to `docs/UI_AUDIT_P8.md`; each finding becomes a task T8.19a, T8.19b... fixed before the final run. `npm run test:ui-rules` runs in full.
+- [x] T8.19 UI review of the new and changed screens in both themes: the canvas with its controls and the selection toolbar, the toast, a dropped step over an edge, the popup in each state, the card and form of each new step in each state, the step list with three more groups. Findings go to `docs/UI_AUDIT_P8.md`; each finding becomes a task T8.19a, T8.19b... fixed before the final run. `npm run test:ui-rules` runs in full.
+- [x] T8.19a Selection toolbar: below the steps when there is no room above (UI_AUDIT_P8 finding 1).
+- [x] T8.19b Preview popup: the row-number column is as wide as its numbers (finding 2).
+- [x] T8.19c Preview popup: "Show more" is 40 px like the Find field (finding 3).
+- [x] T8.19d Test tab and popup: the `muted` text has no margin of its own (finding 4).
+- [x] T8.19e Check form: one "Load columns" button, not two (finding 5).
 - [ ] T8.20 Final run: `npm ci`, then `npm run gates` (seven gates) and `npm run test:acceptance:pages`; set `STATUS: COMPLETE` only if both pass. Consult the advisor before the last tick.
 
 ## Phase 9: Print layout and linked reference tables (gates G1 to G6)
@@ -448,6 +453,12 @@ Decisions with a default. Build with the default unless this list says otherwise
 None. The Pages file size blocker of T3.9 is solved by D71.
 
 ## Log
+
+### 2026-11-27 T8.19 UI review of Phase 8, and its fixes T8.19a to T8.19e
+Reviewed (details in `docs/UI_AUDIT_P8.md`): the full `npm run test:ui-rules` first (5,925 tests, 2.0 h, exit 0: light 1280, light 1440, dark 1440, every Phase 8 route), then 62 audits of the Phase 8 routes in both themes (`playwright.ui-audit.config.ts`: screenshots and script measurements, read one by one for the canvas controls, the toast, the selection toolbar, the popup, the cards and forms of the seven steps, the canvas and the Run screen of a flow with all seven), and the step list in Vietnamese (a script for cut text: none). Ten findings: five fixed (T8.19a to e), five low ones left with their reasons (a label that fills its button, the toast dismiss padding, React Flow's panel margins, the parameter control margin, compact buttons under full-width fields).
+Changed: `selection-toolbar.tsx` (goes below the box when there is less than 60 px above it; `e2e/align.spec.ts` pans the steps to the top edge), `preview-table.module.css` (row numbers `width: 1%`; `e2e/preview-popup.spec.ts` checks under 120 px), `preview-dialog.tsx` ("Show more" 40 px), `step-preview.module.css` (`muted` margin 0), `check-form.tsx` (one Load columns). The route of the selection toolbar uses its own flow of three steps in a row: on a zoomed-out canvas the toolbar, a fixed 42 px bar, covers a neighbouring card, which the old route (twelve stacked steps) now showed.
+Gates run: check PASS (2578 tests, 1 lint warning); e2e align, preview-popup, check-step, components PASS (41); ui-rules after the fixes for the routes they touch: the toolbar route (45), the popup, Check and all-steps routes (462, light 1280 and 1440, dark 1440, pseudo-locale) PASS. The full ui-rules runs again inside `npm run gates` in T8.20.
+Next: T8.20.
 
 ### 2026-11-27 T8.18 Deploy notes and DESIGN
 Changed: `docs/DEPLOY.md` ("Upgrade to Phase 8": no migration, no function, no backup needed, deploy the app, the five checks: Auto arrange and Undo, add after the selected step, copy and paste, the preview popup, a new step in a run; what a rollback does to a flow saved with a new step), `docs/DESIGN.md` ("What the build chose otherwise (Phase 8)"), `docs/DECISIONS.md` (D135).
