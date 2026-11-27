@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { validateFlow } from '../../engine/flow/validate';
-import { addStep, arrangeSteps, restorePositions, connectSteps, currentSource, deleteEdges, deleteSteps, emptyDefinition, inputHandlesOf, inputTitle, moveStep, nextFreePosition, setInput, sourceOptions, stepNumbers, STEP_CATALOG, STEP_GROUPS } from './graph';
+import { addStep, setPositions, arrangeSteps, restorePositions, connectSteps, currentSource, deleteEdges, deleteSteps, emptyDefinition, inputHandlesOf, inputTitle, moveStep, nextFreePosition, setInput, sourceOptions, stepNumbers, STEP_CATALOG, STEP_GROUPS } from './graph';
 import type { FlowDefinition } from '../../engine/flow/types';
 import { NODE_TYPES } from '../../engine/flow/types';
 
@@ -210,5 +210,14 @@ describe('arrangeSteps', () => {
     const r = arrangeSteps(def, [ids[0]!, ids[1]!]);
     expect(r.definition.nodes.find((n) => n.id === ids[2])?.position).toEqual(def.nodes[2]?.position);
     expect(restorePositions(r.definition, r.previous)).toEqual(def);
+  });
+});
+
+describe('setPositions', () => {
+  it('moves several steps in one change and returns the same object when nothing moves', () => {
+    const { def, ids } = build(['input_file', 'column_mapping']);
+    const next = setPositions(def, { [ids[0]!]: { x: 10.4, y: 20 }, [ids[1]!]: { x: 10, y: 99 } });
+    expect(next.nodes.map((n) => n.position)).toEqual([{ x: 10, y: 20 }, { x: 10, y: 99 }]);
+    expect(setPositions(next, { [ids[0]!]: { x: 10, y: 20 } })).toBe(next);
   });
 });

@@ -230,6 +230,21 @@ export const ROUTES: RuleRoute[] = [
     },
   },
   {
+    path: '/flows/flow-timesheet/versions/4',
+    name: '/flows/flow-timesheet/versions/4 (selection toolbar, Snap to grid on)',
+    sidebar: false,
+    // Three steps selected: the align and distribute toolbar over their box, and the Snap switch pressed.
+    prepare: async (page) => {
+      const cards = page.locator('.react-flow__node');
+      await cards.nth(0).click();
+      await cards.nth(1).click({ modifiers: ['Control'] });
+      await cards.nth(2).click({ modifiers: ['Control'] });
+      await page.locator('.react-flow__node-toolbar [role=toolbar]').waitFor();
+      // By position (the pseudo-locale check changes every name): zoom out, zoom in, Auto arrange, Snap, fit.
+      await page.locator('.react-flow__panel [role=toolbar]').getByRole('button').nth(3).click();
+    },
+  },
+  {
     path: REF_FLOW,
     name: `${REF_FLOW} (Reference table cards)`,
     sidebar: false,

@@ -182,6 +182,20 @@ export function arrangeSteps(def: FlowDefinition, selection: readonly string[]):
   return { definition: unchanged ? def : { ...def, nodes }, previous, unchanged };
 }
 
+/** Writes positions for several steps as one change. Returns the same definition when nothing moves. */
+export function setPositions(def: FlowDefinition, positions: Record<string, { x: number; y: number }>): FlowDefinition {
+  let changed = false;
+  const nodes = def.nodes.map((n) => {
+    const p = positions[n.id];
+    if (!p) return n;
+    const next = { x: Math.round(p.x), y: Math.round(p.y) };
+    if (n.position?.x === next.x && n.position?.y === next.y) return n;
+    changed = true;
+    return { ...n, position: next };
+  });
+  return changed ? { ...def, nodes } : def;
+}
+
 /** Undo of Auto arrange: every position goes back. */
 export function restorePositions(def: FlowDefinition, previous: ArrangeResult['previous']): FlowDefinition {
   return {

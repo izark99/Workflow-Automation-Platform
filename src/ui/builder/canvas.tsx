@@ -8,12 +8,16 @@ import { NODE_TYPES } from '../../engine/flow/types';
 import { ErrorState, useDismissToast, useToast } from '../components';
 import { translate, useT } from '../i18n';
 import { useAppTheme } from '../theme-context';
-import { addStep, STEP_CATALOG, CARD_HEIGHT, CARD_WIDTH, arrangeSteps, restorePositions, connectSteps, deleteEdges, deleteSteps, inputHandlesOf, moveStep, nextFreePosition, outputHandlesOf, resolvedEdges, stepNumbers } from './graph';
+import { addStep, STEP_CATALOG, CARD_HEIGHT, CARD_WIDTH, arrangeSteps, restorePositions, setPositions, connectSteps, deleteEdges, deleteSteps, inputHandlesOf, moveStep, nextFreePosition, outputHandlesOf, resolvedEdges, stepNumbers } from './graph';
 import { StepCard } from './step-card';
 import type { StepCardNode } from './step-card';
 import { DRAG_TYPE } from './step-list';
 import { FIT_VIEW_OPTIONS } from './fit-view';
 import { ZoomControls } from './zoom-controls';
+import { SelectionToolbar } from './arrange/selection-toolbar';
+import { SNAP_GRID, useSnap } from './arrange/snap';
+import { alignNodes, distributeNodes } from '../../engine/flow/arrange';
+import type { AlignMode } from '../../engine/flow/arrange';
 import styles from './builder.module.css';
 
 const nodeTypes = { step: StepCard };
@@ -40,6 +44,7 @@ function Inner({ definition, onChange, selection, onSelect, message, onMessage, 
   const { expand: expandSettings } = usePanel('settings');
   const { screenToFlowPosition, getInternalNode, fitView } = useReactFlow();
   const toast = useToast();
+  const [snap, toggleSnap] = useSnap();
   const dismissToast = useDismissToast();
   // Positions of the cards that are held. A drag moves the card here and writes the definition once, on the drop (SPEC 13.1).
   const [held, setHeld] = useState<Record<string, { x: number; y: number }>>({});
@@ -178,6 +183,24 @@ function Inner({ definition, onChange, selection, onSelect, message, onMessage, 
     const { definition: d, place: p } = latest.current;
     p(addRequest.type, nextFreePosition(d));
   }, [addRequest, readOnly]);
+  // Align and distribute (SPEC 15.1 item 4): the measured size of each card, one change per action.
+  const rectsOf = (ids: string[]) =>
+    ids.flatMap((id) => {
+      const n = definition.nodes.find((x) => x.id === id);
+      if (!n) return [];
+      const m = getInternalNode(id)?.measured;
+      return [{ id, x: n.position?.x ?? 0, y: n.position?.y ?? 0, width: m?.width ?? CARD_WIDTH, height: m?.height ?? CARD_HEIGHT }];
+    });
+  const align = (mode: AlignMode): void => {
+    if (readOnly) return;
+    const next = setPositions(definition, alignNodes(rectsOf(selection.nodes), mode));
+    if (next !== definition) onChange(next);
+  };
+  const distribute = (axis: 'horizontal' | 'vertical'): void => {
+    if (readOnly) return;
+    const next = setPositions(definition, distributeNodes(rectsOf(selection.nodes), axis));
+    if (next !== definition) onChange(next);
+  };
   // The shortcut Alt+Shift+A never acts while a field, a menu or a dialog has focus.
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
@@ -222,13 +245,16 @@ function Inner({ definition, onChange, selection, onSelect, message, onMessage, 
         deleteKeyCode={readOnly ? null : ['Backspace', 'Delete']}
         minZoom={0.2}
         maxZoom={2}
+        snapToGrid={snap}
+        snapGrid={[SNAP_GRID, SNAP_GRID]}
         fitView={definition.nodes.length > 0}
         fitViewOptions={FIT_VIEW_OPTIONS}
         proOptions={{ hideAttribution: false }}
         aria-label={t('builder.canvas')}
       >
         <Background variant={BackgroundVariant.Dots} gap={20} />
-        <ZoomControls summary={summary(definition)} onArrange={arrange} arrangeDisabled={readOnly || definition.nodes.length === 0} />
+        <ZoomControls summary={summary(definition)} onArrange={arrange} arrangeDisabled={readOnly || definition.nodes.length === 0} snap={snap} onSnap={toggleSnap} />
+        {!readOnly && selection.nodes.length >= 2 ? <SelectionToolbar ids={selection.nodes} visible={Object.keys(held).length === 0} onAlign={align} onDistribute={distribute} /> : null}
       </ReactFlow>
       {message ? (
         <div className={styles.message}>

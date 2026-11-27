@@ -226,6 +226,30 @@
   box-shadow: var(--shadow-sm);
 }
 
+/* The toolbar of the selected steps: a floating layer above their box (DESIGN, Auto arrange). It never moves a card. */
+.selectionToolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  background: var(--surface-overlay);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+}
+
+.toolbarDivider {
+  width: 1px;
+  height: 20px;
+  margin: 0 var(--space-1);
+  background: var(--border);
+}
+
+.toolbar button[aria-pressed='true'] {
+  background: var(--primary-soft);
+  color: var(--primary-text);
+}
+
 .zoom {
   min-width: 48px;
   text-align: center;

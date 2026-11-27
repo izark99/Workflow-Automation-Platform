@@ -5,7 +5,7 @@ import { useT } from '../i18n';
 import styles from './builder.module.css';
 
 /** Own zoom controls: the built-in ones are 26 px buttons, and the design allows only 36 and 40 px. */
-export function ZoomControls({ summary, onArrange, arrangeDisabled }: { summary: string; onArrange: () => void; arrangeDisabled: boolean }) {
+export function ZoomControls({ summary, onArrange, arrangeDisabled, snap, onSnap }: { summary: string; onArrange: () => void; arrangeDisabled: boolean; snap: boolean; onSnap: () => void }) {
   const { zoomIn, zoomOut, fitView } = useReactFlow();
   const { zoom } = useViewport();
   const t = useT();
@@ -22,6 +22,9 @@ export function ZoomControls({ summary, onArrange, arrangeDisabled }: { summary:
         </Button>
         <Button size="sm" icon aria-label={t('builder.arrange')} disabled={arrangeDisabled} onClick={onArrange}>
           <Icon name="workflow" />
+        </Button>
+        <Button size="sm" icon aria-label={t('builder.snap')} aria-pressed={snap} onClick={onSnap}>
+          <Icon name="grid" />
         </Button>
         <Button size="sm" onClick={() => void fitView({ duration: 150, ...FIT_VIEW_OPTIONS })}>
           {t('builder.fit')}
