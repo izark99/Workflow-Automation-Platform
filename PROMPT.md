@@ -38,7 +38,7 @@ The build is complete when every gate below passes in one clean run of
 | G5 Server | `npm run test:db` | On a local Supabase: migrations apply from zero, and row-level security tests prove every cell of the permission table in SPEC section 7, the no-overlap rule for versions, soft delete and restore. From Phase 4 also: a locked user's open session reads and writes nothing; `ui_texts` rules. From Phase 5 also: `app_settings`, `flow_ref_tables`, the rows of a reference table readable only by the admin and by a user for whom a flow uses it, and the function that saves two texts in one transaction From Phase 6 also: migration 18 (the function that lists the tables a definition reads, through Lookup, Pivot and the Reference table step, the trigger and the backfill) with the same cases as the engine, and read access to a table that only the Reference table step uses. |
 | G6 Functions (Phase 4) | `npm run test:functions` | On a local Supabase with the Edge Functions running: `admin-users` creates an account, resets a password, locks and unlocks, and refuses every call from a non-admin, a locked admin, a signed-out caller, and the last-admin and self-lock cases |
 
-When all gates pass (six up to Phase 3, seven from Phase 4; from Phase 7 also an empty `git diff main -- src/engine src/store supabase flows`), set line 1 of `PROGRESS.md` to `STATUS: COMPLETE`, print the
+When all gates pass (six up to Phase 3, seven from Phase 4; from Phase 7 also an empty `git diff main -- src/engine src/store supabase flows`, which Phases 8 and 9 replace by the checks in their goals), set line 1 of `PROGRESS.md` to `STATUS: COMPLETE`, print the
 Evidence block with the output of `npm run gates`, and end your reply with:
 
 `DFW BUILD COMPLETE`
@@ -96,6 +96,7 @@ not run in this iteration.
 - Build only what `docs/SPEC.md` lists as in scope. Tier 2 formula functions and everything under "Out of scope" stay out.
 - Do not deploy, do not create cloud projects, do not touch real credentials. Deployment is a human step, described in `docs/DEPLOY.md`, which you write in task T3.9 and extend in Phase 4 (new migrations, the Edge Function). Edge Functions run only on the local Supabase in this loop.
 - Phase 7 (SPEC 14) restyles only. It adds no feature, setting or migration, changes no wording, and `src/engine/`, `src/store/`, `supabase/` and `flows/` are not edited. A behaviour that a restyle seems to need changed is a blocker to log, not a change to make. Do not import `design/harold/components/bundle.js` or `bundle.css`; read them for values.
+- Phase 8 (SPEC 15) has no server part: no migration and no edit of `src/store/` or `supabase/`; the acceptance flow, `testcase/` and the drag budgets are unchanged, and a definition becomes `schemaVersion` 4 only when it holds one of the seven new steps. Phase 9 (SPEC 16) adds one migration, number 21, and ExcelJS as its one new dependency, loaded only through a dynamic import for a sheet with a print layout; the normal output path stays as it is, byte for byte.
 - Do not add a dependency outside the stack in section 6 unless a task cannot be done without it. If you add one, record the reason in `docs/DECISIONS.md`.
 
 **Data**
@@ -132,7 +133,7 @@ first use it, and pin the versions you install.
 | App | Vite, React, TypeScript, React Router |
 | Canvas | React Flow |
 | Engine | DuckDB-WASM, running in a Web Worker |
-| Files | SheetJS for reading and writing xlsx and csv. Follow its current official install instructions |
+| Files | SheetJS for reading and writing xlsx and csv. Follow its current official install instructions. From Phase 9, ExcelJS writes only an xlsx sheet that has a print layout (SPEC 16.1), loaded by a dynamic import |
 | Formula | A small parser of your own that turns Tier 1 formulas into DuckDB SQL |
 | Styling | CSS variables and CSS modules. A headless accessibility library is allowed. No styled UI kit. From Phase 7 the tokens are those of `design/harold/tokens.json`, the fonts are Be Vietnam Pro and JetBrains Mono through `@fontsource` (never a CDN) and the icons are the Harold set |
 | Data store | One `DataStore` interface with two implementations: `LocalStore` (browser storage, used by default and by G3 and G4) and `SupabaseStore` (used when Supabase environment variables are set) |
