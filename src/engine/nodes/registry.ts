@@ -9,6 +9,7 @@ import { pivotNode } from './pivot';
 import { dedupeNode } from './dedupe';
 import { topNNode } from './top-n';
 import { splitColumnNode } from './split-column';
+import { cleanTextNode } from './clean-text';
 import { sortNode } from './sort';
 import { sqlNode } from './sql-node';
 import { unpivotNode } from './unpivot';
@@ -34,4 +35,5 @@ export const defaultRegistry: NodeRegistry = {
   dedupe: dedupeNode,
   top_n: topNNode,
   split_column: splitColumnNode,
+  clean_text: cleanTextNode,
 };

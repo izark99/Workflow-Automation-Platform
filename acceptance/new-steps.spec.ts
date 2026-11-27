@@ -268,3 +268,56 @@ test.describe('Split column', () => {
     expectWorkbook(dropped, [{ name: 'Split', columns: ['Id', 'Name', 'C1', 'C2', 'C3', 'Tail'], rows: rows.map((r): FixtureCell[] => [r[0]!, r[1]!, ...cutText(r[2]!, ',', 3, 'drop'), r[3]!]) }]);
   });
 });
+
+const BECOMES_SPACE = new RegExp('[\\t\\n\\v\\f\\r\\u00a0\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]', 'g');
+// trim() of the engine removes the spaces of Unicode (the space separators), not tabs, line breaks or zero-width characters.
+const TRIM_ENDS = new RegExp('^[ \\u00a0\\u1680\\u2000-\\u200a\\u202f\\u205f\\u3000]+|[ \\u00a0\\u1680\\u2000-\\u200a\\u202f\\u205f\\u3000]+$', 'g');
+// The test names control characters on purpose: they are the input of the step.
+// eslint-disable-next-line no-control-regex
+const REMOVED = new RegExp('[\\u0001-\\u0008\\u000e-\\u001f\\u007f-\\u009f\\u00ad\\u200b-\\u200d\\u2060\\ufeff]', 'g');
+
+/** The cleaning of a text as a plain loop of JavaScript, in the order of the step. */
+function cleanText(value: FixtureCell, o: { nonPrinting?: boolean; collapse?: boolean; trim?: boolean; marks?: boolean; mode?: 'upper' | 'lower' | 'proper' }): FixtureCell {
+  if (value === null) return null;
+  let t = String(value);
+  if (o.nonPrinting) t = t.replace(BECOMES_SPACE, ' ').replace(REMOVED, '');
+  if (o.collapse) t = t.replace(/ {2,}/g, ' ');
+  if (o.trim) t = t.replace(TRIM_ENDS, '');
+  if (o.marks) t = t.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D');
+  if (o.mode === 'upper') t = t.toUpperCase();
+  else if (o.mode === 'lower') t = t.toLowerCase();
+  else if (o.mode === 'proper') t = t.toLowerCase().split(' ').map((w) => (w === '' ? w : w[0]!.toUpperCase() + w.slice(1))).join(' ');
+  return t === '' ? null : t;
+}
+
+test.describe('Clean text', () => {
+  const rand = lcg(41);
+  const WORDS = ['nguyễn', 'VĂN', 'Đặng', 'thị', 'HỒNG', 'Lê', 'bình', 'ĐỨC', 'Hà', 'phạm'];
+  const JUNK = [' ', '  ', '   ', '\t', '\u00a0', '\u200b'];
+  const rows: FixtureCell[][] = [];
+  for (let i = 0; i < 200; i++) {
+    const n = rand() < 0.07 ? 0 : 1 + Math.floor(rand() * 4);
+    let text = pick(rand, JUNK) === ' ' ? '' : pick(rand, [' ', '', '  ']);
+    for (let k = 0; k < n; k++) text += pick(rand, WORDS) + pick(rand, JUNK);
+    // Composed and decomposed forms are mixed in one column.
+    if (rand() < 0.3) text = text.normalize('NFD');
+    rows.push([`E${i + 1}`, rand() < 0.06 || text === '' ? null : text, 'keep me']);
+  }
+  const columns = ['Id', 'Name', 'Note'];
+  const file = { File: { name: 'names.csv', text: csvOf(columns, rows) } };
+  const run = (page: Parameters<typeof runGenerated>[0], settings: Record<string, unknown>) =>
+    runGenerated(page, { inputs: ['File'], files: file, nodes: [{ id: 'cl', type: 'clean_text', settings: { columns: ['Name'], ...settings } }], edges: [{ source: 'in_File', target: 'cl' }], outputs: [{ sheet: 'Clean', from: 'cl' }] });
+
+  test('spaces, characters that print nothing, marks and Proper Case on a mixed Vietnamese column', async ({ page }) => {
+    const reply = await run(page, { trim: true, collapse: true, nonPrinting: true, removeMarks: true, caseMode: 'proper' });
+    const expected: FixtureCell[][] = rows.map((r) => [r[0]!, cleanText(r[1]!, { nonPrinting: true, collapse: true, trim: true, marks: true, mode: 'proper' }), r[2]!]);
+    expectWorkbook(reply, [{ name: 'Clean', columns, rows: expected }]);
+  });
+
+  test('only the case, UPPER, with the marks kept; and a new column with a suffix', async ({ page }) => {
+    const upper = await run(page, { trim: false, collapse: false, caseMode: 'upper' });
+    expectWorkbook(upper, [{ name: 'Clean', columns, rows: rows.map((r) => [r[0]!, cleanText(r[1]!, { mode: 'upper' }), r[2]!]) }]);
+    const suffix = await run(page, { target: 'suffix', suffix: ' (clean)', removeMarks: true, caseMode: 'lower' });
+    expectWorkbook(suffix, [{ name: 'Clean', columns: ['Id', 'Name', 'Name (clean)', 'Note'], rows: rows.map((r) => [r[0]!, r[1]!, cleanText(r[1]!, { collapse: true, trim: true, marks: true, mode: 'lower' }), r[2]!]) }]);
+  });
+});

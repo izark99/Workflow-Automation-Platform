@@ -324,7 +324,7 @@ Definition and the three groups of steps (SPEC 15.4)
 - [x] T8.11 Top N: the engine module (N, order column or formula, largest or smallest first, "first rows", group columns, no ties kept, N takes a parameter), the card, the form, unit tests (N larger than the table, per group, ties, a bound N), e2e.
 - [x] T8.12a Split column, engine: every way to cut of SPEC 15.4 item 4 (the last space for Vietnamese names), the names and the number of parts, the rest of the text, trim, keep or drop the original, an existing name is an error that names it. Unit tests with Vietnamese names, empty and null values, a text with no separator.
 - [x] T8.12b Split column, card and form, with the Load columns bar and ColumnSelect; e2e.
-- [ ] T8.13a Clean text, engine: trim, collapse spaces, non-printing characters, case, remove Vietnamese marks (`đ`, `Đ` included), replace the column or write a suffix column. Unit tests with a full Vietnamese alphabet, mixed marks (precomposed and combining), null and numbers in a text column.
+- [x] T8.13a Clean text, engine: trim, collapse spaces, non-printing characters, case, remove Vietnamese marks (`đ`, `Đ` included), replace the column or write a suffix column. Unit tests with a full Vietnamese alphabet, mixed marks (precomposed and combining), null and numbers in a text column.
 - [ ] T8.13b Clean text, card and form; e2e.
 - [ ] T8.14a Check, engine: the rules (name, Tier 1 condition, message), `ok` and `errors` (one row per failed rule, `Rule` and `Message` added), a null condition fails, the optional stop with the count per rule, an invalid formula says which rule and where. Unit tests.
 - [ ] T8.14b Check, card and form (the rule list), the counts per rule on the Test tab and as a quiet warning on the Run screen; e2e: a flow with two rules and a row that fails both.
@@ -448,6 +448,12 @@ Decisions with a default. Build with the default unless this list says otherwise
 None. The Pages file size blocker of T3.9 is solved by D71.
 
 ## Log
+
+### 2026-11-27 T8.13a Clean text, engine
+Changed: `src/engine/nodes/clean-text.ts` (`cleanTextNode`, `parseCleanSettings`, `cleanSql`: trim, collapse spaces, characters that print nothing, case (UPPER, lower, Proper Case), Vietnamese marks with `đ` and `Đ`, replace the column or write a suffix column), registered; 19 unit tests (`clean-text.test.ts`: the full Vietnamese alphabet with its tones in lower and upper case, the precomposed and the combining form giving the same result, null and numbers written as text, empty and spaces-only values, every option on its own and together, the errors); two generated acceptance flows (200 mixed Vietnamese texts with junk characters and both Unicode forms, expected by a plain loop of JavaScript). D132 records the order and what each option covers; the acceptance run found that DuckDB `trim` also removes a non-breaking space but not a tab, which D132 documents.
+Not done in this task, by the split of the plan: the card and the form (T8.13b).
+Gates run: check PASS (2531 tests, 1 lint warning); test:acceptance new-steps PASS (15 tests in the file so far).
+Next: T8.13b.
 
 ### 2026-11-27 T8.12b Split column, card and form
 Changed: `forms/split-form.tsx` and `split-logic.ts` (the text column through `ColumnSelect` and the Load columns bar, only text columns are offered; the cut dropdown with all seven cuts, the separator for a given text, the names of the new columns as a list, the rest, Trim and Keep the original with parameter buttons, what is still missing, a new name that another column has), catalog keys (en, vi), 4 logic tests, `e2e/split-step.spec.ts` (4 journeys: what is missing and the text columns only, a Vietnamese name at the last space with the preview, keep the original and a clash, a column that is not text), three routes in `ui-rules/routes.ts` (a new step, a Vietnamese name, a given text with the rest dropped and the original kept).

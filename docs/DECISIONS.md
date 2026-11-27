@@ -1257,3 +1257,11 @@ What it still lists on the new screens is the pattern of the earlier phases (D83
 - Only a text column can be split; a number or date column is an error that says so. With `trim` on, the text and each part lose the spaces at their ends, so " Trần Hà " cuts at the space between the words, not at the one after "Hà". A part that is missing and a part that is empty are both empty (no cell), never an empty text.
 - `first_space` and `last_space` give at most two parts (before and after); with one name and `rest` = `last` the whole text goes in it, and with `drop` only the first part. For the other cuts, `rest` = `last` puts everything from the part that has the last name onward in that column, joined with the same cut text.
 - The new columns are text and take the place of the original; with `keepOriginal` the original stays in front of them. A new name that another column has is an error that names it; the name of the original is free when it is dropped.
+
+## D132 Clean text: the order of the operations and what each one covers (T8.13a)
+
+- Settings: `columns` (text columns), `trim`, `collapse`, `nonPrinting`, `caseMode` (`keep`, `upper`, `lower`, `proper`), `removeMarks`, `target` (`replace` or `suffix`), `suffix`. Defaults: trim and collapse on, the rest off, replace the column. A step with nothing chosen is an error that says so.
+- Order inside one text: characters that print nothing, runs of spaces, the ends, marks, letter case.
+- `nonPrinting`: a tab, line break, non-breaking space and the other Unicode spaces become a space; controls, the soft hyphen, zero-width characters and the byte order mark are removed. `collapse` joins runs of the plain space. `trim` is the trim of DuckDB: it removes the spaces of Unicode at the ends (a non-breaking space too), but not a tab or a line break; with `nonPrinting` on those become spaces first.
+- `removeMarks`: `strip_accents` (the precomposed and the combining form give the same result) and then the stroke: `đ` to `d`, `Đ` to `D`. `proper`: each word between plain spaces gets a capital first letter and lower case for the rest.
+- A cleaned text that is empty is an empty cell, and a null stays null. With `suffix` the new column is written after its original and is text; an existing name is an error that names it.
