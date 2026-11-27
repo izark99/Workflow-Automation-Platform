@@ -221,3 +221,25 @@ describe('setPositions', () => {
     expect(setPositions(next, { [ids[0]!]: { x: 10, y: 20 } })).toBe(next);
   });
 });
+
+describe('the steps of Phase 8 in the builder', () => {
+  const NEW = ['sort', 'dedupe', 'top_n', 'split_column', 'clean_text', 'check', 'compare'] as const;
+  it('adds a definition that holds one as schemaVersion 4, and leaves the version of a plain definition', () => {
+    for (const t of NEW) expect(addStep(emptyDefinition(), t, { x: 0, y: 0 }).definition.schemaVersion, t).toBe(4);
+    expect(addStep(emptyDefinition(), 'filter', { x: 0, y: 0 }).definition.schemaVersion).toBe(1);
+    const four = addStep(emptyDefinition(), 'sort', { x: 0, y: 0 });
+    expect(deleteSteps(four.definition, [four.id]).schemaVersion).toBe(4);
+  });
+  it('lists them in the groups Rows, Text and Quality after Combine, and before Advanced', () => {
+    expect(STEP_GROUPS.map((g) => g.types.length)).toEqual([3, 6, 2, 3, 2, 2, 1]);
+    expect(STEP_GROUPS.slice(3, 6).flatMap((g) => g.types)).toEqual(['sort', 'dedupe', 'top_n', 'split_column', 'clean_text', 'check', 'compare']);
+  });
+  it('gives each one default settings with the names of the settings registry and a name', () => {
+    for (const t of NEW) {
+      const { definition, id } = addStep(emptyDefinition(), t, { x: 0, y: 0 });
+      const node = definition.nodes.find((n) => n.id === id)!;
+      expect(Object.keys(node.settings).length, t).toBeGreaterThan(0);
+      expect(node.label, t).toBe(STEP_CATALOG[t].label);
+    }
+  });
+});

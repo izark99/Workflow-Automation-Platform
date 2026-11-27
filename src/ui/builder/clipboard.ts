@@ -1,4 +1,5 @@
 // Copy, paste and duplicate of steps (SPEC 15.2 item 3). Pure functions, plus a clipboard that lives in memory only.
+import { withStepsVersion } from '../../engine/flow/steps-version';
 import type { FlowDefinition, FlowEdge, FlowNode } from '../../engine/flow/types';
 import { compactVariadic, edgeId, nextStepId, resolvedEdges } from './graph';
 
@@ -77,7 +78,7 @@ export function pasteSteps(def: FlowDefinition, clip: StepClip, offset: number =
     const edge: FlowEdge = { source: from, target: to, ...(e.sourceHandle ? { sourceHandle: e.sourceHandle } : {}), ...(e.targetHandle ? { targetHandle: e.targetHandle } : {}) };
     return [{ ...edge, id: edgeId(edge) }];
   });
-  next = compactVariadic({ ...next, nodes: [...next.nodes, ...added], edges: [...next.edges, ...edges] });
+  next = withStepsVersion(compactVariadic({ ...next, nodes: [...next.nodes, ...added], edges: [...next.edges, ...edges] }));
   return { definition: next, ids: added.map((n) => n.id) };
 }
 

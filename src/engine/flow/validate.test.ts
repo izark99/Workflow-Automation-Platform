@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { FLOW_SCHEMA_VERSION, flowJsonSchema, NODE_PORTS, NODE_TYPES } from './types';
+import { FLOW_SCHEMA_VERSION, flowJsonSchema, NEW_STEP_TYPES, NODE_PORTS, NODE_TYPES } from './types';
+import { withStepsVersion } from './steps-version';
 import { resolveEdgeHandles, topologicalOrder, validateFlow } from './validate';
 
 function node(id: string, type: string, settings: Record<string, unknown> = {}) {
@@ -256,6 +257,13 @@ describe('port registry and JSON schema', () => {
         'reference_table',
         'sql',
         'unpivot',
+        'sort',
+        'dedupe',
+        'top_n',
+        'split_column',
+        'clean_text',
+        'check',
+        'compare',
       ].sort(),
     );
     for (const t of NODE_TYPES) expect(NODE_PORTS[t]).toBeDefined();
@@ -279,5 +287,58 @@ describe('error messages', () => {
         expect(e.message).toMatch(/Connect|Use|Remove|Rename|Choose|Change|Add|Fix/);
       }
     }
+  });
+});
+
+describe('the seven steps of Phase 8 (schemaVersion 4)', () => {
+  it('has the ports of SPEC 15.4', () => {
+    expect(NODE_PORTS.dedupe.outputs).toEqual(['kept', 'removed']);
+    expect(NODE_PORTS.check.outputs).toEqual(['ok', 'errors']);
+    expect(NODE_PORTS.compare.outputs).toEqual(['added', 'removed', 'changed']);
+    expect(NODE_PORTS.compare.inputs).toEqual({ kind: 'fixed', handles: [{ name: 'new', required: true }, { name: 'old', required: true }] });
+    for (const t of ['sort', 'top_n', 'split_column', 'clean_text'] as const) expect(NODE_PORTS[t].outputs).toEqual(['out']);
+    expect([...NEW_STEP_TYPES].sort()).toEqual(['check', 'clean_text', 'compare', 'dedupe', 'sort', 'split_column', 'top_n']);
+  });
+
+  it('accepts each new step in a version 4 flow and routes edges through their handles', () => {
+    for (const t of NEW_STEP_TYPES) {
+      const inputs = t === 'compare' ? [node('i', 'input_file'), node('j', 'input_file')] : [node('i', 'input_file')];
+      const edges = t === 'compare' ? [{ source: 'i', target: 'n', targetHandle: 'new' }, { source: 'j', target: 'n', targetHandle: 'old' }] : [{ source: 'i', target: 'n' }];
+      expect(validateFlow(flow([...inputs, node('n', t)], edges)).ok, t).toBe(true);
+    }
+    const r = validateFlow(flow([node('i', 'input_file'), node('d', 'dedupe'), node('o', 'output')], [{ source: 'i', target: 'd' }, { source: 'd', sourceHandle: 'removed', target: 'o' }]));
+    expect(r.ok).toBe(true);
+  });
+
+  it('refuses an output handle that the step does not have, and a Compare with one input missing', () => {
+    expect(codes(flow([node('i', 'input_file'), node('c', 'check'), node('o', 'output')], [{ source: 'i', target: 'c' }, { source: 'c', sourceHandle: 'match', target: 'o' }]))).not.toEqual([]);
+    expect(codes(flow([node('i', 'input_file'), node('n', 'compare')], [{ source: 'i', target: 'n', targetHandle: 'new' }]))).toContain('missing_input');
+  });
+
+  it('refuses a new step in a definition below version 4 and says to set schemaVersion 4', () => {
+    for (const v of [1, 2, 3]) {
+      const r = validateFlow({ schemaVersion: v, nodes: [node('i', 'input_file'), node('s', 'sort')], edges: [{ source: 'i', target: 's' }] });
+      expect(r.ok, `v${v}`).toBe(false);
+      expect(!r.ok && r.errors.some((e) => e.nodeId === 's' && /schemaVersion 4/.test(e.message))).toBe(true);
+    }
+  });
+
+  it('older definitions load unchanged, and a version 4 flow may hold bindings', () => {
+    expect(validateFlow({ schemaVersion: 1, nodes: [node('i', 'input_file')], edges: [] }).ok).toBe(true);
+    const bound = validateFlow({ schemaVersion: 4, parameters: [{ key: 'p', label: 'P', type: 'number', required: true }], nodes: [node('i', 'input_file'), node('t', 'top_n', { n: { $param: 'p' } })], edges: [{ source: 'i', target: 't' }] });
+    expect(bound.ok).toBe(true);
+  });
+});
+
+describe('withStepsVersion', () => {
+  const def = (version: 1 | 2 | 3 | 4, types: string[]) => ({ schemaVersion: version, nodes: types.map((t, i) => ({ id: `n${i}`, type: t as never, settings: {} })), edges: [] });
+  it('makes a definition with a new step version 4, and leaves every other definition as it is', () => {
+    expect(withStepsVersion(def(1, ['input_file', 'sort'])).schemaVersion).toBe(4);
+    const plain = def(1, ['input_file', 'output']);
+    expect(withStepsVersion(plain)).toBe(plain);
+  });
+  it('never lowers a version: 4 stays 4 when the new step is gone', () => {
+    const four = def(4, ['input_file']);
+    expect(withStepsVersion(four)).toBe(four);
   });
 });

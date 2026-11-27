@@ -20,6 +20,13 @@ const SOURCES: Record<NodeType, { file: string; from?: string; to?: string }> = 
   append: { file: 'engine/nodes/append.ts' },
   output: { file: 'engine/nodes/output.ts' },
   sql: { file: 'engine/nodes/sql-node.ts' },
+  sort: { file: 'engine/nodes/sort.ts' },
+  dedupe: { file: 'engine/nodes/dedupe.ts' },
+  top_n: { file: 'engine/nodes/top-n.ts' },
+  split_column: { file: 'engine/nodes/split-column.ts' },
+  clean_text: { file: 'engine/nodes/clean-text.ts' },
+  check: { file: 'engine/nodes/check.ts' },
+  compare: { file: 'engine/nodes/compare.ts' },
 };
 
 /** The names that a module reads from the settings of its step: `raw.x`, `settings.x`, and the `int('x')` or `text('x')` helpers. */

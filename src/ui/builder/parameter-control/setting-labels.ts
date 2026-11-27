@@ -11,6 +11,11 @@ export const SETTING_LABEL_KEYS: Readonly<Partial<Record<NodeType, Readonly<Reco
   pivot: { aggregation: 'builder.reshape.aggregation', fill: 'builder.reshape.fill', namePrefix: 'builder.reshape.prefix', nameSuffix: 'builder.reshape.suffix', nameCase: 'builder.reshape.nameCase' },
   append: { match: 'builder.append.match' },
   output: { file: 'builder.output.file', format: 'builder.output.format', sheet: 'builder.output.sheet' },
+  dedupe: { keep: 'builder.dedupe.keep' },
+  top_n: { n: 'builder.topN.n', order: 'builder.topN.order' },
+  split_column: { cut: 'builder.split.cut', separator: 'builder.split.separator', rest: 'builder.split.rest', trim: 'builder.split.trim', keepOriginal: 'builder.split.keepOriginal' },
+  clean_text: { trim: 'builder.clean.trim', collapse: 'builder.clean.collapse', nonPrinting: 'builder.clean.nonPrinting', removeMarks: 'builder.clean.removeMarks', caseMode: 'builder.clean.caseMode', target: 'builder.clean.target', suffix: 'builder.clean.suffix' },
+  check: { stop: 'builder.check.stop' },
 };
 
 /** The label of a setting, in the current language; the setting's own name when it has none. */

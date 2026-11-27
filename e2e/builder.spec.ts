@@ -31,11 +31,11 @@ test('the layout follows the design: header bar 64 px, step list 184 px, grouped
   expect(Math.round(bar!.height)).toBe(64);
   const list = page.getByRole('complementary', { name: 'Step types' });
   expect(Math.round((await list.boundingBox())!.width)).toBe(184);
-  for (const group of ['Files', 'Shape', 'Combine', 'Advanced']) await expect(list.getByRole('group', { name: group })).toHaveCount(1);
-  // Twelve step buttons of 36 px, plus the 24 px info button after the title and the panel toggle (T5.4).
+  for (const group of ['Files', 'Shape', 'Combine', 'Rows', 'Text', 'Quality', 'Advanced']) await expect(list.getByRole('group', { name: group })).toHaveCount(1);
+  // Nineteen step buttons of 32 px (twelve, and seven of Phase 8), plus the 24 px info button after the title and the panel toggle (T5.4).
   const stepButtons = list.getByRole('button', { name: /^Add step / });
-  await expect(stepButtons).toHaveCount(12);
-  await expect(list.getByRole('button')).toHaveCount(14);
+  await expect(stepButtons).toHaveCount(19);
+  await expect(list.getByRole('button')).toHaveCount(21);
   expect(Math.round((await stepButtons.first().boundingBox())!.height)).toBe(32);
   // The seed flow of this test has only a draft, so Run is off until a version is published (T2.15).
   await expect(page.getByRole('button', { name: 'Run' })).toBeDisabled();

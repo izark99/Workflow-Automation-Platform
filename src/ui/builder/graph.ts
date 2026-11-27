@@ -1,4 +1,5 @@
 // Pure operations on the flow definition. The canvas reads and writes the same JSON that the engine runs (one format).
+import { withStepsVersion } from '../../engine/flow/steps-version';
 import { arrangeLayout, pointOf } from '../../engine/flow/arrange';
 import { BASE_SCHEMA_VERSION, NODE_PORTS, NODE_TYPES, VARIADIC_HANDLE } from '../../engine/flow/types';
 import { translate } from '../i18n';
@@ -30,6 +31,9 @@ export const STEP_GROUPS: { label: string; types: NodeType[] }[] = [
   { id: 'files', types: ['input_file', 'reference_table', 'output'] },
   { id: 'shape', types: ['column_mapping', 'filter', 'formula_column', 'unpivot', 'pivot', 'group_by'] },
   { id: 'combine', types: ['lookup_join', 'append'] },
+  { id: 'rows', types: ['sort', 'dedupe', 'top_n'] },
+  { id: 'text', types: ['split_column', 'clean_text'] },
+  { id: 'quality', types: ['check', 'compare'] },
   { id: 'advanced', types: ['sql'] },
 ].map((g) => ({
   types: g.types as NodeType[],
@@ -126,6 +130,20 @@ export function defaultSettings(type: NodeType, id: string): Record<string, unkn
       return { key: id, headerRow: 1 };
     case 'column_mapping':
       return { columns: [] };
+    case 'sort':
+      return { keys: [] };
+    case 'dedupe':
+      return { columns: [], keep: 'first' };
+    case 'top_n':
+      return { n: 10, order: 'largest', groupBy: [] };
+    case 'split_column':
+      return { column: '', cut: 'space', separator: '', names: [], rest: 'last', trim: true, keepOriginal: false };
+    case 'clean_text':
+      return { columns: [], trim: true, collapse: true, nonPrinting: false, caseMode: 'keep', removeMarks: false, target: 'replace', suffix: '_clean' };
+    case 'check':
+      return { rules: [], stop: false };
+    case 'compare':
+      return { keys: [], compare: [] };
     case 'formula_column':
       return { name: 'New column', expression: '' };
     case 'lookup_join':
@@ -151,7 +169,8 @@ export function defaultSettings(type: NodeType, id: string): Record<string, unkn
 export function addStep(def: FlowDefinition, type: NodeType, position: { x: number; y: number }): { definition: FlowDefinition; id: string } {
   const id = nextStepId(def, type);
   const step: FlowNode = { id, type, label: nextLabel(def, type), position: { x: Math.round(position.x), y: Math.round(position.y) }, settings: defaultSettings(type, id) };
-  return { definition: { ...def, nodes: [...def.nodes, step] }, id };
+  // A definition that holds a step of Phase 8 is schemaVersion 4 (SPEC 15.4); others keep their version.
+  return { definition: withStepsVersion({ ...def, nodes: [...def.nodes, step] }), id };
 }
 
 export function moveStep(def: FlowDefinition, id: string, position: { x: number; y: number }): FlowDefinition {

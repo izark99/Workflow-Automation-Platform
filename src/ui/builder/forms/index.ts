@@ -6,6 +6,7 @@ import { GroupByForm } from './group-by-form';
 import { InputFileForm } from './input-file-form';
 import { LookupForm } from './lookup-form';
 import { OutputForm } from './output-form';
+import { NotYetForm } from './not-yet-form';
 import { PivotForm } from './pivot-form';
 import { ReferenceTableForm } from './reference-table-form';
 import { SqlForm } from './sql-form';
@@ -26,4 +27,11 @@ export const FORMS: FormRegistry = {
   append: AppendForm,
   output: OutputForm,
   sql: SqlForm,
+  sort: NotYetForm,
+  dedupe: NotYetForm,
+  top_n: NotYetForm,
+  split_column: NotYetForm,
+  clean_text: NotYetForm,
+  check: NotYetForm,
+  compare: NotYetForm,
 };

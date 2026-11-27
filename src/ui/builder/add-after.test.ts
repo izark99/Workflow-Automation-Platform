@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { NODE_TYPES } from '../../engine/flow/types';
+import { NODE_PORTS, NODE_TYPES } from '../../engine/flow/types';
 import type { FlowDefinition, NodeType } from '../../engine/flow/types';
 import { validateFlow } from '../../engine/flow/validate';
 import { addStepAfter, firstRequiredInput, freeOutput, insertStepOnEdge } from './add-after';
@@ -50,7 +50,7 @@ describe('addStepAfter: every type as the selected step', () => {
       const r = addStepAfter(def, [id], 'column_mapping');
       if (hasOutput(type)) {
         expect(resolvedEdges(r.definition)).toHaveLength(1);
-        expect(resolvedEdges(r.definition)[0]?.sourceHandle).toBe(type === 'filter' ? 'match' : 'out');
+        expect(resolvedEdges(r.definition)[0]?.sourceHandle).toBe(NODE_PORTS[type].outputs[0]);
       } else {
         // Output has no output: the step is added below, nothing is connected.
         expect(resolvedEdges(r.definition)).toHaveLength(0);
