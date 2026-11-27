@@ -328,7 +328,7 @@ Definition and the three groups of steps (SPEC 15.4)
 - [x] T8.13b Clean text, card and form; e2e.
 - [x] T8.14a Check, engine: the rules (name, Tier 1 condition, message), `ok` and `errors` (one row per failed rule, `Rule` and `Message` added), a null condition fails, the optional stop with the count per rule, an invalid formula says which rule and where. Unit tests.
 - [x] T8.14b Check, card and form (the rule list), the counts per rule on the Test tab and as a quiet warning on the Run screen; e2e: a flow with two rules and a row that fails both.
-- [ ] T8.15a Compare, engine: key columns (a repeated key stops the run and names it), columns to compare, `added`, `removed`, `changed` with `Changed columns` and the old values, typed comparison, empty equals empty, columns that exist on one side only. Unit tests.
+- [x] T8.15a Compare, engine: key columns (a repeated key stops the run and names it), columns to compare, `added`, `removed`, `changed` with `Changed columns` and the old values, typed comparison, empty equals empty, columns that exist on one side only. Unit tests.
 - [ ] T8.15b Compare, card (two inputs, three outputs) and form (key pairs, compared columns); e2e with last month and this month.
 - [ ] T8.16 The step list and the catalog: the order and the groups, the icons (every icon in the Harold set), the info texts, the Vietnamese texts of every key of the phase (the build writes a first translation), the add-after rules for the new steps, the routes of the UI rules for every new card and form in both themes. A flow that uses every new step runs end to end in one e2e journey.
 
@@ -448,6 +448,12 @@ Decisions with a default. Build with the default unless this list says otherwise
 None. The Pages file size blocker of T3.9 is solved by D71.
 
 ## Log
+
+### 2026-11-27 T8.15a Compare, engine
+Changed: `src/engine/nodes/compare.ts` (`compareNode`, `parseCompareSettings`: key pairs, a repeated key stops the run and names it, columns to compare, `added`, `removed` and `changed` with `Changed columns` and the old values, typed comparison, empty equals empty, columns that exist on one side only are not compared), registered; 17 unit tests (`compare.test.ts`: the three outputs, several changed columns in one row, the order of each output, typed numbers and dates, differently named keys, several key columns, empty keys and empty tables, the partition of the rows, every error message); two generated acceptance flows with two files (300 rows last month against this month with rows gone, changed, set empty and new; the three sheets against a plain loop; a repeated key). D134 records the rules.
+Not done in this task, by the split of the plan: the card and the form (T8.15b).
+Gates run: check PASS (2571 tests, 1 lint warning); test:acceptance PASS (41 tests: both datasets, layouts, privacy, new-steps).
+Next: T8.15b.
 
 ### 2026-11-27 T8.14b Check, card and form
 Changed: `forms/check-form.tsx` and `check-logic.ts` (the rule list: a name, the condition in the formula editor with its syntax check, a message, a remove button, "Add rule"; "Stop the run when a rule fails" with its parameter button; what is still missing, with the number of the rule), catalog keys (en, vi), 3 logic tests, `e2e/check-step.spec.ts` (6 journeys: the two handles and what is missing, two rules and a row that fails both with the counts on the chips ("Passed (2)", "Errors (4)") and a warning per rule on the Test tab, an invalid condition naming the rule, removing a rule, the Run screen with the quiet warnings and the run going on, the Run screen stopping with the count of each rule), four routes in `ui-rules/routes.ts`. The formula editor marks its text as code (`data-code`): the pseudo-locale check found its formula text outside the catalog on the first route with a formula.

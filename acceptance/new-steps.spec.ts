@@ -366,3 +366,68 @@ test.describe('Check', () => {
     for (const [i, rule] of rules.entries()) expect(reply.message).toContain(`"${rule.name}" (${counts[i]})`);
   });
 });
+
+test.describe('Compare', () => {
+  const oldData = people(61);
+  const rand = lcg(62);
+  // This month: some rows gone, some changed (also to and from empty), some new ones, in a different order at the end.
+  const newRows: FixtureCell[][] = [];
+  for (const r of oldData.rows) {
+    const x = rand();
+    if (x < 0.1) continue;
+    const row = [...r];
+    if (x < 0.3) row[3] = rand() < 0.2 ? null : Math.floor(rand() * 8);
+    if (x > 0.3 && x < 0.4) row[2] = pick(rand, [...DEPTS, null]);
+    if (x > 0.4 && x < 0.45) row[1] = row[1] === null ? 'Nguyễn Mới' : null;
+    if (x > 0.45 && x < 0.5) row[4] = rand() < 0.3 ? null : `2026-10-${String(Math.floor(rand() * 28) + 1).padStart(2, '0')}`;
+    newRows.push(row);
+  }
+  for (let i = 0; i < 12; i++) newRows.push([`N${i + 1}`, pick(rand, NAMES), pick(rand, DEPTS), 4, '2026-10-01']);
+  const columns = oldData.columns;
+  const files = { New: { name: 'new.csv', text: csvOf(columns, newRows) }, Old: { name: 'old.csv', text: csvOf(columns, oldData.rows) } };
+  const run = (page: Parameters<typeof runGenerated>[0], settings: Record<string, unknown>) =>
+    runGenerated(page, {
+      inputs: ['New', 'Old'],
+      files,
+      nodes: [{ id: 'cmp', type: 'compare', settings }],
+      edges: [{ source: 'in_New', target: 'cmp', targetHandle: 'new' }, { source: 'in_Old', target: 'cmp', targetHandle: 'old' }],
+      outputs: [{ sheet: 'Added', from: 'cmp', handle: 'added' }, { sheet: 'Removed', from: 'cmp', handle: 'removed' }, { sheet: 'Changed', from: 'cmp', handle: 'changed' }],
+    });
+
+  test('added, removed and changed equal the loop: keys, the changed column names, and the new and old values', async ({ page }) => {
+    const reply = await run(page, { keys: [{ new: 'Id', old: 'Id' }] });
+    const oldById = new Map(oldData.rows.map((r) => [r[0] as string, r]));
+    const newById = new Map(newRows.map((r) => [r[0] as string, r]));
+    const added = newRows.filter((r) => !oldById.has(r[0] as string));
+    const removed = oldData.rows.filter((r) => !newById.has(r[0] as string));
+    const compared = [1, 2, 3, 4];
+    const changed: FixtureCell[][] = [];
+    for (const r of newRows) {
+      const o = oldById.get(r[0] as string);
+      if (!o) continue;
+      const names = compared.filter((c) => r[c] !== o[c]).map((c) => columns[c]!);
+      if (names.length > 0) changed.push([r[0]!, names.join(', '), ...compared.flatMap((c) => [r[c]!, o[c]!])]);
+    }
+    expect(added).toHaveLength(12);
+    expect(removed.length).toBeGreaterThan(10);
+    expect(changed.length).toBeGreaterThan(30);
+    expectWorkbook(reply, [
+      { name: 'Added', columns, rows: added },
+      { name: 'Removed', columns, rows: removed },
+      { name: 'Changed', columns: ['Id', 'Changed columns', ...compared.flatMap((c) => [columns[c]!, `${columns[c]!} (old)`])], rows: changed },
+    ]);
+  });
+
+  test('a repeated key stops the run and names it', async ({ page }) => {
+    const dup = csvOf(columns, [...oldData.rows, oldData.rows[0]!]);
+    const reply = await runGenerated(page, {
+      inputs: ['New', 'Old'],
+      files: { New: files.New, Old: { name: 'old.csv', text: dup } },
+      nodes: [{ id: 'cmp', type: 'compare', settings: { keys: [{ new: 'Id', old: 'Id' }] } }],
+      edges: [{ source: 'in_New', target: 'cmp', targetHandle: 'new' }, { source: 'in_Old', target: 'cmp', targetHandle: 'old' }],
+      outputs: [{ sheet: 'Changed', from: 'cmp', handle: 'changed' }],
+    });
+    expect(reply.ok).toBe(false);
+    if (!reply.ok) expect(reply.message).toContain(`key ${oldData.rows[0]![0]} appears 2 times in the old table`);
+  });
+});

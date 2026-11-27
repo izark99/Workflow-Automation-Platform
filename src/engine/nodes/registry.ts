@@ -10,6 +10,7 @@ import { dedupeNode } from './dedupe';
 import { topNNode } from './top-n';
 import { splitColumnNode } from './split-column';
 import { checkNode } from './check';
+import { compareNode } from './compare';
 import { cleanTextNode } from './clean-text';
 import { sortNode } from './sort';
 import { sqlNode } from './sql-node';
@@ -38,4 +39,5 @@ export const defaultRegistry: NodeRegistry = {
   split_column: splitColumnNode,
   clean_text: cleanTextNode,
   check: checkNode,
+  compare: compareNode,
 };
