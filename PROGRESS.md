@@ -307,7 +307,7 @@ its routes in `ui-rules/routes.ts` in the same commit and runs the UI rules for 
 is not edited, `npm run test:e2e` keeps the canvas drag spec unchanged, and every new text is a catalog key in English and Vietnamese.
 
 Canvas (SPEC 15.1, 15.2)
-- [ ] T8.1 The arrange layout as pure functions in `src/engine/flow/arrange.ts` (no React): `arrangeLayout(definition, options)` (layers by the longest path, order inside a layer by the average row of the neighbours, `match` above `nomatch`, gaps of 80 and 40 px, layers centred on one axis, flows that are not connected stacked 120 px apart, a selection keeps the top left of its box, the same result when run twice), `alignNodes`, `distributeNodes`. Unit tests for each rule, an empty flow, one step, a diamond, two Filter outputs that join again, a flow of 60 steps in under 50 ms.
+- [x] T8.1 The arrange layout as pure functions in `src/engine/flow/arrange.ts` (no React): `arrangeLayout(definition, options)` (layers by the longest path, order inside a layer by the average row of the neighbours, `match` above `nomatch`, gaps of 80 and 40 px, layers centred on one axis, flows that are not connected stacked 120 px apart, a selection keeps the top left of its box, the same result when run twice), `alignNodes`, `distributeNodes`. Unit tests for each rule, an empty flow, one step, a diamond, two Filter outputs that join again, a flow of 60 steps in under 50 ms.
 - [ ] T8.2 Auto arrange on the canvas: the control button, the shortcut, the whole flow or the selection, one change of the definition ("unsaved changes" once), fit view, the toast with Undo (puts every position back, goes with the next change), disabled on a published version. e2e (a messy flow becomes ordered, Undo, selection only) and the routes of the UI rules. `e2e/canvas-drag.spec.ts` is not touched and still passes.
 - [ ] T8.3 Align and distribute and Snap to grid: the selection toolbar (`role="toolbar"`), the six align and two distribute actions as one change each, the Snap switch kept per user in the browser. e2e for each action and a keyboard path; the routes of the UI rules.
 - [ ] T8.4 Adding after the selected step: the connection rules of SPEC 15.2 as a pure function with unit tests (every node type as the new step and as the selected one, Filter `match`, Lookup left input, no free output, several selected), the placement to the right, the polite announcement, and a step dropped on an edge splits it (with the cases where it must not). e2e: a flow of five steps is built by buttons and by keyboard only, no drag; a drop on an edge.
@@ -448,6 +448,11 @@ Decisions with a default. Build with the default unless this list says otherwise
 None. The Pages file size blocker of T3.9 is solved by D71.
 
 ## Log
+
+### 2026-11-27 T8.1 Arrange layout
+Changed: `src/engine/flow/arrange.ts` (`arrangeLayout`, `alignNodes`, `distributeNodes`, `pointOf`), `src/engine/flow/arrange.test.ts` (17 tests).
+Gates run: check PASS.
+Next: T8.2 (check that the rendered card size still matches `CARD_WIDTH` 240 and `CARD_HEIGHT` 56 for every card type; add a per-node size option if not).
 
 ### 2026-11-27 Phases 8 and 9 planned (documents only, no code)
 Changed: `docs/SPEC.md` (sections 15 and 16, the scope, the node catalog and the phase table), `docs/DESIGN.md` (Phase 8 and 9 parts), `docs/DECISIONS.md` (D127), `PROMPT.md`, `CLAUDE.md`, `GOALS.md` (the goals of Phase 8 and Phase 9), this file (line 1 back to `STATUS: IN PROGRESS`, tasks T8.1 to T8.20 and T9.1 to T9.20, the "Needs Harold" rows of both phases).
