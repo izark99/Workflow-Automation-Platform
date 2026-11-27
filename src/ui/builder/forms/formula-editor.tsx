@@ -65,6 +65,7 @@ export function FormulaEditor({ label, hint, value, onChange, readOnly, source, 
         label={label}
         hint={hint}
         mono
+        data-code
         rows={rows}
         textareaRef={ref}
         value={value}
