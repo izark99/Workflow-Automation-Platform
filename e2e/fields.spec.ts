@@ -40,7 +40,10 @@ test('a checkbox is an 18 px box with a 1.5 px border-strong outline, filled pri
   // 1.5 px is drawn as 1 px at a device pixel ratio of 1.
   expect(['1px', '1.5px']).toContain(before.border);
   await first.click();
-  await page.waitForTimeout(250); // the colours change over 120 ms
+  // The colours change over 120 ms: wait for the transitions to end instead of a fixed time (a loaded machine drew the box part
+  // of the way, "rgba(16, 31, 56, 0.57)", in a full run of the gates).
+  await first.evaluate((el) => Promise.all(Array.from(el.querySelectorAll('span')).flatMap((s) => s.getAnimations().map((a) => a.finished))).then(() => undefined));
+  await page.waitForTimeout(50);
   const after = await style();
   const filled = checkedBefore ? before : after;
   const empty = checkedBefore ? after : before;
