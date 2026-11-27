@@ -88,3 +88,43 @@ for (const url of ['/reference-tables', '/flows']) {
     expect(box).toEqual({ x: 0, y: 0, width: 1832, height: 952 });
   });
 }
+
+// A panel with a glass fill that scrolled its own content let the fill scroll away: the rest of the panel showed a hard edge.
+// The panel itself does not scroll now; a scroller inside it does, over a fill that stays.
+test('a panel keeps its glass fill whole while its content scrolls (sidebar, step list and settings panel)', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 250 });
+  await page.goto('/flows/flow-timesheet/versions/3');
+  await expect(page.locator('.react-flow__node').first()).toBeVisible();
+  await page.locator('.react-flow__node').first().click();
+  await expect(page.getByRole('complementary', { name: 'Step settings' })).toBeVisible();
+  for (const id of ['builder-settings', 'builder-steps']) {
+    const result = await page.evaluate((panelId) => {
+      const panel = document.getElementById(panelId)!;
+      const fill = panel.querySelector(':scope > span[aria-hidden="true"]')!;
+      const scroller = [...panel.children].find((c) => c instanceof HTMLElement && getComputedStyle(c).overflowY === 'auto') as HTMLElement;
+      scroller.scrollTop = scroller.scrollHeight;
+      const p = panel.getBoundingClientRect();
+      const f = fill.getBoundingClientRect();
+      return { scrolled: scroller.scrollTop, panelScrolls: panel.scrollHeight > panel.clientHeight + 1, top: Math.round(f.top - p.top), height: Math.round(f.height - p.height) };
+    }, id);
+    // The builder has a minimum height, so only the step list has more content than the panel can show at this window height.
+    if (id === 'builder-steps') expect(result.scrolled, `${id} has content that scrolls at this height`).toBeGreaterThan(0);
+    expect(result.panelScrolls, `${id} itself does not scroll`).toBe(false);
+    expect(result.top).toBe(0);
+    expect(result.height).toBe(0);
+  }
+  await page.goto('/flows');
+  await expect(page.locator('#sidebar-body').getByRole('button', { name: /^Language/ })).toBeVisible();
+  const side = await page.evaluate(() => {
+    const panel = document.getElementById('sidebar-body')!;
+    const fill = panel.querySelector(':scope > span[aria-hidden="true"]')!;
+    const scroller = [...panel.children].find((c) => c instanceof HTMLElement && getComputedStyle(c).overflowY === 'auto') as HTMLElement;
+    scroller.scrollTop = scroller.scrollHeight;
+    const p = panel.getBoundingClientRect();
+    const f = fill.getBoundingClientRect();
+    return { scrolled: scroller.scrollTop, height: Math.round(f.height - p.height), top: Math.round(f.top - p.top) };
+  });
+  expect(side.scrolled).toBeGreaterThan(0);
+  expect(side.top).toBe(0);
+  expect(side.height).toBe(0);
+});

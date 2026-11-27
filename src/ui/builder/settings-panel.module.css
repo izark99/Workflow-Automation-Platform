@@ -4,11 +4,19 @@
   width: var(--layout-settings);
   box-sizing: border-box;
   isolation: isolate;
-  padding: var(--space-5);
   border-left: 1px solid var(--border);
+  /* The panel does not scroll: the glass fill (.glass) would scroll away with the content and leave the rest of the panel bare.
+     The content scrolls in .scroll, which is on top of the fill. */
+  overflow: hidden;
+  transition: width 200ms ease-out;
+}
+
+.scroll {
+  height: 100%;
+  box-sizing: border-box;
+  padding: var(--space-5);
   overflow-x: hidden;
   overflow-y: auto;
-  transition: width 200ms ease-out;
 }
 
 /* The settings panel is glass as its own layer, with no blur while its width changes (usePanelMotion). */
@@ -64,6 +72,9 @@
 
 .rail {
   width: 48px;
+}
+
+.rail .scroll {
   padding: 8px;
   overflow: hidden;
 }

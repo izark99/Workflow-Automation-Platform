@@ -24,6 +24,7 @@ export function StepList({ onAdd, disabled }: { onAdd: (type: NodeType) => void;
       <div className={styles.stepToggle}>
         <PanelToggle panel="steps" collapsed={collapsed} onToggle={toggle} controls="builder-steps" />
       </div>
+      <div className={styles.stepListScroll}>
       <div className={styles.stepListBody} hidden={collapsed}>
       <div className={styles.titleRow}>
         <h2>{t('builder.addStep')}</h2>
@@ -53,6 +54,7 @@ export function StepList({ onAdd, disabled }: { onAdd: (type: NodeType) => void;
           ))}
         </div>
       ))}
+      </div>
       </div>
     </aside>
   );

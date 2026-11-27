@@ -6,6 +6,8 @@ interface Placement {
   left: number;
   /** The width of the anchor, for a list that is as wide as its button. */
   anchorWidth: number;
+  /** The tallest the popover may be: a long list scrolls inside it instead of running past the window. */
+  maxHeight: number;
 }
 
 const MARGIN = 8;
@@ -28,14 +30,20 @@ export function useFloating(anchorRef: RefObject<HTMLElement | null>, popRef: Re
     if (!anchor || !pop) return;
     const a = anchor.getBoundingClientRect();
     const width = pop.offsetWidth;
-    const height = pop.offsetHeight;
-    const below = window.innerHeight - a.bottom;
-    const up = below < height + gap + MARGIN && a.top > below;
+    // The height the list would have with no limit (scrollHeight does not include the 1 px borders).
+    const natural = pop.scrollHeight + 2;
+    const spaceBelow = window.innerHeight - a.bottom - gap - MARGIN;
+    const spaceAbove = a.top - gap - MARGIN;
+    const up = natural > spaceBelow && spaceAbove > spaceBelow;
+    const window_ = window.innerHeight - 2 * MARGIN;
+    // On the side with more room, and never less than 160 px unless the window itself is shorter.
+    const maxHeight = Math.min(window_, Math.max(up ? spaceAbove : spaceBelow, Math.min(160, window_)));
+    const height = Math.min(natural, maxHeight);
     const wantedTop = up ? a.top - gap - height : a.bottom + gap;
     const top = Math.max(MARGIN, Math.min(wantedTop, window.innerHeight - height - MARGIN));
     const wantedLeft = align === 'end' ? a.right - width : a.left;
     const left = Math.max(MARGIN, Math.min(wantedLeft, window.innerWidth - width - MARGIN));
-    setPlacement((p) => (p && p.top === top && p.left === left && p.anchorWidth === a.width ? p : { top, left, anchorWidth: a.width }));
+    setPlacement((p) => (p && p.top === top && p.left === left && p.anchorWidth === a.width && p.maxHeight === maxHeight ? p : { top, left, anchorWidth: a.width, maxHeight }));
   }, [anchorRef, popRef, gap, align]);
 
   // Before the browser paints, so the popover never shows at a wrong place first.
@@ -54,7 +62,7 @@ export function useFloating(anchorRef: RefObject<HTMLElement | null>, popRef: Re
 
   // Before the first placement the popover is invisible but real (not `visibility: hidden`), so that the list can take focus.
   // A placement kept from an earlier opening is replaced before the browser paints (the layout effect above).
-  const style: CSSProperties = open && placement ? { position: 'fixed', top: placement.top, left: placement.left } : { position: 'fixed', top: 0, left: 0, opacity: 0, pointerEvents: 'none' };
+  const style: CSSProperties = open && placement ? { position: 'fixed', top: placement.top, left: placement.left, maxHeight: placement.maxHeight, overflowY: 'auto' } : { position: 'fixed', top: 0, left: 0, opacity: 0, pointerEvents: 'none' };
   return { style, anchorWidth: placement?.anchorWidth ?? 0 };
 }
 

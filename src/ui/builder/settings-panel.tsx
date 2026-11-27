@@ -33,13 +33,15 @@ function PanelFrame({ stepName, children }: { stepName?: string; children: React
       <div className={styles.toggle}>
         <PanelToggle panel="settings" collapsed={collapsed} onToggle={toggle} controls="builder-settings" />
       </div>
-      {collapsed && stepName ? (
-        <span className={styles.railName} title={stepName} data-user-content>
-          {stepName}
-        </span>
-      ) : null}
-      <div className={styles.content} hidden={collapsed}>
-        {children}
+      <div className={styles.scroll}>
+        {collapsed && stepName ? (
+          <span className={styles.railName} title={stepName} data-user-content>
+            {stepName}
+          </span>
+        ) : null}
+        <div className={styles.content} hidden={collapsed}>
+          {children}
+        </div>
       </div>
     </aside>
   );

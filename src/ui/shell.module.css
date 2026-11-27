@@ -9,15 +9,24 @@
   top: 0;
   align-self: flex-start;
   height: 100vh;
-  overflow-y: auto;
+  /* The panel does not scroll: its glass fill (.glass) would scroll away with the content and leave the rest of the panel bare.
+     The content scrolls in .navScroll, which is on top of the fill. */
+  overflow: hidden;
   isolation: isolate;
   width: var(--layout-sidebar);
+  box-sizing: border-box;
+  border-right: 1px solid var(--border);
+}
+
+.navScroll {
+  height: 100%;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
   padding: var(--space-4);
-  border-right: 1px solid var(--border);
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 /* The sidebar is glass. The fill is its own layer, so the panel itself has no blur while its width changes (usePanelMotion). */
@@ -167,8 +176,11 @@
 
 /* The rail (DESIGN, Collapsible panels): 64 px, 8 px padding, no scrolling. */
 .navRail {
-  overflow: hidden; /* the rail does not scroll (DESIGN, Collapsible panels) */
   width: 64px;
+}
+
+.navRail .navScroll {
+  overflow: hidden; /* the rail does not scroll (DESIGN, Collapsible panels) */
   padding: 8px;
   align-items: center;
 }
