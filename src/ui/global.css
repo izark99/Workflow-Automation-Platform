@@ -50,6 +50,16 @@ body::before {
     linear-gradient(160deg, var(--scene-200), var(--scene-100) 70%);
 }
 
+/* One scroll bar for the whole app: thin, in the line colour, on no track. Without it each list and panel got the look of the
+   system's own bar (arrows and all on some systems). */
+* {
+  scrollbar-width: thin;
+}
+
+:root {
+  scrollbar-color: var(--border-strong) transparent;
+}
+
 h1 {
   margin: 0;
   font-size: 28px;

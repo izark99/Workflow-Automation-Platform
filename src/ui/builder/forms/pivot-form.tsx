@@ -34,8 +34,8 @@ export function PivotForm(props: FormProps) {
     <div className={styles.rowCard} style={{ gap: 16, borderBottom: 0, padding: 0 }}>
       <LoadColumnsBar source={source} />
       <ColumnList label={t('builder.reshape.rowKeys')} values={v.rowKeys} columns={names} disabled={readOnly} onChange={(rowKeys) => apply({ ...v, rowKeys })} />
-      <ColumnSelect label={t('builder.reshape.columnSource')} hint={t('builder.reshape.pivotHint')} value={v.columnSource} columns={names} disabled={readOnly} width="100%" onChange={(columnSource) => apply({ ...v, columnSource })} />
-      <ColumnSelect label={t('builder.reshape.value')} value={v.value} columns={names} disabled={readOnly} width="100%" onChange={(value) => apply({ ...v, value })} />
+      <ColumnSelect label={t('builder.reshape.columnSource')} hint={t('builder.reshape.pivotHint')} value={v.columnSource} columns={names} disabled={readOnly} onChange={(columnSource) => apply({ ...v, columnSource })} />
+      <ColumnSelect label={t('builder.reshape.value')} value={v.value} columns={names} disabled={readOnly} onChange={(value) => apply({ ...v, value })} />
       <Bind name="aggregation" label={t('builder.reshape.aggregation')}>
       <div>
         <span className={styles.label}>{t('builder.reshape.aggregation')}</span>
@@ -64,7 +64,7 @@ export function PivotForm(props: FormProps) {
               {t('builder.reshape.refUnreadable')}
             </p>
           ) : null}
-          <ColumnSelect label={t('builder.reshape.refColumn')} value={v.column} columns={refNames} disabled={readOnly} width="100%" onChange={(column) => apply({ ...v, column })} />
+          <ColumnSelect label={t('builder.reshape.refColumn')} value={v.column} columns={refNames} disabled={readOnly} onChange={(column) => apply({ ...v, column })} />
         </>
       ) : null}
       <Bind name="fill" label={t('builder.reshape.fill')}>

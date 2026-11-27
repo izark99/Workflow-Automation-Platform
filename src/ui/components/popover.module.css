@@ -36,6 +36,19 @@
 
 .between {
   justify-content: space-between;
+  max-width: 100%;
+}
+
+/* A long value is cut with an ellipsis instead of running under the chevron. */
+.triggerText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.trigger svg {
+  flex: none;
 }
 
 .trigger svg {

@@ -46,7 +46,9 @@ Theme rules:
 
 - `<html data-theme="light|dark">` is set by a small inline script in `index.html` before the CSS loads, from the saved choice or, for
   System, from `prefers-color-scheme`. System uses dark unless the browser says it prefers light, so a browser with no preference gets
-  dark. `color-scheme` is set to match, so scrollbars and native text fields follow.
+  dark. `color-scheme` is set to match, so native text fields follow.
+- Scroll bars are one style everywhere (`global.css`): `scrollbar-width: thin`, thumb in `--border-strong`, no track. No list, panel or page keeps
+  the system's own bar.
 - React Flow gets its colours from the tokens (dots, edges, handles, selection, controls). Its own defaults never decide a colour.
 - No raw colour anywhere outside `tokens.css`.
 

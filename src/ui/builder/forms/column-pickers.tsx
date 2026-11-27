@@ -17,17 +17,22 @@ export function SectionLabel({ label, hint, flush = false }: { label: string; hi
 /**
  * One column name. With the columns loaded it is a dropdown of them (a name that is not among them stays selectable, so
  * a saved flow shows what it holds); without them it is a text field, so the form works before any file is chosen.
+ * Both fill the same cell, so the form does not change size when the columns are loaded.
  */
-export function ColumnSelect({ label, hint, value, onChange, columns, disabled, width = 150 }: { label: string; hint?: string; value: string; onChange: (v: string) => void; columns: string[] | null; disabled: boolean; width?: number | '100%' }) {
+export function ColumnSelect({ label, hint, value, onChange, columns, disabled }: { label: string; hint?: string; value: string; onChange: (v: string) => void; columns: string[] | null; disabled: boolean }) {
   const t = useT();
   if (columns === null) {
-    return <Field label={label} hint={hint} value={value} disabled={disabled} onChange={(e) => onChange(e.target.value)} />;
+    return (
+      <div className={styles.cell}>
+        <Field label={label} hint={hint} value={value} disabled={disabled} onChange={(e) => onChange(e.target.value)} />
+      </div>
+    );
   }
   const names = value && !columns.includes(value) ? [value, ...columns] : columns;
   return (
-    <div>
+    <div className={styles.cell}>
       <SectionLabel label={label} hint={hint} />
-      <Dropdown label={label} options={[{ value: '', label: t('builder.picker.choose') }, ...names.map((n) => ({ value: n, label: n }))]} value={value} disabled={disabled} width={width} onChange={onChange} />
+      <Dropdown label={label} options={[{ value: '', label: t('builder.picker.choose') }, ...names.map((n) => ({ value: n, label: n }))]} value={value} disabled={disabled} width="100%" onChange={onChange} />
     </div>
   );
 }
