@@ -341,3 +341,54 @@ The card "Versions used for this date" gets one more group, "Settings that use a
 - Item 4 (states) also covers the analysis panel (no file, reading, nothing found, error), a bound field that cannot be resolved, and the Reference table step (no table chosen, unreadable table, no version for the date, a gap warning).
 - Item 8 (keyboard) also covers the parameter dropdown, the Reference table step (added with its button by keyboard, like the other steps) and the preview of the analysis.
 - Item 10 (motion): nothing moves on a drag except the card.
+
+## Auto arrange, align and distribute (Phase 8)
+
+- The canvas controls (the React Flow control group, same glass and size as the zoom buttons) get a 32 px icon button "Auto arrange" with a tooltip and the shortcut shown in it. Disabled on a published version. It is not `cta` and not `primary`.
+- A toolbar for the selection appears above the bounding box of the selected steps when two or more are selected: icon buttons (32 px) for Align left, centre, right, top, middle, bottom, a divider, then Distribute horizontally and vertically (disabled below three steps). It is a floating layer (`surface-overlay`, `shadow-md`, `radius-md`), it does not move the cards, it is hidden while a card is dragged and reachable with Tab after the canvas (an arrow-free toolbar: `role="toolbar"`, Left/Right between buttons).
+- The toast after Auto arrange says "Steps arranged" with the compact button "Undo" (secondary). It stays 8 seconds, longer while it has focus, and goes with the next change.
+- A switch "Snap to grid" in the canvas controls (icon toggle with `aria-pressed`). The grid dots of the canvas already show 8 px spacing.
+- Arranging does not animate the cards (no transition on position: the drag rule of Phase 6 holds); the view is fitted at once.
+
+## Adding steps faster (Phase 8)
+
+- A step button added with a selected step shows no extra UI; the new card appears to the right, connected, and takes the selection (the settings panel shows it). A screen reader hears "Added {step}, connected to {step}" in the polite status region.
+- While a step type is dragged over an edge, the edge is drawn in `primary` and thicker (3 px) and a pill "Insert here" shows at its middle. Nothing else on the canvas changes.
+- A "Duplicate" compact button (secondary, copy icon) at the end of the title row of the settings panel for a selected step. After a paste or a duplicate the new cards are selected and the toast says "{n} steps pasted".
+- The shortcuts are listed in an info button of the step list ("Ctrl+D duplicate, Ctrl+C copy, Ctrl+V paste, Delete remove") and they are never active while a field, a dialog or a menu has focus.
+
+## Preview popup (Phase 8)
+
+- The "Expand" icon button (maximize icon, 32 px, secondary) sits at the end of the row that holds the count text of the preview on the Test tab.
+- The dialog is a wide variant of the Dialog component: up to `calc(100vw - 96px)` by `calc(100vh - 96px)`, at least 960 x 560 px, `radius-xl`, `surface-overlay`, the usual scrim. Title "Preview of {step}". The body is a column: a toolbar row (First rows / Last rows as chips, the Find field with the count "{n} of {total} rows match", "Show more" compact secondary), the table (it fills the rest and scrolls in both directions), the message of rows shown. Only the table area scrolls, the toolbar stays.
+- The table: header row sticky, first column of row numbers sticky and in `ink-muted`, rows 45 px as everywhere, numbers right aligned. A Find match is shown by the count and by hiding the other rows (no highlight colour, so no new colour is needed).
+- States: loading (skeleton rows), no rows, an error (what failed and what to do), "stale" when the settings changed since the preview.
+
+## New steps (Phase 8)
+
+- Cards follow the existing card: icon from the Harold set (Sort: arrow-up-down, Remove duplicates: copy-x or the nearest in the set, Top N: list-ordered or the nearest, Split column: split, Clean text: sparkles, Check: shield-check, Compare: git-compare; if one is not in the set the build picks the nearest and the icon test keeps the set closed), the name, one line of summary, handles. Remove duplicates and Check have two output handles with the labels `kept`/`removed` and `ok`/`errors` like Filter's `match`/`nomatch`; Compare has three (`added`, `removed`, `changed`) and two inputs (`new`, `old`).
+- The step list has three more groups after Combine: Rows, Text, Quality; the buttons are the same size as the others.
+- The forms use the existing parts: ColumnSelect and ColumnList (the same cell that does not change size when the columns load), the rule list of Check is the Filter condition field repeated with a name and a message (a row card with a remove button, "Add rule"), Compare's key pairs are a list like Lookup's keys.
+- The Test tab of Check and Compare, and of Remove duplicates, shows the output chips (`ok`/`errors`, `added`/`removed`/`changed`, `kept`/`removed`) like Filter does, with the row counts in the chip text. The Run screen shows the rule counts of a Check as a quiet warning block ("Check {name}: {n} rows failed {rule}").
+
+## Print layout (Phase 9)
+
+- The Configure tab of an Output step (format xlsx) has the group "Print layout" under the sort rows: a Switch (off by default) with an info button; when on, the group shows, in order: Page (paper and orientation as two dropdowns on one row, margins dropdown, the switch "Fit all columns on one page wide", the switch "Repeat the header row", the switch "Page numbers"), Header lines (a list of up to 6 row cards: the text field, alignment as three icon toggles, "Bold", size dropdown, remove; "Add line"; an info button lists the tokens), Signatures (the optional date line field, then up to 5 signer cards: title, line under the title, name, remove; "Add signer"). The settings panel is 380 px, so a card's controls wrap onto two rows; nothing scrolls horizontally.
+- Defaults when the switch is turned on: A4, portrait, normal margins, fit to width, repeat header, page numbers on, no lines, no signers. The first line added is centre, bold, large.
+- Errors sit under the field (a token that does not exist, a line longer than 200 characters, more than the limit of lines or signers, a parameter that is not in the flow).
+- The print preview on the Test tab: two page boxes side by side in the panel (first page, last page) with the real paper ratio, drawn in the neutral surface with the text in `ink` at 8 px scale, labelled "Approximate: Excel decides the page breaks in the middle". "Open large" opens it in the wide dialog of Phase 8. It is not an image of the file and it is not the file.
+- The Run screen lists a "Print layout" badge (neutral) beside the file name of an Output with the layout on.
+
+## Linked reference tables (Phase 9)
+
+- The detail card of a linked table shows under the title the line "Values from {A} · {c}" with the link icon, in `ink-muted`, and the admin's "Unlink" in the More menu next to "Link to a table" (one or the other, never both).
+- The "Link to a table" dialog (420 px): a dropdown for the table (tables that would not make a cycle), a dropdown for its column, a field for the key column name of B (filled with the column name), the count line "{n} distinct values will be added as rows" and the buttons Cancel and Link. The New table dialog has a switch "Take the values from a column of another table" that shows the same three controls in place of the paste box.
+- The notice is a quiet warning block (the style of the Versions screen warnings: alert icon, not an error box) at the top of the table's detail card for an admin: "{n} new values from {A} · {c} need their other columns: {x}, {y}, and {k} more." with the compact secondary button "Open the draft". The new rows in the draft grid have a "New" chip in the row-number cell (neutral, not Ember). A sidebar "Reference tables" item shows a 8 px `primary` dot, with the accessible name "{n} tables need attention", only for an admin and only while a notice is open.
+- The publish dialog of a draft with new rows whose other cells are empty has the quiet warning "{n} new rows have empty columns"; Publish stays enabled.
+
+## Phase 8 and 9 additions to the checklist
+
+- Item 3 (alignment): the canvas controls and the selection toolbar share one button size and one centre line; the key cells of Compare and Lookup are one width; the rows of the header lines and signer cards line up their controls.
+- Item 4 (states): the popup (loading, empty, stale, error), a step that has no input yet, the print group (off, on, errors), the print preview (no rows yet), the link dialog (no column, would make a cycle), the notice (one value, many values).
+- Item 8 (keyboard): every shortcut of "Adding steps faster" has a button, the selection toolbar is a toolbar, the popup traps focus and returns it, the Find field is reachable first in the popup.
+- Item 10 (motion): auto arrange and paste do not animate positions; the popup uses the Dialog motion.

@@ -38,6 +38,8 @@ If this file and `testcase/TEST_RULES.md` disagree, `TEST_RULES.md` wins.
 - Phase 4: admin account management, help text behind info buttons, editable texts in two languages, light and dark themes, flow parameters, UI quality pass (section 11)
 - Phase 5: import of reference tables from xlsx and csv, reference tables visible to users by use, sign-out after inactivity, texts edited in both languages at once, collapsible panels (section 12)
 - Phase 6: smooth dragging of steps on the canvas, input files with a table inside a larger sheet (a region, a stop rule, analysis of a sample file in the browser), every input box of a step that can take a parameter, and a Reference table step that puts a shared table on the canvas (section 13)
+- Phase 8: faster building of a flow (auto arrange, align and distribute, adding a step after the selected one and connecting it, duplicating and copying steps), the preview in a large popup, and seven new steps: Sort, Remove duplicates, Top N, Split column, Clean text, Check and Compare (section 15)
+- Phase 9: a print layout for the Output step (a header block, a table that repeats its header row, a signature block, page numbers, an xlsx that prints as it is), and reference tables that take their values from a column of another table, with a notice to the admin when new values appear (section 16)
 
 **Out of scope for the MVP**
 
@@ -56,6 +58,8 @@ If this file and `testcase/TEST_RULES.md` disagree, `TEST_RULES.md` wins.
 - Formulas that read a reference table (LOOKUP, IN, and the like): a reference table is read by the Lookup and Pivot steps and, from Phase 6, by the Reference table step (section 13.3)
 - Taking one value from a reference table into an input box, and a list parameter whose options come from a table (both can follow the Reference table step in a later phase)
 - Headers of two or more rows, and more than one table read from one sheet by one Input step (section 13.2 lists the other tables that it finds)
+- Undo and redo of every edit of the canvas (Phase 8 has one level, for Auto arrange only), a search box in the step list, and steps for date ranges, ranking and running totals (candidates for a later phase)
+- PDF output, a company logo on a printed report, and email or push messages to the admin about new values of a linked table (Phase 9 prints through xlsx and tells the admin inside the app)
 
 ## 3. Architecture
 
@@ -130,7 +134,14 @@ preview of its first 100 rows.
 | Pivot | Turns row values into columns | Row keys, column source, value, aggregation |
 | Append | Stacks two or more inputs | Match columns by name or by position |
 | Reference table | From Phase 6: puts a shared reference table on the canvas, the version valid on the effective date | Table |
-| Output | Writes the result to a file | File type, sheet name. Several Output nodes can write to one workbook |
+| Output | Writes the result to a file | File type, sheet name. Several Output nodes can write to one workbook. From Phase 9 an xlsx sheet can have a print layout (section 16.1) |
+| Sort | From Phase 8: puts the rows in an order | Columns, direction |
+| Remove duplicates | From Phase 8: keeps one row of each group of equal rows. A second output holds the removed rows | Columns that decide, keep the first or the last |
+| Top N | From Phase 8: keeps the first N rows, or the N largest or smallest, also per group | N, order column, direction, group columns |
+| Split column | From Phase 8: cuts a text column into several columns | Column, how to cut, names of the new columns |
+| Clean text | From Phase 8: tidies text columns | Columns, trim, spaces, case, remove Vietnamese marks |
+| Check | From Phase 8: tests rules on every row. Rows that fail go to a second output with the rule and the message | Rules (a condition and a message) |
+| Compare | From Phase 8: compares two tables by key: rows added, removed, changed | Key columns, columns to compare |
 | SQL | Runs free SQL on the nodes before it | SQL text |
 
 ## 6. Formula language
@@ -225,6 +236,8 @@ fixed values in the flow.
 | 5. Reference tables, idle sign-out, texts, panels | Section 12 | The same gates pass in one clean run |
 | 6. Canvas drag, input regions, parameters in input boxes, Reference table step | Section 13 | The same gates pass in one clean run |
 | 7. Harold design system | Section 14 | The same gates pass in one clean run, with no change to `src/engine/`, `src/store/`, `supabase/` and the flow file |
+| 8. Faster building and more steps | Section 15 | The same gates pass in one clean run; the acceptance flow and `testcase/` are unchanged; no migration |
+| 9. Print layout and linked reference tables | Section 16 | The same gates pass in one clean run, with migration 21 applied from zero; the acceptance flow and `testcase/` are unchanged |
 
 ## 11. Phase 4 additions
 
@@ -614,3 +627,222 @@ to 6), Harold wins. `docs/DESIGN.md` ("Harold design system (Phase 7)") records 
   or 64 px, no gradient except the scene, no coloured stripe on one side of a
   card, font sizes only from the Harold scale, the 4 px spacing scale of 14.1, the focus ring, and axe.
 - The Pages build (`npm run build:pages`) stays under its size limit with the fonts, and `npm run test:acceptance:pages` passes.
+
+## 15. Phase 8 additions
+
+Phase 8 makes a flow faster to build and adds seven steps. It has no server part: no migration, no change to `src/store/`
+or `supabase/`, and `DataStore` is unchanged. Everything in sections 1 to 14 still holds. The acceptance flow
+`flows/monthly-timesheet.flow.json` is not edited and keeps `schemaVersion` 1, and `testcase/` is not read or changed. The
+drag budgets of section 13.1 still hold.
+
+### 15.1 Auto arrange, align and distribute
+
+1. A button "Auto arrange" in the canvas controls puts the steps in order. With no selection, or one step selected, it
+   arranges the whole flow. With two or more steps selected it arranges only those, and keeps the top left corner of
+   their bounding box where it is.
+2. The layout runs from left to right. A step is in the column after the last of its inputs (the longest path from a step
+   with no input). Inside a column the steps are ordered to reduce crossing edges (the average row of their neighbours),
+   with the `match` output of a Filter above its `nomatch` output. The gap between columns is 80 px and between steps in a
+   column 40 px, the columns are centred on one horizontal axis, and flows that are not connected to each other are stacked
+   with 120 px between them. The result depends only on the flow: arranging twice gives the same positions.
+3. Arranging is one change of the flow definition (the "unsaved changes" state turns on once). The view is fitted to the
+   result. A toast says "Steps arranged" and has "Undo", which puts every position back; it goes away with the next change.
+   A published (read-only) version cannot be arranged: the button is disabled.
+4. With two or more steps selected, a small toolbar offers Align left, centre, right, top, middle and bottom, and with three
+   or more Distribute horizontally and vertically (equal gaps between the edges of the cards, the two outermost steps stay).
+   Each is one change. A switch "Snap to grid" (8 px) is kept per user in the browser and is off by default.
+
+### 15.2 Adding steps faster
+
+1. When exactly one step is selected and it has a free output, adding a step (a click on its button, Enter or Space on it)
+   puts the new step to the right of the selected one, on the same row or the first free place, and connects the selected
+   step to the first input of the new step that is free and required (Lookup and Join: the left input; Append: the first).
+   A Filter connects through `match`. Nothing is connected when the new step has no input (Input file, Reference table),
+   when the selected step has no free output (Output) or when no input of the new step fits. With no selection, or with
+   several steps selected, a step is added as before.
+2. A step dragged from the step list and dropped on an edge goes between the two steps: the edge is split into source to new
+   step and new step to target. When the new step cannot take the source or give the target (no input, no output, a second
+   input that is required) it is added without touching the edge.
+3. Ctrl+D (Cmd+D on a Mac) duplicates the selected steps; Ctrl+C and Ctrl+V copy and paste them. A "Duplicate" button is also
+   in the settings panel for a selected step. The copy keeps the settings, bound parameters and the name with " (copy)" added.
+   The key of an Input file step is made unique ("Main 2") because a key stands for one test file and one file of a run. Edges
+   between copied steps are copied; edges to steps that are not copied are not. The copy is offset by 40 px. Pasting works in
+   another version or another flow of the same tab (the clipboard is in memory, it is gone on reload and it is not sent
+   anywhere). Each action is one change. A read-only version cannot be pasted into. The keys do not act while a text field has focus.
+
+### 15.3 The preview in a large popup
+
+1. The Test tab preview has an "Expand" button that opens the same rows in a large dialog (up to 90% of the window in each
+   direction, at least 960 x 560 px) with a header row that stays in place while the rows scroll, a first column of row
+   numbers, and a vertical and a horizontal scroll bar.
+2. The popup has "First rows" and "Last rows" (the two previews of item 3), a "Find" box that
+   keeps the rows whose text contains the typed text (not case sensitive, in the rows that are loaded) and says how many
+   rows match, and "Show more", which runs the preview again with up to 1,000 rows. The message under the table says how many
+   rows of how many are shown. Escape closes the popup and the focus goes back to the Expand button.
+3. The Test tab has "Preview last rows" next to "Preview first rows" (already built after Phase 7, kept): it shows the last 100 rows to
+   check how the end of a file was read. The popup uses both. The numbers of the rows are those of the whole table.
+4. The popup shows data in the browser only. A preview sends no request that carries file content, as before.
+
+### 15.4 New steps
+
+Each new step is one node type with its module in `src/engine/nodes/`, its settings in the JSON schema, validation with a
+clear message, unit tests, a card, a Configure form, a Test tab, help behind an info button, catalog keys in English and
+Vietnamese, and an icon of the Harold set. Single-value settings take a parameter (section 13.3). A flow that holds one of
+these steps has `schemaVersion` 4; older definitions (1 to 3) load unchanged, and the acceptance flow stays at 1. The step list has three new groups:
+Rows (Sort, Remove duplicates, Top N), Text (Split column, Clean text) and Quality (Check, Compare).
+
+1. **Sort.** One input, one output. A list of keys, each a column (or a formula) with a direction; empty values go last. The
+   row order is kept by the steps that work row by row (Filter, Column mapping, Formula column, Split column, Clean text,
+   Top N, Check) and is not promised after Group by, Pivot, Unpivot and Append, so a Sort is placed before the step that
+   needs the order (Top N, Remove duplicates with "keep first", Output).
+2. **Remove duplicates.** One input, outputs `kept` and `removed`. The columns that decide (all columns by default) and
+   "keep the first" or "keep the last" of the rows in their current order. Empty values equal each other. `kept` keeps the
+   order of the input.
+3. **Top N.** One input, one output. N (a whole number from 1 to 1,000,000; it takes a parameter), "by" a column or formula
+   with largest or smallest first, or "first rows in the current order", and optional group columns ("the 3 largest per
+   department"). Rows with equal values at the limit are cut by their order in the input (no ties kept), and the result is
+   sorted by the order column within each group.
+4. **Split column.** One input, one output. A text column, and how to cut: at every comma, semicolon, space, tab, or a
+   given text; at the first space; or at the last space (a full name into the family and middle names and the given name,
+   the usual cut of a Vietnamese name). The names of the new columns, how many parts there are, "put the rest in the last
+   part" or "drop the rest", trim each part, and keep or drop the original column. A part that is missing is empty. A new
+   name that already exists is an error that says which.
+5. **Clean text.** One input, one output. The columns to clean (text columns) and any of: trim the ends, collapse runs of
+   spaces to one, remove characters that do not print (line breaks, tabs, non-breaking spaces become a space), UPPER, lower or Proper Case,
+   and remove Vietnamese marks (the base letter, with `đ` and `Đ` as `d` and `D`). The result replaces the column, or is
+   written to a new column named by adding a suffix.
+6. **Check.** One input, outputs `ok` and `errors`. A list of rules; a rule has a name, a condition (a Tier 1 formula that
+   is true when the row is fine) and a message. `ok` holds the rows that pass every rule, in order. `errors` holds the
+   input columns plus `Rule` and `Message`, one row for every rule that a row fails, so a row that fails two rules appears
+   twice. A condition that is empty or null for a row counts as a fail. A setting "Stop the run when a rule fails" is off
+   by default; when it is on, a run with at least one error stops with the number of failures per rule. The Test tab and the
+   Run screen say how many rows failed each rule.
+7. **Compare.** Two inputs, `new` and `old`, and outputs `added` (keys only in new), `removed` (keys only in old) and
+   `changed` (keys in both with at least one compared column different). One or more key columns (they must be unique in
+   each input: a repeated key stops the run and names it) and the columns to compare (the columns both inputs have, except
+   the keys, by default). `changed` holds the keys, the column `Changed columns` (the names, joined by a comma) and for each
+   compared column its new value and its old value (`Hours` and `Hours (old)`). Values are compared as the typed values
+   (number to number, date to date; empty equals empty).
+
+### 15.5 What does not change
+
+- No server part: no migration, no change to the stores or to `supabase/`, no new function; a deployment on Phase 7 needs only the new app files.
+- Existing flows load and run unchanged; a flow without the new steps keeps its `schemaVersion`.
+- The acceptance flow, both datasets and the expected workbooks, the drag budgets of section 13.1 and the privacy rule (no
+  request carries file content) hold.
+- Dates, numbers and the look follow Phases 6 and 7. The new controls use the Harold tokens and icons only.
+
+### 15.6 Gates for Phase 8
+
+- G1 adds a generated flow for each new step, run through the real engine in Chromium and compared to expected rows computed
+  in the test by a plain loop (never from `testcase/`), including empty values, Vietnamese text, a repeated key and ties; the
+  two acceptance datasets still pass with the same flow file.
+- G2 has unit tests for the arrange layout (order, spacing, idempotence, filter outputs, disconnected flows, a selection, align
+  and distribute), the connection rules of 15.2, the copy rules (unique keys, edges), and every new node (settings
+  validation, SQL, the cases above), plus the catalog test (every key in both languages, every icon in the Harold set).
+- G3 has the journeys of this section: Auto arrange on a messy flow (and Undo); align and distribute; adding steps after the
+  selected one builds a connected flow without a drag; a step dropped on an edge; duplicate, copy and paste into another flow;
+  the preview popup (first and last rows, Find, Show more up to 1,000 rows, Escape); one run through each new step; and the
+  drag budgets, which stay as they are.
+- G4 checks every new route and state in both themes (light at 1280 and 1440 px, dark at 1440 px) with the pseudo-locale
+  check: the canvas controls and the selection toolbar, the popup, and the card and form of each new step.
+- G5 and G6 are unchanged; `test:db` still applies the migrations 1 to 20 from zero.
+
+## 16. Phase 9 additions
+
+Phase 9 adds a print layout to the Output step and reference tables that take their values from another table. It adds one
+migration, number 21, and one dependency (ExcelJS, used only when a print layout is on). Everything in sections 1 to 15
+still holds, the acceptance flow `flows/monthly-timesheet.flow.json` is not edited (it has no print layout, so it is written
+as before), and `testcase/` is not read or changed.
+
+### 16.1 A print layout for the Output step
+
+The Output step can write an xlsx sheet that prints as it is: a header block, the table with its header row on every page,
+a signature block at the end and page numbers. It is for reports; the default is off, and with it off the step writes the
+file exactly as before.
+
+1. **Switch.** The Configure tab of an Output step (format xlsx) has a group "Print layout" with a switch, off by default.
+   With the format csv the group is not shown. Several Output steps can write one workbook: each sheet has its own print
+   layout; a workbook with at least one print layout is written by ExcelJS (loaded only then, as a separate file of the
+   build), and a workbook without one is written as before.
+2. **Page.** Paper A4 (default), A3 or Letter; portrait (default) or landscape; margins normal, narrow or wide; "fit all
+   columns on one page wide" (on by default, the height is free). The table header row repeats at the top of every page.
+   Gridlines are not printed. The print area is the header block, the table and the signature block.
+3. **Table.** Thin borders on every cell, a bold header row on a light fill, numbers right aligned, dates as dates, text as text,
+   column widths from the content (at least 8 and at most 50 characters), long text wrapped. The values are those of the
+   normal file: reading the table back gives the same cells as the file without a print layout.
+4. **Header block.** Up to 6 lines above the table, on the first page: the company name, the name of the report, the period,
+   and so on. A line has its text, its alignment (left, centre, right), bold, and a size (normal, large, extra large). It
+   is merged across the width of the table. A line can hold these tokens, which are replaced when the file is written:
+   `{effective_date}` (the effective date as `30/09/2026`), `{month_year}` (`09/2026`), `{run_date}` (the day of the run,
+   `dd/mm/yyyy`), `{flow}` (the name of the flow), `{rows}` (the number of rows of the table), and `{param:key}` (the value of a
+   parameter, as text). An unknown token or a parameter that does not exist is a validation error that names it.
+5. **Signature block.** At the end of the report, directly after the last row on the last page: an optional line on the right
+   (for example `Hà Nội, ngày {day} tháng {month} năm {year}` with the tokens `{day}`, `{month}` and `{year}` of the run date),
+   then 1 to 5 signers side by side in equal columns: a title in bold ("Người lập biểu"), a line in italics under it ("(Ký,
+   ghi rõ họ tên)"), a space of four rows to sign, and an optional name. If the block would not fit on what is left of
+   the last page, a page break is put before it, so the block is never cut in two. (The number of rows of a page is estimated from the paper, the
+   orientation and the row height; the check is a rule of the writer, tested on the estimate.)
+6. **Page numbers.** "Trang 1/5" in the middle of the footer of every page (a switch, on by default). It follows the language of the app.
+7. **Size.** A print layout is for reports of up to 20,000 rows; a larger table is refused with a message that says to turn the
+   layout off. T9.1 measures the time and the memory and can lower the limit.
+8. **Print preview.** The Test tab of an Output step with a print layout shows the first page and the last page drawn from the
+   settings and the first and last rows of the preview (the header block, the header row, a few rows, the signature block, the
+   footer), marked as approximate: the page breaks in the middle are Excel's. It can be opened in the large popup of 15.3.
+9. **Privacy.** The file is made in the browser. The ExcelJS file is a static asset, and no request carries file content.
+
+### 16.2 Reference tables that take their values from another table
+
+A table B can take the distinct values of one column of a table A as its key column. The admin then fills the other columns of B.
+When new values appear in A, B gets them without anyone typing, and the admin is told.
+
+1. **Link.** An admin links B to A: "Link to a table" in the More menu of B, or "Take the values from a column of another table"
+   when a table is made. The admin chooses A, the column of A (`c`), and the key column of B that holds the values (it is added
+   as the first column if it does not exist). A table has at most one link as B, and A can feed several tables. A chain (B feeds
+   C) is allowed; a cycle is refused with the names of the tables. The link can be removed ("Unlink"): B becomes an ordinary
+   table and keeps its rows. A flow reads B as any reference table; the engine does not know about the link.
+2. **Values.** The distinct values of `c` in a published version of A: text trimmed, blank values left out, case and accents
+   count (`a` and `A` are two values). When a link is made, the values come from the version of A that is in effect today (the
+   last published version when none is) and B gets a draft with them as its rows: the key column filled, the other columns empty.
+3. **When A changes.** When a version of A is published, every table linked to A takes the values of that version that its key
+   column does not hold yet (in any version of B, draft or published). They are added as rows to the draft of B; if B has no
+   draft, one is made as a copy of its latest published version. The draft starts on the day the new version of A starts when
+   that is after the start of B's last published version, otherwise on the day after the end of B's latest published range
+   (today when there is none). B is never published by this: the admin does it. A draft of A does not change B. The publish
+   of A and the update of B happen together, or neither happens. A value that leaves A stays in B and is shown as "Not in A
+   any more" (information, nothing is deleted).
+4. **The notice.** The admin sees it in the app, nowhere else (there is no email). Each time rows were added, B has an open
+   notice "{n} new values from {A} · {c} need their other columns: {first values}". It shows on the Reference tables screen
+   (on the table, with "Open the draft"), as a dot on "Reference tables" in the sidebar, and in the draft the new rows are marked
+   "New". The notice closes when the draft that holds the values is published. Publishing with new rows that have every other
+   column empty shows a quiet warning in the publish dialog and does not block it.
+5. **Refusals.** Publishing a version of A without the linked column is refused and names the linked tables. Deleting A while a
+   table is linked to it is refused and names them (unlink first). Deleting B works as before and drops its link.
+6. **Rights.** Only an admin links, unlinks, and sees the notices. Who reads the rows of B is as in section 12.1.
+7. **Server.** Migration `20261118000021` adds the link to `ref_tables` (`link_table_id`, `link_column`, `key_column`), the table
+   `ref_table_link_events` (admin only), the function that applies a link, the change of `publish_ref_table_version` that calls
+   it, the cycle and column checks, and the change of `delete_ref_table`. `LocalStore` and `SupabaseStore` give the same messages
+   and results; a shared list of cases (`supabase/tests/ref-link-cases.json`) is used by the database test and the unit test.
+
+### 16.3 What does not change
+
+- A flow, a version, a run and the files of a run with no print layout and no link behave as before; the acceptance flow and both datasets pass unchanged.
+- The privacy rule holds (no request carries file content), the drag budgets of 13.1 and the Phase 8 steps are untouched.
+- No PDF, no logo and no email (see the out-of-scope list).
+
+### 16.4 Gates for Phase 9
+
+- G1 adds a generated flow with a print layout, run through the real engine in Chromium: the file is read back and its table
+  equals the table of the same flow without a layout, cell by cell; the page setup (paper, orientation, margins, fit to width,
+  the repeated header row, the footer), the header lines (merged, with the tokens replaced) and the signature block are checked
+  in the file; a flow with two sheets; a table of 20,000 rows within the measured time. The two acceptance datasets still pass
+  with the same flow file and the same bytes as before.
+- G2 has unit tests for the print settings and tokens, the writer, the page-break rule, the link rules (distinct values, new
+  values, cycles, refusals), and the catalog keys.
+- G3 has the journeys: a flow with a print layout is built, previewed, run and downloaded; a table is linked, a version of A is published
+  with a new value, B gets a draft, the admin sees the notice, fills the columns, publishes, and the notice closes; a chain; a cycle is refused.
+- G4 checks every new route and state in both themes (the print group of the Output form, the print preview, the link dialog,
+  the notice, the dot in the sidebar, the marked rows), with the pseudo-locale check.
+- G5 covers migration 21 from zero (the link columns, the events table and its rules, the publish function with the cascade, atomic
+  with the publish, the cycle and the column checks, the delete refusal, the grants) with the shared cases.
+- The Pages build stays under its size limit with ExcelJS as a separate file, and `npm run test:acceptance:pages` passes.

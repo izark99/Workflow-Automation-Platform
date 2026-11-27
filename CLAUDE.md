@@ -31,6 +31,11 @@ date range. All data processing runs in the browser.
 | `design/harold/` | From Phase 7: the snapshot of the Harold design system (tokens, brand book, component guidelines, `bundle.css`, `bundle.js`). Reference only: read it for values, never import it, never edit it. `SOURCE.md` says where it came from |
 | `src/ui/tokens.css`, `src/ui/glass.css`, `src/ui/type.css` | From Phase 7: the Harold tokens (same names and values as `design/harold/tokens.json`), the glass classes and fallbacks, the type styles |
 | `docs/UI_AUDIT_P7.md`, `design/screens-harold/` | From Phase 7: the UI review of the restyled screens (T7.19), and screenshots of the restyled app, reference only (T7.18) |
+| `src/engine/flow/arrange.ts`, `src/ui/builder/arrange/` | From Phase 8: the pure layout, align and distribute functions (no React); the canvas controls, the selection toolbar and the toast |
+| `src/engine/nodes/sort.ts`, `dedupe.ts`, `top-n.ts`, `split-column.ts`, `clean-text.ts`, `check.ts`, `compare.ts` | From Phase 8: the seven new steps (each with its form in `src/ui/builder/forms/`) |
+| `src/engine/output/print/`, `docs/PRINT_PERF.md` | From Phase 9: the print layout writer (ExcelJS, loaded only for a sheet with a layout) and its measurements |
+| `src/engine/reflink/`, `supabase/migrations/20261118000021_*` | From Phase 9: the rules of linked reference tables (no React, no Supabase) and the migration |
+| `docs/UI_AUDIT_P8.md`, `docs/UI_AUDIT_P9.md` | From Phases 8 and 9: the UI reviews |
 
 ## Commands
 
@@ -79,3 +84,4 @@ This project is built in Claude Code cloud sessions that clone the GitHub reposi
 - Column names in flows are case-sensitive and written in square brackets in formulas: `[OT hours]`.
 - Every user-visible error says what failed and what to do next.
 - From Phase 7: colours, radii, shadows, blur and spacing only through the Harold tokens (no raw value outside `tokens.css`); fonts only through `@fontsource` (no font CDN); icons only from the Harold set. Phase 7 changes no behaviour: `src/engine/`, `src/store/`, `supabase/` and `flows/` stay as they are.
+- Phase 8 has no migration and does not edit `src/store/` or `supabase/`. Phase 9 adds migration 21 and ExcelJS (a dynamic import, only for a print layout). In both, `flows/monthly-timesheet.flow.json` and `testcase/` are not edited and the normal xlsx and csv output is not changed.

@@ -1,4 +1,4 @@
-STATUS: COMPLETE
+STATUS: IN PROGRESS
 
 # Progress
 
@@ -297,6 +297,81 @@ Rules, docs and review
 - [x] T7.19a Versions table fit (UI_AUDIT_P7 finding 1): the Actions column of the table on the Versions screen is not cut off at 1280 and 1440 px, in English and in Vietnamese, in both themes; the rows stay 45 px in English at 1280 and 1440 px (the rule `table rows` on the Versions routes), the full text of a shortened note stays reachable (a title), and the table keeps its focusable scroll region only for what really overflows. Test first: an e2e that measures that no cell of the table is wider than its table (`scrollWidth` equals `clientWidth` of the table's box) in both languages at 1280 and 1440. Run the UI rules of the Versions routes.
 - [x] T7.20 Final run: `npm ci`, then `npm run gates` (seven gates), then `npm run test:acceptance:pages`; check `git diff main -- src/engine src/store supabase flows` is empty and `git status --porcelain testcase` is empty; set `STATUS: COMPLETE` only if all pass. Consult the advisor before the last tick if one is enabled; if none is, say so in the log.
 
+## Phase 8: Faster building and more steps (gates G1 to G6)
+
+Read SPEC section 15 and the Phase 8 parts of `docs/DESIGN.md` first. No server part: no migration, no change to `src/store/` or `supabase/`.
+Order: the canvas (arrange, then adding steps), the preview popup, then the definition format and the seven steps (each: engine with
+unit tests, then the form), the step list, and the quality pass. Every task starts with the failing test. A task that changes a screen also updates
+its routes in `ui-rules/routes.ts` in the same commit and runs the UI rules for those routes in light at 1280 and 1440 px and in dark at
+1440 px; the full `npm run test:ui-rules` runs in T8.19 and T8.20. `testcase/` is not read or changed, `flows/monthly-timesheet.flow.json`
+is not edited, `npm run test:e2e` keeps the canvas drag spec unchanged, and every new text is a catalog key in English and Vietnamese.
+
+Canvas (SPEC 15.1, 15.2)
+- [ ] T8.1 The arrange layout as pure functions in `src/engine/flow/arrange.ts` (no React): `arrangeLayout(definition, options)` (layers by the longest path, order inside a layer by the average row of the neighbours, `match` above `nomatch`, gaps of 80 and 40 px, layers centred on one axis, flows that are not connected stacked 120 px apart, a selection keeps the top left of its box, the same result when run twice), `alignNodes`, `distributeNodes`. Unit tests for each rule, an empty flow, one step, a diamond, two Filter outputs that join again, a flow of 60 steps in under 50 ms.
+- [ ] T8.2 Auto arrange on the canvas: the control button, the shortcut, the whole flow or the selection, one change of the definition ("unsaved changes" once), fit view, the toast with Undo (puts every position back, goes with the next change), disabled on a published version. e2e (a messy flow becomes ordered, Undo, selection only) and the routes of the UI rules. `e2e/canvas-drag.spec.ts` is not touched and still passes.
+- [ ] T8.3 Align and distribute and Snap to grid: the selection toolbar (`role="toolbar"`), the six align and two distribute actions as one change each, the Snap switch kept per user in the browser. e2e for each action and a keyboard path; the routes of the UI rules.
+- [ ] T8.4 Adding after the selected step: the connection rules of SPEC 15.2 as a pure function with unit tests (every node type as the new step and as the selected one, Filter `match`, Lookup left input, no free output, several selected), the placement to the right, the polite announcement, and a step dropped on an edge splits it (with the cases where it must not). e2e: a flow of five steps is built by buttons and by keyboard only, no drag; a drop on an edge.
+- [ ] T8.5 Duplicate, copy and paste: Ctrl+D, Ctrl+C, Ctrl+V and the Duplicate button as in SPEC 15.2 (copy of the settings and bindings, " (copy)", a unique Input file key, edges between copied steps only, offset 40 px, paste into another flow or version in the same tab, nothing sent anywhere, no action while a field has focus, read-only versions refuse). Unit tests for the copy function, e2e for each path and the toast, the info button of the step list lists the shortcuts.
+
+Preview popup (SPEC 15.3)
+- [ ] T8.6 The wide variant of the Dialog component and the shared preview table (`PreviewTable`, extracted from `StepPreview`): sticky header row, sticky row-number column, scroll in both directions, row numbers of the whole table (the last part starts at its real number). Unit and e2e tests of the component in `/dev/components`, the route of the UI rules, no change of the look of the existing preview.
+- [ ] T8.7 The Expand button and the popup: First rows and Last rows, Find (client side, the count), Show more (the preview runs again with up to 1,000 rows: a `limit` option of `runPreview`, never more than 1,000), Escape and focus return, the states (loading, empty, stale, error). e2e with a 250-row and a 1,500-row file; the privacy test (a preview sends no request with file content) still passes; routes of the UI rules in both themes.
+
+Definition and the three groups of steps (SPEC 15.4)
+- [ ] T8.8 Definition format: `FLOW_SCHEMA_VERSION` 4; the node types `sort`, `dedupe`, `top_n`, `split_column`, `clean_text`, `check`, `compare` in the types, `NODE_PORTS` (Remove duplicates `kept` and `removed`; Check `ok` and `errors`; Compare inputs `new` and `old`, outputs `added`, `removed`, `changed`), the JSON schema, the validation with clear errors, the registry of settings that take a parameter (`bindable.ts`) and the step groups Rows, Text and Quality in the step list with a placeholder card. Older definitions load unchanged; a definition becomes 4 only when it holds a new step; the acceptance flow is untouched. Unit tests, and the counts in the existing specs are updated in this commit.
+- [ ] T8.9 Sort: the engine module (columns or formulas, direction, empty values last), the card and the Configure form (the sort rows of the Output step as the model), unit tests (order, ties, empty, a formula key, text and dates), e2e: Sort then Top N.
+- [ ] T8.10 Remove duplicates: the engine module (columns that decide, keep first or last by the current order, empty equals empty, `kept` in input order, `removed` output), the card with two handles, the form, unit tests, e2e with the two outputs on the Test tab.
+- [ ] T8.11 Top N: the engine module (N, order column or formula, largest or smallest first, "first rows", group columns, no ties kept, N takes a parameter), the card, the form, unit tests (N larger than the table, per group, ties, a bound N), e2e.
+- [ ] T8.12a Split column, engine: every way to cut of SPEC 15.4 item 4 (the last space for Vietnamese names), the names and the number of parts, the rest of the text, trim, keep or drop the original, an existing name is an error that names it. Unit tests with Vietnamese names, empty and null values, a text with no separator.
+- [ ] T8.12b Split column, card and form, with the Load columns bar and ColumnSelect; e2e.
+- [ ] T8.13a Clean text, engine: trim, collapse spaces, non-printing characters, case, remove Vietnamese marks (`đ`, `Đ` included), replace the column or write a suffix column. Unit tests with a full Vietnamese alphabet, mixed marks (precomposed and combining), null and numbers in a text column.
+- [ ] T8.13b Clean text, card and form; e2e.
+- [ ] T8.14a Check, engine: the rules (name, Tier 1 condition, message), `ok` and `errors` (one row per failed rule, `Rule` and `Message` added), a null condition fails, the optional stop with the count per rule, an invalid formula says which rule and where. Unit tests.
+- [ ] T8.14b Check, card and form (the rule list), the counts per rule on the Test tab and as a quiet warning on the Run screen; e2e: a flow with two rules and a row that fails both.
+- [ ] T8.15a Compare, engine: key columns (a repeated key stops the run and names it), columns to compare, `added`, `removed`, `changed` with `Changed columns` and the old values, typed comparison, empty equals empty, columns that exist on one side only. Unit tests.
+- [ ] T8.15b Compare, card (two inputs, three outputs) and form (key pairs, compared columns); e2e with last month and this month.
+- [ ] T8.16 The step list and the catalog: the order and the groups, the icons (every icon in the Harold set), the info texts, the Vietnamese texts of every key of the phase (the build writes a first translation), the add-after rules for the new steps, the routes of the UI rules for every new card and form in both themes. A flow that uses every new step runs end to end in one e2e journey.
+
+Quality pass
+- [ ] T8.17 Unit and integration sweep: `npm run check`, `test:acceptance` (both datasets and the layout files with the same flow file), `test:db` with the migrations 1 to 20 from zero, `test:functions`, `test:e2e` (the canvas drag spec inside it and unchanged); `npm run perf:canvas` still within its budgets after Auto arrange and paste exist. Fix what the sweep finds.
+- [ ] T8.18 `docs/DEPLOY.md`: a section "Upgrade to Phase 8" (no migration, no function, only the app: back up is not needed; deploy the app; a check list: Auto arrange and Undo, add after the selected step, copy and paste, the preview popup, one of the new steps in a run). `docs/DESIGN.md` is already written; update it where the build chose something else and say so in `docs/DECISIONS.md`.
+- [ ] T8.19 UI review of the new and changed screens in both themes: the canvas with its controls and the selection toolbar, the toast, a dropped step over an edge, the popup in each state, the card and form of each new step in each state, the step list with three more groups. Findings go to `docs/UI_AUDIT_P8.md`; each finding becomes a task T8.19a, T8.19b... fixed before the final run. `npm run test:ui-rules` runs in full.
+- [ ] T8.20 Final run: `npm ci`, then `npm run gates` (seven gates) and `npm run test:acceptance:pages`; set `STATUS: COMPLETE` only if both pass. Consult the advisor before the last tick.
+
+## Phase 9: Print layout and linked reference tables (gates G1 to G6)
+
+Read SPEC section 16 and the Phase 9 parts of `docs/DESIGN.md` first. Phase 8 must be complete and merged (the wide dialog and the schema version 4 come from it). The only new migration
+is `20261118000021` (T9.12). The only new dependency is ExcelJS (T9.1). Order: measure ExcelJS, the print settings, the writer, the integration and the form, the
+print preview; then the links (pure rules, the stores, the migration, the screens); then the quality pass. Every task starts with the failing test; a task that changes a screen
+updates its routes in `ui-rules/routes.ts` and runs the UI rules for them in both themes; the full `npm run test:ui-rules` runs in T9.19 and T9.20. `testcase/` is not read or
+changed and the acceptance flow is not edited.
+
+Print layout (SPEC 16.1)
+- [ ] T9.1 Measure and decide: add ExcelJS (pin the version, record why in `docs/DECISIONS.md`), loaded only through a dynamic import so it is a separate file of the build and the main file does not grow (a test checks the main file size and that the file is not requested when no layout is on). A script `npm run perf:print` (not a gate) writes 5,000, 20,000 and 50,000 rows by 12 columns with a print layout in headless Chromium and records the time, the memory and the file size in `docs/PRINT_PERF.md`; the row limit of SPEC 16.1 item 7 is 20,000 unless the measure says less (then SPEC and DECISIONS are changed in this commit). `npm run build:pages` stays under its file limit.
+- [ ] T9.2 The print settings: types for `settings.print` in the Output node, the JSON schema, the validation with clear messages (paper, orientation, margins, at most 6 header lines of at most 200 characters, 1 to 5 signers, unknown tokens and unknown parameters by name), `schemaVersion` 5 for a definition that has one, and the token replacement as a pure function (`{effective_date}`, `{month_year}`, `{run_date}`, `{flow}`, `{rows}`, `{param:key}`, `{day}`, `{month}`, `{year}`) with unit tests. Older definitions load unchanged.
+- [ ] T9.3 The writer, part 1 (`src/engine/output/print/`, no React): `buildPrintWorkbook` with ExcelJS: the page (paper, orientation, margins, fit to one page wide, the repeated header row, no gridlines, print area), the table (borders, bold header on a light fill, number and date formats, widths from the content, wrapped long text). Tests read the file back with SheetJS and compare every cell with the same table written by the normal path, and read the page setup from the file's XML.
+- [ ] T9.4 The writer, part 2: the header lines (merged across the table, alignment, bold, sizes, tokens), the signature block (the date line, 1 to 5 signers in equal columns, the space to sign, the optional name), the page-break rule so the block is not cut (the estimate of rows per page from paper, orientation and row height), the footer "Trang n/N" in both languages. Tests on the XML (merges, breaks, footer) and on the readback.
+- [ ] T9.5 Into the output: `buildOutputFiles` uses the writer for a workbook with at least one print layout (each sheet its own layout, sheets without one are plain), refuses a table over the row limit with the message, ignores the group for csv, and the normal path is byte-for-byte the same as before for a flow with no layout (a test compares the bytes of the acceptance flow's workbook with the stored result of the normal path). `acceptance/print.spec.ts` (part of `npm run test:acceptance`) runs a generated flow with a layout through the real engine in Chromium and checks the table, the page setup, the lines and the signatures in the file; both acceptance datasets still pass.
+- [ ] T9.6 The Output form, Configure tab: the group "Print layout" of DESIGN (the switch, the page controls, the header lines, the signatures, the defaults, the errors), with the parameter control where the registry allows. e2e for each control and for each error; routes of the UI rules in both themes with the pseudo-locale check.
+- [ ] T9.7 The print preview on the Test tab: the two page boxes (first and last page), the "approximate" note, "Open large" in the wide dialog, the state with no rows. Unit tests of the page-drawing function, e2e, routes of the UI rules.
+- [ ] T9.8 The journey: build a flow with a print layout, preview it, run it on the September files, download the workbook, read it back (header lines with the tokens replaced, the table equal to the expected sheet, the signature block, the footer); the Run screen shows the badge; no request carries file content (the privacy test) and the ExcelJS file is requested only then. e2e.
+
+Linked reference tables (SPEC 16.2)
+- [ ] T9.9 The pure rules in `src/engine/reflink/` (no React, no Supabase): the distinct values of a column (trim, blanks out, exact), the new values against the keys of B, the start day of the draft, the cycle check with the names, the refusals. Unit tests, and the shared list of cases `supabase/tests/ref-link-cases.json` that the database test also reads.
+- [ ] T9.10 The store: the `DataStore` additions (`linkRefTable`, `unlinkRefTable`, the notices: `listRefLinkNotices`) and the types (`RefTable.link`), `LocalStore` (publish of A updates the linked tables in one commit, the refusals, a chain, the notice closes when the draft is published), the messages in `src/store/messages.ts`. Unit tests with the shared cases.
+- [ ] T9.11 `SupabaseStore` and the mapping (calls the functions of the migration, maps the notices and the link), the same unit tests and the store contract tests as `LocalStore`, the catalog keys for the messages (English and Vietnamese, the same words in the store, the database and both catalogs, tested).
+- [ ] T9.12 Migration `20261118000021_ref_table_links.sql`: the columns on `ref_tables`, the table `ref_table_link_events` (admin only, row-level security), the function that applies a link and its call from `publish_ref_table_version` (atomic), the cycle and column checks, the refusal in `delete_ref_table`, grants (no new function callable by anon). pgTAP tests (`supabase/tests/database/210-ref-links.test.sql`) with the shared cases; `test:db` applies 1 to 21 from zero. T9.11 and T9.12 may run in either order; do T9.12 first when the store tests need the functions.
+- [ ] T9.13 The screens, part 1: "Link to a table" and "Unlink" in the More menu, the dialog, the switch in the New table dialog, the line "Values from {A} · {c}". e2e and routes of the UI rules in both themes.
+- [ ] T9.14 The screens, part 2: the notice on the table, "Open the draft", the "New" chips in the grid, the sidebar dot (admin only), the warning in the publish dialog, "Not in A any more". e2e: the whole journey (a version of A with a new value is published, B gets a draft, the admin sees the notice and the dot, fills the columns, publishes, the notice and the dot go).
+- [ ] T9.15 Regressions and edge journeys: a Lookup that reads B runs; a chain A to B to C updates both in one publish; a cycle is refused with the names; publishing A without the column and deleting A while linked are refused; a non-admin sees no notice and no link controls but reads B as before; the same journeys on `LocalStore` and on the `SupabaseStore` path of `test:db`.
+
+Quality pass
+- [ ] T9.16 Unit and integration sweep: `npm run check`, `test:acceptance` (including print), `test:db` with the migrations 1 to 21 from zero, `test:functions`, `test:e2e` (drag spec unchanged); `docs/PRINT_PERF.md` is current.
+- [ ] T9.17 `docs/DEPLOY.md`: "Upgrade to Phase 9" (back up first; `npx supabase db push` for migration 21 named in the file; no new function; deploy the app after the migration; a check list: a print layout on one flow and the downloaded file printed or previewed in Excel, a linked table and its notice, a published version of A that adds a value).
+- [ ] T9.18 The Vietnamese texts of every key of the phase and the catalog test; `docs/DESIGN.md` and `docs/SPEC.md` updated where the build chose something else, with the reason in `docs/DECISIONS.md`.
+- [ ] T9.19 UI review of the new and changed screens in both themes (the print group in each state, the print preview, the link dialog, the notice, the dot, the marked rows, the publish warning); findings in `docs/UI_AUDIT_P9.md` become tasks T9.19a, T9.19b... fixed before the final run; `npm run test:ui-rules` in full.
+- [ ] T9.20 Final run: `npm ci`, then `npm run gates` (seven gates) and `npm run test:acceptance:pages`; set `STATUS: COMPLETE` only if both pass. Consult the advisor before the last tick.
+
 ## Needs Harold
 
 Decisions with a default. Build with the default unless this list says otherwise.
@@ -348,12 +423,37 @@ Decisions with a default. Build with the default unless this list says otherwise
 | Phase 7: the width of a collapsing panel | Keeps its 200 ms animation (Phase 5); the panel has no blur while it moves, so Harold's rule "never animate a blurred element's size" holds |
 | Phase 7: logo | None, as in Harold: the app name in `sans` 700 next to a `radius-sm` blue square |
 | Phase 7: a Harold value that fails its own contrast target | The build records the pair and the numbers under Blockers and here, keeps Harold's value and uses the pair only where it passes; Harold decides whether to change the system |
+| Phase 8: Auto arrange | Left to right in layers (the longest path), 80 px between columns and 40 px between steps, the layers centred on one axis, unconnected flows stacked 120 px apart, the whole flow or the selected steps (two or more). One level of Undo in the toast; there is no general undo and redo (a candidate for a later phase) |
+| Phase 8: adding a step after the selected one | Only when exactly one step is selected and it has a free output; the new step goes to the right and is connected to its first free required input; a Filter connects through `match`; Input file and Reference table never connect. A drop on an edge splits it |
+| Phase 8: copy and paste | The clipboard is in memory (gone on reload, never sent). Input file keys are made unique. Edges between the copied steps are kept |
+| Phase 8: preview popup | 100 rows as now; "Show more" runs again with up to 1,000 rows; Find works on the loaded rows; no sorting and no column resizing |
+| Phase 8: search in the step list, undo and redo, date-range, ranking and running-total steps | Not built; candidates for a later phase. The step list has 19 entries in 8 groups |
+| Phase 8: Sort and row order | Row order is kept by row-by-row steps and not promised after Group by, Pivot, Unpivot and Append. Empty values sort last |
+| Phase 8: Remove duplicates, Top N | Empty equals empty; "keep first" is by the current row order; Top N keeps no ties and N is at most 1,000,000 |
+| Phase 8: Split column and Clean text | Cut at the last space is the Vietnamese name mode. Marks are removed with the Unicode decomposition plus `đ` to `d`; precomposed and combining forms give the same result |
+| Phase 8: Check | A rule is a condition that is true when the row is fine; a row that fails two rules is two rows in `errors`; the run goes on unless "Stop the run when a rule fails" is on |
+| Phase 8: Compare | Keys must be unique in both inputs; values are compared typed; the columns that exist on one side only are not compared |
+| Phase 9: print layout format | xlsx through ExcelJS, only for a sheet with the layout on, loaded as a separate file; no PDF; a workbook with no layout is written as before |
+| Phase 9: header lines and tokens | Up to 6 lines; tokens `{effective_date}` (`30/09/2026`), `{month_year}` (`09/2026`), `{run_date}`, `{flow}`, `{rows}`, `{param:key}`, `{day}`, `{month}`, `{year}`; dates in the printed form `dd/mm/yyyy` whatever the language of the app |
+| Phase 9: signature block | At the end of the report after the last row, 1 to 5 signers, a date line on the right; never cut by a page break (an estimate of the rows of a page decides) |
+| Phase 9: page | A4, portrait, normal margins, fit to one page wide, header row repeated, page numbers "Trang n/N"; A3 and Letter are offered; no company logo |
+| Phase 9: print row limit | 20,000 rows, or less if T9.1 measures less |
+| Phase 9: linked tables: which values | Distinct, trimmed, blanks out, case and accents count; from the version of A that is published (the one in effect today when the link is made) |
+| Phase 9: linked tables: when B changes | When a version of A is published; the new values go into a draft of B (one is made when there is none) and B is not published; a value that leaves A stays in B |
+| Phase 9: the notice to the admin | In the app only (the table, a dot in the sidebar, "New" rows); no email; it closes when the draft with the values is published |
+| Phase 9: chains and cycles | A feeds B and B feeds C is allowed; a cycle is refused with the names; a table has one source |
 
 ## Blockers
 
 None. The Pages file size blocker of T3.9 is solved by D71.
 
 ## Log
+
+### 2026-11-27 Phases 8 and 9 planned (documents only, no code)
+Changed: `docs/SPEC.md` (sections 15 and 16, the scope, the node catalog and the phase table), `docs/DESIGN.md` (Phase 8 and 9 parts), `docs/DECISIONS.md` (D127), `PROMPT.md`, `CLAUDE.md`, `GOALS.md` (the goals of Phase 8 and Phase 9), this file (line 1 back to `STATUS: IN PROGRESS`, tasks T8.1 to T8.20 and T9.1 to T9.20, the "Needs Harold" rows of both phases).
+Decided with the user: the print layout is xlsx through ExcelJS; a linked table is updated when a version of A is published and the admin is told in the app; the signature block is at the end of the report; the header block is the company and report lines, not the table header; the new steps are Sort, Remove duplicates, Top N, Split column, Clean text, Check, Compare; the steps are added after the selected one and can be duplicated.
+Gates run: none (documents only). The last code gates were run on the final code of PR 20: `npm run check`, `test:e2e` 427 passed, `test:ui-rules` 4425 passed.
+Next: T8.1.
 
 Newest first.
 
