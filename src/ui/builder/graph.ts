@@ -265,7 +265,7 @@ export function deleteEdges(def: FlowDefinition, ids: string[]): FlowDefinition 
   return compactVariadic({ ...def, edges: resolvedEdges(def).filter((e) => !gone.has(e.id)) });
 }
 
-function compactVariadic(def: FlowDefinition): FlowDefinition {
+export function compactVariadic(def: FlowDefinition): FlowDefinition {
   const edges = resolvedEdges(def);
   const out = edges.map((e) => ({ ...e }));
   for (const node of def.nodes) {

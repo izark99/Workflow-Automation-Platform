@@ -141,6 +141,10 @@
   align-items: center;
 }
 
+.titleRow .duplicate {
+  margin-left: auto;
+}
+
 .titleRow h2 {
   margin: 0;
 }

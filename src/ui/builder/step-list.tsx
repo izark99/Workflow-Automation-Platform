@@ -28,7 +28,7 @@ export function StepList({ onAdd, disabled }: { onAdd: (type: NodeType) => void;
       <div className={styles.stepListBody} hidden={collapsed}>
       <div className={styles.titleRow}>
         <h2>{t('builder.addStep')}</h2>
-        <InfoTip label={t('builder.addStep')}>{t('builder.addStepHint')}</InfoTip>
+        <InfoTip label={t('builder.addStep')}>{`${t('builder.addStepHint')} ${t('builder.shortcuts')}`}</InfoTip>
       </div>
       {STEP_GROUPS.map((g) => (
         <div key={g.label} role="group" aria-label={g.label} style={{ display: 'contents' }}>

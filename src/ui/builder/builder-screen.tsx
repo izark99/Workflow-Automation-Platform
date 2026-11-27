@@ -12,6 +12,7 @@ import { CopyFlowDialog, DiscardDialog, EditDatesDialog, NewVersionDialog, Publi
 import { Canvas } from './canvas';
 import type { Selection } from './canvas';
 import { emptyDefinition } from './graph';
+import { useStepClipboard } from './use-step-clipboard';
 import { SettingsPanel } from './settings-panel';
 import { StepList } from './step-list';
 import { dateCheck } from '../../engine/versions';
@@ -75,6 +76,15 @@ function Builder() {
   const editable = !!flow.data && canEditFlow(me.data, flow.data);
   const published = version?.status === 'published';
   const readOnly = !editable || published;
+  // Ctrl+D, Ctrl+C and Ctrl+V on the selected steps, and the Duplicate button of the settings panel (SPEC 15.2 item 3).
+  const stepClipboard = useStepClipboard({
+    definition,
+    selected: selection.nodes,
+    readOnly,
+    onChange: setDefinition,
+    onSelect: (ids) => setSelection({ nodes: ids, edges: [] }),
+    onDone: (kind, count) => toast(t(kind === 'pasted' ? 'builder.stepsPasted' : 'builder.stepsCopied', { n: count })),
+  });
   const dirty = !!version && !readOnly && isDirty(definition, version.definition);
   useReportUnsaved(dirty);
 
@@ -292,6 +302,7 @@ function Builder() {
           step={selection.nodes.length === 1 ? definition.nodes.find((n) => n.id === selection.nodes[0]) : undefined}
           onChange={setDefinition}
           onDeleted={() => setSelection({ nodes: [], edges: [] })}
+          onDuplicate={stepClipboard.duplicate}
           readOnly={readOnly}
           testFiles={testFiles}
           onTestFile={(key, file) => setTestFiles((f) => ({ ...f, [key]: file }))}

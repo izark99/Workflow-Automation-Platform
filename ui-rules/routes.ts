@@ -283,6 +283,18 @@ export const ROUTES: RuleRoute[] = [
     },
   },
   {
+    path: '/flows/flow-timesheet/versions/4',
+    name: '/flows/flow-timesheet/versions/4 (step duplicated: toast and Duplicate button)',
+    sidebar: false,
+    // A step selected with its Duplicate button in the title row, then Ctrl+D: the copy is selected and the toast says it was pasted.
+    prepare: async (page) => {
+      await page.locator('.react-flow__node').first().click();
+      await page.getByRole('complementary', { name: 'Step settings' }).getByRole('heading').waitFor();
+      await page.keyboard.press('Control+KeyD');
+      await page.locator('[role=status] button').first().waitFor();
+    },
+  },
+  {
     path: REF_FLOW,
     name: `${REF_FLOW} (Reference table cards)`,
     sidebar: false,

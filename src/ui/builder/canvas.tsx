@@ -14,6 +14,7 @@ import type { StepCardNode } from './step-card';
 import { DRAG_TYPE } from './step-list';
 import { FIT_VIEW_OPTIONS } from './fit-view';
 import { ZoomControls } from './zoom-controls';
+import { inField } from './use-step-clipboard';
 import { SelectionToolbar } from './arrange/selection-toolbar';
 import { SNAP_GRID, useSnap } from './arrange/snap';
 import { addStepAfter, insertStepOnEdge } from './add-after';
@@ -220,8 +221,7 @@ function Inner({ definition, onChange, selection, onSelect, message, onMessage, 
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
       if (!(e.altKey && e.shiftKey && e.code === 'KeyA')) return;
-      const el = e.target instanceof HTMLElement ? e.target : null;
-      if (el?.closest('input, textarea, select, [contenteditable="true"], [role="dialog"], [role="menu"], [role="listbox"]')) return;
+      if (inField(e.target)) return;
       e.preventDefault();
       latest.current.arrange();
     };
