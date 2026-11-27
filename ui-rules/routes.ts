@@ -25,15 +25,17 @@ function stepRoute(name: string, type: string, settings: Record<string, unknown>
           ...(parameters ? { parameters } : {}),
           nodes: [
             { id: 'a', type: 'input_file', label: 'Alpha', position: { x: 0, y: 100 }, settings: { key: 'a', headerRow: 1 } },
+            ...(type === 'compare' ? [{ id: 'b', type: 'input_file', label: 'Bravo', position: { x: 0, y: 300 }, settings: { key: 'b', headerRow: 1 } }] : []),
             { id: 's', type, label: 'Beta', position: { x: 400, y: 100 }, settings: JSON.parse(JSON.stringify(settings)) },
           ],
-          edges: [{ source: 'a', target: 's' }],
+          // Compare reads two tables: the new one from the first Input file and the old one from the second.
+          edges: type === 'compare' ? [{ source: 'a', target: 's', targetHandle: 'new' }, { source: 'b', target: 's', targetHandle: 'old' }] : [{ source: 'a', target: 's' }],
         } }],
       });
       await page.addInitScript((json) => localStorage.setItem('dfw.seed', json), JSON.stringify(s));
     },
     prepare: async (page) => {
-      await page.locator('.react-flow__node').nth(1).click();
+      await page.locator('.react-flow__node').last().click();
       const panel = page.getByRole('complementary', { name: 'Step settings' });
       await panel.getByRole('tab').nth(tab === 'configure' ? 1 : 2).click();
       await panel.getByRole('tabpanel').waitFor();
@@ -658,6 +660,9 @@ export const ROUTES: RuleRoute[] = [
   stepRoute('Check: two rules, stop the run', 'check', { rules: [{ name: 'Hours range', condition: 'AND([hours] >= 0, [hours] <= 24)', message: 'Hours must be from 0 to 24.' }, { name: 'Department', condition: 'NOT(ISBLANK([dept]))', message: 'A department is required.' }], stop: true }, 'configure'),
   stepRoute('Check: an unfinished rule', 'check', { rules: [{ name: '', condition: '[hours] >', message: '' }], stop: false }, 'configure'),
   stepRoute('Check: Test tab with two outputs', 'check', { rules: [{ name: 'Hours range', condition: '[hours] <= 24', message: 'Too many hours.' }], stop: false }, 'test'),
+  stepRoute('Compare: new step', 'compare', { keys: [], compare: [] }, 'configure'),
+  stepRoute('Compare: two keys, listed columns', 'compare', { keys: [{ new: 'Id', old: 'Code' }, { new: 'Dept', old: 'Dept' }], compare: ['Hours', 'Name'] }, 'configure'),
+  stepRoute('Compare: Test tab with three outputs', 'compare', { keys: [{ new: 'Id', old: 'Id' }], compare: [] }, 'test'),
   stepRoute('Top N: defaults', 'top_n', { n: 10, order: 'largest', groupBy: [] }, 'configure'),
   stepRoute('Top N: smallest by a formula, grouped', 'top_n', { n: 3, order: 'smallest', by: { expression: '[hours] * 2' }, groupBy: ['dept'] }, 'configure'),
   stepRoute('Top N: first rows', 'top_n', { n: 5, order: 'first', groupBy: [] }, 'configure'),

@@ -1,5 +1,6 @@
 import { AppendForm } from './append-form';
 import { CheckForm } from './check-form';
+import { CompareForm } from './compare-form';
 import { CleanForm } from './clean-form';
 import { ColumnMappingForm } from './column-mapping-form';
 import { DedupeForm } from './dedupe-form';
@@ -9,7 +10,6 @@ import { GroupByForm } from './group-by-form';
 import { InputFileForm } from './input-file-form';
 import { LookupForm } from './lookup-form';
 import { OutputForm } from './output-form';
-import { NotYetForm } from './not-yet-form';
 import { PivotForm } from './pivot-form';
 import { ReferenceTableForm } from './reference-table-form';
 import { SortForm } from './sort-form';
@@ -39,5 +39,5 @@ export const FORMS: FormRegistry = {
   split_column: SplitForm,
   clean_text: CleanForm,
   check: CheckForm,
-  compare: NotYetForm,
+  compare: CompareForm,
 };

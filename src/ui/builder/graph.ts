@@ -314,7 +314,12 @@ const handleTitle = (handle: string): string | undefined => {
 };
 
 /** The name of an input port for a person: `Input`, `Left input`, `Input 2`. */
-export const inputTitle = (handle: string): string => handleTitle(handle) ?? (/^in(\d+)$/.test(handle) ? translate('builder.port.numbered', { n: handle.slice(2) }) : handle);
+export const inputTitle = (handle: string): string => {
+  // Compare reads two tables: they are named as tables, not as "new" and "old" alone.
+  if (handle === 'new') return translate('builder.port.newInput');
+  if (handle === 'old') return translate('builder.port.oldInput');
+  return handleTitle(handle) ?? (/^in(\d+)$/.test(handle) ? translate('builder.port.numbered', { n: handle.slice(2) }) : handle);
+};
 
 /** The value of the connection into an input port, or an empty text. */
 export function currentSource(def: FlowDefinition, targetId: string, handle: string): string {

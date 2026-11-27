@@ -329,7 +329,7 @@ Definition and the three groups of steps (SPEC 15.4)
 - [x] T8.14a Check, engine: the rules (name, Tier 1 condition, message), `ok` and `errors` (one row per failed rule, `Rule` and `Message` added), a null condition fails, the optional stop with the count per rule, an invalid formula says which rule and where. Unit tests.
 - [x] T8.14b Check, card and form (the rule list), the counts per rule on the Test tab and as a quiet warning on the Run screen; e2e: a flow with two rules and a row that fails both.
 - [x] T8.15a Compare, engine: key columns (a repeated key stops the run and names it), columns to compare, `added`, `removed`, `changed` with `Changed columns` and the old values, typed comparison, empty equals empty, columns that exist on one side only. Unit tests.
-- [ ] T8.15b Compare, card (two inputs, three outputs) and form (key pairs, compared columns); e2e with last month and this month.
+- [x] T8.15b Compare, card (two inputs, three outputs) and form (key pairs, compared columns); e2e with last month and this month.
 - [ ] T8.16 The step list and the catalog: the order and the groups, the icons (every icon in the Harold set), the info texts, the Vietnamese texts of every key of the phase (the build writes a first translation), the add-after rules for the new steps, the routes of the UI rules for every new card and form in both themes. A flow that uses every new step runs end to end in one e2e journey.
 
 Quality pass
@@ -448,6 +448,11 @@ Decisions with a default. Build with the default unless this list says otherwise
 None. The Pages file size blocker of T3.9 is solved by D71.
 
 ## Log
+
+### 2026-11-27 T8.15b Compare, card and form
+Changed: `forms/compare-form.tsx` and `compare-logic.ts` (a Load columns bar for each table, the key pairs as rows of two column selects with a remove button and "Add key", "Compare all columns that both tables have" or a list of columns offered from the columns that both tables have without the keys, what is still missing), catalog keys (en, vi), the two inputs are named "New table" and "Old table" on the Setup tab (`inputTitle`), 4 logic tests, `e2e/compare-step.spec.ts` (4 journeys: the card has two inputs and three outputs and a new step says what is missing, last month against this month with the three outputs, their counts on the chips and the changed columns with the old values, only the listed columns, a repeated key), three routes in `ui-rules/routes.ts` (`stepRoute` adds a second Input file for Compare and selects the last card). All seven new steps now have their form, so `NotYetForm` and its catalog key are removed.
+Gates run: check PASS (2575 tests, 1 lint warning); e2e compare-step, check-step, settings-panel, joins, canvas-drag (unchanged), builder PASS (47); ui-rules for the Compare routes PASS (135 tests, light 1280 and 1440, dark 1440, pseudo-locale), and two older routes (Sort, Check) at light 1280 again after the helper change PASS (30).
+Next: T8.16.
 
 ### 2026-11-27 T8.15a Compare, engine
 Changed: `src/engine/nodes/compare.ts` (`compareNode`, `parseCompareSettings`: key pairs, a repeated key stops the run and names it, columns to compare, `added`, `removed` and `changed` with `Changed columns` and the old values, typed comparison, empty equals empty, columns that exist on one side only are not compared), registered; 17 unit tests (`compare.test.ts`: the three outputs, several changed columns in one row, the order of each output, typed numbers and dates, differently named keys, several key columns, empty keys and empty tables, the partition of the rows, every error message); two generated acceptance flows with two files (300 rows last month against this month with rows gone, changed, set empty and new; the three sheets against a plain loop; a repeated key). D134 records the rules.
