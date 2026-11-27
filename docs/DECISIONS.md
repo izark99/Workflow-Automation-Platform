@@ -1279,3 +1279,8 @@ What it still lists on the new screens is the pattern of the earlier phases (D83
 - Typing: a key pair of two different types, or a compared column that is a number in one table and a text in the other, is an error that names the columns and says to give both the same type (for example with a Column mapping step). A csv whose type was guessed differently in the two months is the likely cause. Numbers are compared as numbers and dates as dates; an empty text equals an empty cell.
 - A key that repeats stops the run with the key, the table (new or old) and the count; an empty key is a value and two empty keys are a repeat.
 - `added` has the columns of the new table in its order, `removed` those of the old table, and `changed` the key columns (named as in the new table), `Changed columns`, then for each compared column `Name` (the new value) and `Name (old)`. A result that would have two columns of one name is an error that names it.
+
+## D135 Where the build differs from the Phase 8 text of DESIGN (T8.18)
+
+- `docs/DESIGN.md` now has "What the build chose otherwise (Phase 8)", which lists the differences: the canvas controls are the app's own bar, the shortcut is Alt+Shift+A, the step icons are the nearest Harold icons and they are on every card and on the step list (no summary line), ten icons are drawn (D128), seven groups and 19 buttons, the toast does not stay longer on focus, row numbers only in the popup, and a later paste moves further. D129 to D134 hold the rules of the new steps.
+- `docs/DEPLOY.md` has "Upgrade to Phase 8": no migration, no function, only the app, with the five checks of the goal.

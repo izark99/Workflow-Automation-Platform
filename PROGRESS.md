@@ -334,7 +334,7 @@ Definition and the three groups of steps (SPEC 15.4)
 
 Quality pass
 - [x] T8.17 Unit and integration sweep: `npm run check`, `test:acceptance` (both datasets and the layout files with the same flow file), `test:db` with the migrations 1 to 20 from zero, `test:functions`, `test:e2e` (the canvas drag spec inside it and unchanged); `npm run perf:canvas` still within its budgets after Auto arrange and paste exist. Fix what the sweep finds.
-- [ ] T8.18 `docs/DEPLOY.md`: a section "Upgrade to Phase 8" (no migration, no function, only the app: back up is not needed; deploy the app; a check list: Auto arrange and Undo, add after the selected step, copy and paste, the preview popup, one of the new steps in a run). `docs/DESIGN.md` is already written; update it where the build chose something else and say so in `docs/DECISIONS.md`.
+- [x] T8.18 `docs/DEPLOY.md`: a section "Upgrade to Phase 8" (no migration, no function, only the app: back up is not needed; deploy the app; a check list: Auto arrange and Undo, add after the selected step, copy and paste, the preview popup, one of the new steps in a run). `docs/DESIGN.md` is already written; update it where the build chose something else and say so in `docs/DECISIONS.md`.
 - [ ] T8.19 UI review of the new and changed screens in both themes: the canvas with its controls and the selection toolbar, the toast, a dropped step over an edge, the popup in each state, the card and form of each new step in each state, the step list with three more groups. Findings go to `docs/UI_AUDIT_P8.md`; each finding becomes a task T8.19a, T8.19b... fixed before the final run. `npm run test:ui-rules` runs in full.
 - [ ] T8.20 Final run: `npm ci`, then `npm run gates` (seven gates) and `npm run test:acceptance:pages`; set `STATUS: COMPLETE` only if both pass. Consult the advisor before the last tick.
 
@@ -448,6 +448,11 @@ Decisions with a default. Build with the default unless this list says otherwise
 None. The Pages file size blocker of T3.9 is solved by D71.
 
 ## Log
+
+### 2026-11-27 T8.18 Deploy notes and DESIGN
+Changed: `docs/DEPLOY.md` ("Upgrade to Phase 8": no migration, no function, no backup needed, deploy the app, the five checks: Auto arrange and Undo, add after the selected step, copy and paste, the preview popup, a new step in a run; what a rollback does to a flow saved with a new step), `docs/DESIGN.md` ("What the build chose otherwise (Phase 8)"), `docs/DECISIONS.md` (D135).
+Gates run: none (documents only); `git diff main -- supabase src/store` was empty at this commit.
+Next: T8.19.
 
 ### 2026-11-27 T8.17 Unit and integration sweep
 Ran: `npm run check` (2578 tests, 1 lint warning), `npm run test:acceptance` (41 tests: both datasets, the layout files, privacy and the generated flows of the seven new steps), the Docker daemon started by hand, `npm run test:db` (the migrations 1 to 20 applied from zero, 20 files, 541 tests, PASS), `npm run test:functions` (14 tests, PASS), the full `npm run test:e2e` (499 passed; `e2e/canvas-drag.spec.ts` is inside it and `git diff main -- e2e/canvas-drag.spec.ts` is empty), `npm run perf:canvas` (p95 frame 17 ms for 12, 60 and 70 steps, every card visible; the budgets of 33 and 50 ms hold after Auto arrange and paste exist; `docs/CANVAS_PERF.md` and its screenshots are regenerated).

@@ -355,6 +355,35 @@ steps, in this order. A fresh deployment does not: "Apply the migrations" alread
    column or function, but it does not break on them, so a rollback of the app is safe. A limit that the admin already set
    still holds in the database. Do not undo a migration by hand.
 
+## Upgrade to Phase 8
+
+Phase 8 made flows faster to build (Auto arrange, align and distribute, Snap to grid, a new step added after the selected one and
+connected, dropping a step on an edge, duplicate, copy and paste, a large preview popup) and added seven steps (Sort, Remove
+duplicates, Top N, Split column, Clean text, Check, Compare). It has no server part. A deployment that is on Phase 7 (migrations
+1 to 20) needs only the app. A fresh deployment does not need any of this list.
+
+1. **There is no migration.** The database is the same (migrations 1 to 20). Do not run `npx supabase db push` for this upgrade.
+2. **There is no new function.** `admin-users` stays as it is; do not deploy it again.
+3. **A backup is not needed.** Nothing in the database changes. A flow that is saved with one of the new steps is stored as
+   `schemaVersion` 4 inside the flow definition; older flows are not rewritten when they are opened.
+4. **Deploy the app.** Pushing to the branch that Cloudflare Pages builds starts the build (`npm run build:pages`). Wait for it
+   to finish.
+5. **Check it**, in this order:
+   - Auto arrange and Undo: open a flow with several steps and press the button "Auto arrange" at the bottom left of the canvas
+     (or Alt+Shift+A). The steps are ordered from left to right, the toast says "Steps arranged", and "Undo" puts every position
+     back. The flow shows "Unsaved changes" once.
+   - Add after the selected step: select a step and press a button in the step list. The new step appears to its right and is
+     connected. Select nothing and add one: it appears below, not connected.
+   - Copy and paste: select a step, press Ctrl+C, then Ctrl+V. A copy with "(copy)" in its name appears and is selected. Open
+     another flow in the same tab and press Ctrl+V: the copy is there.
+   - The preview popup: on the Test tab choose a test file, press "Preview first rows", then the expand button at the end of the
+     count line. The popup shows the rows with a row number column; "Show more" loads up to 1,000 rows.
+   - A new step in a run: add Sort after an Input file step, choose a key column, publish, and run the flow on a sample file. The
+     downloaded workbook has the rows in the new order.
+6. **If something is wrong,** roll back the app in Cloudflare Pages. A flow that was saved with one of the new steps then does not
+   open in the older app (it says the schema version is not supported); the flow itself is not damaged and opens again after the
+   app is deployed again. Flows without the new steps are not affected. Do not undo a migration: there is none.
+
 ## Limits
 
 - There is no sign-up and no email invitation. The admin creates accounts in the app (Admin, Users, Add user) with a
