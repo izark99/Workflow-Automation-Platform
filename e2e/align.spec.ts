@@ -36,9 +36,13 @@ async function boxes(page: Page) {
 const node = (page: Page, id: string) => page.locator(`.react-flow__node[data-id="${id}"]`);
 const tools = (page: Page) => page.getByRole('toolbar', { name: 'Align and distribute' });
 
-async function select(page: Page, ids: string[]) {
+async function select(page: Page, ids: string[], settle = true) {
   await node(page, ids[0]!).click();
   for (const id of ids.slice(1)) await node(page, id).click({ modifiers: ['Control'] });
+  // The toolbar follows the box of the selection; let it settle before a button is clicked.
+  if (!settle) return;
+  await expect(tools(page)).toBeVisible();
+  await page.waitForTimeout(250);
 }
 
 test('the toolbar shows for two or more selected steps, and distribute needs three', async ({ page }) => {
@@ -65,8 +69,9 @@ for (const [name, axis, edge] of [
 ] as const) {
   test(`${name} puts the selected steps on one line and leaves the others`, async ({ page }) => {
     await open(page);
-    const before = await boxes(page);
     await select(page, ['a', 'b', 'c']);
+    // Measured after the selection: opening the settings panel can change the size of the canvas and move the view.
+    const before = await boxes(page);
     await tools(page).getByRole('button', { name, exact: true }).click();
     await page.waitForTimeout(200);
     const after = await boxes(page);
@@ -84,8 +89,8 @@ for (const [name, axis, edge] of [
 
 test('Distribute horizontally makes equal gaps and keeps the two outer steps', async ({ page }) => {
   await open(page);
-  const before = await boxes(page);
   await select(page, ['a', 'b', 'c']);
+  const before = await boxes(page);
   await tools(page).getByRole('button', { name: 'Distribute horizontally' }).click();
   await page.waitForTimeout(200);
   const a = await boxes(page);
@@ -133,6 +138,6 @@ test('Snap to grid is kept in the browser and puts a dropped card on the 8 px gr
 
 test('a published version has no toolbar', async ({ page }) => {
   await open(page, 'published');
-  await select(page, ['a', 'b']);
+  await select(page, ['a', 'b'], false);
   await expect(tools(page)).toHaveCount(0);
 });

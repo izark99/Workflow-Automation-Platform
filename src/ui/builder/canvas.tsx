@@ -8,7 +8,7 @@ import { NODE_TYPES } from '../../engine/flow/types';
 import { ErrorState, useDismissToast, useToast } from '../components';
 import { translate, useT } from '../i18n';
 import { useAppTheme } from '../theme-context';
-import { addStep, STEP_CATALOG, CARD_HEIGHT, CARD_WIDTH, arrangeSteps, restorePositions, setPositions, connectSteps, deleteEdges, deleteSteps, inputHandlesOf, moveStep, nextFreePosition, outputHandlesOf, resolvedEdges, stepNumbers } from './graph';
+import { addStep, STEP_CATALOG, CARD_HEIGHT, CARD_WIDTH, arrangeSteps, restorePositions, setPositions, connectSteps, deleteEdges, deleteSteps, inputHandlesOf, moveStep, outputHandlesOf, resolvedEdges, stepNumbers } from './graph';
 import { StepCard } from './step-card';
 import type { StepCardNode } from './step-card';
 import { DRAG_TYPE } from './step-list';
@@ -16,6 +16,7 @@ import { FIT_VIEW_OPTIONS } from './fit-view';
 import { ZoomControls } from './zoom-controls';
 import { SelectionToolbar } from './arrange/selection-toolbar';
 import { SNAP_GRID, useSnap } from './arrange/snap';
+import { addStepAfter, insertStepOnEdge } from './add-after';
 import { alignNodes, distributeNodes } from '../../engine/flow/arrange';
 import type { AlignMode } from '../../engine/flow/arrange';
 import styles from './builder.module.css';
@@ -45,6 +46,11 @@ function Inner({ definition, onChange, selection, onSelect, message, onMessage, 
   const { screenToFlowPosition, getInternalNode, fitView } = useReactFlow();
   const toast = useToast();
   const [snap, toggleSnap] = useSnap();
+  // A step type dragged over an edge: the edge to split and where its middle is on the screen (SPEC 15.2 item 2).
+  const [dropEdge, setDropEdge] = useState<{ id: string; x: number; y: number } | null>(null);
+  // What a screen reader hears after a step is added by a button.
+  const [announcement, setAnnouncement] = useState('');
+  const frame = useRef<HTMLDivElement>(null);
   const dismissToast = useDismissToast();
   // Positions of the cards that are held. A drag moves the card here and writes the definition once, on the drop (SPEC 13.1).
   const [held, setHeld] = useState<Record<string, { x: number; y: number }>>({});
@@ -72,9 +78,9 @@ function Inner({ definition, onChange, selection, onSelect, message, onMessage, 
   const edges: Edge[] = useMemo(
     () => {
       const names = new Map(definition.nodes.map((n) => [n.id, n.label ?? n.id]));
-      return resolvedEdges(definition).map((e) => ({ id: e.id, source: e.source, sourceHandle: e.sourceHandle, target: e.target, targetHandle: e.targetHandle, type: 'smoothstep', selected: selection.edges.includes(e.id), ariaLabel: t('builder.edgeAria', { source: names.get(e.source) ?? e.source, target: names.get(e.target) ?? e.target }) }));
+      return resolvedEdges(definition).map((e) => ({ id: e.id, source: e.source, sourceHandle: e.sourceHandle, target: e.target, targetHandle: e.targetHandle, type: 'smoothstep', selected: selection.edges.includes(e.id), ...(dropEdge?.id === e.id ? { className: 'dropTarget' } : {}), ariaLabel: t('builder.edgeAria', { source: names.get(e.source) ?? e.source, target: names.get(e.target) ?? e.target }) }));
     },
-    [definition, selection.edges, t],
+    [definition, selection.edges, t, dropEdge],
   );
 
   const onNodesChange = (changes: NodeChangeset<StepCardNode>): void => {
@@ -136,7 +142,7 @@ function Inner({ definition, onChange, selection, onSelect, message, onMessage, 
 
   // The keyboard path of the step list: add below the lowest step, once per request.
   const handled = useRef(0);
-  const latest = useRef({ definition, place, arrange: (): void => undefined });
+  const latest = useRef({ definition, place, arrange: (): void => undefined, selection: selection.nodes, addFromList: (() => undefined) as (type: NodeType) => void });
 
   // Auto arrange (SPEC 15.1): one change, a fitted view, a toast with Undo that goes away with the next change.
   const arranged = useRef<{ toastId: number; after: FlowDefinition } | null>(null);
@@ -164,9 +170,6 @@ function Inner({ definition, onChange, selection, onSelect, message, onMessage, 
     arranged.current = { toastId, after: r.definition };
   };
   useEffect(() => {
-    latest.current = { definition, place, arrange };
-  });
-  useEffect(() => {
     if (arranged.current && definition !== arranged.current.after) {
       dismissToast(arranged.current.toastId);
       arranged.current = null;
@@ -177,11 +180,23 @@ function Inner({ definition, onChange, selection, onSelect, message, onMessage, 
       requestAnimationFrame(() => void fitView({ ...FIT_VIEW_OPTIONS }));
     }
   }, [definition, dismissToast, fitView]);
+  // A step added by its button or key (SPEC 15.2 item 1): after the selected step, connected when it fits.
+  const addFromList = (type: NodeType): void => {
+    const r = addStepAfter(definition, selection.nodes, type);
+    onChange(r.definition);
+    onSelect({ nodes: [r.id], edges: [] });
+    onMessage(null);
+    const added = r.definition.nodes.find((n) => n.id === r.id);
+    const name = added?.label ?? r.id;
+    setAnnouncement(r.connectedTo ? t('builder.addedConnected', { step: name, from: r.connectedTo.label ?? r.connectedTo.id }) : t('builder.added', { step: name }));
+  };
+  useEffect(() => {
+    latest.current = { definition, place, arrange, selection: selection.nodes, addFromList };
+  });
   useEffect(() => {
     if (!addRequest || addRequest.n === handled.current || readOnly) return;
     handled.current = addRequest.n;
-    const { definition: d, place: p } = latest.current;
-    p(addRequest.type, nextFreePosition(d));
+    latest.current.addFromList(addRequest.type);
   }, [addRequest, readOnly]);
   // Align and distribute (SPEC 15.1 item 4): the measured size of each card, one change per action.
   const rectsOf = (ids: string[]) =>
@@ -215,12 +230,25 @@ function Inner({ definition, onChange, selection, onSelect, message, onMessage, 
   }, []);
 
   return (
-    <div className={`${styles.canvas} ${theme}`} onDragOver={(e) => { if (e.dataTransfer.types.includes(DRAG_TYPE)) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; } }} onDrop={(e) => {
+    <div ref={frame} className={`${styles.canvas} ${theme}`} onDragOver={(e) => {
+      const type = draggedType(e.dataTransfer.types);
+      if (type) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; }
+      const hit = !readOnly && type ? edgeUnder(e.clientX, e.clientY, frame.current, (id) => insertStepOnEdge(definition, id, type as NodeType, { x: 0, y: 0 }) !== null) : null;
+      setDropEdge((cur) => (cur?.id === hit?.id ? cur : hit));
+    }} onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDropEdge(null); }} onDrop={(e) => {
+      setDropEdge(null);
       const type = e.dataTransfer.getData(DRAG_TYPE);
       if (readOnly || !(NODE_TYPES as readonly string[]).includes(type)) return;
       e.preventDefault();
       const p = screenToFlowPosition({ x: e.clientX, y: e.clientY });
-      place(type as NodeType, { x: p.x - CARD_WIDTH / 2, y: p.y - CARD_HEIGHT / 2 });
+      const position = { x: p.x - CARD_WIDTH / 2, y: p.y - CARD_HEIGHT / 2 };
+      const hit = edgeUnder(e.clientX, e.clientY, frame.current, (id) => insertStepOnEdge(definition, id, type as NodeType, position) !== null);
+      const split = hit ? insertStepOnEdge(definition, hit.id, type as NodeType, position) : null;
+      if (split) {
+        onChange(split.definition);
+        onSelect({ nodes: [split.id], edges: [] });
+        onMessage(null);
+      } else place(type as NodeType, position);
     }}>
       <ReactFlow
         nodes={nodes}
@@ -256,6 +284,14 @@ function Inner({ definition, onChange, selection, onSelect, message, onMessage, 
         <ZoomControls summary={summary(definition)} onArrange={arrange} arrangeDisabled={readOnly || definition.nodes.length === 0} snap={snap} onSnap={toggleSnap} />
         {!readOnly && selection.nodes.length >= 2 ? <SelectionToolbar ids={selection.nodes} visible={Object.keys(held).length === 0} onAlign={align} onDistribute={distribute} /> : null}
       </ReactFlow>
+      {dropEdge ? (
+        <div className={styles.insertPill} style={{ left: dropEdge.x, top: dropEdge.y }} aria-hidden="true">
+          {t('builder.insertHere')}
+        </div>
+      ) : null}
+      <div className={styles.srOnly} role="status" aria-live="polite">
+        {announcement}
+      </div>
       {message ? (
         <div className={styles.message}>
           <ErrorState what={t('builder.connectFailed')} next={message} />
@@ -263,6 +299,31 @@ function Inner({ definition, onChange, selection, onSelect, message, onMessage, 
       ) : null}
     </div>
   );
+}
+
+/** The step type that is dragged, read from the type names of the drag (its data cannot be read before the drop). */
+function draggedType(types: readonly string[]): string | null {
+  const prefix = `${DRAG_TYPE}.`;
+  const hit = types.find((x) => x.startsWith(prefix));
+  return hit ? hit.slice(prefix.length) : null;
+}
+
+/** The edge under the pointer that accepts the dragged step, and the middle of its path in the frame. */
+function edgeUnder(x: number, y: number, frame: HTMLElement | null, accepts: (edgeId: string) => boolean): { id: string; x: number; y: number } | null {
+  if (!frame) return null;
+  for (const el of document.elementsFromPoint(x, y)) {
+    const g = el.closest('.react-flow__edge');
+    const id = g?.getAttribute('data-id');
+    if (!g || !id) continue;
+    if (!accepts(id)) return null;
+    const path = g.querySelector<SVGPathElement>('.react-flow__edge-path');
+    const ctm = path?.getScreenCTM();
+    if (!path || !ctm) return null;
+    const mid = path.getPointAtLength(path.getTotalLength() / 2);
+    const box = frame.getBoundingClientRect();
+    return { id, x: ctm.a * mid.x + ctm.c * mid.y + ctm.e - box.left, y: ctm.b * mid.x + ctm.d * mid.y + ctm.f - box.top };
+  }
+  return null;
 }
 
 function summary(def: FlowDefinition): string {

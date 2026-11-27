@@ -54,6 +54,8 @@ test('Input from connects steps with the keyboard only, can replace the source, 
   await newFlow(page);
   await addStep(page, 'Input file');
   await addStep(page, 'Input file');
+  // Clearing the selection first: with a step selected, the new one would be connected to it.
+  await page.locator('.react-flow__pane').click({ position: { x: 5, y: 5 } });
   await addStep(page, 'Filter');
   await expect(page.locator('.react-flow__node')).toHaveCount(3);
   await expect(panel(page).getByRole('heading', { name: '3. Filter' })).toBeVisible();
@@ -87,6 +89,7 @@ test('an Input file step has no input to choose; a Lookup has a left and a right
 test('Delete step removes the step and its connections and clears the panel', async ({ page }) => {
   await newFlow(page);
   await addStep(page, 'Input file');
+  await page.locator('.react-flow__pane').click({ position: { x: 5, y: 5 } });
   await addStep(page, 'Output');
   const dd = panel(page).getByRole('button', { name: /^Input from: None/ });
   await dd.press('ArrowDown');

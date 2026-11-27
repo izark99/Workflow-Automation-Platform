@@ -44,6 +44,8 @@ export function StepList({ onAdd, disabled }: { onAdd: (type: NodeType) => void;
               draggable={!disabled}
               onDragStart={(e) => {
                 e.dataTransfer.setData(DRAG_TYPE, type);
+                // The data of a drag cannot be read while it is over a target, but its types can: the type of step goes in a type name.
+                e.dataTransfer.setData(`${DRAG_TYPE}.${type}`, '1');
                 e.dataTransfer.effectAllowed = 'copy';
               }}
               onClick={() => onAdd(type)}

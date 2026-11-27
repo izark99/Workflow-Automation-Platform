@@ -79,8 +79,11 @@ test('two steps are connected by dragging from an output to an input; the connec
 
 test('a second input on the same port is refused with what to do next, and a loop is refused', async ({ page }) => {
   await newFlow(page);
+  // Clearing the selection between the steps keeps them apart (with a step selected, the next one is connected to it).
   await addStep(page, 'Column mapping');
+  await page.locator('.react-flow__pane').click({ position: { x: 5, y: 5 } });
   await addStep(page, 'Column mapping');
+  await page.locator('.react-flow__pane').click({ position: { x: 5, y: 5 } });
   await addStep(page, 'Output');
   await connect(page, 'Column mapping', 'Output');
   await expect(page.locator('.react-flow__edge')).toHaveCount(1);

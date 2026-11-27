@@ -245,6 +245,44 @@ export const ROUTES: RuleRoute[] = [
     },
   },
   {
+    path: '/flows/flow-edge-drop/versions/1',
+    sidebar: false,
+    before: async (page) => {
+      const s = seedSnapshot();
+      s.flows.push({
+        id: 'flow-edge-drop', name: 'Edge drop', ownerId: 'user-harold', scope: 'personal', deletedAt: null, groupIds: [],
+        versions: [{ versionNo: 1, validFrom: '2026-01-01', validTo: null, status: 'draft', changeNote: '', definition: {
+          schemaVersion: 1,
+          nodes: [
+            { id: 'a', type: 'input_file', label: 'Alpha', position: { x: 0, y: 100 }, settings: {} },
+            { id: 'b', type: 'output', label: 'Omega', position: { x: 700, y: 100 }, settings: {} },
+          ],
+          edges: [{ source: 'a', target: 'b' }],
+        } }],
+      });
+      await page.addInitScript((json) => localStorage.setItem('dfw.seed', json), JSON.stringify(s));
+    },
+    // The pill "Insert here" and the edge in primary, while the pointer holds a Column mapping step over the first edge.
+    prepare: async (page) => {
+      await page.locator('.react-flow__edge-path').first().waitFor({ state: 'attached' });
+      const mid = await page.locator('.react-flow__edge-path').first().evaluate((p) => {
+        const path = p as SVGPathElement;
+        const pt = path.getPointAtLength(path.getTotalLength() / 2);
+        const m = path.getScreenCTM()!;
+        return { x: m.a * pt.x + m.e, y: m.d * pt.y + m.f };
+      });
+      // A drag over the edge, sent as an event: a real held mouse button would press the step button (scale 0.98) and fail its height.
+      await page.evaluate(({ x, y }) => {
+        const dt = new DataTransfer();
+        dt.setData('application/x-dfw-step', 'column_mapping');
+        dt.setData('application/x-dfw-step.column_mapping', '1');
+        const target = document.elementFromPoint(x, y) ?? document.body;
+        target.dispatchEvent(new DragEvent('dragover', { bubbles: true, cancelable: true, clientX: x, clientY: y, dataTransfer: dt }));
+      }, mid);
+      await page.locator('[class*=insertPill]').waitFor();
+    },
+  },
+  {
     path: REF_FLOW,
     name: `${REF_FLOW} (Reference table cards)`,
     sidebar: false,
