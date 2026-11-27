@@ -10,7 +10,7 @@ import { seedSnapshot } from '../src/store/seed';
  * A route with a flow of an Input file step and one new step that reads it, the new step selected, on its Configure or Test tab.
  * Selectors are structural: the pseudo-locale check changes every name.
  */
-function stepRoute(name: string, type: string, settings: Record<string, unknown>, tab: 'configure' | 'test'): RuleRoute {
+function stepRoute(name: string, type: string, settings: Record<string, unknown>, tab: 'configure' | 'test', parameters?: unknown[]): RuleRoute {
   const id = `flow-step-${type}`;
   return {
     path: `/flows/${id}/versions/1`,
@@ -22,6 +22,7 @@ function stepRoute(name: string, type: string, settings: Record<string, unknown>
         id, name: `Step ${type}`, ownerId: 'user-harold', scope: 'personal', deletedAt: null, groupIds: [],
         versions: [{ versionNo: 1, validFrom: '2026-01-01', validTo: null, status: 'draft', changeNote: '', definition: {
           schemaVersion: 4,
+          ...(parameters ? { parameters } : {}),
           nodes: [
             { id: 'a', type: 'input_file', label: 'Alpha', position: { x: 0, y: 100 }, settings: { key: 'a', headerRow: 1 } },
             { id: 's', type, label: 'Beta', position: { x: 400, y: 100 }, settings: JSON.parse(JSON.stringify(settings)) },
@@ -647,6 +648,10 @@ export const ROUTES: RuleRoute[] = [
   stepRoute('Remove duplicates: all columns', 'dedupe', {}, 'configure'),
   stepRoute('Remove duplicates: two columns, keep the last', 'dedupe', { columns: ['name', 'hours'], keep: 'last' }, 'configure'),
   stepRoute('Remove duplicates: Test tab with two outputs', 'dedupe', {}, 'test'),
+  stepRoute('Top N: defaults', 'top_n', { n: 10, order: 'largest', groupBy: [] }, 'configure'),
+  stepRoute('Top N: smallest by a formula, grouped', 'top_n', { n: 3, order: 'smallest', by: { expression: '[hours] * 2' }, groupBy: ['dept'] }, 'configure'),
+  stepRoute('Top N: first rows', 'top_n', { n: 5, order: 'first', groupBy: [] }, 'configure'),
+  stepRoute('Top N: N from a parameter', 'top_n', { n: { $param: 'n' }, order: 'first', groupBy: [] }, 'configure', [{ key: 'n', label: 'How many', type: 'number', required: true }]),
   // The preview popup (SPEC 15.3) in its states. Selectors are structural: the pseudo-locale check changes every name.
   ...(
     [

@@ -39,10 +39,13 @@ export interface Generated {
   inputs: string[];
   /** The Output steps: the sheet name, the node and handle that feed it. */
   outputs: { sheet: string; from: string; handle?: string }[];
+  /** The parameters of the flow, and their values for this run. */
+  parameters?: unknown[];
+  parameterValues?: Record<string, unknown>;
 }
 
 /** Runs a generated flow: one Input file step per key, the given steps, one Output step per sheet, all in one workbook. */
-export async function runGenerated(page: Page, g: Generated, parameterValues?: Record<string, unknown>): Promise<RunReply> {
+export async function runGenerated(page: Page, g: Generated): Promise<RunReply> {
   await page.goto('/acceptance/index.html');
   await page.waitForFunction(() => typeof window.runDataset === 'function');
   const nodes = [
@@ -53,8 +56,8 @@ export async function runGenerated(page: Page, g: Generated, parameterValues?: R
   const edges = [...g.edges, ...g.outputs.map((o) => ({ source: o.from, ...(o.handle ? { sourceHandle: o.handle } : {}), target: `out_${o.sheet}` }))];
   const files: Record<string, { name: string; base64: string }> = {};
   for (const [key, f] of Object.entries(g.files)) files[key] = { name: f.name, base64: Buffer.from(f.text).toString('base64') };
-  const flow = { schemaVersion: 4, ...(parameterValues ? { parameters: [] } : {}), nodes, edges };
-  return page.evaluate((a) => window.runDataset(a), { flow, effectiveDate: '2026-09-30', files, ...(parameterValues ? { parameterValues } : {}) } as never);
+  const flow = { schemaVersion: 4, ...(g.parameters ? { parameters: g.parameters } : {}), nodes, edges };
+  return page.evaluate((a) => window.runDataset(a), { flow, effectiveDate: '2026-09-30', files, ...(g.parameterValues ? { parameterValues: g.parameterValues } : {}) } as never);
 }
 
 export interface ExpectedSheet {

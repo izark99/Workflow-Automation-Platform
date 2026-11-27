@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 
-// T8.9: the Sort step (SPEC 15.4 item 1). Sort then Top N is added to this file in T8.11.
+// T8.9: the Sort step (SPEC 15.4 item 1). Sort then Top N is in `top-n-step.spec.ts`.
 const panel = (page: Page) => page.getByRole('complementary', { name: 'Step settings' });
 const addStep = (page: Page, name: string) => page.getByRole('button', { name: `Add step ${name}` }).click();
 const csv = (text: string) => ({ name: 'data.csv', mimeType: 'text/csv', buffer: Buffer.from(text) });

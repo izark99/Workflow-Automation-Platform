@@ -1,6 +1,6 @@
 import { quoteIdent } from '../sql';
 import { EngineError } from '../types';
-import { requireColumn } from './columns';
+import { nullAwareTerm, requireColumn } from './columns';
 import type { NodeModule } from './types';
 
 export interface DedupeSettings {
@@ -32,7 +32,7 @@ export const dedupeNode: NodeModule = {
     const s = parseDedupeSettings(node.settings, node.id);
     const deciding = s.columns.length > 0 ? s.columns.map((c) => requireColumn(input.columns, c, node.id)) : input.columns;
     // A partition puts all NULLs of a column in one group. An empty text is made NULL too, so that "" and a blank cell are the same.
-    const parts = deciding.map((c) => (c.type === 'text' ? `NULLIF(${quoteIdent(c.name)}, '')` : quoteIdent(c.name)));
+    const parts = deciding.map(nullAwareTerm);
     const direction = s.keep === 'last' ? 'DESC' : 'ASC';
     const partition = parts.length > 0 ? `PARTITION BY ${parts.join(', ')}` : '';
     const numbered = `SELECT *, rowid AS __rid, ROW_NUMBER() OVER (${partition} ORDER BY rowid ${direction}) AS __n FROM ${quoteIdent(input.relation)}`;

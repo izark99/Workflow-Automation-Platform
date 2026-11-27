@@ -7,6 +7,7 @@ import { appendNode } from './append';
 import { outputNode } from './output';
 import { pivotNode } from './pivot';
 import { dedupeNode } from './dedupe';
+import { topNNode } from './top-n';
 import { sortNode } from './sort';
 import { sqlNode } from './sql-node';
 import { unpivotNode } from './unpivot';
@@ -30,4 +31,5 @@ export const defaultRegistry: NodeRegistry = {
   output: outputNode,
   sort: sortNode,
   dedupe: dedupeNode,
+  top_n: topNNode,
 };

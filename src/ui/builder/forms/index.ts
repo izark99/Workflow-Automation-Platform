@@ -12,6 +12,7 @@ import { PivotForm } from './pivot-form';
 import { ReferenceTableForm } from './reference-table-form';
 import { SortForm } from './sort-form';
 import { SqlForm } from './sql-form';
+import { TopNForm } from './top-n-form';
 import { UnpivotForm } from './unpivot-form';
 import type { FormRegistry } from './types';
 
@@ -31,7 +32,7 @@ export const FORMS: FormRegistry = {
   sql: SqlForm,
   sort: SortForm,
   dedupe: DedupeForm,
-  top_n: NotYetForm,
+  top_n: TopNForm,
   split_column: NotYetForm,
   clean_text: NotYetForm,
   check: NotYetForm,

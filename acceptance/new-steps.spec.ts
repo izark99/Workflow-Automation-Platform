@@ -150,3 +150,72 @@ test.describe('Remove duplicates', () => {
     ]);
   });
 });
+
+/** Top N as a plain loop: rank inside each group by the key (empty last), ties by input order, keep the first n. */
+function topN(rows: FixtureCell[][], n: number, by: { col: number; desc: boolean } | null, groupCol: number | null): FixtureCell[][] {
+  const groups = new Map<string, { first: number; rows: { r: FixtureCell[]; i: number }[] }>();
+  rows.forEach((r, i) => {
+    const k = groupCol === null ? '' : JSON.stringify(r[groupCol] === '' ? null : r[groupCol]);
+    const g = groups.get(k) ?? { first: i, rows: [] };
+    g.rows.push({ r, i });
+    groups.set(k, g);
+  });
+  const out: FixtureCell[][] = [];
+  for (const g of [...groups.values()].sort((a, b) => a.first - b.first)) {
+    const ranked = [...g.rows];
+    if (by) {
+      ranked.sort((a, b) => {
+        const x = a.r[by.col]!;
+        const y = b.r[by.col]!;
+        if (x === null && y === null) return a.i - b.i;
+        if (x === null) return 1;
+        if (y === null) return -1;
+        if (x === y) return a.i - b.i;
+        return ((x < y ? -1 : 1) * (by.desc ? -1 : 1)) as number;
+      });
+    }
+    out.push(...ranked.slice(0, n).map((x) => x.r));
+  }
+  return out;
+}
+
+test.describe('Top N', () => {
+  const data = people(23);
+  const file = { File: { name: 'people.csv', text: csvOf(data.columns, data.rows) } };
+  const run = (page: Parameters<typeof runGenerated>[0], settings: Record<string, unknown>, extra: { parameters?: unknown[]; parameterValues?: Record<string, unknown> } = {}) =>
+    runGenerated(page, {
+      inputs: ['File'],
+      files: file,
+      nodes: [{ id: 'top', type: 'top_n', settings }],
+      edges: [{ source: 'in_File', target: 'top' }],
+      outputs: [{ sheet: 'Top', from: 'top' }],
+      ...extra,
+    });
+
+  test('the 25 largest by Hours, ties cut by the order of the file, with empty values', async ({ page }) => {
+    const reply = await run(page, { n: 25, order: 'largest', by: { column: 'Hours' } });
+    expectWorkbook(reply, [{ name: 'Top', columns: data.columns, rows: topN(data.rows, 25, { col: 3, desc: true }, null) }]);
+  });
+
+  test('the 10 smallest by a date, and the first 7 rows', async ({ page }) => {
+    const smallest = await run(page, { n: 10, order: 'smallest', by: { column: 'Day' } });
+    expectWorkbook(smallest, [{ name: 'Top', columns: data.columns, rows: topN(data.rows, 10, { col: 4, desc: false }, null) }]);
+    const first = await run(page, { n: 7, order: 'first' });
+    expectWorkbook(first, [{ name: 'Top', columns: data.columns, rows: topN(data.rows, 7, null, null) }]);
+  });
+
+  test('the 3 largest per department, groups in the order they first appear', async ({ page }) => {
+    const reply = await run(page, { n: 3, order: 'largest', by: { column: 'Hours' }, groupBy: ['Dept'] });
+    const expected = topN(data.rows, 3, { col: 3, desc: true }, 2);
+    expect(expected.length).toBe(3 * (DEPTS.length + 1));
+    expectWorkbook(reply, [{ name: 'Top', columns: data.columns, rows: expected }]);
+  });
+
+  test('N from a parameter: the same flow with 4 and with 9', async ({ page }) => {
+    const parameters = [{ key: 'n', label: 'How many', type: 'number', required: true }];
+    for (const n of [4, 9]) {
+      const reply = await run(page, { n: { $param: 'n' }, order: 'largest', by: { column: 'Hours' } }, { parameters, parameterValues: { n } });
+      expectWorkbook(reply, [{ name: 'Top', columns: data.columns, rows: topN(data.rows, n, { col: 3, desc: true }, null) }]);
+    }
+  });
+});
