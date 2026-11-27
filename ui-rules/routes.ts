@@ -6,6 +6,11 @@ import { ambiguousLayouts, clearLayouts } from '../scripts/lib/layout-fixtures';
 import { seedRunnableFlow } from '../e2e/runnable-flow';
 import { seedSnapshot } from '../src/store/seed';
 
+/** A csv of n rows for the preview popup routes. */
+function bigCsv(n: number): string {
+  return `k,v\n${Array.from({ length: n }, (_, i) => `row${i + 1},${i + 1}`).join('\n')}\n`;
+}
+
 /** A draft reference table of 250 rows, so the editable grid and its pager can be checked. */
 const seedBigDraft = async (page: Page): Promise<void> => {
   const s = seedSnapshot();
@@ -601,6 +606,49 @@ export const ROUTES: RuleRoute[] = [
   ),
   ...(['/flows', '/admin', '/flows/flow-timesheet/run'] as const).map(
     (path): RuleRoute => ({ path, name: `${path} (sidebar rail)`, sidebar: true, railSidebar: true, before: collapsePanels('sidebar') }),
+  ),
+  // The preview popup (SPEC 15.3) in its states. Selectors are structural: the pseudo-locale check changes every name.
+  ...(
+    [
+      ['rows', bigCsv(250), undefined],
+      ['Find with matches and their count', bigCsv(250), 'row9'],
+      ['Find with no match', bigCsv(250), 'no such text'],
+      ['no rows', 'k,v\n', undefined],
+    ] as const
+  ).map(
+    ([state, text, find]): RuleRoute => ({
+      path: '/flows/flow-popup/versions/1',
+      name: `/flows/flow-popup/versions/1 (preview popup: ${state})`,
+      sidebar: false,
+      before: async (page) => {
+        const s = seedSnapshot();
+        s.flows.push({
+          id: 'flow-popup', name: 'Popup', ownerId: 'user-harold', scope: 'personal', deletedAt: null, groupIds: [],
+          versions: [{ versionNo: 1, validFrom: '2026-01-01', validTo: null, status: 'draft', changeNote: '', definition: {
+            schemaVersion: 1,
+            nodes: [
+              { id: 'a', type: 'input_file', label: 'Alpha', position: { x: 0, y: 100 }, settings: { key: 'a', headerRow: 1 } },
+              { id: 'b', type: 'column_mapping', label: 'Beta', position: { x: 400, y: 100 }, settings: { columns: [] } },
+            ],
+            edges: [{ source: 'a', target: 'b' }],
+          } }],
+        });
+        await page.addInitScript((json) => localStorage.setItem('dfw.seed', json), JSON.stringify(s));
+      },
+      prepare: async (page) => {
+        await page.locator('.react-flow__node').nth(1).click();
+        const panel = page.getByRole('complementary', { name: 'Step settings' });
+        await panel.getByRole('tab').nth(2).click();
+        await panel.locator('input[type=file]').setInputFiles({ name: 'popup.csv', mimeType: 'text/csv', buffer: Buffer.from(text) });
+        await panel.locator('div[style*="flex-wrap"] > button').first().click();
+        const expand = panel.locator('[class*=countRow] button');
+        await expand.waitFor({ timeout: 30_000 });
+        await expand.click();
+        const dialog = page.getByRole('dialog');
+        await dialog.waitFor();
+        if (find) await dialog.locator('input[type=text]').fill(find);
+      },
+    }),
   ),
   {
     path: '/flows/flow-timesheet/versions/4',

@@ -14,10 +14,13 @@ import type { RefTable } from '../../engine/versions';
 
 export type PreviewPart = 'first' | 'last';
 
+/** The most rows that one preview holds (the popup's Show more, SPEC 15.3). */
+export const MAX_PREVIEW_ROWS = 1000;
+
 export interface PreviewData {
   columns: Column[];
   rows: Cell[][];
-  /** Rows in the whole table; the preview holds at most 100. */
+  /** Rows in the whole table; the preview holds at most 100 (up to 1,000 in the popup). */
   totalRows: number;
   /** Which rows these are: the first 100 of the table, or the last 100. */
   part: PreviewPart;
@@ -52,6 +55,8 @@ export interface PreviewRequest {
   parameterValues?: ParameterValues;
   /** The first 100 rows (the default) or the last 100, to see how the end of the file was read. */
   part?: PreviewPart;
+  /** How many rows to read: 100 by default, never more than `MAX_PREVIEW_ROWS` and at least 1. */
+  limit?: number;
   signal?: AbortSignal;
   /** Tests pass a Node runner here. */
   runner?: SqlRunner;
@@ -76,8 +81,9 @@ export async function runPreview(req: PreviewRequest): Promise<PreviewData> {
     const table = result.tables.get(`${req.nodeId}/${req.handle}`);
     const part = req.part ?? 'first';
     const total = table?.rowCount ?? 0;
-    const offset = part === 'last' ? Math.max(0, total - PREVIEW_ROWS) : 0;
-    const data = await result.preview(req.nodeId, req.handle, PREVIEW_ROWS, offset);
+    const limit = Math.min(MAX_PREVIEW_ROWS, Math.max(1, Math.floor(req.limit ?? PREVIEW_ROWS)));
+    const offset = part === 'last' ? Math.max(0, total - limit) : 0;
+    const data = await result.preview(req.nodeId, req.handle, limit, offset);
     return { columns: data.columns, rows: data.rows, totalRows: table?.rowCount ?? data.rows.length, part, fromRow: offset + 1, warnings: result.warnings.map(warningText) };
   } finally {
     await result.dispose();

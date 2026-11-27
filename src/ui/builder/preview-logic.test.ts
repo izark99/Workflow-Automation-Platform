@@ -3,8 +3,8 @@ import { createNodeRunner } from '../../engine/runner/node-runner';
 import type { SqlRunner } from '../../engine/types';
 import type { FlowDefinition } from '../../engine/flow/types';
 import { addStep, connectSteps, defaultSettings, emptyDefinition, upstreamOf } from './graph';
-import { formatCell, neededFiles, previewKey, previewTarget } from './preview-logic';
-import { runPreview } from './preview-runner';
+import { capRows, findRows, formatCell, neededFiles, previewKey, previewTarget } from './preview-logic';
+import { MAX_PREVIEW_ROWS, runPreview } from './preview-runner';
 
 const chain = (types: Parameters<typeof addStep>[1][]): FlowDefinition => {
   let def = emptyDefinition();
@@ -113,6 +113,18 @@ describe('runPreview on the Node engine', () => {
     expect(data.rows).toHaveLength(100);
     expect(data.totalRows).toBe(250);
   });
+  it('takes a limit: up to 1,000 rows, never more, and the last part counts from the limit', async () => {
+    const def = chain(['input_file']);
+    const lines = Array.from({ length: 1500 }, (_, i) => `r${i},${i}`).join('\n');
+    const base = { definition: def, nodeId: 'input_file-1', handle: 'out', files: { 'input_file-1': csv(`k,v\n${lines}\n`) }, refTables: [], effectiveDate: '2026-09-30', runner };
+    expect((await runPreview({ ...base, limit: 1000 })).rows).toHaveLength(1000);
+    expect((await runPreview({ ...base, limit: 5000 })).rows).toHaveLength(MAX_PREVIEW_ROWS);
+    expect((await runPreview({ ...base, limit: 0 })).rows).toHaveLength(1);
+    const last = await runPreview({ ...base, limit: 1000, part: 'last' });
+    expect(last.rows).toHaveLength(1000);
+    expect(last.fromRow).toBe(501);
+    expect(last.totalRows).toBe(1500);
+  });
   it('says what failed when no file was chosen for an input', async () => {
     const def = chain(['input_file']);
     await expect(runPreview({ definition: def, nodeId: 'input_file-1', handle: 'out', files: {}, refTables: [], effectiveDate: '2026-09-30', runner })).rejects.toThrow(/No file was provided|Choose a file/);
@@ -138,5 +150,41 @@ describe('runPreview on the Node engine', () => {
     const data = await runPreview({ ...base, parameterValues: { min_age: 35 } });
     expect(data.rows).toEqual([['Bob', 42]]);
     await expect(runPreview(base)).rejects.toThrow(/"Min age" needs a value/);
+  });
+});
+
+describe('findRows', () => {
+  const rows = [['Lan Nguyễn', '12'], ['Bình Trần', '7'], ['lan Phạm', '300']];
+  it('keeps the rows with a cell that contains the text, not case sensitive, and says which they are', () => {
+    expect(findRows(rows, 'LAN')).toEqual([0, 2]);
+    expect(findRows(rows, '300')).toEqual([2]);
+    expect(findRows(rows, 'xyz')).toEqual([]);
+  });
+  it('keeps every row for an empty text, and trims it', () => {
+    expect(findRows(rows, '')).toEqual([0, 1, 2]);
+    expect(findRows(rows, '   ')).toEqual([0, 1, 2]);
+    expect(findRows(rows, ' bình ')).toEqual([1]);
+  });
+  it('matches a text that spans two words of one cell, and does not match across two cells', () => {
+    expect(findRows(rows, 'lan ph')).toEqual([2]);
+    expect(findRows(rows, 'nguyễn 12')).toEqual([]);
+  });
+});
+
+describe('capRows', () => {
+  const rows = Array.from({ length: 300 }, (_, i) => [i]);
+  const base = { columns: [{ name: 'n', type: 'number' as const }], rows, totalRows: 1500, warnings: [] };
+  it('keeps the first rows of the first part, the last rows of the last part with their real start', () => {
+    const first = capRows({ ...base, part: 'first', fromRow: 1 }, 100);
+    expect(first.rows).toHaveLength(100);
+    expect(first.rows[0]).toEqual([0]);
+    expect(first.fromRow).toBe(1);
+    const last = capRows({ ...base, part: 'last', fromRow: 1201 }, 100);
+    expect(last.rows[0]).toEqual([200]);
+    expect(last.fromRow).toBe(1401);
+  });
+  it('returns the same object when there is nothing to drop', () => {
+    const small = { ...base, rows: rows.slice(0, 50), part: 'first' as const, fromRow: 1 };
+    expect(capRows(small, 100)).toBe(small);
   });
 });

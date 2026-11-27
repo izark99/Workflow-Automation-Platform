@@ -303,6 +303,12 @@ const NODES = {
     ['line', { x1: '3', y1: '21', x2: '21', y2: '21' }],
     ['rect', { x: '7', y: '9', width: '10', height: '6', rx: '1' }],
   ],
+  maximize: [
+    ['path', { d: 'M8 3H5a2 2 0 0 0-2 2v3' }],
+    ['path', { d: 'M21 8V5a2 2 0 0 0-2-2h-3' }],
+    ['path', { d: 'M3 16v3a2 2 0 0 0 2 2h3' }],
+    ['path', { d: 'M16 21h3a2 2 0 0 0 2-2v-3' }],
+  ],
   'grid': [
     ['rect', { x: '3', y: '3', width: '18', height: '18', rx: '1' }],
     ['line', { x1: '9', y1: '3', x2: '9', y2: '21' }],
@@ -319,8 +325,8 @@ export type IconSize = 16 | 20 | 24;
 /** The 47 icons of the Harold set, then the two taken from Lucide. */
 export const ICON_NAMES = Object.keys(NODES) as IconName[];
 export const LUCIDE_EXTRAS: readonly IconName[] = ['link', 'shield'];
-/** Drawn for Phase 8 in the same style (D128): the align and distribute actions and the snap switch. */
-export const DRAWN_EXTRAS: readonly IconName[] = ['align-left', 'align-center-h', 'align-right', 'align-top', 'align-middle', 'align-bottom', 'distribute-h', 'distribute-v', 'grid'];
+/** Drawn for Phase 8 in the same style (D128): the align and distribute actions, the snap switch and the expand button of the preview. */
+export const DRAWN_EXTRAS: readonly IconName[] = ['align-left', 'align-center-h', 'align-right', 'align-top', 'align-middle', 'align-bottom', 'distribute-h', 'distribute-v', 'grid', 'maximize'];
 
 /** Stroke 2 at 16 px and below, 1.75 above. */
 export const strokeFor = (size: number): number => (size <= 16 ? 2 : 1.75);

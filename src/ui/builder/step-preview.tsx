@@ -6,8 +6,7 @@ import type { FileSource } from '../../engine/input/load';
 import { checkFileSize } from '../../engine/size-guard';
 import { EngineError } from '../../engine/types';
 import type { RefTable } from '../../engine/versions';
-import { Button, Chip, ChipGroup, DatePicker, EmptyState, ErrorState, InfoTip, QuietWarning, SkeletonTable, PreviewTable } from '../components';
-import type { PreviewTableColumn } from '../components';
+import { Button, Chip, Icon, ChipGroup, DatePicker, EmptyState, ErrorState, InfoTip, QuietWarning, SkeletonTable, PreviewTable } from '../components';
 import { bindableSetting } from '../../engine/flow/bindable';
 import { parametersOf } from '../../engine/flow/parameters';
 import { AnalysisPanel } from './analyze/analysis-panel';
@@ -17,8 +16,10 @@ import { settingLabel } from './parameter-control/setting-labels';
 import { useT, errorText } from '../i18n';
 import { ParameterInputs, PendingParametersNote } from '../parameter-inputs';
 import { initialValues, parameterValueErrors } from '../parameter-logic';
-import { formatCell, neededFiles, previewKey, previewTarget } from './preview-logic';
-import { runPreview } from './preview-runner';
+import { capRows, neededFiles, previewKey, previewTableData, previewTarget } from './preview-logic';
+import { PreviewDialog } from './preview-dialog';
+import type { PopupState } from './preview-dialog';
+import { MAX_PREVIEW_ROWS, runPreview } from './preview-runner';
 import type { PreviewData, PreviewPart } from './preview-runner';
 import styles from './step-preview.module.css';
 
@@ -49,6 +50,9 @@ export function StepPreview({ definition, step, files, onFile, refTables, parame
   const [handle, setHandle] = useState<string | undefined>(undefined);
   const [state, setState] = useState<State>({ status: 'idle' });
   const abort = useRef<AbortController | null>(null);
+  // The popup (SPEC 15.3): it shows the same state, and runs the preview again for the other part or for more rows.
+  const [popup, setPopup] = useState(false);
+  const popupLimit = useRef(100);
   const target = previewTarget(definition, step, handle);
 
   // Leaving the step or the tab cancels a running preview and forgets its rows.
@@ -67,7 +71,7 @@ export function StepPreview({ definition, step, files, onFile, refTables, parame
   const bound = stepBindingResults(step, parametersOf(definition), values);
   const key = previewKey(target.definition, target.nodeId, target.handle, date) + JSON.stringify(values);
 
-  const run = async (part: PreviewPart = 'first'): Promise<void> => {
+  const run = async (part: PreviewPart = 'first', limit?: number): Promise<void> => {
     abort.current?.abort();
     const controller = new AbortController();
     abort.current = controller;
@@ -81,14 +85,17 @@ export function StepPreview({ definition, step, files, onFile, refTables, parame
         if (!guard.ok) throw new EngineError('file_too_large', t('engine.fileTooLarge', { fileName: f.name, size: megabytes(guard.sizeBytes), limit: megabytes(guard.limitBytes) }));
         sources[n.key] = asSource(f);
       }
-      const data = await runPreview({ definition: target.definition, nodeId: target.nodeId, handle: target.handle, files: sources, refTables, effectiveDate: date, parameterValues: values, part, signal: controller.signal });
+      const data = await runPreview({ definition: target.definition, nodeId: target.nodeId, handle: target.handle, files: sources, refTables, effectiveDate: date, parameterValues: values, part, ...(limit ? { limit } : {}), signal: controller.signal });
       if (!controller.signal.aborted) setState({ status: 'ready', data, key });
     } catch (e) {
       if (!controller.signal.aborted) setState({ status: 'error', message: errorText(e) });
     }
   };
 
-  const { columns, rows } = state.status === 'ready' ? previewTableData(state.data) : { columns: [], rows: [] };
+  // The Test tab always shows 100 rows, also after the popup loaded more.
+  const shown = state.status === 'ready' ? capRows(state.data, 100) : null;
+  const { columns, rows } = shown ? previewTableData(shown) : { columns: [], rows: [] };
+  const popupState: PopupState = state.status === 'ready' ? { status: 'ready', data: state.data, stale: state.key !== key } : state.status === 'error' ? { status: 'error', message: state.message } : state.status === 'loading' ? { status: 'loading' } : { status: 'idle' };
 
   return (
     <div className={styles.block} style={{ gap: 16 }}>
@@ -169,7 +176,12 @@ export function StepPreview({ definition, step, files, onFile, refTables, parame
         <div className={styles.block}>
           {state.key !== key ? <p className={styles.muted} role="status">{t('builder.preview.stale')}</p> : null}
           <QuietWarning lines={state.data.warnings} />
-          <span className={styles.muted}>{state.data.totalRows === 0 ? t('builder.preview.noRows') : (state.data.totalRows > state.data.rows.length ? (state.data.part === 'last' ? t('builder.preview.showingLast', { shown: state.data.rows.length.toLocaleString('en-US'), total: state.data.totalRows.toLocaleString('en-US'), from: state.data.fromRow.toLocaleString('en-US') }) : t('builder.preview.showing', { shown: state.data.rows.length.toLocaleString('en-US'), total: state.data.totalRows.toLocaleString('en-US') })) : t('builder.preview.rowCount', { total: state.data.totalRows, totalText: state.data.totalRows.toLocaleString('en-US') }))}</span>
+          <div className={styles.countRow}>
+          <span className={styles.muted}>{shown!.totalRows === 0 ? t('builder.preview.noRows') : (shown!.totalRows > shown!.rows.length ? (shown!.part === 'last' ? t('builder.preview.showingLast', { shown: shown!.rows.length.toLocaleString('en-US'), total: shown!.totalRows.toLocaleString('en-US'), from: shown!.fromRow.toLocaleString('en-US') }) : t('builder.preview.showing', { shown: shown!.rows.length.toLocaleString('en-US'), total: shown!.totalRows.toLocaleString('en-US') })) : t('builder.preview.rowCount', { total: shown!.totalRows, totalText: shown!.totalRows.toLocaleString('en-US') }))}</span>
+            <Button size="sm" icon aria-label={t('builder.preview.expand')} onClick={() => { popupLimit.current = 100; setPopup(true); }}>
+              <Icon name="maximize" />
+            </Button>
+          </div>
           {state.data.rows.length > 0 ? (
             <div className={styles.result}>
               <PreviewTable label={t('builder.preview.table')} columns={columns} rows={rows} />
@@ -177,19 +189,23 @@ export function StepPreview({ definition, step, files, onFile, refTables, parame
           ) : null}
         </div>
       ) : null}
+      {popup ? (
+        <PreviewDialog
+          stepName={step.label ?? step.id}
+          state={popupState}
+          onClose={() => setPopup(false)}
+          onPart={(p) => void run(p, popupLimit.current)}
+          onShowMore={() => {
+            popupLimit.current = MAX_PREVIEW_ROWS;
+            void run(state.status === 'ready' ? state.data.part : 'first', MAX_PREVIEW_ROWS);
+          }}
+        />
+      ) : null}
     </div>
   );
 }
 
 const megabytes = (bytes: number): string => `${(bytes / 1e6).toFixed(1)} MB`;
-
-/** The columns and the formatted cells of a preview, for `PreviewTable`. The names and cells are the user's data. */
-export function previewTableData(data: PreviewData): { columns: PreviewTableColumn[]; rows: string[][] } {
-  return {
-    columns: data.columns.map((c) => ({ header: c.name, align: c.type === 'number' ? ('right' as const) : ('left' as const) })),
-    rows: data.rows.map((cells) => data.columns.map((c, i) => formatCell(cells[i] ?? null, c.type))),
-  };
-}
 
 function FileRow({ label, file, onFile }: { label: string; file: File | undefined; onFile: (f: File) => void }) {
   const t = useT();

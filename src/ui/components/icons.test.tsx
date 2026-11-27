@@ -20,12 +20,12 @@ function sourceFiles(dir: string): string[] {
 const src = sourceFiles(fileURLToPath(new URL('../..', import.meta.url))).map((f) => readFileSync(f, 'utf8'));
 
 describe('the icon set', () => {
-  it('has the 47 icons of Harold with their path data, link and shield from Lucide, and the nine drawn for Phase 8 (D128)', () => {
+  it('has the 47 icons of Harold with their path data, link and shield from Lucide, and the ten drawn for Phase 8 (D128)', () => {
     const own = ICON_NAMES.filter((n) => !LUCIDE_EXTRAS.includes(n) && !DRAWN_EXTRAS.includes(n));
     expect(own.sort()).toEqual(Object.keys(haroldNodes).sort());
     expect(own).toHaveLength(47);
     expect([...ICON_NAMES].filter((n) => LUCIDE_EXTRAS.includes(n)).sort()).toEqual(['link', 'shield']);
-    expect([...ICON_NAMES].filter((n) => DRAWN_EXTRAS.includes(n))).toHaveLength(9);
+    expect([...ICON_NAMES].filter((n) => DRAWN_EXTRAS.includes(n))).toHaveLength(10);
   });
 
   it('draws each Harold icon with the nodes of bundle.js', () => {
