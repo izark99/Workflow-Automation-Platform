@@ -322,7 +322,7 @@ Definition and the three groups of steps (SPEC 15.4)
 - [x] T8.9 Sort: the engine module (columns or formulas, direction, empty values last), the card and the Configure form (the sort rows of the Output step as the model), unit tests (order, ties, empty, a formula key, text and dates), e2e: Sort then Top N.
 - [x] T8.10 Remove duplicates: the engine module (columns that decide, keep first or last by the current order, empty equals empty, `kept` in input order, `removed` output), the card with two handles, the form, unit tests, e2e with the two outputs on the Test tab.
 - [x] T8.11 Top N: the engine module (N, order column or formula, largest or smallest first, "first rows", group columns, no ties kept, N takes a parameter), the card, the form, unit tests (N larger than the table, per group, ties, a bound N), e2e.
-- [ ] T8.12a Split column, engine: every way to cut of SPEC 15.4 item 4 (the last space for Vietnamese names), the names and the number of parts, the rest of the text, trim, keep or drop the original, an existing name is an error that names it. Unit tests with Vietnamese names, empty and null values, a text with no separator.
+- [x] T8.12a Split column, engine: every way to cut of SPEC 15.4 item 4 (the last space for Vietnamese names), the names and the number of parts, the rest of the text, trim, keep or drop the original, an existing name is an error that names it. Unit tests with Vietnamese names, empty and null values, a text with no separator.
 - [ ] T8.12b Split column, card and form, with the Load columns bar and ColumnSelect; e2e.
 - [ ] T8.13a Clean text, engine: trim, collapse spaces, non-printing characters, case, remove Vietnamese marks (`đ`, `Đ` included), replace the column or write a suffix column. Unit tests with a full Vietnamese alphabet, mixed marks (precomposed and combining), null and numbers in a text column.
 - [ ] T8.13b Clean text, card and form; e2e.
@@ -448,6 +448,12 @@ Decisions with a default. Build with the default unless this list says otherwise
 None. The Pages file size blocker of T3.9 is solved by D71.
 
 ## Log
+
+### 2026-11-27 T8.12a Split column, engine
+Changed: `src/engine/nodes/split-column.ts` (`splitColumnNode`, `parseSplitSettings`, `CUTS`; every cut of SPEC 15.4 item 4, the last space for Vietnamese names, the names and the number of parts, the rest in the last part or dropped, trim, keep or drop the original, an existing name is an error that names it), registered; 13 unit tests (`split-column.test.ts`: Vietnamese names with double and trailing spaces, empty and null values, a text with no separator, every cut, the rest rules, missing and empty parts, trim off, the errors); two generated acceptance flows in `acceptance/new-steps.spec.ts` (200 generated names cut at the last space, and codes cut at commas with the rest kept and dropped, expected by a plain loop). D131 records the rules that the spec leaves open.
+Not done in this task, by the split of the plan: the card and the form (T8.12b).
+Gates run: check PASS (2509 tests, 1 lint warning); test:acceptance new-steps PASS (13 tests in the file so far).
+Next: T8.12b.
 
 ### 2026-11-27 T8.11 Top N
 Changed: `src/engine/nodes/top-n.ts` (`topNNode`, `parseTopNSettings`, `MAX_TOP_N`; a row number window function, ties cut by `rowid`, groups in the order of their first row), `columns.ts` (`nullAwareTerm`, shared with Remove duplicates), registered; 12 unit tests (largest, smallest, empty values last, ties, first rows, per group, N larger than the table, a formula key, empty table, every error message, N from a parameter through `runFlow`). The form: `forms/top-n-form.tsx` and `top-n-logic.ts` (N with its error, Order with a parameter button on both, the column or formula, group columns; 4 logic tests), catalog keys (en, vi), D130. `e2e/top-n-step.spec.ts` (5 journeys, including Sort then Top N as the task asks), generated acceptance flows (largest with ties and empty values, smallest by a date, first rows, per department, N from a parameter with 4 and with 9; plain loop as the expected rows), the acceptance kit takes `parameters` and `parameterValues`, four routes in `ui-rules/routes.ts` (defaults, smallest by a formula and grouped, first rows, N from a parameter).

@@ -219,3 +219,52 @@ test.describe('Top N', () => {
     }
   });
 });
+
+/** The text cut into parts as a plain loop: `sep` null cuts at the last space; the rest rules of the step. */
+function cutText(value: FixtureCell, sep: string | null, count: number, rest: 'last' | 'drop'): (string | null)[] {
+  const out: (string | null)[] = Array(count).fill(null);
+  if (value === null) return out;
+  const text = String(value).trim();
+  let parts: string[];
+  if (sep === null) {
+    const at = text.lastIndexOf(' ');
+    parts = at < 0 ? [text] : [text.slice(0, at), text.slice(at + 1)];
+  } else parts = text.split(sep);
+  for (let i = 0; i < count; i++) {
+    let p: string | undefined = parts[i];
+    if (i === count - 1 && rest === 'last' && parts.length > count) p = parts.slice(i).join(sep ?? ' ');
+    const v = (p ?? '').trim();
+    out[i] = v === '' ? null : v;
+  }
+  return out;
+}
+
+test.describe('Split column', () => {
+  const rand = lcg(31);
+  const FAMILY = ['Nguyễn', 'Trần', 'Lê', 'Phạm', 'Đặng', 'Võ'];
+  const MIDDLE = ['Văn', 'Thị', 'Hoàng Minh', 'Thu', ''];
+  const GIVEN = ['An', 'Bình', 'Cường', 'Dũng', 'Hà', 'Nhung', 'Đức'];
+  const rows: FixtureCell[][] = [];
+  for (let i = 0; i < 200; i++) {
+    const r = rand();
+    const name = r < 0.05 ? null : r < 0.08 ? null : `${pick(rand, FAMILY)} ${[pick(rand, MIDDLE)].filter(Boolean).join(' ')} ${pick(rand, GIVEN)}`.replace(/  +/g, ' ');
+    rows.push([`E${i + 1}`, name, i % 7 === 0 ? ' a, b,,c ,d,e ' : i % 5 === 0 ? null : 'x,y', 'tail']);
+  }
+  const columns = ['Id', 'Name', 'Codes', 'Tail'];
+  const file = { File: { name: 'names.csv', text: csvOf(columns, rows) } };
+  const run = (page: Parameters<typeof runGenerated>[0], settings: Record<string, unknown>) =>
+    runGenerated(page, { inputs: ['File'], files: file, nodes: [{ id: 'sp', type: 'split_column', settings }], edges: [{ source: 'in_File', target: 'sp' }], outputs: [{ sheet: 'Split', from: 'sp' }] });
+
+  test('a Vietnamese full name at the last space: family and middle names, and the given name', async ({ page }) => {
+    const reply = await run(page, { column: 'Name', cut: 'last_space', names: ['Family and middle', 'Given'] });
+    const expected: FixtureCell[][] = rows.map((r) => [r[0]!, ...cutText(r[1]!, null, 2, 'last'), r[2]!, r[3]!]);
+    expectWorkbook(reply, [{ name: 'Split', columns: ['Id', 'Family and middle', 'Given', 'Codes', 'Tail'], rows: expected }]);
+  });
+
+  test('codes at every comma into 3 columns with the rest in the last, and with the rest dropped, keeping the original', async ({ page }) => {
+    const kept = await run(page, { column: 'Codes', cut: 'comma', names: ['C1', 'C2', 'C3'], keepOriginal: true });
+    expectWorkbook(kept, [{ name: 'Split', columns: ['Id', 'Name', 'Codes', 'C1', 'C2', 'C3', 'Tail'], rows: rows.map((r): FixtureCell[] => [r[0]!, r[1]!, r[2]!, ...cutText(r[2]!, ',', 3, 'last'), r[3]!]) }]);
+    const dropped = await run(page, { column: 'Codes', cut: 'comma', names: ['C1', 'C2', 'C3'], rest: 'drop' });
+    expectWorkbook(dropped, [{ name: 'Split', columns: ['Id', 'Name', 'C1', 'C2', 'C3', 'Tail'], rows: rows.map((r): FixtureCell[] => [r[0]!, r[1]!, ...cutText(r[2]!, ',', 3, 'drop'), r[3]!]) }]);
+  });
+});
