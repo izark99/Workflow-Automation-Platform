@@ -1,4 +1,5 @@
 import { AppendForm } from './append-form';
+import { CleanForm } from './clean-form';
 import { ColumnMappingForm } from './column-mapping-form';
 import { DedupeForm } from './dedupe-form';
 import { FilterForm } from './filter-form';
@@ -35,7 +36,7 @@ export const FORMS: FormRegistry = {
   dedupe: DedupeForm,
   top_n: TopNForm,
   split_column: SplitForm,
-  clean_text: NotYetForm,
+  clean_text: CleanForm,
   check: NotYetForm,
   compare: NotYetForm,
 };
