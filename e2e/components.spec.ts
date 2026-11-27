@@ -171,3 +171,66 @@ test('a list that is taller than the window scrolls inside the window and every 
   await expect(last).toBeFocused();
   await expect(last).toBeInViewport();
 });
+
+test.describe('the wide dialog and the preview table (T8.6)', () => {
+  async function openWide(page: import('@playwright/test').Page) {
+    await page.goto('/dev/components');
+    await page.getByRole('button', { name: 'Wide dialog' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Preview of Rows' });
+    await expect(dialog).toBeVisible();
+    await page.waitForTimeout(400);
+    return dialog;
+  }
+
+  test('fills the window minus 96 px each way and is at least 960 x 560', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    const dialog = await openWide(page);
+    const box = (await dialog.boundingBox())!;
+    expect(Math.round(box.width)).toBe(1440 - 96);
+    expect(Math.round(box.height)).toBe(900 - 96);
+    await page.setViewportSize({ width: 1100, height: 640 });
+    const small = (await dialog.boundingBox())!;
+    expect(small.width).toBeGreaterThanOrEqual(959);
+    expect(small.height).toBeGreaterThanOrEqual(559);
+  });
+
+  test('the header row stays in place when the rows scroll, the row numbers when it scrolls sideways', async ({ page }) => {
+    const dialog = await openWide(page);
+    const region = dialog.getByRole('region', { name: 'Preview table' });
+    const head = region.getByRole('columnheader', { name: 'Column 1', exact: true });
+    const first = region.getByRole('rowheader').first();
+    // Row numbers are those of the whole table: the first shown row is 9,801.
+    await expect(first).toHaveText('9,801');
+    const headBefore = (await head.boundingBox())!;
+    const numberBefore = (await first.boundingBox())!;
+    await region.evaluate((el) => { el.scrollTop = 600; el.scrollLeft = 500; });
+    await page.waitForTimeout(100);
+    const headAfter = (await head.boundingBox())!;
+    // The header did not move up with the rows.
+    expect(Math.abs(headAfter.y - headBefore.y)).toBeLessThan(1);
+    // The row number of the first column did not move to the left with the columns.
+    const row100 = region.getByRole('rowheader', { name: '9,901' });
+    const n = (await row100.boundingBox())!;
+    expect(Math.abs(n.x - numberBefore.x)).toBeLessThan(1);
+    const scroll = await region.evaluate((el) => ({ top: el.scrollTop, left: el.scrollLeft, w: el.scrollWidth > el.clientWidth, h: el.scrollHeight > el.clientHeight }));
+    expect(scroll.w && scroll.h).toBe(true);
+    expect(scroll.top).toBeGreaterThan(0);
+    expect(scroll.left).toBeGreaterThan(0);
+  });
+
+  test('rows are 45 px and the table scrolls by keyboard; Escape closes and the focus returns to the opener', async ({ page }) => {
+    const dialog = await openWide(page);
+    const region = dialog.getByRole('region', { name: 'Preview table' });
+    const rows = region.locator('tbody tr');
+    const a = (await rows.nth(1).boundingBox())!;
+    const b = (await rows.nth(2).boundingBox())!;
+    expect(Math.round(b.y - a.y)).toBe(45);
+    await region.focus();
+    await expect(region).toBeFocused();
+    await page.keyboard.press('PageDown');
+    await expect.poll(() => region.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+    await page.keyboard.press('Escape');
+    await expect(dialog).toBeHidden();
+    await expect(page.getByRole('button', { name: 'Wide dialog' })).toBeFocused();
+  });
+});

@@ -314,7 +314,7 @@ Canvas (SPEC 15.1, 15.2)
 - [x] T8.5 Duplicate, copy and paste: Ctrl+D, Ctrl+C, Ctrl+V and the Duplicate button as in SPEC 15.2 (copy of the settings and bindings, " (copy)", a unique Input file key, edges between copied steps only, offset 40 px, paste into another flow or version in the same tab, nothing sent anywhere, no action while a field has focus, read-only versions refuse). Unit tests for the copy function, e2e for each path and the toast, the info button of the step list lists the shortcuts.
 
 Preview popup (SPEC 15.3)
-- [ ] T8.6 The wide variant of the Dialog component and the shared preview table (`PreviewTable`, extracted from `StepPreview`): sticky header row, sticky row-number column, scroll in both directions, row numbers of the whole table (the last part starts at its real number). Unit and e2e tests of the component in `/dev/components`, the route of the UI rules, no change of the look of the existing preview.
+- [x] T8.6 The wide variant of the Dialog component and the shared preview table (`PreviewTable`, extracted from `StepPreview`): sticky header row, sticky row-number column, scroll in both directions, row numbers of the whole table (the last part starts at its real number). Unit and e2e tests of the component in `/dev/components`, the route of the UI rules, no change of the look of the existing preview.
 - [ ] T8.7 The Expand button and the popup: First rows and Last rows, Find (client side, the count), Show more (the preview runs again with up to 1,000 rows: a `limit` option of `runPreview`, never more than 1,000), Escape and focus return, the states (loading, empty, stale, error). e2e with a 250-row and a 1,500-row file; the privacy test (a preview sends no request with file content) still passes; routes of the UI rules in both themes.
 
 Definition and the three groups of steps (SPEC 15.4)
@@ -448,6 +448,13 @@ Decisions with a default. Build with the default unless this list says otherwise
 None. The Pages file size blocker of T3.9 is solved by D71.
 
 ## Log
+
+### 2026-11-27 T8.6 Wide dialog and the shared preview table
+Changed: `Dialog` has a `wide` variant (window minus 96 px each way, at least 960 x 560, the body does not scroll), new `PreviewTable` (`src/ui/components/preview-table.tsx`: sticky header, optional sticky row-number column, row numbers of the whole table through `firstRowNumber` or `numbers`, `fill` scrolls both ways inside its parent and is a focusable region), `StepPreview` uses it without row numbers (same markup and look as `Table`), a demo in `/dev/components` (button "Wide dialog"), catalog keys (en, vi), 6 unit tests in `more.test.tsx`, 3 e2e tests in `e2e/components.spec.ts` (size and minimum, header and row numbers stay while scrolling both ways, 45 px rows, keyboard scroll, Escape and focus return), a route in `ui-rules/routes.ts`.
+Found by the full e2e run (the first one of the phase): T8.4 made the add buttons connect to the selected step, which broke steps of `e2e/preview.spec.ts`, `journeys.spec.ts`, `output.spec.ts` and `parameters-panel.spec.ts` that connected steps by hand afterwards. Fixed in the specs (they now expect the connection); no test was skipped or loosened (the same edge counts are asserted).
+Known, not caused by Phase 8: `e2e/info-tip.spec.ts` "hover opens after 300 ms" fails on the commit before Phase 8 as well (b6fe9ce, checked by checking out `src` and `e2e` of it). It must be fixed or explained in T8.17, because the goal needs `npm run test:e2e` to exit 0.
+Gates run: check PASS (2409 tests, 1 lint warning); full e2e: 452 passed, 6 failed before the spec fixes (5 of them fixed and re-run PASS, info-tip as above); components, preview, dialog-toast, table, canvas-drag, input-region PASS; ui-rules for the new route PASS (light 1280 and 1440, dark 1440, pseudo-locale).
+Next: T8.7.
 
 ### 2026-11-27 T8.5 Duplicate, copy and paste
 Changed: `src/ui/builder/clipboard.ts` (`copySteps`, `pasteSteps`, the in-memory clip; 8 unit tests), `use-step-clipboard.ts` (Ctrl/Cmd+D, C, V; not while a field, dialog or menu has focus, not for selected page text; `inField` is shared with the Auto arrange key), `builder-screen.tsx`, `settings-panel.tsx` (Duplicate button), `step-list.tsx` (the info text lists the shortcuts), catalog keys (en, vi, plural for the toasts), `compactVariadic` exported from `graph.ts`, `e2e/copy-paste.spec.ts` (7 journeys), a route in `ui-rules/routes.ts`.

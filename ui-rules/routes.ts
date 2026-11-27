@@ -583,6 +583,17 @@ export const ROUTES: RuleRoute[] = [
     },
   },
   { path: '/dev/components', sidebar: true, nav: false },
+  {
+    path: '/dev/components',
+    name: '/dev/components (wide dialog with the preview table)',
+    sidebar: true,
+    nav: false,
+    // The button after the danger button of the Confirm card opens the wide dialog (by position: the pseudo-locale check changes every name).
+    prepare: async (page) => {
+      await page.locator('main [data-variant=danger]').last().locator('xpath=following-sibling::button').click();
+      await page.getByRole('dialog').waitFor();
+    },
+  },
   { path: '/reference-tables', name: '/reference-tables (list collapsed)', sidebar: true, table: true, before: collapsePanels('refList') },
   // The builder with each panel collapsed (SPEC 12.4, T5.4); T5.6 adds the width rule for them.
   ...([['steps'], ['settings'], ['steps', 'settings']] as const).map(

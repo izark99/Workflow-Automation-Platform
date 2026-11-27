@@ -12,10 +12,8 @@ async function inputThenMapping(page: Page) {
   await page.getByRole('textbox', { name: 'Flow name' }).fill('Preview test');
   await page.getByRole('textbox', { name: 'Flow name' }).press('Enter');
   await addStep(page, 'Input file');
+  // A step added with one selected is connected to it (SPEC 15.2), so no connecting is needed.
   await addStep(page, 'Column mapping');
-  await panel(page).getByRole('button', { name: /^Input from: None/ }).press('ArrowDown');
-  await page.keyboard.press('ArrowDown');
-  await page.keyboard.press('Enter');
   await expect(page.locator('.react-flow__edge')).toHaveCount(1);
   await panel(page).getByRole('tab', { name: 'Test' }).click();
 }
@@ -105,6 +103,8 @@ test('a Filter offers both outputs; an Output step with no input asks for one', 
   await expect(group.getByRole('button', { name: 'Match', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await group.getByRole('button', { name: 'No match', exact: true }).click();
   await expect(group.getByRole('button', { name: 'No match', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  // Nothing selected, so the Output step is not connected to the Filter.
+  await page.locator('.react-flow__pane').click({ position: { x: 5, y: 5 } });
   await addStep(page, 'Output');
   await panel(page).getByRole('tab', { name: 'Test' }).click();
   await expect(panel(page).getByRole('alert')).toContainText('This step has no input yet');

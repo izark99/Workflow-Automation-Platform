@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { nextTab, trapIndex } from './tab-keys';
 import { MAX_TOASTS, toastReducer } from './toast-state';
-import { Checkbox, Chip, Dialog, EmptyState, ErrorState, SkeletonTable, Tabs, ToastProvider } from './index';
+import { Checkbox, Chip, Dialog, EmptyState, ErrorState, PreviewTable, SkeletonTable, Tabs, ToastProvider } from './index';
 
 const html = (el: React.ReactElement): string => renderToStaticMarkup(el);
 const noop = (): void => undefined;
@@ -107,5 +107,43 @@ describe('Skeleton, empty and error states', () => {
     expect(out).toContain('role="alert"');
     expect(out).toContain('<b>The file could not be read.</b> Choose another file.');
     expect(out).toContain('Retry');
+  });
+});
+
+describe('PreviewTable and the wide Dialog', () => {
+  const cols = [{ header: 'Name' }, { header: 'Hours', align: 'right' as const }];
+  it('has a header row with column headers, and no row numbers unless asked (the look of the Test tab)', () => {
+    const out = html(<PreviewTable label="Preview" columns={cols} rows={[['Lan', '8']]} />);
+    expect(out).toContain('<thead>');
+    expect(out).toContain('scope="col"');
+    expect(out).not.toContain('scope="row"');
+    expect(out).not.toContain('role="region"');
+  });
+  it('numbers the rows of the whole table: the last part starts at its real number', () => {
+    const out = html(<PreviewTable label="Preview" columns={cols} rows={[['a', '1'], ['b', '2']]} rowNumbers firstRowNumber={9801} />);
+    expect(out).toContain('>9,801<');
+    expect(out).toContain('>9,802<');
+    expect(out).not.toContain('>1<th');
+  });
+  it('takes row numbers that are not one run (a Find keeps some rows)', () => {
+    const out = html(<PreviewTable label="Preview" columns={cols} rows={[['a', '1'], ['b', '2']]} rowNumbers numbers={[4, 90]} />);
+    expect(out).toContain('>4<');
+    expect(out).toContain('>90<');
+  });
+  it('right-aligns numbers and marks user data', () => {
+    const out = html(<PreviewTable label="Preview" columns={cols} rows={[['a', '1']]} />);
+    expect(out).toContain('data-user-content');
+    expect(out.match(/right/g)?.length).toBeGreaterThanOrEqual(2);
+  });
+  it('fill makes a focusable scroll region with a name', () => {
+    const out = html(<PreviewTable label="Preview" columns={cols} rows={[]} fill />);
+    expect(out).toContain('role="region"');
+    expect(out).toContain('tabindex="0"');
+    expect(out).toContain('aria-label="Preview"');
+  });
+  it('the wide dialog sets the wide classes and ignores a width', () => {
+    const out = html(<Dialog wide width={300} title="Preview" onClose={noop} actions={null}>x</Dialog>);
+    expect(out).toMatch(/class="[^"]*wide/);
+    expect(out).not.toContain('width:300px');
   });
 });

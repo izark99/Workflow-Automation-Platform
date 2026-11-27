@@ -97,9 +97,7 @@ test('the Test tab asks for the parameters that the steps read, and only for tho
   }
   await page.getByRole('button', { name: 'Add step Input file' }).click();
   await page.getByRole('button', { name: 'Add step Filter' }).click();
-  await panel(page).getByRole('button', { name: /^Input from: None/ }).press('ArrowDown');
-  await page.keyboard.press('ArrowDown');
-  await page.keyboard.press('Enter');
+  // Added with the Input file selected, so it is connected to it.
   await expect(page.locator('.react-flow__edge')).toHaveCount(1);
   await panel(page).getByRole('tab', { name: 'Configure' }).click();
   await panel(page).getByRole('textbox', { name: 'Condition' }).fill('[age] > PARAM("min_age")');

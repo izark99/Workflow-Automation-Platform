@@ -47,20 +47,13 @@ test('journey 1: a user builds a flow on an empty canvas, previews a step, publi
   await expect(cards(page)).toHaveCount(0);
   await expect(panel(page)).toContainText('Select a step on the canvas');
 
-  // Add the steps, connect the first two with the mouse and the others from the Setup tab.
+  // Add the steps; each one is connected to the step that was selected.
   await addStep(page, 'Input file');
   await addStep(page, 'Formula column');
   await addStep(page, 'Filter');
   await addStep(page, 'Output');
   await expect(cards(page)).toHaveCount(4);
-  await connect(page, 'Input file', 'Formula column');
-  await expect(page.locator('.react-flow__edge')).toHaveCount(1);
-  await card(page, 'Filter').click();
-  await panel(page).getByRole('button', { name: /^Input from/ }).press('ArrowDown');
-  await page.getByRole('option', { name: /\. Formula column$/ }).click();
-  await card(page, 'Output').click();
-  await panel(page).getByRole('button', { name: /^Input from/ }).press('ArrowDown');
-  await page.getByRole('option', { name: /\. Filter \(match\)$/ }).click();
+  // Each step was added with the one before it selected, so it is connected to it (SPEC 15.2): Filter through match.
   await expect(page.locator('.react-flow__edge')).toHaveCount(3);
 
   // Configure each step.

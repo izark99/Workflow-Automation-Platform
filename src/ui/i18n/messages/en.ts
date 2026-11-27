@@ -1140,6 +1140,10 @@ export const en = {
   'dev.demo.deleteFlow': 'Delete flow',
   'dev.demo.deleteMonthlyTimesheetSummary': 'Delete Monthly timesheet summary?',
   'dev.demo.cancel': 'Cancel',
+  'dev.demo.wideDialog': 'Wide dialog',
+  'dev.demo.widePreview': 'Preview of Rows',
+  'dev.demo.previewTable': 'Preview table',
+  'dev.demo.close': 'Close',
   'dev.demo.theFlowAndIts': 'The flow and its 4 versions move to Deleted flows. The admin can restore it within 30 days.',
 
   // Added by T4.7c3

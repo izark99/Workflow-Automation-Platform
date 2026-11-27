@@ -18,8 +18,8 @@ async function inputThen(page: Page, step: 'Output' | 'SQL' | 'Append', data: st
   await newFlow(page);
   await addStep(page, 'Input file');
   await addStep(page, step);
-  await panel(page).getByRole('button', { name: /^Input from/ }).press('ArrowDown');
-  await page.getByRole('option', { name: /1\. Input file/ }).click();
+  // The step was added with the Input file selected, so it is connected to it.
+  await expect(page.locator('.react-flow__edge')).toHaveCount(1);
   await panel(page).getByRole('tab', { name: 'Test' }).click();
   await panel(page).locator('input[type=file]').first().setInputFiles(csv(data));
   await panel(page).getByRole('tab', { name: 'Configure' }).click();

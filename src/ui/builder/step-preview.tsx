@@ -5,10 +5,9 @@ import { parametersUsedBy } from '../../engine/flow/parameters-used';
 import type { FileSource } from '../../engine/input/load';
 import { checkFileSize } from '../../engine/size-guard';
 import { EngineError } from '../../engine/types';
-import type { Cell } from '../../engine/types';
 import type { RefTable } from '../../engine/versions';
-import { Button, Chip, ChipGroup, DatePicker, EmptyState, ErrorState, InfoTip, QuietWarning, SkeletonTable, Table } from '../components';
-import type { Column } from '../components';
+import { Button, Chip, ChipGroup, DatePicker, EmptyState, ErrorState, InfoTip, QuietWarning, SkeletonTable, PreviewTable } from '../components';
+import type { PreviewTableColumn } from '../components';
 import { bindableSetting } from '../../engine/flow/bindable';
 import { parametersOf } from '../../engine/flow/parameters';
 import { AnalysisPanel } from './analyze/analysis-panel';
@@ -89,8 +88,7 @@ export function StepPreview({ definition, step, files, onFile, refTables, parame
     }
   };
 
-  const columns: Column<PreviewRow>[] = state.status === 'ready' ? previewColumns(state.data) : [];
-  const rows: PreviewRow[] = state.status === 'ready' ? state.data.rows.map((cells, i) => ({ i, cells })) : [];
+  const { columns, rows } = state.status === 'ready' ? previewTableData(state.data) : { columns: [], rows: [] };
 
   return (
     <div className={styles.block} style={{ gap: 16 }}>
@@ -174,7 +172,7 @@ export function StepPreview({ definition, step, files, onFile, refTables, parame
           <span className={styles.muted}>{state.data.totalRows === 0 ? t('builder.preview.noRows') : (state.data.totalRows > state.data.rows.length ? (state.data.part === 'last' ? t('builder.preview.showingLast', { shown: state.data.rows.length.toLocaleString('en-US'), total: state.data.totalRows.toLocaleString('en-US'), from: state.data.fromRow.toLocaleString('en-US') }) : t('builder.preview.showing', { shown: state.data.rows.length.toLocaleString('en-US'), total: state.data.totalRows.toLocaleString('en-US') })) : t('builder.preview.rowCount', { total: state.data.totalRows, totalText: state.data.totalRows.toLocaleString('en-US') }))}</span>
           {state.data.rows.length > 0 ? (
             <div className={styles.result}>
-              <Table label={t('builder.preview.table')} columns={columns} rows={rows} rowKey={(r) => String(r.i)} />
+              <PreviewTable label={t('builder.preview.table')} columns={columns} rows={rows} />
             </div>
           ) : null}
         </div>
@@ -183,22 +181,14 @@ export function StepPreview({ definition, step, files, onFile, refTables, parame
   );
 }
 
-interface PreviewRow {
-  i: number;
-  cells: Cell[];
-}
-
 const megabytes = (bytes: number): string => `${(bytes / 1e6).toFixed(1)} MB`;
 
-function previewColumns(data: PreviewData): Column<PreviewRow>[] {
-  return data.columns.map((c, i) => ({
-    key: `${i}-${c.name}`,
-    header: c.name,
-    // The column names and the cells are the user's data, not texts of the app.
-    userContent: true,
-    align: c.type === 'number' ? ('right' as const) : ('left' as const),
-    render: (row: PreviewRow) => formatCell(row.cells[i] ?? null, c.type),
-  }));
+/** The columns and the formatted cells of a preview, for `PreviewTable`. The names and cells are the user's data. */
+export function previewTableData(data: PreviewData): { columns: PreviewTableColumn[]; rows: string[][] } {
+  return {
+    columns: data.columns.map((c) => ({ header: c.name, align: c.type === 'number' ? ('right' as const) : ('left' as const) })),
+    rows: data.rows.map((cells) => data.columns.map((c, i) => formatCell(cells[i] ?? null, c.type))),
+  };
 }
 
 function FileRow({ label, file, onFile }: { label: string; file: File | undefined; onFile: (f: File) => void }) {
