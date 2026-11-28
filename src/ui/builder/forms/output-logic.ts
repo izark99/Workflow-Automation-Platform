@@ -3,12 +3,10 @@ import { checkSqlText } from '../../../engine/nodes/sql-node';
 import { translate } from '../../i18n';
 
 export type OutputFormat = 'xlsx' | 'csv';
-export interface SortRow {
-  kind: 'column' | 'formula';
-  column: string;
-  expression: string;
-  direction: 'asc' | 'desc';
-}
+import { sortRowDone, sortRowsFromList, sortRowsToList } from './sort-logic';
+import type { SortRow } from './sort-logic';
+
+export type { SortRow };
 export interface OutputValues {
   file: string;
   format: OutputFormat;
@@ -33,14 +31,7 @@ export function validateSheetName(name: string): string | undefined {
 const list = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : []);
 
 export function outputFromSettings(s: Record<string, unknown>): OutputValues {
-  const sort = Array.isArray(s.sort)
-    ? (s.sort as Record<string, unknown>[]).map((k): SortRow => ({
-        kind: typeof k.expression === 'string' ? 'formula' : 'column',
-        column: typeof k.column === 'string' ? k.column : '',
-        expression: typeof k.expression === 'string' ? k.expression : '',
-        direction: k.direction === 'desc' ? 'desc' : 'asc',
-      }))
-    : [];
+  const sort = sortRowsFromList(s.sort);
   const columns = list(s.columns);
   return {
     file: typeof s.file === 'string' ? s.file : 'Result',
@@ -74,13 +65,7 @@ export function outputToSettings(v: OutputValues, previous: Record<string, unkno
   else delete out.sheet;
   if (!v.allColumns && v.columns.length > 0) out.columns = v.columns;
   else delete out.columns;
-  const sort = v.sort
-    .filter((k) => (k.kind === 'column' ? k.column.trim() !== '' : k.expression.trim() !== ''))
-    .map((k) => {
-      const o: Record<string, unknown> = k.kind === 'column' ? { column: k.column.trim() } : { expression: k.expression };
-      if (k.direction === 'desc') o.direction = 'desc';
-      return o;
-    });
+  const sort = sortRowsToList(v.sort);
   if (sort.length > 0) out.sort = sort;
   else delete out.sort;
   if (v.numberLikeText.length > 0) out.numberLikeText = v.numberLikeText;
@@ -91,7 +76,7 @@ export function outputToSettings(v: OutputValues, previous: Record<string, unkno
 export function outputMissing(v: OutputValues): string[] {
   const m: string[] = [];
   if (!v.allColumns && v.columns.length === 0) m.push(translate('builder.output.missing.columns'));
-  if (v.sort.some((k) => (k.kind === 'column' ? k.column.trim() === '' : k.expression.trim() === ''))) m.push(translate('builder.output.missing.sortRow'));
+  if (v.sort.some((k) => !sortRowDone(k))) m.push(translate('builder.output.missing.sortRow'));
   return m;
 }
 

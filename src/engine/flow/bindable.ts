@@ -29,6 +29,7 @@ export interface BindableSetting {
 
 const text = (name: string, optional: boolean, placeholder: string): BindableSetting => ({ name, type: 'text', optional, placeholder });
 const whole = (name: string, min: number, placeholder: number): BindableSetting => ({ name, type: 'number', integer: true, min, optional: true, placeholder });
+const flag = (name: string): BindableSetting => ({ name, type: 'boolean', optional: true, placeholder: false });
 const choice = (name: string, choices: readonly string[], optional: boolean): BindableSetting => ({ name, type: 'choice', choices, optional, placeholder: choices[0] as string });
 
 export const BINDABLE_SETTINGS: Readonly<Record<NodeType, readonly BindableSetting[]>> = {
@@ -50,6 +51,13 @@ export const BINDABLE_SETTINGS: Readonly<Record<NodeType, readonly BindableSetti
   append: [choice('match', ['name', 'position'], true)],
   output: [text('file', true, 'Result'), choice('format', ['xlsx', 'csv'], true), text('sheet', false, 'Sheet1')],
   sql: [],
+  sort: [],
+  dedupe: [choice('keep', ['first', 'last'], true)],
+  top_n: [{ name: 'n', type: 'number', integer: true, min: 1, optional: false, placeholder: 10 }, choice('order', ['largest', 'smallest', 'first'], false)],
+  split_column: [choice('cut', ['comma', 'semicolon', 'space', 'tab', 'text', 'first_space', 'last_space'], false), text('separator', true, ','), choice('rest', ['last', 'drop'], true), flag('trim'), flag('keepOriginal')],
+  clean_text: [flag('trim'), flag('collapse'), flag('nonPrinting'), flag('removeMarks'), choice('caseMode', ['keep', 'upper', 'lower', 'proper'], true), choice('target', ['replace', 'suffix'], true), text('suffix', true, '_clean')],
+  check: [flag('stop')],
+  compare: [],
 };
 
 /** Settings that never take a parameter, with the reason. */
@@ -66,6 +74,13 @@ export const NOT_BINDABLE_SETTINGS: Readonly<Record<NodeType, Readonly<Record<st
   append: {},
   output: { columns: 'A list of columns of the data.', numberLikeText: 'A list of columns of the data.', sort: 'The rows of a list.' },
   sql: { sql: 'SQL. Read parameters from the table params.' },
+  sort: { keys: 'The rows of a list: a column or a formula with a direction.' },
+  dedupe: { columns: 'A list of columns of the data.' },
+  top_n: { by: 'A column or a formula of the data, with its kind.', groupBy: 'A list of columns of the data.' },
+  split_column: { column: 'A column of the data.', names: 'A list of new column names.' },
+  clean_text: { columns: 'A list of columns of the data.' },
+  check: { rules: 'The rows of a list: a name, a formula and a message.' },
+  compare: { keys: 'The rows of a list: a key column of each input.', compare: 'A list of columns of the data.' },
 };
 
 export function bindableSetting(type: NodeType, name: string): BindableSetting | undefined {

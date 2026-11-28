@@ -38,6 +38,6 @@ export function bindingsOf(definition: Pick<FlowDefinition, 'nodes'>): BindingRe
  * a flow never rewrites it (a published version cannot change) and a version is never lowered.
  */
 export function withBindingsVersion(definition: FlowDefinition): FlowDefinition {
-  if (definition.schemaVersion === 3 || bindingsOf(definition).length === 0) return definition;
+  if (definition.schemaVersion >= 3 || bindingsOf(definition).length === 0) return definition;
   return { ...definition, schemaVersion: 3 };
 }

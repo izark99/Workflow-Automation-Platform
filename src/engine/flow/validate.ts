@@ -5,7 +5,9 @@ import type { FlowParameter, ParameterType } from './parameters';
 import { isBindable } from './bindable';
 import { containsBindingKey, isParamBinding } from './bindings';
 import {
+  BINDINGS_SCHEMA_VERSION,
   FLOW_SCHEMA_VERSION,
+  NEW_STEP_TYPES,
   SUPPORTED_SCHEMA_VERSIONS,
   NODE_PORTS,
   NODE_TYPES,
@@ -125,6 +127,7 @@ export function validateFlow(input: unknown): FlowValidation {
     nodes.push(node);
   });
   checkBindings(input.schemaVersion, nodes, parameters, errors);
+  checkStepVersions(input.schemaVersion, nodes, errors);
 
   const validEdges: FlowEdge[] = [];
   input.edges.forEach((raw: unknown, index: number) => {
@@ -323,6 +326,15 @@ export function topologicalOrder(flow: FlowDefinition): string[] {
   return order;
 }
 
+/** A step of Phase 8 needs schemaVersion 4 (SPEC 15.4); older definitions never hold one. */
+function checkStepVersions(schemaVersion: unknown, nodes: FlowNode[], errors: FlowError[]): void {
+  if (schemaVersion === FLOW_SCHEMA_VERSION) return;
+  for (const node of nodes) {
+    if (!(NEW_STEP_TYPES as readonly string[]).includes(node.type)) continue;
+    errors.push({ ...paramError('engine.stepNeedsV4', { step: node.label ?? node.id, type: node.type }), nodeId: node.id });
+  }
+}
+
 /** The bindings of the settings (SPEC 13.3): their shape, their parameter, and that they sit in a single-value setting. */
 function checkBindings(schemaVersion: unknown, nodes: FlowNode[], parameters: FlowParameter[], errors: FlowError[]): void {
   const known = new Set(parameters.map((p) => p.key));
@@ -337,7 +349,7 @@ function checkBindings(schemaVersion: unknown, nodes: FlowNode[], parameters: Fl
           add('engine.bindShape', { setting });
           continue;
         }
-        if (schemaVersion !== 3) add('engine.bindNeedsV3', { setting });
+        if (typeof schemaVersion !== 'number' || schemaVersion < BINDINGS_SCHEMA_VERSION) add('engine.bindNeedsV3', { setting });
         if (!isBindable(node.type, setting)) {
           add('engine.bindNotHere', { setting });
           continue;

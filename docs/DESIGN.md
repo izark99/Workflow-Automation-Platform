@@ -371,6 +371,18 @@ The card "Versions used for this date" gets one more group, "Settings that use a
 - The forms use the existing parts: ColumnSelect and ColumnList (the same cell that does not change size when the columns load), the rule list of Check is the Filter condition field repeated with a name and a message (a row card with a remove button, "Add rule"), Compare's key pairs are a list like Lookup's keys.
 - The Test tab of Check and Compare, and of Remove duplicates, shows the output chips (`ok`/`errors`, `added`/`removed`/`changed`, `kept`/`removed`) like Filter does, with the row counts in the chip text. The Run screen shows the rule counts of a Check as a quiet warning block ("Check {name}: {n} rows failed {rule}").
 
+## What the build chose otherwise (Phase 8)
+
+These are the places where the build differs from the text above; each is recorded in `docs/DECISIONS.md` (D128 to D135).
+
+- The canvas controls are the app's own bar (zoom out, zoom in, Auto arrange, Snap to grid, fit), not the React Flow control group. The shortcut of Auto arrange is Alt+Shift+A and it is shown in the name of the button.
+- The step icons are the Harold icons that are nearest to the ones named above: `chevrons-up-down` for Sort, `copy` for Remove duplicates, `trending-up` for Top N, `list-filter` for Split column, `refresh-cw` for Clean text, `circle-check` for Check and `chart-column` for Compare. They appear on every card (16 px at its end, `ink-muted`) and on the step list buttons, not only on the new steps. The card keeps the type name as its second line; there is no summary line.
+- Ten icons are drawn in the Harold style because the set has none: the six align icons, the two distribute icons, `grid` (Snap to grid) and `maximize` (the Expand button).
+- The step list has 19 buttons in 7 groups (Files, Shape, Combine, Rows, Text, Quality, Advanced), not 8.
+- The toast of Auto arrange stays 8 seconds. It is not kept longer while it has focus.
+- The preview table has row numbers only in the popup; the table of the Test tab is unchanged.
+- A paste after a paste of the same copy moves a further 40 px, so that the copies do not hide each other.
+
 ## Print layout (Phase 9)
 
 - The Configure tab of an Output step (format xlsx) has the group "Print layout" under the sort rows: a Switch (off by default) with an info button; when on, the group shows, in order: Page (paper and orientation as two dropdowns on one row, margins dropdown, the switch "Fit all columns on one page wide", the switch "Repeat the header row", the switch "Page numbers"), Header lines (a list of up to 6 row cards: the text field, alignment as three icon toggles, "Bold", size dropdown, remove; "Add line"; an info button lists the tokens), Signatures (the optional date line field, then up to 5 signer cards: title, line under the title, name, remove; "Add signer"). The settings panel is 380 px, so a card's controls wrap onto two rows; nothing scrolls horizontally.

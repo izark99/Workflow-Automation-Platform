@@ -13,9 +13,11 @@ import type { FlowParameter } from './parameters';
 export const BASE_SCHEMA_VERSION = 1;
 /** Version 2 may carry `parameters`. Older definitions load with an empty list, and are never rewritten. */
 export const PARAMETERS_SCHEMA_VERSION = 2;
-/** The latest format: a single-value setting may be a binding `{"$param": "key"}` (SPEC 13.3). */
-export const FLOW_SCHEMA_VERSION = 3;
-export const SUPPORTED_SCHEMA_VERSIONS = [1, 2, 3] as const;
+/** Version 3: a single-value setting may be a binding `{"$param": "key"}` (SPEC 13.3). */
+export const BINDINGS_SCHEMA_VERSION = 3;
+/** The latest format: a definition that holds one of the seven steps of Phase 8 (`NEW_STEP_TYPES`) is version 4 (SPEC 15.4). */
+export const FLOW_SCHEMA_VERSION = 4;
+export const SUPPORTED_SCHEMA_VERSIONS = [1, 2, 3, 4] as const;
 
 /** A setting that takes its value from a parameter of the flow. */
 export interface ParamBinding {
@@ -35,7 +37,17 @@ export const NODE_TYPES = [
   'append',
   'output',
   'sql',
+  'sort',
+  'dedupe',
+  'top_n',
+  'split_column',
+  'clean_text',
+  'check',
+  'compare',
 ] as const;
+
+/** The steps of Phase 8. A definition that holds one is schemaVersion 4; older definitions never do. */
+export const NEW_STEP_TYPES = ['sort', 'dedupe', 'top_n', 'split_column', 'clean_text', 'check', 'compare'] as const;
 
 export type NodeType = (typeof NODE_TYPES)[number];
 
@@ -116,6 +128,22 @@ export const NODE_PORTS: Readonly<Record<NodeType, NodePorts>> = {
   append: { inputs: { kind: 'variadic', min: 2 }, outputs: ['out'] },
   output: { inputs: { kind: 'fixed', handles: [{ name: 'in', required: true }] }, outputs: [] },
   sql: { inputs: { kind: 'variadic', min: 1 }, outputs: ['out'] },
+  sort: { inputs: { kind: 'fixed', handles: [{ name: 'in', required: true }] }, outputs: ['out'] },
+  dedupe: { inputs: { kind: 'fixed', handles: [{ name: 'in', required: true }] }, outputs: ['kept', 'removed'] },
+  top_n: { inputs: { kind: 'fixed', handles: [{ name: 'in', required: true }] }, outputs: ['out'] },
+  split_column: { inputs: { kind: 'fixed', handles: [{ name: 'in', required: true }] }, outputs: ['out'] },
+  clean_text: { inputs: { kind: 'fixed', handles: [{ name: 'in', required: true }] }, outputs: ['out'] },
+  check: { inputs: { kind: 'fixed', handles: [{ name: 'in', required: true }] }, outputs: ['ok', 'errors'] },
+  compare: {
+    inputs: {
+      kind: 'fixed',
+      handles: [
+        { name: 'new', required: true },
+        { name: 'old', required: true },
+      ],
+    },
+    outputs: ['added', 'removed', 'changed'],
+  },
 };
 
 export const VARIADIC_HANDLE = /^in([1-9]\d*)$/;

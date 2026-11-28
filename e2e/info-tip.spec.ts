@@ -6,6 +6,10 @@ const text = /The date a run is for/;
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/dev/components');
+  // Wait until the page has its content: a hover right after the load can land on a button that then moves away (the layout is
+  // still settling), and the pointer has left it before the 300 ms are over.
+  await expect(page.getByRole('heading', { name: 'Components and states', level: 1 })).toBeVisible();
+  await page.waitForLoadState('networkidle');
 });
 
 test('the info button is exactly 24 x 24 px and named "About {label}"', async ({ page }) => {

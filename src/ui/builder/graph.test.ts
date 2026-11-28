@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { validateFlow } from '../../engine/flow/validate';
-import { addStep, connectSteps, currentSource, deleteEdges, deleteSteps, emptyDefinition, inputHandlesOf, inputTitle, moveStep, nextFreePosition, setInput, sourceOptions, stepNumbers, STEP_CATALOG, STEP_GROUPS } from './graph';
+import { addStep, setPositions, arrangeSteps, restorePositions, connectSteps, currentSource, deleteEdges, deleteSteps, emptyDefinition, inputHandlesOf, inputTitle, moveStep, nextFreePosition, setInput, sourceOptions, stepNumbers, STEP_CATALOG, STEP_GROUPS } from './graph';
 import type { FlowDefinition } from '../../engine/flow/types';
 import { NODE_TYPES } from '../../engine/flow/types';
 
@@ -182,5 +182,64 @@ describe('input choices (the keyboard way to connect)', () => {
   });
   it('names ports for people', () => {
     expect([inputTitle('in'), inputTitle('left'), inputTitle('right'), inputTitle('in3')]).toEqual(['Input', 'Left input', 'Right input', 'Input 3']);
+  });
+});
+
+describe('arrangeSteps', () => {
+  const messy = () => {
+    const { def, ids } = build(['input_file', 'column_mapping', 'output']);
+    const linked = link(link(def, ids[0]!, ids[1]!), ids[1]!, ids[2]!);
+    return { def: { ...linked, nodes: linked.nodes.map((n, i) => ({ ...n, position: { x: 400 - i * 90, y: i * 300 } })) }, ids };
+  };
+  it('puts a messy chain in one row, 80 px between the columns, and says it changed', () => {
+    const { def, ids } = messy();
+    const r = arrangeSteps(def, []);
+    expect(r.unchanged).toBe(false);
+    const x = ids.map((id) => r.definition.nodes.find((n) => n.id === id)?.position?.x);
+    expect(x).toEqual([0, 320, 640]);
+  });
+  it('is unchanged the second time and returns the same object', () => {
+    const { def } = messy();
+    const once = arrangeSteps(def, []).definition;
+    const twice = arrangeSteps(once, []);
+    expect(twice.unchanged).toBe(true);
+    expect(twice.definition).toBe(once);
+  });
+  it('moves only the selected steps and puts every position back with restorePositions', () => {
+    const { def, ids } = messy();
+    const r = arrangeSteps(def, [ids[0]!, ids[1]!]);
+    expect(r.definition.nodes.find((n) => n.id === ids[2])?.position).toEqual(def.nodes[2]?.position);
+    expect(restorePositions(r.definition, r.previous)).toEqual(def);
+  });
+});
+
+describe('setPositions', () => {
+  it('moves several steps in one change and returns the same object when nothing moves', () => {
+    const { def, ids } = build(['input_file', 'column_mapping']);
+    const next = setPositions(def, { [ids[0]!]: { x: 10.4, y: 20 }, [ids[1]!]: { x: 10, y: 99 } });
+    expect(next.nodes.map((n) => n.position)).toEqual([{ x: 10, y: 20 }, { x: 10, y: 99 }]);
+    expect(setPositions(next, { [ids[0]!]: { x: 10, y: 20 } })).toBe(next);
+  });
+});
+
+describe('the steps of Phase 8 in the builder', () => {
+  const NEW = ['sort', 'dedupe', 'top_n', 'split_column', 'clean_text', 'check', 'compare'] as const;
+  it('adds a definition that holds one as schemaVersion 4, and leaves the version of a plain definition', () => {
+    for (const t of NEW) expect(addStep(emptyDefinition(), t, { x: 0, y: 0 }).definition.schemaVersion, t).toBe(4);
+    expect(addStep(emptyDefinition(), 'filter', { x: 0, y: 0 }).definition.schemaVersion).toBe(1);
+    const four = addStep(emptyDefinition(), 'sort', { x: 0, y: 0 });
+    expect(deleteSteps(four.definition, [four.id]).schemaVersion).toBe(4);
+  });
+  it('lists them in the groups Rows, Text and Quality after Combine, and before Advanced', () => {
+    expect(STEP_GROUPS.map((g) => g.types.length)).toEqual([3, 6, 2, 3, 2, 2, 1]);
+    expect(STEP_GROUPS.slice(3, 6).flatMap((g) => g.types)).toEqual(['sort', 'dedupe', 'top_n', 'split_column', 'clean_text', 'check', 'compare']);
+  });
+  it('gives each one default settings with the names of the settings registry and a name', () => {
+    for (const t of NEW) {
+      const { definition, id } = addStep(emptyDefinition(), t, { x: 0, y: 0 });
+      const node = definition.nodes.find((n) => n.id === id)!;
+      expect(Object.keys(node.settings).length, t).toBeGreaterThan(0);
+      expect(node.label, t).toBe(STEP_CATALOG[t].label);
+    }
   });
 });

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Badge, Button, Icon, Card, Checkbox, Chip, ChipGroup, QuietWarning, Switch, DatePicker, Dialog, Dropdown, EmptyState, ErrorState, Field, InfoTip, PageHeader, ProgressBar, SearchField, SkeletonTable, Tabs, ToastProvider, useToast } from '../components';
+import { Badge, Button, Icon, Card, Checkbox, Chip, ChipGroup, QuietWarning, Switch, DatePicker, Dialog, Dropdown, EmptyState, ErrorState, Field, InfoTip, PageHeader, PreviewTable, ProgressBar, SearchField, SkeletonTable, Tabs, ToastProvider, useToast } from '../components';
 import { useT } from '../i18n';
 import { ParameterControl } from '../builder/parameter-control/parameter-control';
 import type { FlowParameter } from '../../engine/flow/parameters';
@@ -78,6 +78,7 @@ function Content() {
   const [checked, setChecked] = useState(true);
   const [tab, setTab] = useState('setup');
   const [confirm, setConfirm] = useState(false);
+  const [wide, setWide] = useState(false);
   const [scope, setScope] = useState<'all' | 'personal' | 'shared'>('all');
   const toast = useToast();
 
@@ -205,6 +206,7 @@ function Content() {
             <Button variant="danger" onClick={() => setConfirm(true)}>
               {t('dev.demo.deleteFlow')}
             </Button>
+            <Button onClick={() => setWide(true)}>{t('dev.demo.wideDialog')}</Button>
           </div>
         </Card>
         <Card>
@@ -225,6 +227,18 @@ function Content() {
           <QuietWarning lines={[t('versions.state.upcoming')]} />
         </Card>
       </div>
+      {wide ? (
+        <Dialog wide title={t('dev.demo.widePreview')} onClose={() => setWide(false)} actions={<Button onClick={() => setWide(false)}>{t('dev.demo.close')}</Button>}>
+          <PreviewTable
+            fill
+            rowNumbers
+            firstRowNumber={9801}
+            label={t('dev.demo.previewTable')}
+            columns={Array.from({ length: 14 }, (_, c) => ({ header: `Column ${c + 1}`, align: c % 3 === 2 ? ('right' as const) : ('left' as const) }))}
+            rows={Array.from({ length: 200 }, (_, r) => Array.from({ length: 14 }, (_, c) => (c % 3 === 2 ? String((r + 1) * (c + 1)) : `Value ${r + 1}.${c + 1}`)))}
+          />
+        </Dialog>
+      ) : null}
       {confirm ? (
         <Dialog
           title={t('dev.demo.deleteMonthlyTimesheetSummary')}

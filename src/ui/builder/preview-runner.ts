@@ -2,6 +2,7 @@ import { warningText } from '../i18n';
 import { PREVIEW_ROWS, runFlow } from '../../engine/run';
 import { createBrowserRunner } from '../../engine/runner/browser-runner';
 import type { FileSource } from '../../engine/input/load';
+import { NODE_PORTS } from '../../engine/flow/types';
 import type { FlowDefinition } from '../../engine/flow/types';
 import type { ParameterValues } from '../../engine/flow/parameter-values';
 import { parametersOf } from '../../engine/flow/parameters';
@@ -14,15 +15,20 @@ import type { RefTable } from '../../engine/versions';
 
 export type PreviewPart = 'first' | 'last';
 
+/** The most rows that one preview holds (the popup's Show more, SPEC 15.3). */
+export const MAX_PREVIEW_ROWS = 1000;
+
 export interface PreviewData {
   columns: Column[];
   rows: Cell[][];
-  /** Rows in the whole table; the preview holds at most 100. */
+  /** Rows in the whole table; the preview holds at most 100 (up to 1,000 in the popup). */
   totalRows: number;
   /** Which rows these are: the first 100 of the table, or the last 100. */
   part: PreviewPart;
   /** The number of the first row shown (1 for the first part). */
   fromRow: number;
+  /** The rows of each output of the step, for the chips of a step with several outputs. Empty for a step with one table. */
+  counts: Record<string, number>;
   /** What the load of the files did that the person should know (a stop text that was never found), in the current language. */
   warnings: string[];
 }
@@ -52,6 +58,8 @@ export interface PreviewRequest {
   parameterValues?: ParameterValues;
   /** The first 100 rows (the default) or the last 100, to see how the end of the file was read. */
   part?: PreviewPart;
+  /** How many rows to read: 100 by default, never more than `MAX_PREVIEW_ROWS` and at least 1. */
+  limit?: number;
   signal?: AbortSignal;
   /** Tests pass a Node runner here. */
   runner?: SqlRunner;
@@ -71,14 +79,21 @@ export async function runPreview(req: PreviewRequest): Promise<PreviewData> {
     // The builder's test runs read a draft version of a table that covers the date (DECISIONS: includeDrafts is for them).
     includeDrafts: true,
   });
-  const result = await runFlow(runner, { flow: definition, parameterValues, effectiveDate: req.effectiveDate, files: req.files, refTables: prepared.refTables, signal: req.signal });
+  const result = await runFlow(runner, { flow: definition, parameterValues, effectiveDate: req.effectiveDate, files: req.files, refTables: prepared.refTables, signal: req.signal, stopChecks: false });
   try {
     const table = result.tables.get(`${req.nodeId}/${req.handle}`);
     const part = req.part ?? 'first';
     const total = table?.rowCount ?? 0;
-    const offset = part === 'last' ? Math.max(0, total - PREVIEW_ROWS) : 0;
-    const data = await result.preview(req.nodeId, req.handle, PREVIEW_ROWS, offset);
-    return { columns: data.columns, rows: data.rows, totalRows: table?.rowCount ?? data.rows.length, part, fromRow: offset + 1, warnings: result.warnings.map(warningText) };
+    const limit = Math.min(MAX_PREVIEW_ROWS, Math.max(1, Math.floor(req.limit ?? PREVIEW_ROWS)));
+    const offset = part === 'last' ? Math.max(0, total - limit) : 0;
+    const data = await result.preview(req.nodeId, req.handle, limit, offset);
+    const counts: Record<string, number> = {};
+    const type = definition.nodes.find((n) => n.id === req.nodeId)?.type;
+    for (const h of type ? NODE_PORTS[type].outputs : []) {
+      const t = result.tables.get(`${req.nodeId}/${h}`);
+      if (t) counts[h] = t.rowCount;
+    }
+    return { columns: data.columns, rows: data.rows, totalRows: table?.rowCount ?? data.rows.length, part, fromRow: offset + 1, counts, warnings: result.warnings.map(warningText) };
   } finally {
     await result.dispose();
   }

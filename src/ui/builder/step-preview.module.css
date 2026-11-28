@@ -23,6 +23,7 @@
 }
 
 .muted {
+  margin: 0;
   font-size: 13px;
   line-height: 20px;
   color: var(--ink-muted);
@@ -42,4 +43,29 @@
 .labelRow {
   display: flex;
   align-items: center;
+}
+
+/* The toolbar of the preview popup: the part chips, the Find field, its count, then Show more at the end. */
+.popupBar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.popupBar > label {
+  flex: 0 1 280px;
+  min-width: 160px;
+}
+
+.popupBar > span {
+  flex: 1;
+  min-width: 0;
+}
+
+.countRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
 }

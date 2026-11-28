@@ -1,7 +1,8 @@
 import { useRef } from 'react';
-import { Button, InfoTip } from '../components';
+import { Button, Icon, InfoTip } from '../components';
 import type { NodeType } from '../../engine/flow/types';
 import { STEP_CATALOG, STEP_GROUPS } from './graph';
+import { STEP_ICONS } from './step-icons';
 import { useT } from '../i18n';
 import { usePanel } from '../panels/use-panel';
 import { PanelToggle } from '../panels/panel-toggle';
@@ -28,7 +29,7 @@ export function StepList({ onAdd, disabled }: { onAdd: (type: NodeType) => void;
       <div className={styles.stepListBody} hidden={collapsed}>
       <div className={styles.titleRow}>
         <h2>{t('builder.addStep')}</h2>
-        <InfoTip label={t('builder.addStep')}>{t('builder.addStepHint')}</InfoTip>
+        <InfoTip label={t('builder.addStep')}>{`${t('builder.addStepHint')} ${t('builder.shortcuts')}`}</InfoTip>
       </div>
       {STEP_GROUPS.map((g) => (
         <div key={g.label} role="group" aria-label={g.label} style={{ display: 'contents' }}>
@@ -44,11 +45,14 @@ export function StepList({ onAdd, disabled }: { onAdd: (type: NodeType) => void;
               draggable={!disabled}
               onDragStart={(e) => {
                 e.dataTransfer.setData(DRAG_TYPE, type);
+                // The data of a drag cannot be read while it is over a target, but its types can: the type of step goes in a type name.
+                e.dataTransfer.setData(`${DRAG_TYPE}.${type}`, '1');
                 e.dataTransfer.effectAllowed = 'copy';
               }}
               onClick={() => onAdd(type)}
               aria-label={t('builder.addStepButton', { name: STEP_CATALOG[type].label })}
             >
+              <Icon name={STEP_ICONS[type]} />
               {STEP_CATALOG[type].label}
             </Button>
           ))}

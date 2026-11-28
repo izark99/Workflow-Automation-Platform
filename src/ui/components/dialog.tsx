@@ -14,6 +14,8 @@ export interface DialogProps {
   children: ReactNode;
   /** Width in px; 420 by default. */
   width?: number;
+  /** The wide variant (the preview popup): up to the window minus 96 px each way, at least 960 x 560 px. The body does not scroll; its content does. */
+  wide?: boolean;
   /** The buttons, right-aligned. Put destructive buttons 8 px from the others (the gap does that). */
   actions: ReactNode;
 }
@@ -21,7 +23,7 @@ export interface DialogProps {
 const FOCUSABLE = 'button:not(:disabled), [href], input:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])';
 
 /** Modal dialog: focus moves in, Tab stays inside, Escape closes, focus returns to the element that opened it. */
-export function Dialog({ title, onClose, children, actions, width }: DialogProps) {
+export function Dialog({ title, onClose, children, actions, width, wide = false }: DialogProps) {
   const ref = useRef<HTMLDivElement>(null);
   const layerRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
@@ -68,11 +70,11 @@ export function Dialog({ title, onClose, children, actions, width }: DialogProps
 
   return (
     <div ref={layerRef} className={styles.backdrop} data-dialog-layer>
-      <div ref={ref} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1} className={styles.dialog} style={width ? { width } : undefined}>
+      <div ref={ref} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1} className={wide ? `${styles.dialog} ${styles.wide}` : styles.dialog} style={width && !wide ? { width } : undefined}>
         <span id={titleId} className={styles.title}>
           {title}
         </span>
-        <div className={styles.body}>{children}</div>
+        <div className={wide ? `${styles.body} ${styles.wideBody}` : styles.body}>{children}</div>
         <div className={styles.actions}>{actions}</div>
       </div>
     </div>

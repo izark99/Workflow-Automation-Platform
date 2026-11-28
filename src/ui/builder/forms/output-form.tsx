@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { withBindingPlaceholders } from '../../../engine/flow/bindable';
 import { checkOutputNodes } from '../../../engine/nodes/output';
-import { Button, Checkbox, Dropdown, ErrorState, Field, Icon } from '../../components';
+import { Checkbox, Dropdown, ErrorState, Field } from '../../components';
 import { useT, errorText } from '../../i18n';
 import type { MessageKey } from '../../i18n';
 import { Bind } from '../parameter-control/bind';
-import { ColumnList, ColumnSelect, LoadColumnsBar, SectionLabel } from './column-pickers';
+import { ColumnList, LoadColumnsBar } from './column-pickers';
 import { outputFromSettings, outputMissing, outputToSettings } from './output-logic';
-import type { OutputErrors, OutputFormat, OutputValues, SortRow } from './output-logic';
+import type { OutputErrors, OutputFormat, OutputValues } from './output-logic';
+import { SortRows } from './sort-rows';
 import type { FormProps } from './types';
 import { useSourceColumns } from './use-source-columns';
 import styles from './column-pickers.module.css';
@@ -27,7 +28,6 @@ export function OutputForm(props: FormProps) {
     setErrors(r.errors);
     if (r.settings) onSettings(r.settings);
   };
-  const patchSort = (i: number, change: Partial<SortRow>): void => apply({ ...v, sort: v.sort.map((k, j) => (j === i ? { ...k, ...change } : k)) });
 
   // The engine checks all Output steps together (sheet names, formats, csv files). Show its message when it is about this step.
   let clash: string | null = null;
@@ -67,38 +67,7 @@ export function OutputForm(props: FormProps) {
         </>
       )}
 
-      <div role="group" aria-label={t('builder.output.sort')} style={{ display: 'flex', flexDirection: 'column' }}>
-        <SectionLabel label={t('builder.output.sort')} hint={t('builder.output.sortHint')} flush />
-        {v.sort.map((k, i) => (
-          <div key={i} className={styles.rowCard}>
-            <div className={styles.line}>
-              <div>
-                <span className={styles.label}>{t('common.numbered', { label: t('builder.output.kind'), n: i + 1 })}</span>
-                <Dropdown label={t('common.numbered', { label: t('builder.output.kind'), n: i + 1 })} options={(['column', 'formula'] as const).map((x) => ({ value: x, label: t(`builder.output.kinds.${x}` as MessageKey) }))} value={k.kind} disabled={readOnly} width={110} onChange={(kind) => patchSort(i, { kind: kind as SortRow['kind'] })} />
-              </div>
-              <div className={styles.grow}>
-                {k.kind === 'column' ? (
-                  <ColumnSelect label={t('common.numbered', { label: t('builder.output.sortColumn'), n: i + 1 })} value={k.column} columns={names} disabled={readOnly} onChange={(column) => patchSort(i, { column })} />
-                ) : (
-                  <Field label={t('common.numbered', { label: t('builder.output.sortFormula'), n: i + 1 })} value={k.expression} disabled={readOnly} onChange={(e) => patchSort(i, { expression: e.target.value })} />
-                )}
-              </div>
-              <Button icon disabled={readOnly} aria-label={t('builder.output.removeSort', { n: i + 1 })} onClick={() => apply({ ...v, sort: v.sort.filter((_, j) => j !== i) })}>
-                <Icon name="x" />
-              </Button>
-            </div>
-            <div>
-              <span className={styles.label}>{t('common.numbered', { label: t('builder.output.direction'), n: i + 1 })}</span>
-              <Dropdown label={t('common.numbered', { label: t('builder.output.direction'), n: i + 1 })} options={(['asc', 'desc'] as const).map((x) => ({ value: x, label: t(`builder.output.directions.${x}` as MessageKey) }))} value={k.direction} disabled={readOnly} width={150} onChange={(direction) => patchSort(i, { direction: direction as SortRow['direction'] })} />
-            </div>
-          </div>
-        ))}
-        <div style={{ paddingTop: 8 }}>
-          <Button size="sm" disabled={readOnly} onClick={() => apply({ ...v, sort: [...v.sort, { kind: 'column', column: '', expression: '', direction: 'asc' }] })}>
-            {t('builder.output.addSort')}
-          </Button>
-        </div>
-      </div>
+      <SortRows rows={v.sort} names={names} readOnly={readOnly} onChange={(sort) => apply({ ...v, sort })} />
 
       <ColumnList label={t('builder.output.numberLike')} hint={t('builder.output.numberLikeHint')} values={v.numberLikeText} columns={names} disabled={readOnly} onChange={(numberLikeText) => apply({ ...v, numberLikeText })} />
       {missing.length > 0 ? (

@@ -1,3 +1,4 @@
+import { quoteIdent } from '../sql';
 import { EngineError, type Column } from '../types';
 
 /**
@@ -12,4 +13,12 @@ export function requireColumn(columns: Column[], name: string, nodeId?: string):
     ? ` The input has "${close.name}"; column names are case-sensitive, so use that spelling.`
     : ` Available columns: ${columns.map((c) => `"${c.name}"`).join(', ') || '(none)'}.`;
   throw new EngineError('unknown_column', `Column "${name}" does not exist in the input of this step.${hint}`, nodeId);
+}
+
+/**
+ * The SQL that groups or compares by a column: an empty text is made NULL, so that "" and a blank cell are the same value.
+ * (All NULLs of a column fall in one group of a window partition.)
+ */
+export function nullAwareTerm(column: Column): string {
+  return column.type === 'text' ? `NULLIF(${quoteIdent(column.name)}, '')` : quoteIdent(column.name);
 }

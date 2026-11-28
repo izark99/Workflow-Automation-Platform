@@ -1,4 +1,6 @@
 // Pure operations on the flow definition. The canvas reads and writes the same JSON that the engine runs (one format).
+import { withStepsVersion } from '../../engine/flow/steps-version';
+import { arrangeLayout, pointOf } from '../../engine/flow/arrange';
 import { BASE_SCHEMA_VERSION, NODE_PORTS, NODE_TYPES, VARIADIC_HANDLE } from '../../engine/flow/types';
 import { translate } from '../i18n';
 import type { MessageKey } from '../i18n';
@@ -29,6 +31,9 @@ export const STEP_GROUPS: { label: string; types: NodeType[] }[] = [
   { id: 'files', types: ['input_file', 'reference_table', 'output'] },
   { id: 'shape', types: ['column_mapping', 'filter', 'formula_column', 'unpivot', 'pivot', 'group_by'] },
   { id: 'combine', types: ['lookup_join', 'append'] },
+  { id: 'rows', types: ['sort', 'dedupe', 'top_n'] },
+  { id: 'text', types: ['split_column', 'clean_text'] },
+  { id: 'quality', types: ['check', 'compare'] },
   { id: 'advanced', types: ['sql'] },
 ].map((g) => ({
   types: g.types as NodeType[],
@@ -125,6 +130,20 @@ export function defaultSettings(type: NodeType, id: string): Record<string, unkn
       return { key: id, headerRow: 1 };
     case 'column_mapping':
       return { columns: [] };
+    case 'sort':
+      return { keys: [] };
+    case 'dedupe':
+      return { columns: [], keep: 'first' };
+    case 'top_n':
+      return { n: 10, order: 'largest', groupBy: [] };
+    case 'split_column':
+      return { column: '', cut: 'space', separator: '', names: [], rest: 'last', trim: true, keepOriginal: false };
+    case 'clean_text':
+      return { columns: [], trim: true, collapse: true, nonPrinting: false, caseMode: 'keep', removeMarks: false, target: 'replace', suffix: '_clean' };
+    case 'check':
+      return { rules: [], stop: false };
+    case 'compare':
+      return { keys: [], compare: [] };
     case 'formula_column':
       return { name: 'New column', expression: '' };
     case 'lookup_join':
@@ -150,11 +169,64 @@ export function defaultSettings(type: NodeType, id: string): Record<string, unkn
 export function addStep(def: FlowDefinition, type: NodeType, position: { x: number; y: number }): { definition: FlowDefinition; id: string } {
   const id = nextStepId(def, type);
   const step: FlowNode = { id, type, label: nextLabel(def, type), position: { x: Math.round(position.x), y: Math.round(position.y) }, settings: defaultSettings(type, id) };
-  return { definition: { ...def, nodes: [...def.nodes, step] }, id };
+  // A definition that holds a step of Phase 8 is schemaVersion 4 (SPEC 15.4); others keep their version.
+  return { definition: withStepsVersion({ ...def, nodes: [...def.nodes, step] }), id };
 }
 
 export function moveStep(def: FlowDefinition, id: string, position: { x: number; y: number }): FlowDefinition {
   return { ...def, nodes: def.nodes.map((n) => (n.id === id ? { ...n, position: { x: Math.round(position.x), y: Math.round(position.y) } } : n)) };
+}
+
+export interface ArrangeResult {
+  definition: FlowDefinition;
+  /** The positions before, for Undo. A step that had none is not in the map. */
+  previous: Record<string, { x: number; y: number } | undefined>;
+  /** True when no step has to move. */
+  unchanged: boolean;
+}
+
+/** Auto arrange: the whole flow, or only the selected steps when two or more are selected (SPEC 15.1). One change. */
+export function arrangeSteps(def: FlowDefinition, selection: readonly string[]): ArrangeResult {
+  const positions = arrangeLayout(def, { width: CARD_WIDTH, height: CARD_HEIGHT, selection });
+  const previous: ArrangeResult['previous'] = {};
+  let unchanged = true;
+  const nodes = def.nodes.map((n) => {
+    if (!(n.id in positions)) return n;
+    const p = pointOf(positions, n.id);
+    const next = { x: Math.round(p.x), y: Math.round(p.y) };
+    previous[n.id] = n.position;
+    if (n.position?.x !== next.x || n.position?.y !== next.y) unchanged = false;
+    return { ...n, position: next };
+  });
+  return { definition: unchanged ? def : { ...def, nodes }, previous, unchanged };
+}
+
+/** Writes positions for several steps as one change. Returns the same definition when nothing moves. */
+export function setPositions(def: FlowDefinition, positions: Record<string, { x: number; y: number }>): FlowDefinition {
+  let changed = false;
+  const nodes = def.nodes.map((n) => {
+    const p = positions[n.id];
+    if (!p) return n;
+    const next = { x: Math.round(p.x), y: Math.round(p.y) };
+    if (n.position?.x === next.x && n.position?.y === next.y) return n;
+    changed = true;
+    return { ...n, position: next };
+  });
+  return changed ? { ...def, nodes } : def;
+}
+
+/** Undo of Auto arrange: every position goes back. */
+export function restorePositions(def: FlowDefinition, previous: ArrangeResult['previous']): FlowDefinition {
+  return {
+    ...def,
+    nodes: def.nodes.map((n) => {
+      if (!(n.id in previous)) return n;
+      const { position: _drop, ...rest } = n;
+      void _drop;
+      const before = previous[n.id];
+      return before ? { ...rest, position: before } : rest;
+    }),
+  };
 }
 
 export interface ConnectionLike {
@@ -212,7 +284,7 @@ export function deleteEdges(def: FlowDefinition, ids: string[]): FlowDefinition 
   return compactVariadic({ ...def, edges: resolvedEdges(def).filter((e) => !gone.has(e.id)) });
 }
 
-function compactVariadic(def: FlowDefinition): FlowDefinition {
+export function compactVariadic(def: FlowDefinition): FlowDefinition {
   const edges = resolvedEdges(def);
   const out = edges.map((e) => ({ ...e }));
   for (const node of def.nodes) {
@@ -237,12 +309,17 @@ export interface SourceOption {
 }
 
 const handleTitle = (handle: string): string | undefined => {
-  const keys: Record<string, MessageKey> = { in: 'builder.port.input', left: 'builder.port.left', right: 'builder.port.right', match: 'builder.port.match', nomatch: 'builder.port.noMatch' };
+  const keys: Record<string, MessageKey> = { in: 'builder.port.input', left: 'builder.port.left', right: 'builder.port.right', match: 'builder.port.match', nomatch: 'builder.port.noMatch', kept: 'builder.port.kept', removed: 'builder.port.removed', ok: 'builder.port.ok', errors: 'builder.port.errors', added: 'builder.port.added', changed: 'builder.port.changed', new: 'builder.port.new', old: 'builder.port.old' };
   return keys[handle] ? translate(keys[handle]!) : undefined;
 };
 
 /** The name of an input port for a person: `Input`, `Left input`, `Input 2`. */
-export const inputTitle = (handle: string): string => handleTitle(handle) ?? (/^in(\d+)$/.test(handle) ? translate('builder.port.numbered', { n: handle.slice(2) }) : handle);
+export const inputTitle = (handle: string): string => {
+  // Compare reads two tables: they are named as tables, not as "new" and "old" alone.
+  if (handle === 'new') return translate('builder.port.newInput');
+  if (handle === 'old') return translate('builder.port.oldInput');
+  return handleTitle(handle) ?? (/^in(\d+)$/.test(handle) ? translate('builder.port.numbered', { n: handle.slice(2) }) : handle);
+};
 
 /** The value of the connection into an input port, or an empty text. */
 export function currentSource(def: FlowDefinition, targetId: string, handle: string): string {

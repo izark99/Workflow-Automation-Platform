@@ -53,6 +53,7 @@ export type EngineErrorCode =
   | 'file_read_failed'
   | 'unknown_column'
   | 'node_failed'
+  | 'check_failed'
   | 'cancelled';
 
 /** Every message says what failed and what to do next. */

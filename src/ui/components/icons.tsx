@@ -263,6 +263,59 @@ const NODES = {
       },
     ],
   ],
+  'align-left': [
+    ['line', { x1: '4', y1: '3', x2: '4', y2: '21' }],
+    ['rect', { x: '7', y: '6', width: '13', height: '4', rx: '1' }],
+    ['rect', { x: '7', y: '14', width: '8', height: '4', rx: '1' }],
+  ],
+  'align-center-h': [
+    ['line', { x1: '12', y1: '3', x2: '12', y2: '21' }],
+    ['rect', { x: '4', y: '6', width: '16', height: '4', rx: '1' }],
+    ['rect', { x: '7', y: '14', width: '10', height: '4', rx: '1' }],
+  ],
+  'align-right': [
+    ['line', { x1: '20', y1: '3', x2: '20', y2: '21' }],
+    ['rect', { x: '4', y: '6', width: '13', height: '4', rx: '1' }],
+    ['rect', { x: '9', y: '14', width: '8', height: '4', rx: '1' }],
+  ],
+  'align-top': [
+    ['line', { x1: '3', y1: '4', x2: '21', y2: '4' }],
+    ['rect', { x: '6', y: '7', width: '4', height: '13', rx: '1' }],
+    ['rect', { x: '14', y: '7', width: '4', height: '8', rx: '1' }],
+  ],
+  'align-middle': [
+    ['line', { x1: '3', y1: '12', x2: '21', y2: '12' }],
+    ['rect', { x: '6', y: '4', width: '4', height: '16', rx: '1' }],
+    ['rect', { x: '14', y: '7', width: '4', height: '10', rx: '1' }],
+  ],
+  'align-bottom': [
+    ['line', { x1: '3', y1: '20', x2: '21', y2: '20' }],
+    ['rect', { x: '6', y: '4', width: '4', height: '13', rx: '1' }],
+    ['rect', { x: '14', y: '9', width: '4', height: '8', rx: '1' }],
+  ],
+  'distribute-h': [
+    ['line', { x1: '3', y1: '3', x2: '3', y2: '21' }],
+    ['line', { x1: '21', y1: '3', x2: '21', y2: '21' }],
+    ['rect', { x: '9', y: '7', width: '6', height: '10', rx: '1' }],
+  ],
+  'distribute-v': [
+    ['line', { x1: '3', y1: '3', x2: '21', y2: '3' }],
+    ['line', { x1: '3', y1: '21', x2: '21', y2: '21' }],
+    ['rect', { x: '7', y: '9', width: '10', height: '6', rx: '1' }],
+  ],
+  maximize: [
+    ['path', { d: 'M8 3H5a2 2 0 0 0-2 2v3' }],
+    ['path', { d: 'M21 8V5a2 2 0 0 0-2-2h-3' }],
+    ['path', { d: 'M3 16v3a2 2 0 0 0 2 2h3' }],
+    ['path', { d: 'M16 21h3a2 2 0 0 0 2-2v-3' }],
+  ],
+  'grid': [
+    ['rect', { x: '3', y: '3', width: '18', height: '18', rx: '1' }],
+    ['line', { x1: '9', y1: '3', x2: '9', y2: '21' }],
+    ['line', { x1: '15', y1: '3', x2: '15', y2: '21' }],
+    ['line', { x1: '3', y1: '9', x2: '21', y2: '9' }],
+    ['line', { x1: '3', y1: '15', x2: '21', y2: '15' }],
+  ],
 } as const satisfies Record<string, readonly Node[]>;
 
 export type IconName = keyof typeof NODES;
@@ -272,6 +325,8 @@ export type IconSize = 16 | 20 | 24;
 /** The 47 icons of the Harold set, then the two taken from Lucide. */
 export const ICON_NAMES = Object.keys(NODES) as IconName[];
 export const LUCIDE_EXTRAS: readonly IconName[] = ['link', 'shield'];
+/** Drawn for Phase 8 in the same style (D128): the align and distribute actions, the snap switch and the expand button of the preview. */
+export const DRAWN_EXTRAS: readonly IconName[] = ['align-left', 'align-center-h', 'align-right', 'align-top', 'align-middle', 'align-bottom', 'distribute-h', 'distribute-v', 'grid', 'maximize'];
 
 /** Stroke 2 at 16 px and below, 1.75 above. */
 export const strokeFor = (size: number): number => (size <= 16 ? 2 : 1.75);

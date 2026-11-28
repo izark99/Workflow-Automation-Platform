@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { ICON_NAMES, Icon, LUCIDE_EXTRAS, strokeFor, type IconName } from './icons';
+import { DRAWN_EXTRAS, ICON_NAMES, Icon, LUCIDE_EXTRAS, strokeFor, type IconName } from './icons';
 
 const harold = readFileSync(new URL('../../../design/harold/components/bundle.js', import.meta.url), 'utf8');
 const haroldNodes = JSON.parse(harold.match(/var ICONS = (\{.*?\});\n/s)![1]!) as Record<string, Array<[string, Record<string, string>]>>;
@@ -20,11 +20,12 @@ function sourceFiles(dir: string): string[] {
 const src = sourceFiles(fileURLToPath(new URL('../..', import.meta.url))).map((f) => readFileSync(f, 'utf8'));
 
 describe('the icon set', () => {
-  it('has the 47 icons of Harold with their path data, and only link and shield besides', () => {
-    const own = ICON_NAMES.filter((n) => !LUCIDE_EXTRAS.includes(n));
+  it('has the 47 icons of Harold with their path data, link and shield from Lucide, and the ten drawn for Phase 8 (D128)', () => {
+    const own = ICON_NAMES.filter((n) => !LUCIDE_EXTRAS.includes(n) && !DRAWN_EXTRAS.includes(n));
     expect(own.sort()).toEqual(Object.keys(haroldNodes).sort());
     expect(own).toHaveLength(47);
     expect([...ICON_NAMES].filter((n) => LUCIDE_EXTRAS.includes(n)).sort()).toEqual(['link', 'shield']);
+    expect([...ICON_NAMES].filter((n) => DRAWN_EXTRAS.includes(n))).toHaveLength(10);
   });
 
   it('draws each Harold icon with the nodes of bundle.js', () => {

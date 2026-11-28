@@ -32,6 +32,21 @@
   animation: dialog-in 260ms ease-out;
 }
 
+.wide {
+  width: calc(100vw - 96px);
+  height: calc(100vh - 96px);
+  min-width: 960px;
+  min-height: 560px;
+  max-width: none;
+}
+
+/* The wide body is a column that fills the dialog; what is inside scrolls (the table), so the toolbar stays. */
+.wideBody {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .backdrop[data-closing='true'] .dialog {
   animation: dialog-out 170ms ease-in forwards;
 }

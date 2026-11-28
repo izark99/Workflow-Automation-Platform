@@ -3,8 +3,51 @@ import type { Page } from '@playwright/test';
 import { seedParameterFlow } from '../e2e/parameter-flow';
 import { REF_FLOW, seedReferenceStep } from '../e2e/reference-step-flow';
 import { ambiguousLayouts, clearLayouts } from '../scripts/lib/layout-fixtures';
+import { seedAllSteps } from '../e2e/all-steps-flow';
 import { seedRunnableFlow } from '../e2e/runnable-flow';
 import { seedSnapshot } from '../src/store/seed';
+
+/**
+ * A route with a flow of an Input file step and one new step that reads it, the new step selected, on its Configure or Test tab.
+ * Selectors are structural: the pseudo-locale check changes every name.
+ */
+function stepRoute(name: string, type: string, settings: Record<string, unknown>, tab: 'configure' | 'test', parameters?: unknown[]): RuleRoute {
+  const id = `flow-step-${type}`;
+  return {
+    path: `/flows/${id}/versions/1`,
+    name: `/flows/${id}/versions/1 (${name})`,
+    sidebar: false,
+    before: async (page) => {
+      const s = seedSnapshot();
+      s.flows.push({
+        id, name: `Step ${type}`, ownerId: 'user-harold', scope: 'personal', deletedAt: null, groupIds: [],
+        versions: [{ versionNo: 1, validFrom: '2026-01-01', validTo: null, status: 'draft', changeNote: '', definition: {
+          schemaVersion: 4,
+          ...(parameters ? { parameters } : {}),
+          nodes: [
+            { id: 'a', type: 'input_file', label: 'Alpha', position: { x: 0, y: 100 }, settings: { key: 'a', headerRow: 1 } },
+            ...(type === 'compare' ? [{ id: 'b', type: 'input_file', label: 'Bravo', position: { x: 0, y: 300 }, settings: { key: 'b', headerRow: 1 } }] : []),
+            { id: 's', type, label: 'Beta', position: { x: 400, y: 100 }, settings: JSON.parse(JSON.stringify(settings)) },
+          ],
+          // Compare reads two tables: the new one from the first Input file and the old one from the second.
+          edges: type === 'compare' ? [{ source: 'a', target: 's', targetHandle: 'new' }, { source: 'b', target: 's', targetHandle: 'old' }] : [{ source: 'a', target: 's' }],
+        } }],
+      });
+      await page.addInitScript((json) => localStorage.setItem('dfw.seed', json), JSON.stringify(s));
+    },
+    prepare: async (page) => {
+      await page.locator('.react-flow__node').last().click();
+      const panel = page.getByRole('complementary', { name: 'Step settings' });
+      await panel.getByRole('tab').nth(tab === 'configure' ? 1 : 2).click();
+      await panel.getByRole('tabpanel').waitFor();
+    },
+  };
+}
+
+/** A csv of n rows for the preview popup routes. */
+function bigCsv(n: number): string {
+  return `k,v\n${Array.from({ length: n }, (_, i) => `row${i + 1},${i + 1}`).join('\n')}\n`;
+}
 
 /** A draft reference table of 250 rows, so the editable grid and its pager can be checked. */
 const seedBigDraft = async (page: Page): Promise<void> => {
@@ -216,6 +259,100 @@ export const ROUTES: RuleRoute[] = [
     prepare: async (page) => {
       await page.locator('.react-flow__node').first().click();
       await page.getByRole('complementary', { name: 'Step settings' }).getByRole('heading').waitFor();
+    },
+  },
+  {
+    path: '/flows/flow-timesheet/versions/4',
+    name: '/flows/flow-timesheet/versions/4 (Auto arrange: toast with Undo)',
+    sidebar: false,
+    // The canvas controls with the Auto arrange button, and the toast with its compact Undo button.
+    prepare: async (page) => {
+      // By position, not by name: the pseudo-locale check runs this route with every text changed. The buttons are zoom out, zoom in, Auto arrange, fit.
+      await page.getByRole('toolbar').getByRole('button').nth(2).click();
+      await page.locator('[role=status] button').nth(1).waitFor();
+    },
+  },
+  {
+    path: '/flows/flow-toolbar/versions/1',
+    name: '/flows/flow-toolbar/versions/1 (selection toolbar, Snap to grid on)',
+    sidebar: false,
+    // Three steps in a row, far enough apart that the toolbar over them does not cover the next one to click (the toolbar is a fixed
+    // size, so on a zoomed-out canvas it would cover its neighbours).
+    before: async (page) => {
+      const s = seedSnapshot();
+      s.flows.push({
+        id: 'flow-toolbar', name: 'Toolbar', ownerId: 'user-harold', scope: 'personal', deletedAt: null, groupIds: [],
+        versions: [{ versionNo: 1, validFrom: '2026-01-01', validTo: null, status: 'draft', changeNote: '', definition: {
+          schemaVersion: 1,
+          nodes: [
+            { id: 'a', type: 'input_file', label: 'Alpha', position: { x: 0, y: 100 }, settings: { key: 'a', headerRow: 1 } },
+            { id: 'b', type: 'input_file', label: 'Bravo', position: { x: 360, y: 220 }, settings: { key: 'b', headerRow: 1 } },
+            { id: 'c', type: 'input_file', label: 'Charlie', position: { x: 760, y: 100 }, settings: { key: 'c', headerRow: 1 } },
+          ],
+          edges: [],
+        } }],
+      });
+      await page.addInitScript((json) => localStorage.setItem('dfw.seed', json), JSON.stringify(s));
+    },
+    // Three steps selected: the align and distribute toolbar over their box, and the Snap switch pressed.
+    prepare: async (page) => {
+      const cards = page.locator('.react-flow__node');
+      await cards.nth(0).click();
+      await cards.nth(1).click({ modifiers: ['Control'] });
+      await cards.nth(2).click({ modifiers: ['Control'] });
+      await page.locator('.react-flow__node-toolbar [role=toolbar]').waitFor();
+      // By position (the pseudo-locale check changes every name): zoom out, zoom in, Auto arrange, Snap, fit.
+      await page.locator('.react-flow__panel [role=toolbar]').getByRole('button').nth(3).click();
+    },
+  },
+  {
+    path: '/flows/flow-edge-drop/versions/1',
+    sidebar: false,
+    before: async (page) => {
+      const s = seedSnapshot();
+      s.flows.push({
+        id: 'flow-edge-drop', name: 'Edge drop', ownerId: 'user-harold', scope: 'personal', deletedAt: null, groupIds: [],
+        versions: [{ versionNo: 1, validFrom: '2026-01-01', validTo: null, status: 'draft', changeNote: '', definition: {
+          schemaVersion: 1,
+          nodes: [
+            { id: 'a', type: 'input_file', label: 'Alpha', position: { x: 0, y: 100 }, settings: {} },
+            { id: 'b', type: 'output', label: 'Omega', position: { x: 700, y: 100 }, settings: {} },
+          ],
+          edges: [{ source: 'a', target: 'b' }],
+        } }],
+      });
+      await page.addInitScript((json) => localStorage.setItem('dfw.seed', json), JSON.stringify(s));
+    },
+    // The pill "Insert here" and the edge in primary, while the pointer holds a Column mapping step over the first edge.
+    prepare: async (page) => {
+      await page.locator('.react-flow__edge-path').first().waitFor({ state: 'attached' });
+      const mid = await page.locator('.react-flow__edge-path').first().evaluate((p) => {
+        const path = p as SVGPathElement;
+        const pt = path.getPointAtLength(path.getTotalLength() / 2);
+        const m = path.getScreenCTM()!;
+        return { x: m.a * pt.x + m.e, y: m.d * pt.y + m.f };
+      });
+      // A drag over the edge, sent as an event: a real held mouse button would press the step button (scale 0.98) and fail its height.
+      await page.evaluate(({ x, y }) => {
+        const dt = new DataTransfer();
+        dt.setData('application/x-dfw-step', 'column_mapping');
+        dt.setData('application/x-dfw-step.column_mapping', '1');
+        const target = document.elementFromPoint(x, y) ?? document.body;
+        target.dispatchEvent(new DragEvent('dragover', { bubbles: true, cancelable: true, clientX: x, clientY: y, dataTransfer: dt }));
+      }, mid);
+      await page.locator('[class*=insertPill]').waitFor();
+    },
+  },
+  {
+    path: '/flows/flow-timesheet/versions/4',
+    name: '/flows/flow-timesheet/versions/4 (step duplicated: toast and Duplicate button)',
+    sidebar: false,
+    // A step selected with its Duplicate button in the title row, then Ctrl+D: the copy is selected and the toast says it was pasted.
+    prepare: async (page) => {
+      await page.locator('.react-flow__node').first().click();
+      await page.getByRole('complementary', { name: 'Step settings' }).getByRole('heading').waitFor();
+      await page.keyboard.press('Control+KeyD');
+      await page.locator('[role=status] button').first().waitFor();
     },
   },
   {
@@ -507,6 +644,17 @@ export const ROUTES: RuleRoute[] = [
     },
   },
   { path: '/dev/components', sidebar: true, nav: false },
+  {
+    path: '/dev/components',
+    name: '/dev/components (wide dialog with the preview table)',
+    sidebar: true,
+    nav: false,
+    // The button after the danger button of the Confirm card opens the wide dialog (by position: the pseudo-locale check changes every name).
+    prepare: async (page) => {
+      await page.locator('main [data-variant=danger]').last().locator('xpath=following-sibling::button').click();
+      await page.getByRole('dialog').waitFor();
+    },
+  },
   { path: '/reference-tables', name: '/reference-tables (list collapsed)', sidebar: true, table: true, before: collapsePanels('refList') },
   // The builder with each panel collapsed (SPEC 12.4, T5.4); T5.6 adds the width rule for them.
   ...([['steps'], ['settings'], ['steps', 'settings']] as const).map(
@@ -514,6 +662,75 @@ export const ROUTES: RuleRoute[] = [
   ),
   ...(['/flows', '/admin', '/flows/flow-timesheet/run'] as const).map(
     (path): RuleRoute => ({ path, name: `${path} (sidebar rail)`, sidebar: true, railSidebar: true, before: collapsePanels('sidebar') }),
+  ),
+  // The card and the Configure form (or the Test tab) of the new steps of Phase 8, each in its states (SPEC 15.4).
+  stepRoute('Sort: no key', 'sort', {}, 'configure'),
+  stepRoute('Sort: two keys', 'sort', { keys: [{ column: 'hours', direction: 'desc' }, { expression: '[hours] + 1' }] }, 'configure'),
+  stepRoute('Remove duplicates: all columns', 'dedupe', {}, 'configure'),
+  stepRoute('Remove duplicates: two columns, keep the last', 'dedupe', { columns: ['name', 'hours'], keep: 'last' }, 'configure'),
+  stepRoute('Remove duplicates: Test tab with two outputs', 'dedupe', {}, 'test'),
+  stepRoute('Split column: new step', 'split_column', { column: '', cut: 'space', names: [], rest: 'last', trim: true, keepOriginal: false }, 'configure'),
+  stepRoute('Split column: Vietnamese name at the last space', 'split_column', { column: 'Name', cut: 'last_space', names: ['Family and middle', 'Given'], rest: 'last', trim: true, keepOriginal: false }, 'configure'),
+  stepRoute('Split column: given text, rest dropped, original kept', 'split_column', { column: 'Codes', cut: 'text', separator: ' - ', names: ['A', 'B', 'C'], rest: 'drop', trim: false, keepOriginal: true }, 'configure'),
+  stepRoute('Clean text: new step', 'clean_text', { columns: [], trim: true, collapse: true, nonPrinting: false, caseMode: 'keep', removeMarks: false, target: 'replace' }, 'configure'),
+  stepRoute('Clean text: marks and Proper Case, two columns', 'clean_text', { columns: ['name', 'note'], trim: true, collapse: true, nonPrinting: true, caseMode: 'proper', removeMarks: true, target: 'replace' }, 'configure'),
+  stepRoute('Clean text: new columns with a suffix', 'clean_text', { columns: ['name'], trim: true, collapse: false, nonPrinting: false, caseMode: 'upper', removeMarks: false, target: 'suffix', suffix: '_clean' }, 'configure'),
+  stepRoute('Check: new step', 'check', { rules: [], stop: false }, 'configure'),
+  stepRoute('Check: two rules, stop the run', 'check', { rules: [{ name: 'Hours range', condition: 'AND([hours] >= 0, [hours] <= 24)', message: 'Hours must be from 0 to 24.' }, { name: 'Department', condition: 'NOT(ISBLANK([dept]))', message: 'A department is required.' }], stop: true }, 'configure'),
+  stepRoute('Check: an unfinished rule', 'check', { rules: [{ name: '', condition: '[hours] >', message: '' }], stop: false }, 'configure'),
+  stepRoute('Check: Test tab with two outputs', 'check', { rules: [{ name: 'Hours range', condition: '[hours] <= 24', message: 'Too many hours.' }], stop: false }, 'test'),
+  stepRoute('Compare: new step', 'compare', { keys: [], compare: [] }, 'configure'),
+  stepRoute('Compare: two keys, listed columns', 'compare', { keys: [{ new: 'Id', old: 'Code' }, { new: 'Dept', old: 'Dept' }], compare: ['Hours', 'Name'] }, 'configure'),
+  stepRoute('Compare: Test tab with three outputs', 'compare', { keys: [{ new: 'Id', old: 'Id' }], compare: [] }, 'test'),
+  stepRoute('Top N: defaults', 'top_n', { n: 10, order: 'largest', groupBy: [] }, 'configure'),
+  stepRoute('Top N: smallest by a formula, grouped', 'top_n', { n: 3, order: 'smallest', by: { expression: '[hours] * 2' }, groupBy: ['dept'] }, 'configure'),
+  stepRoute('Top N: first rows', 'top_n', { n: 5, order: 'first', groupBy: [] }, 'configure'),
+  stepRoute('Top N: N from a parameter', 'top_n', { n: { $param: 'n' }, order: 'first', groupBy: [] }, 'configure', [{ key: 'n', label: 'How many', type: 'number', required: true }]),
+  // The canvas with the cards of all seven new steps (the icons, the names of the handles), and the step list with its seven groups.
+  { path: '/flows/flow-all-steps/versions/1', name: '/flows/flow-all-steps/versions/1 (the cards of the new steps)', sidebar: false, before: seedAllSteps, prepare: async (page) => { await page.locator('.react-flow__node').nth(8).waitFor(); } },
+  { path: '/flows/flow-all-steps/run', name: '/flows/flow-all-steps/run (a flow of the new steps)', sidebar: true, busy: true, before: seedAllSteps },
+  // The preview popup (SPEC 15.3) in its states. Selectors are structural: the pseudo-locale check changes every name.
+  ...(
+    [
+      ['rows', bigCsv(250), undefined],
+      ['Find with matches and their count', bigCsv(250), 'row9'],
+      ['Find with no match', bigCsv(250), 'no such text'],
+      ['no rows', 'k,v\n', undefined],
+    ] as const
+  ).map(
+    ([state, text, find]): RuleRoute => ({
+      path: '/flows/flow-popup/versions/1',
+      name: `/flows/flow-popup/versions/1 (preview popup: ${state})`,
+      sidebar: false,
+      before: async (page) => {
+        const s = seedSnapshot();
+        s.flows.push({
+          id: 'flow-popup', name: 'Popup', ownerId: 'user-harold', scope: 'personal', deletedAt: null, groupIds: [],
+          versions: [{ versionNo: 1, validFrom: '2026-01-01', validTo: null, status: 'draft', changeNote: '', definition: {
+            schemaVersion: 1,
+            nodes: [
+              { id: 'a', type: 'input_file', label: 'Alpha', position: { x: 0, y: 100 }, settings: { key: 'a', headerRow: 1 } },
+              { id: 'b', type: 'column_mapping', label: 'Beta', position: { x: 400, y: 100 }, settings: { columns: [] } },
+            ],
+            edges: [{ source: 'a', target: 'b' }],
+          } }],
+        });
+        await page.addInitScript((json) => localStorage.setItem('dfw.seed', json), JSON.stringify(s));
+      },
+      prepare: async (page) => {
+        await page.locator('.react-flow__node').nth(1).click();
+        const panel = page.getByRole('complementary', { name: 'Step settings' });
+        await panel.getByRole('tab').nth(2).click();
+        await panel.locator('input[type=file]').setInputFiles({ name: 'popup.csv', mimeType: 'text/csv', buffer: Buffer.from(text) });
+        await panel.locator('div[style*="flex-wrap"] > button').first().click();
+        const expand = panel.locator('[class*=countRow] button');
+        await expand.waitFor({ timeout: 30_000 });
+        await expand.click();
+        const dialog = page.getByRole('dialog');
+        await dialog.waitFor();
+        if (find) await dialog.locator('input[type=text]').fill(find);
+      },
+    }),
   ),
   {
     path: '/flows/flow-timesheet/versions/4',

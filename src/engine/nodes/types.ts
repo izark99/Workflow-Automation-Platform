@@ -1,6 +1,6 @@
 import type { ResolvedParameters } from '../flow/parameter-values';
 import type { FlowNode, NodeType } from '../flow/types';
-import type { Column, LoadedTable, QueryResult } from '../types';
+import type { Column, EngineWarning, LoadedTable, QueryResult } from '../types';
 
 export interface CompileContext {
   node: FlowNode;
@@ -16,6 +16,10 @@ export interface CompileContext {
   parameters: ResolvedParameters;
   /** Runs a query on the tables of this run. For nodes whose output columns depend on values, such as Pivot. */
   query(sql: string): Promise<QueryResult>;
+  /** True for a run that writes files: a Check step with "stop the run" then stops it. A preview reports and goes on. */
+  stopChecks: boolean;
+  /** Tells the person something about this step that is not an error (a quiet warning on the Test tab and the Run screen). */
+  warn(warning: EngineWarning): void;
 }
 
 export interface CompiledOutput {

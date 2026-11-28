@@ -6,7 +6,7 @@ import { withBindingsVersion } from '../../engine/flow/bindings';
 import { parametersOf } from '../../engine/flow/parameters';
 import type { ParameterValue } from '../../engine/flow/parameters';
 import type { RefTable } from '../../engine/versions';
-import { Button, Dropdown, ErrorState, Field, InfoTip, Tabs } from '../components';
+import { Button, Dropdown, ErrorState, Field, Icon, InfoTip, Tabs } from '../components';
 import { useT } from '../i18n';
 import { currentSource, deleteSteps, updateSettings, inputHandlesOf, inputTitle, renameStep, setInput, sourceOptions, STEP_CATALOG, stepNumbers } from './graph';
 import { FORMS } from './forms';
@@ -55,6 +55,8 @@ export interface SettingsPanelProps {
   step: FlowNode | undefined;
   onChange: (next: FlowDefinition) => void;
   onDeleted: () => void;
+  /** Puts a copy of the selected step in the flow (Ctrl+D). */
+  onDuplicate: () => void;
   readOnly: boolean;
   /** Test files by input key, and what the preview needs to resolve reference tables. */
   testFiles: Record<string, File>;
@@ -71,7 +73,7 @@ export interface SettingsPanelProps {
 }
 
 /** The 380 px panel at the right: the selected step with the tabs Setup, Configure and Test. */
-export function SettingsPanel({ definition, step, onChange, onDeleted, readOnly, testFiles, onTestFile, refTables, parameterValues, onParameterValue, testDate, onTestDate, coverage }: SettingsPanelProps) {
+export function SettingsPanel({ definition, step, onChange, onDeleted, onDuplicate, readOnly, testFiles, onTestFile, refTables, parameterValues, onParameterValue, testDate, onTestDate, coverage }: SettingsPanelProps) {
   countRender('SettingsPanel');
   const t = useT();
   const [tab, setTab] = useState<SettingsTab>('setup');
@@ -94,6 +96,12 @@ export function SettingsPanel({ definition, step, onChange, onDeleted, readOnly,
         <div className={styles.titleRow}>
           <h2 data-user-content>{`${number}. ${label}`}</h2>
           <InfoTip label={label}>{t('builder.stepInfo', { type: STEP_CATALOG[step.type].label, hint: STEP_CATALOG[step.type].hint })}</InfoTip>
+          <span className={styles.duplicate}>
+            <Button size="sm" disabled={readOnly} onClick={onDuplicate}>
+              <Icon name="copy" />
+              {t('builder.duplicate')}
+            </Button>
+          </span>
         </div>
         <p className={styles.note}>{STEP_CATALOG[step.type].label}</p>
       </div>

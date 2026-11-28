@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import { popoverLayer, useFloating } from './floating';
 import { useT } from '../i18n';
 import { Icon } from './icons';
-import { INFO_TIP_CLOSED, INFO_TIP_HOVER_MS, infoTipNext } from './info-tip-logic';
+import { INFO_TIP_CLOSED, INFO_TIP_HOVER_MS, INFO_TIP_LEAVE_MS, infoTipNext } from './info-tip-logic';
 import type { InfoTipEvent, InfoTipState } from './info-tip-logic';
 import { useEscapeLayer } from './layers';
 import { useOutsideClose } from './popover';
@@ -50,9 +50,11 @@ export function InfoTip({ label, children, defaultOpen = false }: InfoTipProps) 
     window.clearTimeout(timer.current);
     send('hoverOpen');
   };
+  // Leaving closes after a short delay: the pointer crosses the gap between the button and its popover on the way to the popover,
+  // and that must not close it. Entering either one again cancels the delay.
   const hoverOut = (): void => {
     window.clearTimeout(timer.current);
-    send('hoverLeave');
+    timer.current = window.setTimeout(() => send('hoverLeave'), INFO_TIP_LEAVE_MS);
   };
 
   return (

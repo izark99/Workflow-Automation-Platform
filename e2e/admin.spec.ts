@@ -3,6 +3,12 @@ import type { Page } from '@playwright/test';
 import { seedSnapshot } from '../src/store/seed';
 
 const URL = '/admin';
+
+// The seed deletes two flows on 5 Nov and 28 Oct 2026, and the Admin screen removes a flow 30 days after its delete. These tests ran on
+// the real date, so they failed from 27 Nov 2026 at 09:00 UTC on (found by the full run of T8.17). The date is fixed, as in the other specs.
+test.beforeEach(async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2026-11-17T09:00:00+07:00'));
+});
 const table = (page: Page, name: string) => page.getByRole('table', { name });
 const rows = (page: Page, name: string) => table(page, name).locator('tbody tr');
 const toastWith = (page: Page, text: string) => page.getByRole('status').filter({ hasText: text });
