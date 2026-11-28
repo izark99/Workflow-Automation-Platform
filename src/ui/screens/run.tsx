@@ -102,6 +102,7 @@ export function RunScreen() {
     let cancelled = false;
     try {
       outcome = await executeRun({
+        flowName: record.name,
         definition,
         effectiveDate: date,
         parameterValues: values,

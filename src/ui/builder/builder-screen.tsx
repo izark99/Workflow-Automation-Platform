@@ -298,6 +298,7 @@ function Builder() {
           addRequest={addRequest}
         />
         <SettingsPanel
+          flowName={flow.data?.name ?? ''}
           definition={definition}
           step={selection.nodes.length === 1 ? definition.nodes.find((n) => n.id === selection.nodes[0]) : undefined}
           onChange={setDefinition}

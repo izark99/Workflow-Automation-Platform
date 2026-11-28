@@ -264,7 +264,11 @@ export const noStripe: Rule = async (page) =>
     return bad;
   });
 
-/** Harold: font sizes only from the type table (12, 13, 14, 15, 16, 18, 22, 28 px) on text that is drawn. */
+/**
+ * Harold: font sizes only from the type table (12, 13, 14, 15, 16, 18, 22, 28 px) on text that is drawn. The drawing of a printed page
+ * in the print preview (`[data-drawing]`, DESIGN "Print layout": text at a scale of 8 px) is a picture of a sheet, not interface text,
+ * so it is left out, as an svg is (D138).
+ */
 export const FONT_SIZES = [12, 13, 14, 15, 16, 18, 22, 28];
 export const fontSizes: Rule = async (page) =>
   page.evaluate((allowed) => {
@@ -273,7 +277,7 @@ export const fontSizes: Rule = async (page) =>
       const r = el.getBoundingClientRect();
       if (r.width === 0 || r.height === 0 || getComputedStyle(el).visibility === 'hidden') continue;
       const own = Array.from(el.childNodes).some((n) => n.nodeType === 3 && (n.textContent ?? '').trim() !== '');
-      if (!own || el.closest('svg')) continue;
+      if (!own || el.closest('svg') || el.closest('[data-drawing]')) continue;
       const px = parseFloat(getComputedStyle(el).fontSize);
       if (!allowed.includes(px)) bad.set(`${el.tagName.toLowerCase()} "${String(el.className).slice(0, 30)}" has font size ${px} px`, 1);
     }

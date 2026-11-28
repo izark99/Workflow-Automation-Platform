@@ -13,10 +13,13 @@ import { AnalysisPanel } from './analyze/analysis-panel';
 import { ParameterControl } from './parameter-control/parameter-control';
 import { stepBindingResults } from './parameter-control/parameter-control-logic';
 import { settingLabel } from './parameter-control/setting-labels';
-import { useT, errorText } from '../i18n';
+import { parsePrintSettings } from '../../engine/output/print/settings';
+import type { PrintSettings } from '../../engine/output/print/settings';
+import { getLocale, useT, errorText } from '../i18n';
 import { ParameterInputs, PendingParametersNote } from '../parameter-inputs';
 import { initialValues, parameterValueErrors } from '../parameter-logic';
 import { capRows, neededFiles, outputChipText, previewKey, previewTableData, previewTarget } from './preview-logic';
+import { PrintPreview } from './print-preview';
 import { PreviewDialog } from './preview-dialog';
 import type { PopupState } from './preview-dialog';
 import { MAX_PREVIEW_ROWS, runPreview } from './preview-runner';
@@ -24,6 +27,8 @@ import type { PreviewData, PreviewPart } from './preview-runner';
 import styles from './step-preview.module.css';
 
 export interface StepPreviewProps {
+  /** The name of the flow, for the token {flow} of a print layout. */
+  flowName?: string;
   /** The test date (ISO), kept by the builder so the forms can show what it selects. */
   date: string;
   onDate: (date: string) => void;
@@ -45,7 +50,7 @@ type State = { status: 'idle' } | { status: 'loading' } | { status: 'ready'; dat
 const asSource = (f: File): FileSource => ({ name: f.name, size: f.size, blob: f });
 
 /** The Test tab: effective date, test files, and the first rows of the step, run in this browser. */
-export function StepPreview({ definition, step, files, onFile, refTables, parameterValues, onParameterValue, date, onDate, onApplySettings }: StepPreviewProps) {
+export function StepPreview({ flowName, definition, step, files, onFile, refTables, parameterValues, onParameterValue, date, onDate, onApplySettings }: StepPreviewProps) {
   const t = useT();
   const [handle, setHandle] = useState<string | undefined>(undefined);
   const [state, setState] = useState<State>({ status: 'idle' });
@@ -53,7 +58,11 @@ export function StepPreview({ definition, step, files, onFile, refTables, parame
   // The popup (SPEC 15.3): it shows the same state, and runs the preview again for the other part or for more rows.
   const [popup, setPopup] = useState(false);
   const popupLimit = useRef(100);
+  // The print preview (SPEC 16.1 item 8) needs the first rows and the last rows: the part that was not asked for is loaded after it.
+  const [other, setOther] = useState<PreviewData | null>(null);
+  const [printLarge, setPrintLarge] = useState(false);
   const target = previewTarget(definition, step, handle);
+  const print = printOf(step);
 
   // Leaving the step or the tab cancels a running preview and forgets its rows.
   useEffect(() => () => abort.current?.abort(), []);
@@ -75,6 +84,7 @@ export function StepPreview({ definition, step, files, onFile, refTables, parame
     abort.current?.abort();
     const controller = new AbortController();
     abort.current = controller;
+    if (!limit) setOther(null);
     setState({ status: 'loading' });
     try {
       const sources: Record<string, FileSource> = {};
@@ -87,6 +97,10 @@ export function StepPreview({ definition, step, files, onFile, refTables, parame
       }
       const data = await runPreview({ definition: target.definition, nodeId: target.nodeId, handle: target.handle, files: sources, refTables, effectiveDate: date, parameterValues: values, part, ...(limit ? { limit } : {}), signal: controller.signal });
       if (!controller.signal.aborted) setState({ status: 'ready', data, key });
+      if (print && !limit && !controller.signal.aborted && data.totalRows > data.rows.length) {
+        const rest = await runPreview({ definition: target.definition, nodeId: target.nodeId, handle: target.handle, files: sources, refTables, effectiveDate: date, parameterValues: values, part: part === 'first' ? 'last' : 'first', signal: controller.signal });
+        if (!controller.signal.aborted) setOther(rest);
+      }
     } catch (e) {
       if (!controller.signal.aborted) setState({ status: 'error', message: errorText(e) });
     }
@@ -189,6 +203,20 @@ export function StepPreview({ definition, step, files, onFile, refTables, parame
           ) : null}
         </div>
       ) : null}
+      {print ? (
+        <PrintPreview
+          stepName={step.label ?? step.id}
+          print={print}
+          tokens={{ effectiveDate: date, runDate: new Date().toISOString().slice(0, 10), flow: flowName ?? definition.name ?? '', params: Object.fromEntries(Object.entries(values).filter(([, v]) => v !== undefined && v !== null).map(([k, v]) => [k, String(v)])) }}
+          language={getLocale() === 'vi' ? 'vi' : 'en'}
+          first={state.status === 'ready' ? (state.data.part === 'first' ? state.data : other?.part === 'first' ? other : undefined) : undefined}
+          last={state.status === 'ready' ? (state.data.part === 'last' ? state.data : other?.part === 'last' ? other : undefined) : undefined}
+          stale={state.status === 'ready' && state.key !== key}
+          large={printLarge}
+          onOpenLarge={() => setPrintLarge(true)}
+          onCloseLarge={() => setPrintLarge(false)}
+        />
+      ) : null}
       {popup ? (
         <PreviewDialog
           stepName={step.label ?? step.id}
@@ -203,6 +231,17 @@ export function StepPreview({ definition, step, files, onFile, refTables, parame
       ) : null}
     </div>
   );
+}
+
+/** The print layout of an Output step that writes xlsx and has the layout on, or null. */
+function printOf(step: FlowNode): PrintSettings | null {
+  if (step.type !== 'output' || step.settings.format === 'csv' || step.settings.print === undefined) return null;
+  try {
+    const p = parsePrintSettings(step.settings.print);
+    return p.enabled ? p : null;
+  } catch {
+    return null;
+  }
 }
 
 const megabytes = (bytes: number): string => `${(bytes / 1e6).toFixed(1)} MB`;

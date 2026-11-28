@@ -1295,3 +1295,7 @@ What it still lists on the new screens is the pattern of the earlier phases (D83
 ## D137 A sheet without a layout in a workbook that has one
 
 When one xlsx file holds sheets with and without a print layout, the whole workbook is written by ExcelJS. The plain sheets keep the same cells as the normal path (same types, same blanks) but not the same bytes, and they have the styled table of the writer. A file with no layout at all is written by the normal path and is byte for byte as before, which a test checks with a stored sha-256. Chosen because one file cannot be written by two libraries.
+
+## D138 The drawing of a printed page is not interface text
+
+The print preview draws a page of the report at a small scale (8 px in the panel, 12 px in the popup, DESIGN "Print layout"), with the sizes of the header lines (1, 1.35 and 1.7 times). These sizes are not in the type table of the interface. The page box carries `data-drawing="print-page"`, and the UI rule "font sizes from the type table" skips what is inside it, as it skips an svg. The box has `role="img"` and a label ("Page 1 of 5"); its content is hidden from the screen reader. All other rules (colours, contrast of the box, one primary, no scroll) still run on it.

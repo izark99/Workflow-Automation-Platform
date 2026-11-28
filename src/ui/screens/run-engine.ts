@@ -28,6 +28,8 @@ export interface RunOutcome {
 }
 
 export interface RunRequest {
+  /** The name of the flow, for the token {flow} of a print layout. */
+  flowName?: string;
   definition: FlowDefinition;
   effectiveDate: string;
   /** The values of the flow parameters, by key. They stay in the browser. */
@@ -70,7 +72,7 @@ export async function executeRun(req: RunRequest): Promise<RunOutcome> {
     }
     const parameters = Object.fromEntries(Object.entries(req.parameterValues ?? {}).filter(([, v]) => v !== null && v !== undefined).map(([k, v]) => [k, String(v)]));
     // The fixed words of a printed report (the footer) follow the language of the app; the rest of the layout is as it was typed.
-    const files = await buildOutputFiles(result, definition, { flowName: definition.name ?? '', effectiveDate: req.effectiveDate, parameters, language: getLocale() === 'vi' ? 'vi' : 'en' });
+    const files = await buildOutputFiles(result, definition, { flowName: req.flowName ?? definition.name ?? '', effectiveDate: req.effectiveDate, parameters, language: getLocale() === 'vi' ? 'vi' : 'en' });
     const inputRows = definition.nodes.filter((n) => n.type === 'input_file').reduce((n, node) => n + (result.tables.get(`${node.id}/out`)?.rowCount ?? 0), 0);
     return { files, sheets, inputRows, outputRows: sheets.reduce((n, s) => n + s.rowCount, 0), warnings: result.warnings.map(warningText) };
   } finally {

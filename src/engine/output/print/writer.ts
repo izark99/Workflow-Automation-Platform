@@ -6,11 +6,12 @@ import { loadExcelJS } from './load-exceljs';
 import { FONT_POINTS, LINE_POINTS, ROW_POINTS, fitScale, printableArea, signatureFits, wrappedLines } from './pagination';
 import type { PageLayout } from './pagination';
 import type { Margins, Paper, PrintSettings } from './settings';
+import type { PrintLanguage } from './language';
+import { SIGN_SPACE_ROWS, signatureRowCount } from './signature-rows';
 import { resolvedTexts } from './tokens';
 import type { TokenContext } from './tokens';
 
-/** The language of the fixed words of the file (the footer). The texts of the layout are written as the person typed them. */
-export type PrintLanguage = 'vi' | 'en';
+export type { PrintLanguage } from './language';
 
 export interface PrintSheetInput {
   /** The sheet name. */
@@ -138,8 +139,7 @@ export function setPage(ws: Worksheet, print: PrintSettings, place: TablePlace, 
 /** The footer of the pages: "Trang n/N" in Vietnamese, "Page n/N" in English. */
 export const FOOTER: Readonly<Record<PrintLanguage, string>> = { vi: '&CTrang &P/&N', en: '&CPage &P/&N' };
 
-/** Rows of blank space to sign in the signature block. */
-export const SIGN_SPACE_ROWS = 4;
+export { SIGN_SPACE_ROWS };
 
 const sum = (xs: readonly number[]): number => xs.reduce((a, b) => a + b, 0);
 
@@ -176,12 +176,7 @@ export function signerGroups(columns: number, signers: number): { from: number; 
   return out;
 }
 
-/** The rows of the signature block: the date line, the titles, the lines under them, the space to sign, the names. */
-export function signatureRows(print: PrintSettings): number {
-  if (print.signers.length === 0) return 0;
-  const hasName = print.signers.some((s) => s.name.trim() !== '');
-  return (print.dateLine.trim() === '' ? 0 : 1) + 2 + SIGN_SPACE_ROWS + (hasName ? 1 : 0);
-}
+export const signatureRows = signatureRowCount;
 
 /** Writes the signature block from `startRow`. Returns the last row it wrote. */
 function writeSignatures(ws: Worksheet, print: PrintSettings, startRow: number, columns: number): number {

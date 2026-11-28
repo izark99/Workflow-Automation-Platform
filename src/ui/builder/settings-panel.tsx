@@ -51,6 +51,8 @@ function PanelFrame({ stepName, children }: { stepName?: string; children: React
 export type SettingsTab = 'setup' | 'configure' | 'test';
 
 export interface SettingsPanelProps {
+  /** The name of the flow, for the token {flow} of a print layout. */
+  flowName?: string;
   definition: FlowDefinition;
   /** The selected step, or undefined when none or several are selected. */
   step: FlowNode | undefined;
@@ -74,7 +76,7 @@ export interface SettingsPanelProps {
 }
 
 /** The 380 px panel at the right: the selected step with the tabs Setup, Configure and Test. */
-export function SettingsPanel({ definition, step, onChange, onDeleted, onDuplicate, readOnly, testFiles, onTestFile, refTables, parameterValues, onParameterValue, testDate, onTestDate, coverage }: SettingsPanelProps) {
+export function SettingsPanel({ flowName, definition, step, onChange, onDeleted, onDuplicate, readOnly, testFiles, onTestFile, refTables, parameterValues, onParameterValue, testDate, onTestDate, coverage }: SettingsPanelProps) {
   countRender('SettingsPanel');
   const t = useT();
   const [tab, setTab] = useState<SettingsTab>('setup');
@@ -122,7 +124,7 @@ export function SettingsPanel({ definition, step, onChange, onDeleted, onDuplica
             <SetupTab key={step.id} definition={definition} step={step} onChange={onChange} readOnly={readOnly} error={error} setError={setError} />
           ) : null}
           {tab === 'configure' ? <ConfigureTab step={step} definition={definition} onChange={onChange} readOnly={readOnly} context={{ testFiles, refTables, parameterValues, testDate, coverage }} /> : null}
-          {tab === 'test' ? <StepPreview key={step.id} definition={definition} step={step} files={testFiles} onFile={onTestFile} refTables={refTables} parameterValues={parameterValues} onParameterValue={onParameterValue} date={testDate} onDate={onTestDate} onApplySettings={(next) => { onChange(withPrintVersion(withBindingsVersion(updateSettings(definition, step.id, next)))); setTab('configure'); }} /> : null}
+          {tab === 'test' ? <StepPreview key={step.id} flowName={flowName} definition={definition} step={step} files={testFiles} onFile={onTestFile} refTables={refTables} parameterValues={parameterValues} onParameterValue={onParameterValue} date={testDate} onDate={onTestDate} onApplySettings={(next) => { onChange(withPrintVersion(withBindingsVersion(updateSettings(definition, step.id, next)))); setTab('configure'); }} /> : null}
         </div>
       </Tabs>
       <div className={styles.footer}>

@@ -51,6 +51,34 @@ function bigCsv(n: number): string {
   return `k,v\n${Array.from({ length: n }, (_, i) => `row${i + 1},${i + 1}`).join('\n')}\n`;
 }
 
+/** The print layout of the routes of the print preview: a header line, a date line and two signers. */
+const PREVIEW_PRINT = {
+  enabled: true, orientation: 'portrait',
+  header: [{ text: 'BÁO CÁO GIỜ CÔNG {month_year}', align: 'center', bold: true, size: 'large' }],
+  dateLine: 'Hà Nội, ngày {day} tháng {month} năm {year}',
+  signers: [{ title: 'Người lập biểu', line: '(Ký, ghi rõ họ tên)', name: '' }, { title: 'Giám đốc', line: '(Ký, ghi rõ họ tên)', name: '' }],
+};
+
+/** The Test tab of an Output step with a print layout, after the first rows were loaded from a csv of `rows` rows (and the large dialog opened when `large`). */
+function printPreviewRoute(name: string, rows: number, large: boolean): RuleRoute {
+  const base = stepRoute(name, 'output', { file: 'Result', format: 'xlsx', sheet: 'Rows', print: PREVIEW_PRINT }, 'test');
+  return {
+    ...base,
+    prepare: async (page) => {
+      await base.prepare?.(page);
+      const panel = page.getByRole('complementary', { name: 'Step settings' });
+      await panel.locator('input[type=file]').setInputFiles({ name: 'rows.csv', mimeType: 'text/csv', buffer: Buffer.from(bigCsv(rows)) });
+      await panel.locator('div[style*="flex-wrap"] > button').first().click();
+      await panel.locator('[class*=pages] [role=img]').first().waitFor({ timeout: 60_000 });
+      if (rows > 150) await panel.locator('[class*=pages] [role=img]').nth(1).waitFor({ timeout: 60_000 });
+      if (large) {
+        await panel.locator('button[data-open-large]').click();
+        await page.getByRole('dialog').waitFor();
+      }
+    },
+  };
+}
+
 /** A draft reference table of 250 rows, so the editable grid and its pager can be checked. */
 const seedBigDraft = async (page: Page): Promise<void> => {
   const s = seedSnapshot();
@@ -713,6 +741,12 @@ export const ROUTES: RuleRoute[] = [
       signers: Array.from({ length: 5 }, (_, i) => ({ title: `Signer ${i + 1}`, line: '(Ký, ghi rõ họ tên)', name: '' })),
     },
   }, 'configure'),
+  // The print preview of the Test tab (SPEC 16.1 item 8): no rows yet, one page, first and last page, the large dialog, a table with no rows.
+  { ...stepRoute('Output: print preview, no rows yet', 'output', { file: 'Result', format: 'xlsx', sheet: 'Rows', print: PREVIEW_PRINT }, 'test') },
+  printPreviewRoute('Output: print preview, one page', 20, false),
+  printPreviewRoute('Output: print preview, first and last page', 300, false),
+  printPreviewRoute('Output: print preview, the large dialog', 300, true),
+  printPreviewRoute('Output: print preview, no rows', 0, false),
   // The canvas with the cards of all seven new steps (the icons, the names of the handles), and the step list with its seven groups.
   { path: '/flows/flow-all-steps/versions/1', name: '/flows/flow-all-steps/versions/1 (the cards of the new steps)', sidebar: false, before: seedAllSteps, prepare: async (page) => { await page.locator('.react-flow__node').nth(8).waitFor(); } },
   { path: '/flows/flow-all-steps/run', name: '/flows/flow-all-steps/run (a flow of the new steps)', sidebar: true, busy: true, before: seedAllSteps },
