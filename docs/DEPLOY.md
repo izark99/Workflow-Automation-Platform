@@ -384,6 +384,52 @@ duplicates, Top N, Split column, Clean text, Check, Compare). It has no server p
    open in the older app (it says the schema version is not supported); the flow itself is not damaged and opens again after the
    app is deployed again. Flows without the new steps are not affected. Do not undo a migration: there is none.
 
+## Upgrade to Phase 9
+
+Phase 9 added a print layout for an Output step (a header block, a table that repeats its header row, a signature block, page numbers,
+an xlsx that prints as it is) and reference tables that take their values from a column of another table, with a notice to the admin
+when new values appear. A deployment that is on Phase 8 (migrations 1 to 20) needs these steps, in this order. A fresh deployment does
+not: "Apply the migrations" already applies all of them.
+
+1. **Back up first.** In the Supabase dashboard, Database, Backups: take a backup if your plan has one, and write down the time.
+   Migration 21 changes the publish and delete functions of reference tables and adds columns to `ref_tables`.
+2. **Apply the new migration** from your computer (`npx supabase link --project-ref <ref>` once, if you have not):
+
+   ```bash
+   npx supabase db push
+   ```
+
+   It lists one file and asks you to confirm:
+   - `20261118000021_ref_table_links.sql`: the columns `link_table_id`, `link_column` and `key_column` on `ref_tables`; the table
+     `ref_table_link_events` (the notices; only an admin can read it); the functions `link_ref_table` and `unlink_ref_table`;
+     the helper functions of the cascade; and new versions of `publish_ref_table_version` (it gives the new values of a published
+     version to the draft of each linked table, in the same transaction, and refuses a version that lacks a linked column) and of
+     `delete_ref_table` (it refuses a table that other tables take values from, and names them). No function is callable by `anon`.
+
+   If the push fails, stop and read the first error; do not edit tables by hand.
+   If you cannot use the CLI, run the file in the SQL editor and add its row to `supabase_migrations.schema_migrations` (the version
+   is the number at the start of the file name, the name is the rest) so that a later `db push` does not run it twice.
+3. **There is no new function to deploy.** `admin-users` stays as it is; do not deploy it again.
+4. **Deploy the app after the migration.** Pushing to the branch that Cloudflare Pages builds starts the build
+   (`npm run build:pages`). Wait for it to finish. The build has ExcelJS as a separate file that the app loads only when a print
+   layout is on; the main file does not carry it (the build stops if it does).
+5. **Check it**, in this order:
+   - A print layout: open a flow, select an Output step that writes xlsx, switch on "Print layout", add a header line and a signer,
+     publish and run the flow. The Run screen shows the badge "Print layout" beside the file. Open the downloaded workbook in
+     Excel: the print preview shows the header lines, the table with its header row repeated on every page, the signature block
+     after the table (not cut by a page break) and "Page 1/N" in the footer (the footer is in the language of the app).
+   - A linked table: as admin, in Reference tables, open a table, "Link to a table", choose another table and its column. The table
+     gets a draft with the distinct values; the sidebar shows a dot on "Reference tables" and the table shows the notice.
+   - A published version of the source with a new value: make a new version of the source table, add a value, publish it. The linked
+     table gets a draft with the new value marked "New", and the notice and the dot appear. Fill the other columns of the new rows
+     and publish the draft: the notice and the dot go.
+   - A user who is not an admin sees no dot, no notice and no link control, and reads the linked table as any reference table.
+6. **If something is wrong,** think before you roll back the app in Cloudflare Pages. The Phase 8 app does not know the new columns
+   or the notices, but it does not break on them, so a rollback of the app is safe. A flow that was saved with a print layout is
+   stored as `schemaVersion` 5 and does not open in the older app (it says the schema version is not supported); the flow itself is
+   not damaged and opens again after the app is deployed again. Linked tables keep working in the database: a publish of the source
+   still gives values to the linked tables, so unlink them first if you do not want that. Do not undo a migration by hand.
+
 ## Limits
 
 - There is no sign-up and no email invitation. The admin creates accounts in the app (Admin, Users, Add user) with a
@@ -393,6 +439,9 @@ duplicates, Top N, Split column, Clean text, Check, Compare). It has no server p
 - A person without a profile (for example an account whose email matches another profile) can sign in but sees a
   message that they have no profile. Fix it in the dashboard: change the email, then ask them to sign in again.
 - A reference table version holds at most 50,000 rows. Published versions cannot change; a change is a new version.
+- A print layout is for reports of up to 20,000 rows; a larger table is refused with a message that says to turn the layout off
+  (`docs/PRINT_PERF.md` has the measurements). The page breaks in the middle of a report are Excel's: the app only makes sure that
+  the signature block is not cut in two, from an estimate of the rows of a page.
 - Run history stores counts and ids only, never file content.
 - Backups and point-in-time recovery depend on your Supabase plan. Check what your plan offers before the data
   matters. The app has no export of flows or reference tables.

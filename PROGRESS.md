@@ -372,7 +372,7 @@ Linked reference tables (SPEC 16.2)
 
 Quality pass
 - [x] T9.16 Unit and integration sweep: `npm run check`, `test:acceptance` (including print), `test:db` with the migrations 1 to 21 from zero, `test:functions`, `test:e2e` (drag spec unchanged); `docs/PRINT_PERF.md` is current.
-- [ ] T9.17 `docs/DEPLOY.md`: "Upgrade to Phase 9" (back up first; `npx supabase db push` for migration 21 named in the file; no new function; deploy the app after the migration; a check list: a print layout on one flow and the downloaded file printed or previewed in Excel, a linked table and its notice, a published version of A that adds a value).
+- [x] T9.17 `docs/DEPLOY.md`: "Upgrade to Phase 9" (back up first; `npx supabase db push` for migration 21 named in the file; no new function; deploy the app after the migration; a check list: a print layout on one flow and the downloaded file printed or previewed in Excel, a linked table and its notice, a published version of A that adds a value).
 - [ ] T9.18 The Vietnamese texts of every key of the phase and the catalog test; `docs/DESIGN.md` and `docs/SPEC.md` updated where the build chose something else, with the reason in `docs/DECISIONS.md`.
 - [ ] T9.19 UI review of the new and changed screens in both themes (the print group in each state, the print preview, the link dialog, the notice, the dot, the marked rows, the publish warning); findings in `docs/UI_AUDIT_P9.md` become tasks T9.19a, T9.19b... fixed before the final run; `npm run test:ui-rules` in full.
 - [ ] T9.20 Final run: `npm ci`, then `npm run gates` (seven gates) and `npm run test:acceptance:pages`; set `STATUS: COMPLETE` only if both pass. Consult the advisor before the last tick.
@@ -457,6 +457,11 @@ Decisions with a default. Build with the default unless this list says otherwise
 None. The Pages file size blocker of T3.9 is solved by D71.
 
 ## Log
+
+### 2026-11-28 T9.17 DEPLOY.md: Upgrade to Phase 9
+Changed: `docs/DEPLOY.md` has the section "Upgrade to Phase 9" (back up first; `npx supabase db push` with migration 21 named and what it does; no new function; deploy the app after the migration, ExcelJS as a separate file; the check list: a print layout run and opened in Excel, a linked table with its draft, a published version of the source with a new value and the notice, the dot and the "New" marks, a user who sees none of it; the rollback and `schemaVersion` 5) and a line in "Limits" about the 20,000 rows and the page breaks.
+Gates run: none needed (a document). The statements were checked against the migration, the store and the screens of T9.1 to T9.15.
+Next: T9.18.
 
 ### 2026-11-28 T9.16 Unit and integration sweep
 Ran, after T9.15, one after the other: `npm run test:acceptance` exit 0 (44 passed: both datasets, the layout files, the generated flow of each Phase 8 step, the print layout flow and the privacy tests); `npm run test:e2e` exit 0 (529 passed in 10.2 min, the canvas drag spec inside it and unchanged; the toast spec of T9.6 passed in this run); `npm run test:functions` exit 0 (14 passed); `npm run test:db` exit 0 (migrations 1 to 21 from zero, PASS); `npm run check` exit 0 (2787 tests).
