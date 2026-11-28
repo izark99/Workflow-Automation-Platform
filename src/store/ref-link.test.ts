@@ -218,7 +218,7 @@ describe('unlinking and deleting', () => {
     await store.linkRefTable(c.id, { sourceTableId: a.id, column: 'dept', keyColumn: 'dept' });
     const e = await err(store.deleteRefTable(a.id));
     expect(e.messageId).toBe('errors.refLinkDeleteSource');
-    expect(e.message).toContain('Costs, Budgets');
+    expect(e.message).toContain('Budgets, Costs');
     await store.deleteRefTable(b.id);
     expect((await store.listRefLinkNotices()).map((n) => n.tableName)).toEqual(['Budgets']);
     await store.unlinkRefTable(c.id);

@@ -15,7 +15,7 @@ select columns_are('public', 'flow_versions',
   array['flow_id','version_no','valid_from','valid_to','status','change_note','definition'],
   'flow_versions columns');
 select columns_are('public', 'flow_group_access', array['flow_id','group_id'], 'flow_group_access columns');
-select columns_are('public', 'ref_tables', array['id','name','description'], 'ref_tables columns');
+select columns_are('public', 'ref_tables', array['id','name','description','link_table_id','link_column','key_column'], 'ref_tables columns');
 select columns_are('public', 'ref_table_versions',
   array['ref_table_id','version_no','valid_from','valid_to','status','columns','rows'],
   'ref_table_versions columns');

@@ -767,7 +767,7 @@
     "params": {
      "table": "Departments",
      "columns": "dept",
-     "tables": "Costs, Budgets"
+     "tables": "Budgets, Costs"
     }
    }
   },
@@ -917,7 +917,7 @@
     "code": "ref_link_delete_source",
     "params": {
      "table": "Departments",
-     "tables": "Costs, Budgets"
+     "tables": "Budgets, Costs"
     }
    }
   },

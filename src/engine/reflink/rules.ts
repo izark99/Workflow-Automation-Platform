@@ -24,6 +24,9 @@ export interface Refusal {
   params: Record<string, string>;
 }
 
+/** Names are listed in code-unit order, which is the order of the `C` collation of the database: both stores say the same words. */
+const byCode = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
+
 /** Names the tables of a cycle in the order of the chain: `B, A, B` for a link of B to A that A already feeds from B. */
 export function findCycle(tables: readonly LinkTable[], bId: string, aId: string): string[] | null {
   const byId = new Map(tables.map((t) => [t.id, t]));
@@ -65,13 +68,13 @@ export function linkRefusal(tables: readonly LinkTable[], bId: string, aId: stri
 export function publishRefusal(a: LinkTable, columns: readonly Column[], linked: readonly LinkTable[]): Refusal | null {
   const missing = linked.filter((t) => t.link && t.link.from === a.id && !columns.some((c) => c.name === t.link!.column));
   if (missing.length === 0) return null;
-  const columnNames = [...new Set(missing.map((t) => t.link!.column))];
-  return { code: 'ref_link_publish_column', params: { table: a.name, columns: columnNames.join(', '), tables: missing.map((t) => t.name).join(', ') } };
+  const columnNames = [...new Set(missing.map((t) => t.link!.column))].sort(byCode);
+  return { code: 'ref_link_publish_column', params: { table: a.name, columns: columnNames.join(', '), tables: missing.map((t) => t.name).sort(byCode).join(', ') } };
 }
 
 /** Deleting A while a table is linked to it is refused and names them (SPEC 16.2 item 5). */
 export function deleteRefusal(a: LinkTable, tables: readonly LinkTable[]): Refusal | null {
   const linked = tables.filter((t) => t.link?.from === a.id);
   if (linked.length === 0) return null;
-  return { code: 'ref_link_delete_source', params: { table: a.name, tables: linked.map((t) => t.name).join(', ') } };
+  return { code: 'ref_link_delete_source', params: { table: a.name, tables: linked.map((t) => t.name).sort(byCode).join(', ') } };
 }
