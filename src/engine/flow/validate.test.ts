@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { FLOW_SCHEMA_VERSION, flowJsonSchema, NEW_STEP_TYPES, NODE_PORTS, NODE_TYPES } from './types';
-import { withStepsVersion } from './steps-version';
+import { withPrintVersion, withStepsVersion } from './steps-version';
 import { resolveEdgeHandles, topologicalOrder, validateFlow } from './validate';
 
 function node(id: string, type: string, settings: Record<string, unknown> = {}) {
@@ -340,5 +340,55 @@ describe('withStepsVersion', () => {
   it('never lowers a version: 4 stays 4 when the new step is gone', () => {
     const four = def(4, ['input_file']);
     expect(withStepsVersion(four)).toBe(four);
+  });
+});
+
+describe('schemaVersion 5 and the versions before it', () => {
+  const step = (type: string, settings: Record<string, unknown> = {}) => node('n', type, settings);
+  it('a saved version 4 flow with a new step still validates when the latest version is 5 (a version is never lowered by a newer one)', () => {
+    for (const t of NEW_STEP_TYPES) {
+      const inputs = t === 'compare' ? [node('i', 'input_file'), node('j', 'input_file')] : [node('i', 'input_file')];
+      const edges = t === 'compare' ? [{ source: 'i', target: 'n', targetHandle: 'new' }, { source: 'j', target: 'n', targetHandle: 'old' }] : [{ source: 'i', target: 'n' }];
+      for (const v of [4, 5]) expect(validateFlow({ schemaVersion: v, nodes: [...inputs, step(t)], edges }).ok, `${t} v${v}`).toBe(true);
+    }
+  });
+  it('withStepsVersion makes version 4 of an older definition, leaves 4 and 5 as they are', () => {
+    const def = (v: 1 | 4 | 5) => ({ schemaVersion: v, nodes: [{ id: 's', type: 'sort' as const, settings: {} }], edges: [] });
+    expect(withStepsVersion(def(1)).schemaVersion).toBe(4);
+    const five = def(5);
+    expect(withStepsVersion(five)).toBe(five);
+  });
+});
+
+describe('the print layout in a definition', () => {
+  const output = (print: unknown) => ({ id: 'o', type: 'output', settings: { file: 'R', format: 'xlsx', sheet: 'S', ...(print === undefined ? {} : { print }) } });
+  const flowOf = (version: number, print: unknown, parameters?: unknown[]) => ({ schemaVersion: version, ...(parameters ? { parameters } : {}), nodes: [node('i', 'input_file'), output(print)], edges: [{ source: 'i', target: 'o' }] });
+  const messages = (input: unknown) => {
+    const r = validateFlow(input);
+    return r.ok ? [] : r.errors.map((e) => e.message);
+  };
+  it('a print layout needs schemaVersion 5 and says so', () => {
+    expect(messages(flowOf(4, { enabled: true }))[0]).toMatch(/needs schemaVersion 5/);
+    expect(validateFlow(flowOf(5, { enabled: true })).ok).toBe(true);
+    expect(validateFlow(flowOf(4, undefined)).ok).toBe(true);
+  });
+  it('names a token that does not exist and a parameter that the flow does not have, with the place', () => {
+    const header = (text: string) => [{ text }];
+    expect(messages(flowOf(5, { header: header('{company}') }))[0]).toMatch(/\{company\} in header line 1 is not a token/);
+    expect(messages(flowOf(5, { header: header('{param:gone}') }))[0]).toMatch(/\{param:gone\} in header line 1 names the parameter "gone"/);
+    expect(validateFlow(flowOf(5, { header: header('{param:period} {flow}') }, [{ key: 'period', label: 'Period', type: 'text', required: true }])).ok).toBe(true);
+  });
+  it('says what is wrong with the layout itself', () => {
+    expect(messages(flowOf(5, { paper: 'B5' }))[0]).toMatch(/paper is "B5"/);
+    expect(messages(flowOf(5, { header: Array.from({ length: 7 }, () => ({ text: 'x' })) }))[0]).toMatch(/at most 6/);
+  });
+  it('withPrintVersion makes version 5 when an Output step has a layout, and never lowers it', () => {
+    const base = (v: 1 | 4 | 5, print?: unknown) => ({ schemaVersion: v, nodes: [{ id: 'o', type: 'output' as const, settings: print === undefined ? {} : { print } }], edges: [] });
+    expect(withPrintVersion(base(1, { enabled: true })).schemaVersion).toBe(5);
+    expect(withPrintVersion(base(4, { enabled: false })).schemaVersion).toBe(5);
+    const plain = base(4);
+    expect(withPrintVersion(plain)).toBe(plain);
+    const five = base(5);
+    expect(withPrintVersion(five)).toBe(five);
   });
 });

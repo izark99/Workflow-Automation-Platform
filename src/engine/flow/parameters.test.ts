@@ -15,16 +15,16 @@ const messageIds = (input: unknown): string[] => {
 const date: FlowParameter = { key: 'period_end', label: 'Period end', type: 'date', required: true, default: '2026-09-30', help: 'The last day of the period.' };
 
 describe('versions of the definition format', () => {
-  it('reads version 1, 2, 3 and 4, and says which versions it reads', () => {
-    expect([...SUPPORTED_SCHEMA_VERSIONS]).toEqual([1, 2, 3, 4]);
+  it('reads version 1, 2, 3, 4 and 5, and says which versions it reads', () => {
+    expect([...SUPPORTED_SCHEMA_VERSIONS]).toEqual([1, 2, 3, 4, 5]);
     expect(BASE_SCHEMA_VERSION).toBe(1);
-    expect(FLOW_SCHEMA_VERSION).toBe(4);
+    expect(FLOW_SCHEMA_VERSION).toBe(5);
     expect(validateFlow({ schemaVersion: 1, ...base }).ok).toBe(true);
     expect(validateFlow(v2()).ok).toBe(true);
-    const r = validateFlow({ schemaVersion: 5, ...base });
+    const r = validateFlow({ schemaVersion: 6, ...base });
     expect(r.ok).toBe(false);
-    expect(!r.ok && r.errors[0]!.message).toMatch(/versions 1, 2, 3 and 4/);
-    expect([...flowJsonSchema.properties.schemaVersion.enum]).toEqual([1, 2, 3, 4]);
+    expect(!r.ok && r.errors[0]!.message).toMatch(/versions 1, 2, 3, 4 and 5/);
+    expect([...flowJsonSchema.properties.schemaVersion.enum]).toEqual([1, 2, 3, 4, 5]);
   });
 
   it('an older definition loads with an empty list of parameters and is not changed', () => {

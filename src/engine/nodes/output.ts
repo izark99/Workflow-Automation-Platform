@@ -1,5 +1,7 @@
 import type { FlowDefinition } from '../flow/types';
 import { compileStepFormula } from '../formula/node-formula';
+import { parsePrintSettings, PrintSettingsError } from '../output/print/settings';
+import type { PrintSettings } from '../output/print/settings';
 import { quoteIdent } from '../sql';
 import { EngineError } from '../types';
 import { requireColumn } from './columns';
@@ -16,6 +18,19 @@ export interface OutputSettings {
   columns: string[] | undefined;
   /** Text columns whose plain-number values are written as numbers (D27). */
   numberLikeText: string[];
+  /** The print layout (SPEC 16.1). Undefined when the step has none. */
+  print: PrintSettings | undefined;
+}
+
+/** The print layout of the step, or undefined. A message of the layout becomes a message of the step. */
+function printOf(raw: unknown, bad: (rule: string) => never): PrintSettings | undefined {
+  if (raw === undefined) return undefined;
+  try {
+    return parsePrintSettings(raw);
+  } catch (e) {
+    if (e instanceof PrintSettingsError) return bad(e.message);
+    throw e;
+  }
 }
 
 const SHEET_NAME = /^[^[\]:*?/\\]{1,31}$/;
@@ -62,6 +77,7 @@ export function parseOutputSettings(raw: Record<string, unknown>, nodeId: string
     sort: parsedSort,
     columns,
     numberLikeText: raw.numberLikeText === undefined ? [] : names(raw.numberLikeText, 'numberLikeText'),
+    print: printOf(raw.print, bad),
   };
 }
 

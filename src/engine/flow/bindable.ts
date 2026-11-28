@@ -72,7 +72,7 @@ export const NOT_BINDABLE_SETTINGS: Readonly<Record<NodeType, Readonly<Record<st
   pivot: { rowKeys: 'A list of columns of the data.', columnSource: 'A column of the data.', value: 'A column of the data.', columns: 'Where the new columns come from, with its own settings.' },
   unpivot: { keep: 'A list of columns of the data.', unpivot: 'A list of columns of the data.' },
   append: {},
-  output: { columns: 'A list of columns of the data.', numberLikeText: 'A list of columns of the data.', sort: 'The rows of a list.' },
+  output: { columns: 'A list of columns of the data.', numberLikeText: 'A list of columns of the data.', sort: 'The rows of a list.', print: 'The print layout is an object with its own settings; a parameter reaches it through the token {param:key} in a line (SPEC 16.1).' },
   sql: { sql: 'SQL. Read parameters from the table params.' },
   sort: { keys: 'The rows of a list: a column or a formula with a direction.' },
   dedupe: { columns: 'A list of columns of the data.' },

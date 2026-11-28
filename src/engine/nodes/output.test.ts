@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createNodeRunner } from '../runner/node-runner';
 import { EngineError, type SqlRunner, type TableData } from '../types';
-import { checkOutputNodes } from './output';
+import { checkOutputNodes, parseOutputSettings } from './output';
 import { runNode } from './test-helpers';
 
 let runner: SqlRunner;
@@ -144,5 +144,21 @@ describe('checkOutputNodes (several output steps in one run)', () => {
   it('refuses two csv steps for one file, and one file in two formats', () => {
     expect(() => checkOutputNodes(flow(node('a', { file: 'R', format: 'csv' }), node('b', { file: 'R', format: 'csv' })))).toThrow(/csv/);
     expect(() => checkOutputNodes(flow(node('a', { file: 'R', sheet: 'S' }), node('b', { file: 'R', format: 'csv' })))).toThrow(/format/);
+  });
+});
+
+describe('the print layout setting of an Output step', () => {
+  const base = { file: 'R', format: 'xlsx', sheet: 'S' };
+  it('has no layout when the step has none, and reads the layout when it has one', () => {
+    expect(parseOutputSettings(base, 'o').print).toBeUndefined();
+    const p = parseOutputSettings({ ...base, print: { paper: 'A3', header: [{ text: 'Báo cáo {flow}', bold: true }] } }, 'o').print;
+    expect(p).toMatchObject({ enabled: true, paper: 'A3' });
+    expect(p?.header[0]).toMatchObject({ text: 'Báo cáo {flow}', bold: true, align: 'left' });
+  });
+  it('turns a message of the layout into a message of the step', () => {
+    expect(() => parseOutputSettings({ ...base, print: { paper: 'B5' } }, 'out-1')).toThrow(/Output step "out-1": The paper is "B5"/);
+  });
+  it('keeps the layout of a csv step without using it (the group is not shown for csv)', () => {
+    expect(parseOutputSettings({ file: 'R', format: 'csv', print: { enabled: true } }, 'o').print?.enabled).toBe(true);
   });
 });

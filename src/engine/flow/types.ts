@@ -15,9 +15,12 @@ export const BASE_SCHEMA_VERSION = 1;
 export const PARAMETERS_SCHEMA_VERSION = 2;
 /** Version 3: a single-value setting may be a binding `{"$param": "key"}` (SPEC 13.3). */
 export const BINDINGS_SCHEMA_VERSION = 3;
-/** The latest format: a definition that holds one of the seven steps of Phase 8 (`NEW_STEP_TYPES`) is version 4 (SPEC 15.4). */
-export const FLOW_SCHEMA_VERSION = 4;
-export const SUPPORTED_SCHEMA_VERSIONS = [1, 2, 3, 4] as const;
+/** Version 4: a definition that holds one of the seven steps of Phase 8 (`NEW_STEP_TYPES`) (SPEC 15.4). */
+export const STEPS_SCHEMA_VERSION = 4;
+/** The latest format: an Output step with a print layout makes a definition version 5 (SPEC 16.1). */
+export const PRINT_SCHEMA_VERSION = 5;
+export const FLOW_SCHEMA_VERSION = 5;
+export const SUPPORTED_SCHEMA_VERSIONS = [1, 2, 3, 4, 5] as const;
 
 /** A setting that takes its value from a parameter of the flow. */
 export interface ParamBinding {

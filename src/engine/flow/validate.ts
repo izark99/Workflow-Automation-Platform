@@ -2,12 +2,16 @@ import { engineText } from '../messages';
 import type { EngineMessageId, MessageParams } from '../messages';
 import { MAX_PARAMETER_KEY_LENGTH, PARAMETER_KEY, PARAMETER_TYPES, fitsParameterType } from './parameters';
 import type { FlowParameter, ParameterType } from './parameters';
+import { parsePrintSettings, PrintSettingsError } from '../output/print/settings';
+import { PRINT_TOKENS, printTokenProblems } from '../output/print/tokens';
 import { isBindable } from './bindable';
 import { containsBindingKey, isParamBinding } from './bindings';
 import {
   BINDINGS_SCHEMA_VERSION,
   FLOW_SCHEMA_VERSION,
   NEW_STEP_TYPES,
+  PRINT_SCHEMA_VERSION,
+  STEPS_SCHEMA_VERSION,
   SUPPORTED_SCHEMA_VERSIONS,
   NODE_PORTS,
   NODE_TYPES,
@@ -29,7 +33,8 @@ export type FlowErrorCode =
   | 'missing_input'
   | 'input_connected_twice'
   | 'cycle'
-  | 'invalid_parameters';
+  | 'invalid_parameters'
+  | 'invalid_print_layout';
 
 export interface FlowError {
   code: FlowErrorCode;
@@ -128,6 +133,7 @@ export function validateFlow(input: unknown): FlowValidation {
   });
   checkBindings(input.schemaVersion, nodes, parameters, errors);
   checkStepVersions(input.schemaVersion, nodes, errors);
+  checkPrintLayouts(input.schemaVersion, nodes, parameters, errors);
 
   const validEdges: FlowEdge[] = [];
   input.edges.forEach((raw: unknown, index: number) => {
@@ -328,10 +334,41 @@ export function topologicalOrder(flow: FlowDefinition): string[] {
 
 /** A step of Phase 8 needs schemaVersion 4 (SPEC 15.4); older definitions never hold one. */
 function checkStepVersions(schemaVersion: unknown, nodes: FlowNode[], errors: FlowError[]): void {
-  if (schemaVersion === FLOW_SCHEMA_VERSION) return;
+  // Version 4 and the versions after it allow the steps.
+  if (typeof schemaVersion === 'number' && schemaVersion >= STEPS_SCHEMA_VERSION) return;
   for (const node of nodes) {
     if (!(NEW_STEP_TYPES as readonly string[]).includes(node.type)) continue;
     errors.push({ ...paramError('engine.stepNeedsV4', { step: node.label ?? node.id, type: node.type }), nodeId: node.id });
+  }
+}
+
+/** A print layout needs schemaVersion 5, and its tokens and parameters must exist (SPEC 16.1 item 4). */
+function checkPrintLayouts(schemaVersion: unknown, nodes: FlowNode[], parameters: FlowParameter[], errors: FlowError[]): void {
+  const keys = parameters.map((p) => p.key);
+  for (const node of nodes) {
+    if (node.type !== 'output' || node.settings.print === undefined) continue;
+    const step = node.label ?? node.id;
+    if (typeof schemaVersion !== 'number' || schemaVersion < PRINT_SCHEMA_VERSION) {
+      errors.push({ ...paramError('engine.printNeedsV5', { step }), nodeId: node.id });
+      continue;
+    }
+    let print: ReturnType<typeof parsePrintSettings>;
+    try {
+      print = parsePrintSettings(node.settings.print);
+    } catch (e) {
+      if (e instanceof PrintSettingsError) {
+        errors.push({ code: 'invalid_print_layout', message: `Output step "${step}": ${e.message} Change it in the print layout of the step.`, nodeId: node.id });
+        continue;
+      }
+      throw e;
+    }
+    for (const problem of printTokenProblems(print, keys)) {
+      errors.push(
+        problem.kind === 'param'
+          ? { ...paramError('engine.printParam', { step, token: problem.token, where: problem.where, key: problem.key ?? '' }), nodeId: node.id }
+          : { ...paramError('engine.printToken', { step, token: problem.token, where: problem.where, tokens: [...PRINT_TOKENS, 'param:key'].map((t) => `{${t}}`).join(' ') }), nodeId: node.id },
+      );
+    }
   }
 }
 
