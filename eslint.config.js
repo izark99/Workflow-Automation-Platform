@@ -13,6 +13,7 @@ export default tseslint.config(
       'bench-data',
       'dist-spike',
       'dist-acceptance',
+      'dist-perf-print',
       'dist-ui-rules',
       'dist-e2e',
       'testcase',

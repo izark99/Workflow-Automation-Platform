@@ -1,6 +1,7 @@
 // Browser side of the acceptance test: runs the real engine, in the real browser runner, on files that the test hands
 // in, and returns the output files. It has no knowledge of any dataset.
 import * as XLSX from 'xlsx';
+import './print-probe';
 import type { ParameterValues } from '../src/engine/flow/parameter-values';
 import { runFlow } from '../src/engine/run';
 import { createBrowserRunner } from '../src/engine/runner/browser-runner';

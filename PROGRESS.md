@@ -1,4 +1,4 @@
-STATUS: COMPLETE
+STATUS: IN PROGRESS
 
 # Progress
 
@@ -352,7 +352,7 @@ updates its routes in `ui-rules/routes.ts` and runs the UI rules for them in bot
 changed and the acceptance flow is not edited.
 
 Print layout (SPEC 16.1)
-- [ ] T9.1 Measure and decide: add ExcelJS (pin the version, record why in `docs/DECISIONS.md`), loaded only through a dynamic import so it is a separate file of the build and the main file does not grow (a test checks the main file size and that the file is not requested when no layout is on). A script `npm run perf:print` (not a gate) writes 5,000, 20,000 and 50,000 rows by 12 columns with a print layout in headless Chromium and records the time, the memory and the file size in `docs/PRINT_PERF.md`; the row limit of SPEC 16.1 item 7 is 20,000 unless the measure says less (then SPEC and DECISIONS are changed in this commit). `npm run build:pages` stays under its file limit.
+- [x] T9.1 Measure and decide: add ExcelJS (pin the version, record why in `docs/DECISIONS.md`), loaded only through a dynamic import so it is a separate file of the build and the main file does not grow (a test checks the main file size and that the file is not requested when no layout is on). A script `npm run perf:print` (not a gate) writes 5,000, 20,000 and 50,000 rows by 12 columns with a print layout in headless Chromium and records the time, the memory and the file size in `docs/PRINT_PERF.md`; the row limit of SPEC 16.1 item 7 is 20,000 unless the measure says less (then SPEC and DECISIONS are changed in this commit). `npm run build:pages` stays under its file limit.
 - [ ] T9.2 The print settings: types for `settings.print` in the Output node, the JSON schema, the validation with clear messages (paper, orientation, margins, at most 6 header lines of at most 200 characters, 1 to 5 signers, unknown tokens and unknown parameters by name), `schemaVersion` 5 for a definition that has one, and the token replacement as a pure function (`{effective_date}`, `{month_year}`, `{run_date}`, `{flow}`, `{rows}`, `{param:key}`, `{day}`, `{month}`, `{year}`) with unit tests. Older definitions load unchanged.
 - [ ] T9.3 The writer, part 1 (`src/engine/output/print/`, no React): `buildPrintWorkbook` with ExcelJS: the page (paper, orientation, margins, fit to one page wide, the repeated header row, no gridlines, print area), the table (borders, bold header on a light fill, number and date formats, widths from the content, wrapped long text). Tests read the file back with SheetJS and compare every cell with the same table written by the normal path, and read the page setup from the file's XML.
 - [ ] T9.4 The writer, part 2: the header lines (merged across the table, alignment, bold, sizes, tokens), the signature block (the date line, 1 to 5 signers in equal columns, the space to sign, the optional name), the page-break rule so the block is not cut (the estimate of rows per page from paper, orientation and row height), the footer "Trang n/N" in both languages. Tests on the XML (merges, breaks, footer) and on the readback.
@@ -457,6 +457,13 @@ Decisions with a default. Build with the default unless this list says otherwise
 None. The Pages file size blocker of T3.9 is solved by D71.
 
 ## Log
+
+### 2026-11-28 T9.1 Measure and decide: ExcelJS
+Start of Phase 9: line 1 is back to `STATUS: IN PROGRESS` (Phase 8 set it to COMPLETE; GOALS says the build sets it back), the branch was restarted from `main` after pull request 22 (Phase 8) was merged, and the gates are not run under PROMPT step 2.
+Changed: `exceljs` 4.4.0 (pinned), `src/engine/output/print/load-exceljs.ts` (the one dynamic import), `load-exceljs.test.ts` (3 tests: no other file imports it, one promise, a workbook is written), `scripts/check-dist-size.mjs` (the main file under 2,300,000 bytes and ExcelJS not loaded at start; `npm run build:pages` PASS with a main file of 1,927,900 bytes), `acceptance/print-probe.ts` and `scripts/perf-print.ts` (`npm run perf:print`, not a gate), `docs/PRINT_PERF.md`, D136. The row limit stays 20,000: 20,000 rows by 12 columns take 1.6 s and 158 MB of heap; SPEC 16.1 is unchanged.
+Known for T9.2: `checkStepVersions` and `withStepsVersion` compare with `FLOW_SCHEMA_VERSION`, which becomes 5; they must compare with a constant 4 (`>= 4`), or every saved version 4 flow with a Sort would stop validating. Fix it first in T9.2, with a test.
+Gates run: check PASS (2581 tests); build:pages PASS; perf:print PASS.
+Next: T9.2.
 
 ### 2026-11-27 T8.20 Final run: Phase 8 complete
 Two runs of `npm run gates`, each started after `npm ci` (exit 0). The first stopped at the e2e gate on one test, `e2e/fields.spec.ts` (the checkbox colours read part of the way through a 120 ms transition after a fixed wait); the spec now waits for the transitions to finish and passed 20 repeats. The second run passed all seven gates: check (126 files, 2,578 tests, 1 lint warning), spike (wrote `docs/SPIKE_RESULTS.md`), acceptance (41 tests: both datasets, the layout files, privacy and the generated flow of each new step), e2e (500 tests, `canvas-drag.spec.ts` inside and unchanged), ui-rules (5,925 tests: light 1280, light 1440, dark 1440, with the canvas controls, the selection toolbar, the popup and the card and form of every new step, and the pseudo-locale check), db (20 files, 541 tests, migrations 1 to 20 from zero), functions (14 tests). `npm run test:acceptance:pages`: 42 tests PASS. `git diff --exit-code main -- supabase src/store`, `-- flows/monthly-timesheet.flow.json` and `-- e2e/canvas-drag.spec.ts` all exit 0 (`main` and `origin/main` are the same commit `b6fe9ce`); `git status --porcelain testcase` is empty.
