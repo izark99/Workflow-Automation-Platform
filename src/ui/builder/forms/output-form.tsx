@@ -8,6 +8,8 @@ import { Bind } from '../parameter-control/bind';
 import { ColumnList, LoadColumnsBar } from './column-pickers';
 import { outputFromSettings, outputMissing, outputToSettings } from './output-logic';
 import type { OutputErrors, OutputFormat, OutputValues } from './output-logic';
+import { PrintGroup } from './print-group';
+import { hasPrintErrors, printErrors } from './print-logic';
 import { SortRows } from './sort-rows';
 import type { FormProps } from './types';
 import { useSourceColumns } from './use-source-columns';
@@ -20,13 +22,16 @@ export function OutputForm(props: FormProps) {
   const [v, setV] = useState<OutputValues>(() => outputFromSettings(step.settings));
   const [errors, setErrors] = useState<OutputErrors>({});
   const source = useSourceColumns(props);
+  const parameterKeys = (definition.parameters ?? []).map((p) => p.key);
   const names = source.columns ? source.columns.map((c) => c.name) : null;
 
   const apply = (next: OutputValues): void => {
     setV(next);
     const r = outputToSettings(next, step.settings);
     setErrors(r.errors);
-    if (r.settings) onSettings(r.settings);
+    // A layout with a text that is wrong is shown with its errors and is not saved; the saved layout stays as it was.
+    const printBad = next.print !== null && next.print.enabled && hasPrintErrors(printErrors(next.print, parameterKeys));
+    if (r.settings && !printBad) onSettings(r.settings);
   };
 
   // The engine checks all Output steps together (sheet names, formats, csv files). Show its message when it is about this step.
@@ -37,6 +42,8 @@ export function OutputForm(props: FormProps) {
     const message = errorText(e);
     if (message.includes(`"${step.id}"`)) clash = message;
   }
+  // A fault of the print layout is shown under its field, so the engine's own sentence is not shown a second time.
+  if (v.print?.enabled && hasPrintErrors(printErrors(v.print, parameterKeys))) clash = null;
   const missing = outputMissing(v);
 
   return (
@@ -68,6 +75,8 @@ export function OutputForm(props: FormProps) {
       )}
 
       <SortRows rows={v.sort} names={names} readOnly={readOnly} onChange={(sort) => apply({ ...v, sort })} />
+
+      {v.format === 'xlsx' ? <PrintGroup value={v.print} parameterKeys={parameterKeys} readOnly={readOnly} onChange={(print) => apply({ ...v, print })} /> : null}
 
       <ColumnList label={t('builder.output.numberLike')} hint={t('builder.output.numberLikeHint')} values={v.numberLikeText} columns={names} disabled={readOnly} onChange={(numberLikeText) => apply({ ...v, numberLikeText })} />
       {missing.length > 0 ? (

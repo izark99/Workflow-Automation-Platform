@@ -1,6 +1,8 @@
 // Pure part of the Output, Append and SQL forms.
 import { checkSqlText } from '../../../engine/nodes/sql-node';
 import { translate } from '../../i18n';
+import { printFromSettings } from './print-logic';
+import type { PrintValue } from './print-logic';
 
 export type OutputFormat = 'xlsx' | 'csv';
 import { sortRowDone, sortRowsFromList, sortRowsToList } from './sort-logic';
@@ -15,6 +17,8 @@ export interface OutputValues {
   columns: string[];
   sort: SortRow[];
   numberLikeText: string[];
+  /** The print layout, or null when the step has none (SPEC 16.1). */
+  print: PrintValue;
 }
 
 const SHEET_NAME = /^[^[\]:*?/\\]{1,31}$/;
@@ -41,6 +45,7 @@ export function outputFromSettings(s: Record<string, unknown>): OutputValues {
     columns,
     sort,
     numberLikeText: list(s.numberLikeText),
+    print: printFromSettings(s.print),
   };
 }
 
@@ -70,6 +75,8 @@ export function outputToSettings(v: OutputValues, previous: Record<string, unkno
   else delete out.sort;
   if (v.numberLikeText.length > 0) out.numberLikeText = v.numberLikeText;
   else delete out.numberLikeText;
+  if (v.print) out.print = v.print;
+  else delete out.print;
   return { settings: out, errors };
 }
 

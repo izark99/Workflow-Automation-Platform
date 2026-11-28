@@ -11,18 +11,20 @@ import { seedSnapshot } from '../src/store/seed';
  * A route with a flow of an Input file step and one new step that reads it, the new step selected, on its Configure or Test tab.
  * Selectors are structural: the pseudo-locale check changes every name.
  */
-function stepRoute(name: string, type: string, settings: Record<string, unknown>, tab: 'configure' | 'test', parameters?: unknown[]): RuleRoute {
+function stepRoute(name: string, type: string, settings: Record<string, unknown>, tab: 'configure' | 'test', parameters?: unknown[], pseudo = true): RuleRoute {
   const id = `flow-step-${type}`;
   return {
     path: `/flows/${id}/versions/1`,
     name: `/flows/${id}/versions/1 (${name})`,
     sidebar: false,
+    // The sentence of the engine about a layout that was edited by hand is English only (it names the field and says what to do).
+    ...(pseudo ? {} : { pseudo: false }),
     before: async (page) => {
       const s = seedSnapshot();
       s.flows.push({
         id, name: `Step ${type}`, ownerId: 'user-harold', scope: 'personal', deletedAt: null, groupIds: [],
         versions: [{ versionNo: 1, validFrom: '2026-01-01', validTo: null, status: 'draft', changeNote: '', definition: {
-          schemaVersion: 4,
+          schemaVersion: settings.print ? 5 : 4,
           ...(parameters ? { parameters } : {}),
           nodes: [
             { id: 'a', type: 'input_file', label: 'Alpha', position: { x: 0, y: 100 }, settings: { key: 'a', headerRow: 1 } },
@@ -686,6 +688,31 @@ export const ROUTES: RuleRoute[] = [
   stepRoute('Top N: smallest by a formula, grouped', 'top_n', { n: 3, order: 'smallest', by: { expression: '[hours] * 2' }, groupBy: ['dept'] }, 'configure'),
   stepRoute('Top N: first rows', 'top_n', { n: 5, order: 'first', groupBy: [] }, 'configure'),
   stepRoute('Top N: N from a parameter', 'top_n', { n: { $param: 'n' }, order: 'first', groupBy: [] }, 'configure', [{ key: 'n', label: 'How many', type: 'number', required: true }]),
+  // The group "Print layout" of an Output step (SPEC 16.1) in its states: off, on with the defaults, filled, with errors, at the limits.
+  stepRoute('Output: print layout off', 'output', { file: 'Result', format: 'xlsx', sheet: 'Rows' }, 'configure'),
+  stepRoute('Output: print layout on, the defaults', 'output', { file: 'Result', format: 'xlsx', sheet: 'Rows', print: { enabled: true } }, 'configure'),
+  stepRoute('Output: print layout filled', 'output', {
+    file: 'Result', format: 'xlsx', sheet: 'Rows',
+    print: {
+      enabled: true, paper: 'A3', orientation: 'landscape', margins: 'narrow', fitWidth: true, repeatHeader: true, pageNumbers: false,
+      header: [{ text: 'BÁO CÁO CHẤM CÔNG THÁNG {month_year}', align: 'center', bold: true, size: 'large' }, { text: 'Đơn vị: {param:unit}', align: 'left', bold: false, size: 'normal' }],
+      dateLine: 'Hà Nội, ngày {day} tháng {month} năm {year}',
+      signers: [{ title: 'Người lập biểu', line: '(Ký, ghi rõ họ tên)', name: 'Nguyễn Văn An' }, { title: 'Giám đốc', line: '(Ký, ghi rõ họ tên)', name: '' }],
+    },
+  }, 'configure', [{ key: 'unit', label: 'Unit', type: 'text', required: false }]),
+  stepRoute('Output: print layout with errors', 'output', {
+    file: 'Result', format: 'xlsx', sheet: 'Rows',
+    print: { enabled: true, header: [{ text: 'Report {nope}', align: 'center', bold: true, size: 'large' }, { text: '{param:missing}', align: 'left', bold: false, size: 'normal' }, { text: 'x'.repeat(201), align: 'left', bold: false, size: 'normal' }], dateLine: 'Ngày {day}', signers: [] },
+  }, 'configure', undefined, false),
+  stepRoute('Output: print layout at the limits', 'output', {
+    file: 'Result', format: 'xlsx', sheet: 'Rows',
+    print: {
+      enabled: true,
+      header: Array.from({ length: 6 }, (_, i) => ({ text: `Line ${i + 1}`, align: 'left', bold: false, size: 'normal' })),
+      dateLine: '',
+      signers: Array.from({ length: 5 }, (_, i) => ({ title: `Signer ${i + 1}`, line: '(Ký, ghi rõ họ tên)', name: '' })),
+    },
+  }, 'configure'),
   // The canvas with the cards of all seven new steps (the icons, the names of the handles), and the step list with its seven groups.
   { path: '/flows/flow-all-steps/versions/1', name: '/flows/flow-all-steps/versions/1 (the cards of the new steps)', sidebar: false, before: seedAllSteps, prepare: async (page) => { await page.locator('.react-flow__node').nth(8).waitFor(); } },
   { path: '/flows/flow-all-steps/run', name: '/flows/flow-all-steps/run (a flow of the new steps)', sidebar: true, busy: true, before: seedAllSteps },

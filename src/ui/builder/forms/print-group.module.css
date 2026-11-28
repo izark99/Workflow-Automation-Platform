@@ -1,0 +1,11 @@
+/* The three alignment buttons of a header line: the pressed one takes the soft primary colour, so no second primary button is on the screen. */
+.aligns {
+  display: flex;
+  gap: 4px;
+}
+
+.aligns button[aria-pressed='true'] {
+  background: var(--primary-soft);
+  color: var(--primary-text);
+  border-color: var(--primary);
+}

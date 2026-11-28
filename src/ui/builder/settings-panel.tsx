@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import type { FlowDefinition, FlowNode } from '../../engine/flow/types';
 import { NODE_PORTS } from '../../engine/flow/types';
 import { withBindingsVersion } from '../../engine/flow/bindings';
+import { withPrintVersion } from '../../engine/flow/steps-version';
 import { parametersOf } from '../../engine/flow/parameters';
 import type { ParameterValue } from '../../engine/flow/parameters';
 import type { RefTable } from '../../engine/versions';
@@ -121,7 +122,7 @@ export function SettingsPanel({ definition, step, onChange, onDeleted, onDuplica
             <SetupTab key={step.id} definition={definition} step={step} onChange={onChange} readOnly={readOnly} error={error} setError={setError} />
           ) : null}
           {tab === 'configure' ? <ConfigureTab step={step} definition={definition} onChange={onChange} readOnly={readOnly} context={{ testFiles, refTables, parameterValues, testDate, coverage }} /> : null}
-          {tab === 'test' ? <StepPreview key={step.id} definition={definition} step={step} files={testFiles} onFile={onTestFile} refTables={refTables} parameterValues={parameterValues} onParameterValue={onParameterValue} date={testDate} onDate={onTestDate} onApplySettings={(next) => { onChange(withBindingsVersion(updateSettings(definition, step.id, next))); setTab('configure'); }} /> : null}
+          {tab === 'test' ? <StepPreview key={step.id} definition={definition} step={step} files={testFiles} onFile={onTestFile} refTables={refTables} parameterValues={parameterValues} onParameterValue={onParameterValue} date={testDate} onDate={onTestDate} onApplySettings={(next) => { onChange(withPrintVersion(withBindingsVersion(updateSettings(definition, step.id, next)))); setTab('configure'); }} /> : null}
         </div>
       </Tabs>
       <div className={styles.footer}>
@@ -193,7 +194,7 @@ function ConfigureTab({ step, definition, onChange, readOnly, context }: { step:
   const lastFixed = useRef<Record<string, unknown>>({});
   // The form knows plain values only: it is shown a placeholder where a setting is bound, and the bindings are put back when
   // it saves. The first binding makes the definition schemaVersion 3 (SPEC 13.3).
-  const apply = (settings: Record<string, unknown>): void => onChange(withBindingsVersion(updateSettings(definition, step.id, settings)));
+  const apply = (settings: Record<string, unknown>): void => onChange(withPrintVersion(withBindingsVersion(updateSettings(definition, step.id, settings))));
   const shown = { ...step, settings: hiddenFromForm(step.type, step.settings) };
   const bound = boundNames(step.settings).join(',');
   return (
