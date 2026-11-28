@@ -97,6 +97,27 @@ test('parameter values are used by the run and appear in no request', async ({ p
   expect(auditRequests(requests, ORIGIN, [...MARKERS, PARAM_MARKER], allowedCodeUrls())).toEqual([]);
 });
 
+// SPEC 16.1 item 9: the file with a print layout is made in the browser. The ExcelJS file is a static asset that is requested only for
+// a layout, and no request carries file content.
+test('a run with a print layout loads the ExcelJS file as a static asset and sends no file content; a run without one does not load it', async ({ page }, info) => {
+  const dir = info.outputPath('print');
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(path.join(dir, 'data.csv'), `Id,Name\n1,"${MARKERS[0]}"\n2,"${MARKERS[1]}"\n`);
+  const plainRequests = watchRequests(page);
+  await runDataset(page, flowFor(false), dataset(dir, 'data.csv'));
+  expect(plainRequests.some((r) => /exceljs/i.test(r.url))).toBe(false);
+
+  const flow = flowFor(false);
+  (flow as { schemaVersion: number }).schemaVersion = 5;
+  (flow.nodes[1]!.settings as Record<string, unknown>).print = { enabled: true, header: [{ text: 'Report {flow}', align: 'center', bold: true, size: 'large' }], signers: [{ title: 'Maker', line: '(Ký)', name: MARKERS[1] }] };
+  const requests = watchRequests(page);
+  const ran = await runDataset(page, flow, dataset(dir, 'data.csv'));
+  const text = await outputText(ran.files[0]!.bytes);
+  for (const m of MARKERS) expect(text).toContain(JSON.stringify(m).slice(1, -1));
+  expect(requests.some((r) => /\/assets\/exceljs[^/]*\.js$/i.test(r.url))).toBe(true);
+  expect(auditRequests(requests, ORIGIN, MARKERS, allowedCodeUrls())).toEqual([]);
+});
+
 test('the audit fails when a page leaks: a query, a beacon and another address are all found', async ({ page }) => {
   const requests = watchRequests(page);
   await page.goto('/acceptance/index.html');

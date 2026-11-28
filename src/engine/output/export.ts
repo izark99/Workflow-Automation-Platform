@@ -14,6 +14,8 @@ export interface OutputFile {
   bytes: Uint8Array;
   /** Sheet names in order. Empty for csv. */
   sheets: string[];
+  /** True when the file was written with a print layout (SPEC 16.1). Absent otherwise. */
+  printed?: true;
 }
 
 const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
@@ -120,7 +122,7 @@ export async function buildOutputFiles(result: RunResult, flow: Pick<FlowDefinit
     } else {
       bytes = await writePrinted(parts, options);
     }
-    out.push({ name: `${safeName(file)}.xlsx`, format: 'xlsx', mimeType: XLSX_MIME, bytes, sheets: parts.map((p) => p.settings.sheet!) });
+    out.push({ name: `${safeName(file)}.xlsx`, format: 'xlsx', mimeType: XLSX_MIME, bytes, sheets: parts.map((p) => p.settings.sheet!), ...(printed.length > 0 ? { printed: true as const } : {}) });
   }
   return out;
 }

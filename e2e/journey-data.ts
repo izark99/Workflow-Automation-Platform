@@ -37,7 +37,7 @@ function sheetToTable(ws: XLSX.WorkSheet): { columns: Column[]; rows: Cell[][] }
 }
 
 /** Puts the monthly timesheet flow (published) and its three reference tables into the store before the page loads. */
-export async function seedTimesheet(page: Page, ds: DatasetConfig): Promise<void> {
+export async function seedTimesheet(page: Page, ds: DatasetConfig, options: { draft?: boolean } = {}): Promise<void> {
   const s = seedSnapshot();
   const wb = XLSX.read(readFileSync(path.join(ds.dir, ds.referenceFile ?? 'reference/reference_tables.xlsx')), { type: 'buffer', cellDates: true });
   for (const name of ds.referenceSheets ?? []) {
@@ -51,7 +51,7 @@ export async function seedTimesheet(page: Page, ds: DatasetConfig): Promise<void
     scope: 'personal',
     deletedAt: null,
     groupIds: [],
-    versions: [{ versionNo: 1, validFrom: '2026-01-01', validTo: null, status: 'published', changeNote: 'First version', definition: JSON.parse(readFileSync(TIMESHEET_FLOW, 'utf8')) }],
+    versions: [{ versionNo: 1, validFrom: '2026-01-01', validTo: null, status: options.draft ? 'draft' : 'published', changeNote: 'First version', definition: JSON.parse(readFileSync(TIMESHEET_FLOW, 'utf8')) }],
   });
   await page.addInitScript((json) => localStorage.setItem('dfw.seed', json), JSON.stringify(s));
 }

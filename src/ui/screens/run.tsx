@@ -272,9 +272,10 @@ function Result({ outcome, tab, onTab }: { outcome: RunOutcome; tab: string; onT
       <div className={styles.split}>
         <div className={styles.downloads}>
           {outcome.files.map((f) => (
-            <Button key={f.name} onClick={() => download(f.name, f.mimeType, f.bytes)}>
-              {t('run.download', { name: f.name })}
-            </Button>
+            <span key={f.name} style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+              <Button onClick={() => download(f.name, f.mimeType, f.bytes)}>{t('run.download', { name: f.name })}</Button>
+              {f.printed ? <Badge>{t('run.printLayout')}</Badge> : null}
+            </span>
           ))}
         </div>
       </div>

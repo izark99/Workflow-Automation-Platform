@@ -583,6 +583,7 @@ export const en = {
   'run.changeFile': 'Change file',
   'run.noFile': 'No file chosen',
   'run.ready': 'Ready',
+  'run.printLayout': 'Print layout',
   'run.loaded': 'Loaded',
   'run.run': 'Run flow',
   'run.runAgain': 'Run again',

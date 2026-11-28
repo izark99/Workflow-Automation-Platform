@@ -40,6 +40,7 @@ describe('the output with a print layout', () => {
     const [plain] = await buildOutputFiles(resultOf({}), flowOf(out('o', { numberLikeText: ['Id'] })));
     const [off] = await buildOutputFiles(resultOf({}), flowOf(out('o', { numberLikeText: ['Id'], print: { ...print, enabled: false } })));
     expect(Buffer.from(off!.bytes).equals(Buffer.from(plain!.bytes))).toBe(true);
+    expect(off!.printed).toBeUndefined();
   });
 
   it('a layout is written with the print writer: the lines, the table and the signers are in the file, with the tokens replaced', async () => {
@@ -49,6 +50,7 @@ describe('the output with a print layout', () => {
     expect(ws.A3!.v).toBe('Id');
     expect(ws.A4!.v).toBe('007');
     expect(file!.sheets).toEqual(['S']);
+    expect(file!.printed).toBe(true);
     expect(await entry(file!.bytes, 'xl/worksheets/sheet1.xml')).toContain('Trang');
   });
 

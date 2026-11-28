@@ -572,6 +572,7 @@ export const vi: Record<MessageKey, string> = {
   'run.changeFile': 'Đổi tệp',
   'run.noFile': 'Chưa chọn tệp',
   'run.ready': 'Sẵn sàng',
+  'run.printLayout': 'Bố cục in',
   'run.loaded': 'Đã tải',
   'run.run': 'Chạy luồng',
   'run.runAgain': 'Chạy lại',
