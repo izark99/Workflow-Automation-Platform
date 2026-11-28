@@ -1480,6 +1480,7 @@ export const vi: Record<MessageKey, string> = {
   'engine.printNeedsV5': 'Bước "{step}" có bố cục in, nên cần schemaVersion 5. Hãy đặt schemaVersion là 5, hoặc tắt bố cục in và xoá nó.',
   'engine.printToken': 'Bước "{step}": {token} trong {where} không phải là một thẻ. Hãy dùng một trong: {tokens}.',
   'engine.printParam': 'Bước "{step}": {token} trong {where} dùng tham số "{key}", mà luồng không có. Hãy thêm tham số đó, hoặc dùng thẻ khác.',
+  'engine.printTooManyRows': 'Trang tính "{sheet}" có {rows} dòng, còn bố cục in chỉ dành cho báo cáo tối đa {max} dòng. Hãy tắt bố cục in của trang tính này, hoặc lọc bảng còn ít dòng hơn.',
   'engine.checkStopped': 'Bước Kiểm tra "{step}" đã dừng lượt chạy. Số dòng không đạt từng quy tắc: {summary}. Hãy sửa các dòng hoặc các quy tắc, hoặc tắt "Dừng lượt chạy khi một quy tắc không đạt".',
   'engine.checkFailedRule': 'Kiểm tra "{step}", quy tắc "{rule}": số dòng không đạt: {n}. {message}',
   'engine.bindShape': 'Thiết lập "{setting}" của bước "{step}" có "$param" không phải là đối tượng chỉ có một khoá dạng văn bản. Hãy viết $param với khoá của một tham số, hoặc nhập một giá trị cố định.',

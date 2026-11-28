@@ -3,6 +3,8 @@ import type { FlowDefinition } from '../flow/types';
 import { parseOutputSettings, type OutputSettings } from '../nodes/output';
 import type { RunResult } from '../run';
 import { coded, type Cell, type TableData } from '../types';
+import { defaultPrintSettings, MAX_PRINT_ROWS, printIsOn } from './print/settings';
+import type { PrintLanguage, PrintSheetInput } from './print/writer';
 
 export interface OutputFile {
   /** File name with extension, safe for a download. */
@@ -73,6 +75,17 @@ function toCsv(table: TableData): Uint8Array {
   return new TextEncoder().encode(`\uFEFF${lines.join('\r\n')}\r\n`);
 }
 
+/** What the print layouts need that the run result does not hold (SPEC 16.1 item 4). All of it is optional. */
+export interface OutputOptions {
+  flowName?: string;
+  /** ISO dates. The run date is today when it is not given. */
+  effectiveDate?: string;
+  runDate?: string;
+  /** The values of the parameters as the text that is printed. */
+  parameters?: Readonly<Record<string, string>>;
+  language?: PrintLanguage;
+}
+
 const safeName = (s: string) => s.replace(/[\\/:*?"<>|]/g, '_');
 
 /**
@@ -80,7 +93,7 @@ const safeName = (s: string) => s.replace(/[\\/:*?"<>|]/g, '_');
  * workbook, in step order; csv files hold one table. Types are kept: numbers, dates (serials with a date format),
  * booleans and text; blank cells are absent. See D27.
  */
-export async function buildOutputFiles(result: RunResult, flow: Pick<FlowDefinition, 'nodes'>): Promise<OutputFile[]> {
+export async function buildOutputFiles(result: RunResult, flow: Pick<FlowDefinition, 'nodes'>, options: OutputOptions = {}): Promise<OutputFile[]> {
   const steps = flow.nodes.filter((n) => n.type === 'output');
   if (steps.length === 0) {
     throw coded('invalid_flow', 'engine.noOutputStep');
@@ -98,10 +111,38 @@ export async function buildOutputFiles(result: RunResult, flow: Pick<FlowDefinit
       out.push({ name: `${safeName(file)}.csv`, format: 'csv', mimeType: CSV_MIME, bytes: toCsv(parts[0]!.table), sheets: [] });
       continue;
     }
-    const wb = XLSX.utils.book_new();
-    for (const { settings, table } of parts) XLSX.utils.book_append_sheet(wb, toSheet(table, settings), settings.sheet);
-    const bytes = new Uint8Array(XLSX.write(wb, { type: 'array', bookType: 'xlsx' }) as ArrayBuffer);
+    const printed = parts.filter((p) => p.settings.print !== undefined && printIsOn(p.settings.print));
+    let bytes: Uint8Array;
+    if (printed.length === 0) {
+      const wb = XLSX.utils.book_new();
+      for (const { settings, table } of parts) XLSX.utils.book_append_sheet(wb, toSheet(table, settings), settings.sheet);
+      bytes = new Uint8Array(XLSX.write(wb, { type: 'array', bookType: 'xlsx' }) as ArrayBuffer);
+    } else {
+      bytes = await writePrinted(parts, options);
+    }
     out.push({ name: `${safeName(file)}.xlsx`, format: 'xlsx', mimeType: XLSX_MIME, bytes, sheets: parts.map((p) => p.settings.sheet!) });
   }
   return out;
+}
+
+/** The workbook of a file that has at least one print layout: each sheet with its layout, the others plain. ExcelJS is loaded here only. */
+async function writePrinted(parts: { settings: OutputSettings; table: TableData }[], options: OutputOptions): Promise<Uint8Array> {
+  const today = new Date().toISOString().slice(0, 10);
+  const sheets: PrintSheetInput[] = parts.map(({ settings, table }) => {
+    const name = settings.sheet ?? settings.file;
+    const on = settings.print !== undefined && printIsOn(settings.print);
+    if (on && table.rows.length > MAX_PRINT_ROWS) {
+      throw coded('invalid_settings', 'engine.printTooManyRows', { sheet: name, rows: table.rows.length.toLocaleString('en-US'), max: MAX_PRINT_ROWS.toLocaleString('en-US') });
+    }
+    return {
+      name,
+      table,
+      numberLikeText: settings.numberLikeText,
+      // A sheet without a layout is written plain: the defaults with the switch off, which the writer draws as a table only.
+      print: on ? settings.print! : { ...defaultPrintSettings(), enabled: false, pageNumbers: false, repeatHeader: false, fitWidth: false },
+      tokens: { effectiveDate: options.effectiveDate ?? today, runDate: options.runDate ?? today, flow: options.flowName ?? '', rows: table.rows.length, params: options.parameters ?? {} },
+    };
+  });
+  const { buildPrintWorkbook } = await import('./print/writer');
+  return buildPrintWorkbook(sheets, options.language ?? 'vi');
 }

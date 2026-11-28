@@ -1,4 +1,4 @@
-import { warningText } from '../i18n';
+import { getLocale, warningText } from '../i18n';
 import { parseOutputSettings } from '../../engine/nodes/output';
 import { resolveFlow } from '../../engine/run';
 import { buildOutputFiles } from '../../engine/output/export';
@@ -68,7 +68,9 @@ export async function executeRun(req: RunRequest): Promise<RunOutcome> {
       const table = result.tables.get(`${node.id}/result`);
       sheets.push({ file: s.file, sheet: s.sheet ?? s.file, rowCount: table?.rowCount ?? 0, table: await result.preview(node.id, 'result') });
     }
-    const files = await buildOutputFiles(result, definition);
+    const parameters = Object.fromEntries(Object.entries(req.parameterValues ?? {}).filter(([, v]) => v !== null && v !== undefined).map(([k, v]) => [k, String(v)]));
+    // The fixed words of a printed report (the footer) follow the language of the app; the rest of the layout is as it was typed.
+    const files = await buildOutputFiles(result, definition, { flowName: definition.name ?? '', effectiveDate: req.effectiveDate, parameters, language: getLocale() === 'vi' ? 'vi' : 'en' });
     const inputRows = definition.nodes.filter((n) => n.type === 'input_file').reduce((n, node) => n + (result.tables.get(`${node.id}/out`)?.rowCount ?? 0), 0);
     return { files, sheets, inputRows, outputRows: sheets.reduce((n, s) => n + s.rowCount, 0), warnings: result.warnings.map(warningText) };
   } finally {

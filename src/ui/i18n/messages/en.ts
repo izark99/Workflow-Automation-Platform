@@ -1531,6 +1531,7 @@ export const en = {
   'engine.printNeedsV5': 'Step "{step}" has a print layout, which needs schemaVersion 5. Set schemaVersion to 5, or turn the print layout off and remove it.',
   'engine.printToken': 'Step "{step}": {token} in {where} is not a token. Use one of: {tokens}.',
   'engine.printParam': 'Step "{step}": {token} in {where} names the parameter "{key}", which the flow does not have. Add the parameter, or use another token.',
+  'engine.printTooManyRows': 'Sheet "{sheet}" has {rows} rows, and a print layout is for reports of up to {max} rows. Turn the print layout off for this sheet, or filter the table to fewer rows.',
   'engine.checkStopped': 'Check "{step}" stopped the run. Rows that failed each rule: {summary}. Fix the rows or the rules, or turn off "Stop the run when a rule fails".',
   'engine.checkFailedRule': 'Check "{step}", rule "{rule}": rows that failed: {n}. {message}',
   'engine.bindShape': 'The setting "{setting}" of step "{step}" has a "$param" that is not an object with one text key. Write it as $param with the key of a parameter, or give the setting a fixed value.',

@@ -38,7 +38,7 @@ export interface Generated {
   /** The Input steps, by key. */
   inputs: string[];
   /** The Output steps: the sheet name, the node and handle that feed it. */
-  outputs: { sheet: string; from: string; handle?: string }[];
+  outputs: { sheet: string; from: string; handle?: string; /** The print layout of the sheet (SPEC 16.1). Needs schemaVersion 5. */ print?: unknown }[];
   /** The parameters of the flow, and their values for this run. */
   parameters?: unknown[];
   parameterValues?: Record<string, unknown>;
@@ -51,12 +51,12 @@ export async function runGenerated(page: Page, g: Generated): Promise<RunReply> 
   const nodes = [
     ...g.inputs.map((key) => ({ id: `in_${key}`, type: 'input_file', settings: { key, headerRow: 1 } })),
     ...g.nodes,
-    ...g.outputs.map((o) => ({ id: `out_${o.sheet}`, type: 'output', settings: { file: 'Result', format: 'xlsx', sheet: o.sheet } })),
+    ...g.outputs.map((o) => ({ id: `out_${o.sheet}`, type: 'output', settings: { file: 'Result', format: 'xlsx', sheet: o.sheet, ...(o.print ? { print: o.print } : {}) } })),
   ];
   const edges = [...g.edges, ...g.outputs.map((o) => ({ source: o.from, ...(o.handle ? { sourceHandle: o.handle } : {}), target: `out_${o.sheet}` }))];
   const files: Record<string, { name: string; base64: string }> = {};
   for (const [key, f] of Object.entries(g.files)) files[key] = { name: f.name, base64: Buffer.from(f.text).toString('base64') };
-  const flow = { schemaVersion: 4, ...(g.parameters ? { parameters: g.parameters } : {}), nodes, edges };
+  const flow = { schemaVersion: g.outputs.some((o) => o.print) ? 5 : 4, ...(g.parameters ? { parameters: g.parameters } : {}), nodes, edges };
   return page.evaluate((a) => window.runDataset(a), { flow, effectiveDate: '2026-09-30', files, ...(g.parameterValues ? { parameterValues: g.parameterValues } : {}) } as never);
 }
 

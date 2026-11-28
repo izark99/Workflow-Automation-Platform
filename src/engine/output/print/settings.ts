@@ -9,6 +9,8 @@ export const SIZES = ['normal', 'large', 'xlarge'] as const;
 export const MAX_HEADER_LINES = 6;
 export const MAX_LINE_LENGTH = 200;
 export const MAX_SIGNERS = 5;
+/** The most rows of a table that a print layout is written for (SPEC 16.1 item 7, measured in docs/PRINT_PERF.md). */
+export const MAX_PRINT_ROWS = 20_000;
 /** The line under the title of a signer, when none is given (Vietnamese reports, SPEC 16.1 item 5). */
 export const DEFAULT_SIGNER_LINE = '(Ký, ghi rõ họ tên)';
 

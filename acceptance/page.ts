@@ -94,7 +94,7 @@ async function run(args: RunArgs): Promise<RunReply> {
       refTables: prepared.refTables,
     });
     try {
-      const out = await buildOutputFiles(result, prepared.definition as { nodes: never[] });
+      const out = await buildOutputFiles(result, prepared.definition as { nodes: never[] }, { flowName: 'acceptance', effectiveDate: args.effectiveDate, parameters: Object.fromEntries(Object.entries(args.parameterValues ?? {}).map(([k, v]) => [k, String(v)])), language: 'vi' });
       return { ok: true, files: out.map((f) => ({ name: f.name, base64: toBase64(f.bytes) })), resolved: prepared.resolved };
     } finally {
       await result.dispose();
