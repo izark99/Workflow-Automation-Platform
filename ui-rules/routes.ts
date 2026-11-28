@@ -106,6 +106,20 @@ const seedLinkTables = async (page: Page): Promise<void> => {
   await page.addInitScript((json) => localStorage.setItem('dfw.seed', json), JSON.stringify(s));
 };
 
+
+/** The linked table "Cost limits" with an open notice: two new values in its draft v2, one value that Departments dropped, and the dot in the sidebar. */
+const seedNotice = async (page: Page): Promise<void> => {
+  await seedLinkTables(page);
+  await page.addInitScript(() => {
+    const s = JSON.parse(localStorage.getItem('dfw.seed')!);
+    const linked = s.refTables.find((t: { id: string }) => t.id === 'ref-linked');
+    // The draft holds Kho (published before), QA (new) and Old (dropped from Departments), with limits only for the first.
+    linked.versions[1].rows = [['Kho', 10], ['QA', null], ['Sản xuất', null], ['Old', 5]];
+    s.refLinkNotices = [{ id: 'n1', tableId: 'ref-linked', sourceTableId: 'ref-dept', column: 'dept', draftVersionNo: 2, values: ['QA', 'Sản xuất', 'IT', 'HR', 'Admin'], createdAt: '2026-11-17T00:00:00Z', closedAt: null }];
+    localStorage.setItem('dfw.seed', JSON.stringify(s));
+  });
+};
+
 /** Opens "Link to a table" on a table of `seedLinkTables`, and chooses a source when given. */
 function linkDialogRoute(name: string, table: string, source?: string): RuleRoute {
   return {
@@ -1100,6 +1114,20 @@ export const ROUTES: RuleRoute[] = [
       await page.getByRole('option', { name: 'Departments' }).click();
     },
   },
+  // The notice of a linked table (SPEC 16.2 item 4): on the published version (with "Open the draft"), on the draft (New and "Not in A any more"), the publish dialog with its warning, the dot in the rail.
+  { path: '/reference-tables?table=ref-linked&v=1', name: '/reference-tables (notice of a linked table, with Open the draft)', sidebar: true, table: true, before: seedNotice },
+  { path: '/reference-tables?table=ref-linked&v=2', name: '/reference-tables (linked draft with New and Not in A any more rows)', sidebar: true, table: true, before: seedNotice },
+  {
+    path: '/reference-tables?table=ref-linked&v=2',
+    name: '/reference-tables (publish dialog with the empty columns warning)',
+    sidebar: true,
+    before: seedNotice,
+    prepare: async (page) => {
+      await page.getByRole('button', { name: /Publish/ }).first().click();
+      await page.getByRole('dialog').waitFor();
+    },
+  },
+  { path: '/reference-tables?table=ref-linked&v=1', name: '/reference-tables (notice of a linked table, sidebar rail)', sidebar: true, railSidebar: true, table: true, before: async (page) => { await seedNotice(page); await collapsePanels('sidebar')(page); } },
   {
     path: '/reference-tables?table=ref-big&v=1',
     name: '/reference-tables (an editable draft with a pager)',

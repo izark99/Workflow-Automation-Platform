@@ -1303,3 +1303,7 @@ The print preview draws a page of the report at a small scale (8 px in the panel
 ## D139 The start of the draft of a linked table
 
 SPEC 16.2 item 3 says the draft starts on the day the new version of A starts when that is after the start of the last published version of B, and otherwise on the day after the end of that version. It does not say what happens when that version has no end and A starts on or before it. The rule is then the day after the start of that version, so that publishing the draft ends the old version after one day instead of before its own start. With no published version of B, the draft starts today. The cases are in `supabase/tests/ref-link-cases.json`, and the migration follows them.
+
+## D140 "Not in A any more" follows the latest published version of A
+
+A value of B that A does not hold is marked "Not in A any more" (SPEC 16.2 item 3). Which version of A counts is not said. The marker uses the latest published version of A (the latest start day), not the version in effect today: when the next version of A drops a value, the admin sees it the day that version is published, which is when the notice for the new values appears, and not only on its start day. A draft of A never counts. B keeps the value and its row in every case.

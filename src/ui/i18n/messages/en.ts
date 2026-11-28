@@ -787,6 +787,13 @@ export const en = {
   'refTables.link.unlinkFailed': 'The table could not be unlinked.',
   'refTables.link.switch': 'Take the values from a column of another table',
   'refTables.link.needsChoice': 'Choose the table, its column and the name of the key column, or turn the switch off.',
+  'refTables.notice.text': '{n, plural, one {{nText} new value from {source} · {column} needs its other columns: {values}.} other {{nText} new values from {source} · {column} need their other columns: {values}.}}',
+  'refTables.notice.andMore': '{values}, and {k} more',
+  'refTables.notice.open': 'Open the draft',
+  'refTables.notice.new': 'New',
+  'refTables.notice.gone': 'Not in {source} any more',
+  'refTables.notice.emptyRows': '{n, plural, one {{nText} new row has empty columns.} other {{nText} new rows have empty columns.}} You can publish now and fill them in a new version.',
+  'nav.refTablesAttention': '{n, plural, one {{nText} table needs attention} other {{nText} tables need attention}}',
   'refTables.rowErrors': '{n, plural, one {# cell is} other {# cells are}} not valid, so nothing was saved.',
 
   // admin

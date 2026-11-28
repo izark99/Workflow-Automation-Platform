@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { ClipboardEvent, MouseEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import type { Column as TableColumn } from '../components';
-import { Badge, Button, Card, Chip, Dialog, DatePicker, Dropdown, EmptyState, ErrorState, Field, Icon, ScreenFrame, SkeletonTable, Table, Switch, TextAreaField, useDelayedLoading, useToast } from '../components';
+import { Badge, Button, Card, Chip, Dialog, QuietWarning, DatePicker, Dropdown, EmptyState, ErrorState, Field, Icon, ScreenFrame, SkeletonTable, Table, Switch, TextAreaField, useDelayedLoading, useToast } from '../components';
 import type { Cell, Column, ColumnType } from '../../engine/types';
 import type { RefTableVersionRecord, RefTableView } from '../../store/types';
 import { EditDatesDialog, NewVersionDialog, PublishDialog } from '../builder/builder-dialogs';
@@ -17,6 +17,8 @@ import type { ColumnPlan, RowErrors } from './reftable-logic';
 import { draftRangeProblem, newVersionProblem, suggestStart } from './versions-logic';
 import { usePanel } from '../panels/use-panel';
 import { PanelToggle } from '../panels/panel-toggle';
+import { announceRefNoticesChanged } from '../ref-notices-event';
+import { distinctValues, noticeValues } from '../../engine/reflink';
 import { ImportDialog } from './ref-import-dialog';
 import { LinkControls, LinkDialog } from './ref-link-dialog';
 import type { LinkChoice } from './ref-link-dialog';
@@ -35,7 +37,7 @@ export function ReferenceTablesScreen() {
   const [params] = useSearchParams();
   const data = useLoad(async (s) => {
     const me = await s.currentUser();
-    return { me, tables: await s.listRefTables() };
+    return { me, tables: await s.listRefTables(), notices: me.role === 'admin' ? await s.listRefLinkNotices() : [] };
   });
   const showSkeleton = useDelayedLoading(data.loading);
   const today = todayIso();
@@ -46,6 +48,20 @@ export function ReferenceTablesScreen() {
   const table = tables.find((x) => x.id === params.get('table')) ?? tables[0];
   const version: RefTableVersionRecord | undefined = table ? (table.versions.find((v) => v.versionNo === Number(params.get('v'))) ?? versionToShow(table, today)) : undefined;
   const editable = isAdmin && version?.status === 'draft';
+  // The open notice of this table, the values that need their other columns, and which keys A does not hold any more (SPEC 16.2 items 3 and 4).
+  const notice = isAdmin && table ? (data.data?.notices ?? []).find((n) => n.tableId === table.id) : undefined;
+  const linkedFrom = isAdmin && table?.link ? tables.find((x) => x.id === table.link!.tableId) : undefined;
+  const linkColumn = table?.link?.column;
+  // The compiler of React memoizes this by what it reads, so there is no useMemo.
+  const sourceKeys = ((): Set<string> | null => {
+    if (!linkColumn || !linkedFrom) return null;
+    // The values that A holds now are those of its latest published version: a value that the next version drops is "Not in A any more"
+    // from the day that version is published, also before its start day (D140).
+    const v = linkedFrom.versions.filter((x) => x.status === 'published').reduce<(typeof linkedFrom.versions)[number] | undefined>((best, x) => (!best || x.validFrom > best.validFrom ? x : best), undefined);
+    const i = v ? v.columns.findIndex((c) => c.name === linkColumn) : -1;
+    return v && i >= 0 ? new Set(distinctValues(v.rows.map((r) => r[i] ?? null))) : null;
+  })();
+  const newKeys = new Set(notice && version && notice.draftVersionNo === version.versionNo ? notice.values : []);
 
   // The rows being edited, as text. They start from the saved version when a table or version is opened, not after a save.
   const [grid, setGrid] = useState<string[][]>([]);
@@ -129,6 +145,21 @@ export function ReferenceTablesScreen() {
     }
   };
 
+  const noticeText = (n: { values: string[]; sourceName: string; column: string }): string => {
+    const shown = noticeValues(n.values);
+    const values = shown.more > 0 ? t('refTables.notice.andMore', { values: shown.first.join(', '), k: shown.more }) : shown.first.join(', ');
+    return t('refTables.notice.text', { n: n.values.length, nText: n.values.length.toLocaleString('en-US'), source: n.sourceName, column: n.column, values });
+  };
+
+  /** New rows from a linked table whose other columns are all empty: a quiet warning in the publish dialog, which does not block it. */
+  const emptyNewRowsWarning = (): string[] => {
+    if (!notice || !version || !table?.link || notice.draftVersionNo !== version.versionNo) return [];
+    const k = version.columns.findIndex((c) => c.name === table.link!.keyColumn);
+    if (k < 0) return [];
+    const empty = version.rows.filter((r) => notice.values.includes(String(r[k] ?? '').trim()) && r.every((c, i) => i === k || c === null || c === '')).length;
+    return empty > 0 ? [t('refTables.notice.emptyRows', { n: empty, nText: empty.toLocaleString('en-US') })] : [];
+  };
+
   const usedByLine = (names: string[]): string => {
     const p = usedByParts(names);
     return p.more > 0 ? t('refTables.usedByMore', { names: p.shown, n: p.more }) : t('refTables.usedBy', { names: p.shown });
@@ -137,8 +168,23 @@ export function ReferenceTablesScreen() {
   const firstError = (row: number, col: string): boolean => errors.some((e) => e.row === row && e.column === col);
   const range = pageRange(grid.length, page);
   const pageRows = grid.slice(range.from, range.to).map((cells, i) => ({ index: range.from + i, cells }));
+  // A linked table has a leading cell with a chip: "New" for a value that was added from the other table and waits for its other
+  // columns, "Not in {A} any more" for a value that the other table does not hold any more (nothing is deleted).
+  const keyIndex = table?.link ? cols.findIndex((c) => c.name === table.link!.keyColumn) : -1;
+  const chipFor = (row: { cells: string[] }): 'new' | 'gone' | null => {
+    const key = keyIndex >= 0 ? (row.cells[keyIndex] ?? '').trim() : '';
+    if (key === '') return null;
+    if (newKeys.has(key)) return 'new';
+    return sourceKeys && !sourceKeys.has(key) ? 'gone' : null;
+  };
   const columns: TableColumn<{ index: number; cells: string[] }>[] = version
     ? [
+        ...(isAdmin && table?.link && keyIndex >= 0
+          ? [{ key: 'chip', header: '', render: (row: { index: number; cells: string[] }) => {
+              const chip = chipFor(row);
+              return chip === 'new' ? <Badge>{t('refTables.notice.new')}</Badge> : chip === 'gone' ? <Badge>{t('refTables.notice.gone', { source: linkedFrom?.name ?? '' })}</Badge> : null;
+            } }]
+          : []),
         ...cols.map((c, ci) => ({
           key: `${ci}-${c.name}`,
           header: c.name,
@@ -198,6 +244,7 @@ export function ReferenceTablesScreen() {
       const created = await store.createRefTable({ name, description, columns: parsed.columns });
       await store.saveRefTableVersion(created.id, 1, { rows: parsed.rows, validFrom });
       if (link) await store.linkRefTable(created.id, { sourceTableId: link.sourceId, column: link.column, keyColumn: link.keyColumn });
+      if (link) announceRefNoticesChanged();
       setDialog(null);
       loadedKey.current = '';
       data.reload();
@@ -215,6 +262,7 @@ export function ReferenceTablesScreen() {
       await store.unlinkRefTable(table.id);
       toast(t('refTables.link.unlinked', { name: table.name }));
       data.reload();
+      announceRefNoticesChanged();
     } catch (e) {
       setSaveError(errorText(e, t('refTables.link.unlinkFailed')));
     }
@@ -230,6 +278,7 @@ export function ReferenceTablesScreen() {
       setDialog(null);
       loadedKey.current = '';
       data.reload();
+      announceRefNoticesChanged();
     } catch (e) {
       setDialogError(errorText(e, t('refTables.link.failed')));
     } finally {
@@ -262,6 +311,7 @@ export function ReferenceTablesScreen() {
         await store.publishRefTableVersion(table.id, version.versionNo);
         toast(t('refTables.published', { n: version.versionNo }));
         setDialog(null);
+        announceRefNoticesChanged();
       } else {
         const updated = await store.createRefTableVersion(table.id, { validFrom: validFrom as string, copyFrom: version.versionNo });
         const no = Math.max(...updated.versions.map((v) => v.versionNo));
@@ -373,6 +423,14 @@ export function ReferenceTablesScreen() {
                 ) : null}
               </div>
             </div>
+            {notice ? (
+              <div className={styles.noticeBlock}>
+                <QuietWarning lines={[noticeText(notice)]} />
+                {version.versionNo !== notice.draftVersionNo ? (
+                  <Button size="sm" onClick={() => go(url(table.id, notice.draftVersionNo))}>{t('refTables.notice.open')}</Button>
+                ) : null}
+              </div>
+            ) : null}
             <div className={styles.chips} role="group" aria-label={t('refTables.versionsLabel')}>
               {sorted.map((v) => (
                 <Chip key={v.versionNo} pressed={v.versionNo === version.versionNo} onClick={() => go(url(table.id, v.versionNo))}>
@@ -467,7 +525,7 @@ export function ReferenceTablesScreen() {
           <LinkDialog tables={tables} table={table} today={today} busy={busy === 'table'} error={dialogError} onLink={(c) => void linkTable(c)} onCancel={() => setDialog(null)} />
         ) : null}
         {dialog === 'publish' ? (
-          <PublishDialog versionNo={version.versionNo} text={publishSummaryFor(table.versions, version.versionNo, `reference table "${table.name}"`).text} dirty={false} busy={busy === 'publish'} error={dialogError} onConfirm={() => void mutateVersion('publish')} onCancel={() => setDialog(null)} />
+          <PublishDialog versionNo={version.versionNo} text={publishSummaryFor(table.versions, version.versionNo, `reference table "${table.name}"`).text} dirty={false} warnings={emptyNewRowsWarning()} busy={busy === 'publish'} error={dialogError} onConfirm={() => void mutateVersion('publish')} onCancel={() => setDialog(null)} />
         ) : null}
       </div>
     );

@@ -233,3 +233,20 @@
   line-height: 20px;
   color: var(--ink-muted);
 }
+
+/* The notice of a linked table: the quiet warning and the button that opens the draft. */
+.noticeBlock {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: 0 var(--space-5) var(--space-3);
+}
+
+.noticeBlock > div {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.noticeBlock > button {
+  flex: none;
+}

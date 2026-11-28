@@ -4,6 +4,7 @@ import { Button, DatePicker, Dialog, Dropdown, ErrorState, Field, Icon, ToastPro
 import type { IconName } from './components';
 import { useAuth } from './auth-gate';
 import { useLoad, useStore } from './store-context';
+import { onRefNoticesChanged } from './ref-notices-event';
 import { NewPasswordForm } from './change-password';
 import { LanguageSwitch } from './language-switch';
 import { ThemeSwitch } from './theme-switch';
@@ -20,19 +21,21 @@ export interface ShellContext {
   openCreateFlow: () => void;
 }
 
-function NavItem({ to, icon, children }: { to: string; icon: IconName; children: string }) {
+function NavItem({ to, icon, children, attention }: { to: string; icon: IconName; children: string; /** The accessible name of a dot that asks for attention, or undefined for none. */ attention?: string }) {
   return (
     <NavLink to={to} className={styles.link}>
       <Icon name={icon} size={20} />
       {children}
+      {attention ? <span className={styles.dot} role="img" aria-label={attention} /> : null}
     </NavLink>
   );
 }
 
-function RailLink({ to, icon, label }: { to: string; icon: IconName; label: string }) {
+function RailLink({ to, icon, label, attention }: { to: string; icon: IconName; label: string; attention?: string }) {
   return (
-    <NavLink to={to} className={styles.railLink} aria-label={label} title={label}>
+    <NavLink to={to} className={styles.railLink} aria-label={attention ? `${label}. ${attention}` : label} title={label}>
       <Icon name={icon} size={20} />
+      {attention ? <span className={styles.railDot} aria-hidden="true" /> : null}
     </NavLink>
   );
 }
@@ -202,6 +205,11 @@ export function Shell() {
   const navRef = useRef<HTMLElement>(null);
   usePanelMotion(navRef);
   const me = user.data;
+  // The open notices of linked tables: a dot on "Reference tables", for an admin only (the store gives anyone else an empty list).
+  const notices = useLoad((s) => s.listRefLinkNotices());
+  useEffect(() => onRefNoticesChanged(notices.reload), [notices.reload]);
+  const open = me?.role === 'admin' ? (notices.data?.length ?? 0) : 0;
+  const attention = open > 0 ? t('nav.refTablesAttention', { n: open, nText: open.toLocaleString('en-US') }) : undefined;
   const roleLabel = me ? t(me.role === 'admin' ? 'nav.role.admin' : 'nav.role.user') : '';
   return (
     <ToastProvider>
@@ -219,7 +227,7 @@ export function Shell() {
               <Icon name="plus" size={20} />
             </Button>
             <RailLink to="/flows" icon="workflow" label={t('nav.flows')} />
-            <RailLink to="/reference-tables" icon="file-spreadsheet" label={t('nav.refTables')} />
+            <RailLink to="/reference-tables" icon="file-spreadsheet" label={t('nav.refTables')} attention={attention} />
             {me?.role === 'admin' ? <RailLink to="/admin" icon="shield" label={t('nav.admin')} /> : null}
             {me ? (
               <div className={styles.railUser}>
@@ -241,7 +249,7 @@ export function Shell() {
             <NavItem to="/flows" icon="workflow">
               {t('nav.flows')}
             </NavItem>
-            <NavItem to="/reference-tables" icon="file-spreadsheet">
+            <NavItem to="/reference-tables" icon="file-spreadsheet" attention={attention}>
               {t('nav.refTables')}
             </NavItem>
             {me?.role === 'admin' ? (

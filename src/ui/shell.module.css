@@ -204,6 +204,7 @@
 }
 
 .railLink {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -240,4 +241,24 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-md);
+}
+
+/* The dot on "Reference tables" while a notice of a linked table is open: 8 px, primary (DESIGN, Linked reference tables). */
+.dot {
+  width: 8px;
+  height: 8px;
+  margin-left: auto;
+  border-radius: var(--radius-full);
+  background: var(--primary);
+  flex: none;
+}
+
+.railDot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--primary);
 }

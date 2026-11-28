@@ -61,7 +61,7 @@ test('Link makes a draft with the values, shows the line "Values from Department
   await dialog.getByRole('button', { name: 'Link', exact: true }).click();
   await expect(toastWith(page, 'Costs is linked.')).toBeVisible();
   await expect(page.getByRole('dialog')).toHaveCount(0);
-  await expect(page.getByText('Values from Departments · dept')).toBeVisible();
+  await expect(page.getByText('Values from Departments · dept', { exact: true })).toBeVisible();
   // The draft v2 holds the values: open it from the version chips.
   await page.getByRole('group', { name: 'Versions' }).getByRole('button', { name: /^v2/ }).click();
   const rows = page.getByRole('table', { name: 'Rows of Costs' }).locator('tbody tr');
@@ -80,7 +80,7 @@ test('a table that would make a cycle is not in the list, and the dialog says wh
   await dialog.getByRole('button', { name: /^Take the values from the table/ }).click();
   await page.getByRole('option', { name: 'Departments', exact: true }).click();
   await dialog.getByRole('button', { name: 'Link', exact: true }).click();
-  await expect(page.getByText('Values from Departments · dept')).toBeVisible();
+  await expect(page.getByText('Values from Departments · dept', { exact: true })).toBeVisible();
   await open(page, 'Departments');
   await fromMenu(page, 'Link to a table');
   const again = page.getByRole('dialog', { name: 'Link Departments to a table' });
@@ -99,10 +99,10 @@ test('Unlink keeps the rows, removes the line and offers "Link to a table" again
   await dialog.getByRole('button', { name: /^Take the values from the table/ }).click();
   await page.getByRole('option', { name: 'Departments', exact: true }).click();
   await dialog.getByRole('button', { name: 'Link', exact: true }).click();
-  await expect(page.getByText('Values from Departments · dept')).toBeVisible();
+  await expect(page.getByText('Values from Departments · dept', { exact: true })).toBeVisible();
   await fromMenu(page, 'Unlink');
   await expect(toastWith(page, 'Costs is not linked any more. It keeps its rows.')).toBeVisible();
-  await expect(page.getByText('Values from Departments · dept')).toHaveCount(0);
+  await expect(page.getByText('Values from Departments · dept', { exact: true })).toHaveCount(0);
   await page.getByRole('group', { name: 'Versions' }).getByRole('button', { name: /^v2/ }).click();
   await expect(page.getByRole('table', { name: 'Rows of Costs' }).locator('tbody tr')).toHaveCount(2);
   await page.getByRole('button', { name: /^More actions for this table/ }).click();
@@ -126,7 +126,7 @@ test('the New table dialog has a switch that replaces the paste box with the sam
   await dialog.getByRole('textbox', { name: 'Key column of this table' }).fill('team');
   await dialog.getByRole('button', { name: 'Create' }).click();
   await expect(page.getByRole('heading', { name: 'Teams', level: 2 })).toBeVisible();
-  await expect(page.getByText('Values from Departments · dept')).toBeVisible();
+  await expect(page.getByText('Values from Departments · dept', { exact: true })).toBeVisible();
   await expect(page.getByRole('table', { name: 'Rows of Teams' }).locator('tbody tr')).toHaveCount(2);
 });
 
