@@ -70,11 +70,39 @@ export type RefTableView = RefTableRecord & {
   usedBy: string[];
 };
 
+/** The link of a table B to the column of a table A (SPEC 16.2): B takes the distinct values of that column as its key column. */
+export interface RefLink {
+  /** The id of A. */
+  tableId: string;
+  /** The column of A that gives the values. */
+  column: string;
+  /** The column of B that holds them. */
+  keyColumn: string;
+}
+
 export interface RefTableRecord {
   id: string;
   name: string;
   description: string;
   versions: RefTableVersionRecord[];
+  /** The link of this table to another one, or null. Only an admin sees it. */
+  link?: RefLink | null;
+}
+
+/** An open notice of a linked table (SPEC 16.2 item 4): new values were added to its draft and need their other columns. Admin only. */
+export interface RefLinkNotice {
+  id: string;
+  /** The table B that got the values. */
+  tableId: string;
+  tableName: string;
+  sourceTableId: string;
+  sourceName: string;
+  column: string;
+  /** The draft of B that holds the values. The notice closes when it is published. */
+  draftVersionNo: number;
+  /** The values that were added, in the order they were added. */
+  values: string[];
+  createdAt: string;
 }
 
 /** Run history. Metadata only: no input data, no names. */
@@ -235,6 +263,15 @@ export interface DataStore {
    * names the flows. A deleted flow does not count.
    */
   deleteRefTable(tableId: string): Promise<void>;
+  /**
+   * Admin only. Links B to a column of A (SPEC 16.2): B gets a draft with the distinct values of that column in the version of A
+   * that is in effect today. Refused for a cycle, a missing column, or a table that is linked already; the error says what to do.
+   */
+  linkRefTable(tableId: string, input: { sourceTableId: string; column: string; keyColumn: string }): Promise<RefTableRecord>;
+  /** Admin only. B becomes an ordinary table and keeps its rows. Its open notice closes. */
+  unlinkRefTable(tableId: string): Promise<RefTableRecord>;
+  /** The open notices of linked tables. Only an admin sees them; anyone else gets an empty list. */
+  listRefLinkNotices(): Promise<RefLinkNotice[]>;
   /** Admin only. Makes or fills a draft from a read file; never publishes. */
   importRefTable(input: RefImportInput): Promise<RefImportResult>;
 

@@ -1,3 +1,5 @@
+import { deleteRefusal, distinctValues, draftStart, keysOf, linkRefusal, newValues, publishRefusal, versionInEffect } from '../engine/reflink';
+import type { LinkTable, Refusal } from '../engine/reflink';
 import { planPublish, referencedTables } from '../engine/versions';
 import type { VersionRange } from '../engine/versions';
 import { checkDraftRange, checkRange, checkRowCap } from './checks';
@@ -11,6 +13,7 @@ import type {
   Group,
   RefImportInput,
   RefImportResult,
+  RefLinkNotice,
   RefTableRecord,
   RefTableVersionRecord,
   RefTableView,
@@ -25,6 +28,18 @@ import type {
   VersionPatch,
 } from './types';
 
+/** An open or closed notice of a linked table, as the snapshot keeps it (SPEC 16.2 item 4). */
+export interface StoredRefNotice {
+  id: string;
+  tableId: string;
+  sourceTableId: string;
+  column: string;
+  draftVersionNo: number;
+  values: string[];
+  createdAt: string;
+  closedAt: string | null;
+}
+
 export interface Snapshot {
   currentUserId: string;
   seq: number;
@@ -37,6 +52,8 @@ export interface Snapshot {
   uiTexts?: UiText[];
   /** App settings by key. Missing in a snapshot saved before Phase 5. */
   appSettings?: Partial<Record<AppSettingKey, number>>;
+  /** The notices of linked reference tables. Missing in a snapshot saved before Phase 9. */
+  refLinkNotices?: StoredRefNotice[];
 }
 
 /** Where the snapshot lives between page loads. The browser uses IndexedDB (decision D37); the tests use memory. */
@@ -429,7 +446,10 @@ export class LocalStore implements DataStore {
       const usedBy = flows.filter((f) => f.versions.some((v) => referencedTables(v.definition).includes(table.name))).map((f) => f.name);
       const readable = u.role === 'admin' || usedBy.length > 0;
       const names = [...new Set(usedBy)].sort((a, b) => a.localeCompare(b));
-      return structuredClone({ ...table, versions: readable ? table.versions : [], usedBy: names });
+      const view = structuredClone({ ...table, versions: readable ? table.versions : [], usedBy: names });
+      // Only an admin sees the links (SPEC 16.2 item 6).
+      if (u.role !== 'admin') delete view.link;
+      return view;
     });
   }
 
@@ -489,10 +509,13 @@ export class LocalStore implements DataStore {
   async deleteRefTable(tableId: string): Promise<void> {
     const s = await this.open();
     const table = this.tableFor(s, tableId);
+    this.refuse(deleteRefusal(this.asLinkTable(table), s.refTables.map((t) => this.asLinkTable(t))));
     // A live flow that reads the table (in any version) keeps it: flows point to a table by its name.
     const readers = s.flows.filter((f) => !f.deletedAt && f.versions.some((v) => referencedTables(v.definition).includes(table.name))).map((f) => f.name);
     if (readers.length > 0) fail('conflict', 'errors.refTableInUse', { name: table.name, flows: [...new Set(readers)].sort((a, b) => a.localeCompare(b)).join(', ') });
     s.refTables = s.refTables.filter((x) => x.id !== tableId);
+    // Deleting B drops its link and its notices (SPEC 16.2 item 5).
+    s.refLinkNotices = (s.refLinkNotices ?? []).filter((n) => n.tableId !== tableId);
     await this.commit(s);
   }
 
@@ -504,9 +527,140 @@ export class LocalStore implements DataStore {
   async publishRefTableVersion(tableId: string, versionNo: number): Promise<RefTableRecord> {
     const s = await this.open();
     const t = this.tableFor(s, tableId);
+    const version = t.versions.find((v) => v.versionNo === versionNo);
+    // A version of A without a linked column is refused before anything changes, and names the linked tables.
+    if (version) this.refuse(publishRefusal(this.asLinkTable(t), version.columns, s.refTables.map((x) => this.asLinkTable(x))));
     publish(t.versions, versionNo, `reference table "${t.name}"`);
+    // The publish of A and the update of the tables linked to it are one commit: both happen, or neither (SPEC 16.2 item 3).
+    if (version) this.feedLinked(s, t, version);
+    // The notice of this table closes when the draft that holds the new values is published.
+    for (const n of s.refLinkNotices ?? []) if (n.tableId === tableId && n.closedAt === null && n.draftVersionNo === versionNo) n.closedAt = this.now().toISOString();
     await this.commit(s);
     return structuredClone(t);
+  }
+
+  /** A table as the link rules see it: the columns of its latest version, and its link. */
+  private asLinkTable(t: RefTableRecord): LinkTable {
+    const latest = t.versions.reduce<RefTableVersionRecord | undefined>((best, v) => (!best || v.versionNo > best.versionNo ? v : best), undefined);
+    return { id: t.id, name: t.name, columns: latest?.columns ?? [], link: t.link ? { from: t.link.tableId, column: t.link.column, keyColumn: t.link.keyColumn } : null };
+  }
+
+  private refuse(refusal: Refusal | null): void {
+    if (!refusal) return;
+    const ids: Record<Refusal['code'], [StoreErrorCode, StoreMessageId]> = {
+      ref_link_self: ['invalid', 'errors.refLinkSelf'],
+      ref_link_cycle: ['conflict', 'errors.refLinkCycle'],
+      ref_link_column_missing: ['invalid', 'errors.refLinkColumnMissing'],
+      ref_link_already_linked: ['conflict', 'errors.refLinkAlreadyLinked'],
+      ref_link_key_name: ['invalid', 'errors.refLinkKeyName'],
+      ref_link_key_type: ['invalid', 'errors.refLinkKeyType'],
+      ref_link_publish_column: ['conflict', 'errors.refLinkPublishColumn'],
+      ref_link_delete_source: ['conflict', 'errors.refLinkDeleteSource'],
+    };
+    const [code, id] = ids[refusal.code];
+    fail(code, id, refusal.params);
+  }
+
+  /**
+   * Gives the tables linked to `source` the values of `version` that their key column does not hold yet (SPEC 16.2 item 3), and goes on
+   * down a chain: a table that was changed gives the values of its draft to the tables linked to it. Nothing is published.
+   */
+  private feedLinked(s: Snapshot, source: RefTableRecord, version: { columns: { name: string }[]; rows: unknown[][]; validFrom: string }): void {
+    for (const b of s.refTables) {
+      if (!b.link || b.link.tableId !== source.id) continue;
+      const i = version.columns.findIndex((c) => c.name === b.link!.column);
+      if (i < 0) continue;
+      const values = distinctValues(version.rows.map((r) => (r[i] ?? null) as never));
+      const draft = this.addToDraft(s, b, values, version.validFrom, source);
+      if (draft) this.feedLinked(s, b, draft);
+    }
+  }
+
+  /** Adds the values that B does not hold to its draft (made when it has none), and opens or extends its notice. Null when nothing was added. */
+  private addToDraft(s: Snapshot, b: RefTableRecord, values: string[], aStart: string, source: RefTableRecord): RefTableVersionRecord | null {
+    const link = b.link!;
+    const fresh = newValues(values, keysOf(b.versions, link.keyColumn));
+    if (fresh.length === 0) return null;
+    let draft = b.versions.filter((v) => v.status === 'draft').reduce<RefTableVersionRecord | undefined>((best, v) => (!best || v.versionNo > best.versionNo ? v : best), undefined);
+    if (!draft) {
+      const published = b.versions.filter((v) => v.status === 'published');
+      const last = published.reduce<RefTableVersionRecord | undefined>((best, v) => (!best || v.validFrom > best.validFrom ? v : best), undefined);
+      draft = {
+        versionNo: Math.max(0, ...b.versions.map((v) => v.versionNo)) + 1,
+        validFrom: draftStart(aStart, last ? { validFrom: last.validFrom, validTo: last.validTo } : null, this.now().toISOString().slice(0, 10)),
+        validTo: null,
+        status: 'draft',
+        columns: structuredClone(last?.columns ?? []),
+        rows: structuredClone(last?.rows ?? []),
+      };
+      b.versions.push(draft);
+    }
+    // The key column is the first column when the table has none of that name.
+    let k = draft.columns.findIndex((c) => c.name === link.keyColumn);
+    if (k < 0) {
+      draft.columns.unshift({ name: link.keyColumn, type: 'text' });
+      draft.rows = draft.rows.map((r) => [null, ...r]);
+      k = 0;
+    }
+    for (const value of fresh) {
+      const row = draft.columns.map(() => null) as RefTableVersionRecord['rows'][number];
+      row[k] = value;
+      draft.rows.push(row);
+    }
+    const notices = (s.refLinkNotices ??= []);
+    const open = notices.find((n) => n.tableId === b.id && n.closedAt === null);
+    if (open) {
+      open.values.push(...fresh.filter((v) => !open.values.includes(v)));
+      open.draftVersionNo = draft.versionNo;
+      open.sourceTableId = source.id;
+      open.column = link.column;
+    } else {
+      notices.push({ id: this.nextId(s, 'notice'), tableId: b.id, sourceTableId: source.id, column: link.column, draftVersionNo: draft.versionNo, values: [...fresh], createdAt: this.now().toISOString(), closedAt: null });
+    }
+    return draft;
+  }
+
+  async linkRefTable(tableId: string, input: { sourceTableId: string; column: string; keyColumn: string }): Promise<RefTableRecord> {
+    const s = await this.open();
+    const b = this.tableFor(s, tableId);
+    const a = s.refTables.find((t) => t.id === input.sourceTableId) ?? fail('not_found', 'errors.refLinkSourceMissing');
+    const keyColumn = input.keyColumn.trim();
+    this.refuse(linkRefusal(s.refTables.map((t) => this.asLinkTable(t)), b.id, a.id, input.column, keyColumn));
+    b.link = { tableId: a.id, column: input.column, keyColumn };
+    // B gets a draft with the values of the version of A that is in effect today (the last published one when none is).
+    const today = this.now().toISOString().slice(0, 10);
+    const inEffect = versionInEffect(a.versions, today);
+    if (inEffect) {
+      const i = inEffect.columns.findIndex((c) => c.name === input.column);
+      const draft = this.addToDraft(s, b, distinctValues(inEffect.rows.map((r) => r[i] ?? null)), today, a);
+      if (draft) this.feedLinked(s, b, draft);
+    }
+    await this.commit(s);
+    return structuredClone(b);
+  }
+
+  async unlinkRefTable(tableId: string): Promise<RefTableRecord> {
+    const s = await this.open();
+    const b = this.tableFor(s, tableId);
+    if (!b.link) fail('invalid', 'errors.refLinkNotLinked');
+    b.link = null;
+    for (const n of s.refLinkNotices ?? []) if (n.tableId === tableId && n.closedAt === null) n.closedAt = this.now().toISOString();
+    await this.commit(s);
+    return structuredClone(b);
+  }
+
+  async listRefLinkNotices(): Promise<RefLinkNotice[]> {
+    const s = await this.open();
+    if (this.who(s).role !== 'admin') return [];
+    const out: RefLinkNotice[] = [];
+    for (const n of s.refLinkNotices ?? []) {
+      if (n.closedAt !== null) continue;
+      const b = s.refTables.find((t) => t.id === n.tableId);
+      const a = s.refTables.find((t) => t.id === n.sourceTableId);
+      if (!b || !a) continue;
+      out.push({ id: n.id, tableId: b.id, tableName: b.name, sourceTableId: a.id, sourceName: a.name, column: n.column, draftVersionNo: n.draftVersionNo, values: [...n.values], createdAt: n.createdAt });
+    }
+    return out;
   }
 
   async addRunLog(entry: Omit<RunLogEntry, 'id' | 'userId' | 'runAt'>): Promise<RunLogEntry> {

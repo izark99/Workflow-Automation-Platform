@@ -37,6 +37,7 @@ import {
   type Group,
   type RefImportInput,
   type RefImportResult,
+  type RefLinkNotice,
   type RefTableRecord,
   type RefTableView,
   type RefVersionPatch,
@@ -420,6 +421,19 @@ export class SupabaseStore implements DataStore {
     await this.mustBeAdmin('delete reference tables');
     // The database refuses while a live flow reads the table and says which flows (migration 19).
     await this.rpc('delete_ref_table', { p_ref_table_id: tableId }, 'delete the table');
+  }
+
+  // T9.11 replaces these three with calls of the functions of migration 21. Until then the database path does not link tables.
+  async linkRefTable(): Promise<RefTableRecord> {
+    throw new StoreError('invalid', 'Linking reference tables is not available on the database yet.');
+  }
+
+  async unlinkRefTable(): Promise<RefTableRecord> {
+    throw new StoreError('invalid', 'Linking reference tables is not available on the database yet.');
+  }
+
+  async listRefLinkNotices(): Promise<RefLinkNotice[]> {
+    return [];
   }
 
   async importRefTable(input: RefImportInput): Promise<RefImportResult> {
