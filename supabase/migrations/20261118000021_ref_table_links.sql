@@ -4,6 +4,8 @@
 -- is published, the values that B does not hold yet are added to the draft of B in the same transaction; B is never published by it.
 -- The admin sees a notice for each table that got values, until the draft that holds them is published.
 --
+-- A refusal of an input is SQLSTATE 22023 (the store says `invalid`); a conflict with other tables is P0001 (`conflict`); a missing table or an
+-- admin-only call is P0002.
 -- The functions are security invoker: the policies of migration 4 (admin writes) still decide what a caller may change. The texts of the
 -- refusals are the texts of `src/store/messages.ts`; a test keeps them equal. Names are listed in the order of the `C` collation.
 
@@ -250,7 +252,7 @@ begin
     raise exception 'The table to take the values from does not exist any more. Choose another table.' using errcode = 'P0002';
   end if;
   if v_a.id = v_b.id then
-    raise exception 'The table "%" cannot take its values from itself. Choose another table.', v_b.name using errcode = 'P0001';
+    raise exception 'The table "%" cannot take its values from itself. Choose another table.', v_b.name using errcode = '22023';
   end if;
   v_cycle := public.ref_link_cycle(v_b.id, v_a.id);
   if v_cycle is not null then
@@ -258,18 +260,18 @@ begin
   end if;
   select columns into v_a_columns from public.ref_table_versions where ref_table_id = v_a.id order by version_no desc limit 1;
   if not exists (select 1 from jsonb_array_elements(coalesce(v_a_columns, '[]'::jsonb)) c where c ->> 'name' = p_column) then
-    raise exception 'The table "%" has no column "%". Choose a column of that table.', v_a.name, p_column using errcode = 'P0001';
+    raise exception 'The table "%" has no column "%". Choose a column of that table.', v_a.name, p_column using errcode = '22023';
   end if;
   if v_b.link_table_id is not null then
     raise exception 'The table "%" takes its values from another table already. Unlink it first, then link it again.', v_b.name using errcode = 'P0001';
   end if;
   if v_key = '' then
-    raise exception 'The key column of "%" has no name. Type the name of the column that holds the values.', v_b.name using errcode = 'P0001';
+    raise exception 'The key column of "%" has no name. Type the name of the column that holds the values.', v_b.name using errcode = '22023';
   end if;
   select columns into v_b_columns from public.ref_table_versions where ref_table_id = v_b.id order by version_no desc limit 1;
   select c ->> 'type' into v_key_type from jsonb_array_elements(coalesce(v_b_columns, '[]'::jsonb)) c where c ->> 'name' = v_key limit 1;
   if v_key_type is not null and v_key_type <> 'text' then
-    raise exception 'The column "%" of "%" is not a text column. Choose a text column, or type a new name.', v_key, v_b.name using errcode = 'P0001';
+    raise exception 'The column "%" of "%" is not a text column. Choose a text column, or type a new name.', v_key, v_b.name using errcode = '22023';
   end if;
 
   update public.ref_tables set link_table_id = v_a.id, link_column = p_column, key_column = v_key where id = v_b.id;
@@ -301,7 +303,7 @@ begin
     raise exception 'This reference table does not exist. Go back to the Reference tables list.' using errcode = 'P0002';
   end if;
   if v_b.link_table_id is null then
-    raise exception 'This table is not linked to another table. Reload the page.' using errcode = 'P0001';
+    raise exception 'This table is not linked to another table. Reload the page.' using errcode = '22023';
   end if;
   update public.ref_tables set link_table_id = null, link_column = null, key_column = null where id = p_ref_table_id;
   update public.ref_table_link_events set closed_at = now() where ref_table_id = p_ref_table_id and closed_at is null;

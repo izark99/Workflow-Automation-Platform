@@ -4,6 +4,7 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { StoreError, SupabaseStore, type DataStore } from '../src/store';
+import { storeText } from '../src/store/messages';
 
 const URL = process.env.STORE_API_URL ?? '';
 const ANON = process.env.STORE_ANON_KEY ?? '';
@@ -386,5 +387,74 @@ describe('who reads the rows of a reference table (migration 17, SPEC 12.1)', ()
     await stores.admin.saveFlowVersion(sharedId, 1, { definition: { schemaVersion: 1, nodes: [], edges: [] } });
     expect((await view('member', 'Role table shared')).versions).toEqual([]);
     expect((await view('member', 'Role table shared')).usedBy).toEqual([]);
+  });
+});
+
+// The linked reference tables of SPEC 16.2 on the database path: the cases of `src/store/ref-link.test.ts` for LocalStore, with the
+// words of the refusals checked against the same store messages.
+describe('linked reference tables (migration 21, SPEC 16.2)', () => {
+  const text = [{ name: 'dept', type: 'text' as const }, { name: 'note', type: 'text' as const }];
+  const tag = `${Date.now()}`;
+  const make = async (name: string, values: string[]) => {
+    const t = await stores.admin.createRefTable({ name: `${name} ${tag}`, description: '', columns: text });
+    await stores.admin.saveRefTableVersion(t.id, 1, { validFrom: '2026-01-01', rows: values.map((v) => [v, null]) });
+    return stores.admin.publishRefTableVersion(t.id, 1);
+  };
+  const get = async (id: string) => (await stores.admin.listRefTables()).find((t) => t.id === id)!;
+  const drafts = (t: { versions: { status: string }[] }) => t.versions.filter((v) => v.status === 'draft') as unknown as { versionNo: number; validFrom: string; rows: unknown[][] }[];
+
+  it('links B to A: B gets a draft with the distinct values, an open notice for the admin, and a link only the admin sees', async () => {
+    const a = await make('Departments', ['Kho', ' QA ', 'Kho', '']);
+    const b = await make('Costs', []);
+    const linked = await stores.admin.linkRefTable(b.id, { sourceTableId: a.id, column: 'dept', keyColumn: 'dept' });
+    expect(linked.link).toEqual({ tableId: a.id, column: 'dept', keyColumn: 'dept' });
+    expect(drafts(await get(b.id))[0]!.rows).toEqual([['Kho', null], ['QA', null]]);
+    const notice = (await stores.admin.listRefLinkNotices()).find((n) => n.tableId === b.id)!;
+    expect(notice).toMatchObject({ sourceName: `Departments ${tag}`, tableName: `Costs ${tag}`, column: 'dept', values: ['Kho', 'QA'] });
+    expect(await stores.owner.listRefLinkNotices()).toEqual([]);
+    expect((await stores.owner.listRefTables()).every((t) => t.link === undefined)).toBe(true);
+    expect((await refused(stores.owner.linkRefTable(b.id, { sourceTableId: a.id, column: 'dept', keyColumn: 'dept' }))).code).toBe('forbidden');
+    await stores.admin.unlinkRefTable(b.id);
+  });
+
+  it('a published version of A adds the new values to the draft of B, never publishes B, and the notice closes with the draft', async () => {
+    const a = await make('Sources', ['Kho']);
+    const b = await make('Targets', []);
+    await stores.admin.linkRefTable(b.id, { sourceTableId: a.id, column: 'dept', keyColumn: 'dept' });
+    await stores.admin.publishRefTableVersion(b.id, drafts(await get(b.id))[0]!.versionNo);
+    expect((await stores.admin.listRefLinkNotices()).some((n) => n.tableId === b.id)).toBe(false);
+    const made = await stores.admin.createRefTableVersion(a.id, { validFrom: '2099-01-01', copyFrom: 1 });
+    const no = Math.max(...made.versions.map((v) => v.versionNo));
+    await stores.admin.saveRefTableVersion(a.id, no, { rows: [['Kho', null], ['Vận chuyển', null]] });
+    await stores.admin.publishRefTableVersion(a.id, no);
+    const draft = drafts(await get(b.id))[0]!;
+    expect(draft.rows).toEqual([['Kho', null], ['Vận chuyển', null]]);
+    expect(draft.validFrom).toBe('2099-01-01');
+    expect((await stores.admin.listRefLinkNotices()).find((n) => n.tableId === b.id)!.values).toEqual(['Vận chuyển']);
+    await stores.admin.publishRefTableVersion(b.id, draft.versionNo);
+    expect((await stores.admin.listRefLinkNotices()).some((n) => n.tableId === b.id)).toBe(false);
+    await stores.admin.unlinkRefTable(b.id);
+  });
+
+  it('refuses a cycle with the names, a missing column, a publish without the linked column, and deleting a source, with the same words as the local store', async () => {
+    const a = await make('Alpha', ['x']);
+    const b = await make('Beta', []);
+    await stores.admin.linkRefTable(b.id, { sourceTableId: a.id, column: 'dept', keyColumn: 'dept' });
+    const cycle = await refused(stores.admin.linkRefTable(a.id, { sourceTableId: b.id, column: 'dept', keyColumn: 'dept' }));
+    expect(cycle.code).toBe('conflict');
+    expect(cycle.message).toBe(storeText('errors.refLinkCycle', { tables: `Alpha ${tag} → Beta ${tag} → Alpha ${tag}` }));
+    const c = await make('Gamma', []);
+    const missing = await refused(stores.admin.linkRefTable(c.id, { sourceTableId: a.id, column: 'nope', keyColumn: 'dept' }));
+    expect(missing.code).toBe('invalid');
+    expect(missing.message).toBe(storeText('errors.refLinkColumnMissing', { table: `Alpha ${tag}`, column: 'nope' }));
+    const made = await stores.admin.createRefTableVersion(a.id, { validFrom: '2099-01-01', copyFrom: 1 });
+    const no = Math.max(...made.versions.map((v) => v.versionNo));
+    await stores.admin.saveRefTableVersion(a.id, no, { columns: [{ name: 'note', type: 'text' }], rows: [['x']] });
+    const publish = await refused(stores.admin.publishRefTableVersion(a.id, no));
+    expect(publish.message).toBe(storeText('errors.refLinkPublishColumn', { table: `Alpha ${tag}`, columns: 'dept', tables: `Beta ${tag}` }));
+    const del = await refused(stores.admin.deleteRefTable(a.id));
+    expect(del.message).toBe(storeText('errors.refLinkDeleteSource', { table: `Alpha ${tag}`, tables: `Beta ${tag}` }));
+    await stores.admin.unlinkRefTable(b.id);
+    await stores.admin.deleteRefTable(b.id);
   });
 });

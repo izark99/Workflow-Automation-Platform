@@ -82,7 +82,7 @@ select public.clear_ref_tables();
 insert into public.ref_tables (id, name) values ('30000000-0000-0000-0000-000000000107', 'Costs');
 insert into public.ref_table_versions (ref_table_id, version_no, valid_from, status, columns, rows) values ('30000000-0000-0000-0000-000000000107', 1, '2026-01-01', 'draft', '[{"name": "dept", "type": "text"}]'::jsonb, '[]'::jsonb);
 select public.act_as('00000000-0000-0000-0000-00000000000a');
-select throws_ok($$select public.link_ref_table('30000000-0000-0000-0000-000000000107', '30000000-0000-0000-0000-000000000107', 'dept', 'dept')$$, 'P0001', 'The table "Costs" cannot take its values from itself. Choose another table.', 'link: B to itself');
+select throws_ok($$select public.link_ref_table('30000000-0000-0000-0000-000000000107', '30000000-0000-0000-0000-000000000107', 'dept', 'dept')$$, '22023', 'The table "Costs" cannot take its values from itself. Choose another table.', 'link: B to itself');
 reset role;
 select public.clear_ref_tables();
 insert into public.ref_tables (id, name) values ('30000000-0000-0000-0000-000000000108', 'Departments');
@@ -122,7 +122,7 @@ insert into public.ref_tables (id, name) values ('30000000-0000-0000-0000-000000
 insert into public.ref_table_versions (ref_table_id, version_no, valid_from, status, columns, rows) values ('30000000-0000-0000-0000-000000000116', 1, '2026-01-01', 'draft', '[{"name": "dept", "type": "text"}]'::jsonb, '[]'::jsonb);
 insert into public.ref_table_versions (ref_table_id, version_no, valid_from, status, columns, rows) values ('30000000-0000-0000-0000-000000000117', 1, '2026-01-01', 'draft', '[{"name": "x", "type": "text"}]'::jsonb, '[]'::jsonb);
 select public.act_as('00000000-0000-0000-0000-00000000000a');
-select throws_ok($$select public.link_ref_table('30000000-0000-0000-0000-000000000117', '30000000-0000-0000-0000-000000000116', 'nope', 'dept')$$, 'P0001', 'The table "Departments" has no column "nope". Choose a column of that table.', 'link: A has no such column');
+select throws_ok($$select public.link_ref_table('30000000-0000-0000-0000-000000000117', '30000000-0000-0000-0000-000000000116', 'nope', 'dept')$$, '22023', 'The table "Departments" has no column "nope". Choose a column of that table.', 'link: A has no such column');
 reset role;
 select public.clear_ref_tables();
 insert into public.ref_tables (id, name) values ('30000000-0000-0000-0000-000000000118', 'Departments');
@@ -141,7 +141,7 @@ insert into public.ref_tables (id, name) values ('30000000-0000-0000-0000-000000
 insert into public.ref_table_versions (ref_table_id, version_no, valid_from, status, columns, rows) values ('30000000-0000-0000-0000-000000000121', 1, '2026-01-01', 'draft', '[{"name": "dept", "type": "text"}]'::jsonb, '[]'::jsonb);
 insert into public.ref_table_versions (ref_table_id, version_no, valid_from, status, columns, rows) values ('30000000-0000-0000-0000-000000000122', 1, '2026-01-01', 'draft', '[{"name": "x", "type": "text"}]'::jsonb, '[]'::jsonb);
 select public.act_as('00000000-0000-0000-0000-00000000000a');
-select throws_ok($$select public.link_ref_table('30000000-0000-0000-0000-000000000122', '30000000-0000-0000-0000-000000000121', 'dept', '  ')$$, 'P0001', 'The key column of "Costs" has no name. Type the name of the column that holds the values.', 'link: the key column has no name');
+select throws_ok($$select public.link_ref_table('30000000-0000-0000-0000-000000000122', '30000000-0000-0000-0000-000000000121', 'dept', '  ')$$, '22023', 'The key column of "Costs" has no name. Type the name of the column that holds the values.', 'link: the key column has no name');
 reset role;
 select public.clear_ref_tables();
 insert into public.ref_tables (id, name) values ('30000000-0000-0000-0000-000000000123', 'Departments');
@@ -149,7 +149,7 @@ insert into public.ref_tables (id, name) values ('30000000-0000-0000-0000-000000
 insert into public.ref_table_versions (ref_table_id, version_no, valid_from, status, columns, rows) values ('30000000-0000-0000-0000-000000000123', 1, '2026-01-01', 'draft', '[{"name": "dept", "type": "text"}]'::jsonb, '[]'::jsonb);
 insert into public.ref_table_versions (ref_table_id, version_no, valid_from, status, columns, rows) values ('30000000-0000-0000-0000-000000000124', 1, '2026-01-01', 'draft', '[{"name": "limit", "type": "number"}]'::jsonb, '[]'::jsonb);
 select public.act_as('00000000-0000-0000-0000-00000000000a');
-select throws_ok($$select public.link_ref_table('30000000-0000-0000-0000-000000000124', '30000000-0000-0000-0000-000000000123', 'dept', 'limit')$$, 'P0001', 'The column "limit" of "Costs" is not a text column. Choose a text column, or type a new name.', 'link: the key column exists and is not text');
+select throws_ok($$select public.link_ref_table('30000000-0000-0000-0000-000000000124', '30000000-0000-0000-0000-000000000123', 'dept', 'limit')$$, '22023', 'The column "limit" of "Costs" is not a text column. Choose a text column, or type a new name.', 'link: the key column exists and is not text');
 reset role;
 select public.clear_ref_tables();
 insert into public.ref_tables (id, name) values ('30000000-0000-0000-0000-000000000125', 'A');
@@ -291,7 +291,7 @@ select is((select count(*)::int from public.ref_table_versions where ref_table_i
 select is((select count(*)::int from public.ref_table_link_events where closed_at is null), 2, 'B and C each have one open notice');
 
 -- unlink: B keeps its rows, its notice closes, and a later publish of A does not touch it
-select throws_ok($$select public.unlink_ref_table('40000000-0000-0000-0000-000000000001')$$, 'P0001', 'This table is not linked to another table. Reload the page.', 'a table that is not linked cannot be unlinked');
+select throws_ok($$select public.unlink_ref_table('40000000-0000-0000-0000-000000000001')$$, '22023', 'This table is not linked to another table. Reload the page.', 'a table that is not linked cannot be unlinked');
 select lives_ok($$select public.unlink_ref_table('40000000-0000-0000-0000-000000000003')$$, 'the admin unlinks Budgets');
 select is((select link_table_id from public.ref_tables where id = '40000000-0000-0000-0000-000000000003'), null, 'the link is gone');
 select is((select jsonb_array_length(rows) from public.ref_table_versions where ref_table_id = '40000000-0000-0000-0000-000000000003' and version_no = 2), 4, 'and its rows stay');

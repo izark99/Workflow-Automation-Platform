@@ -7,6 +7,7 @@ import type {
   FlowRecord,
   FlowVersionRecord,
   Group,
+  RefLinkNotice,
   RefTableRecord,
   RefTableVersionRecord,
   Role,
@@ -64,6 +65,9 @@ export interface RefTableRow {
   id: string;
   name: string;
   description: string;
+  link_table_id?: string | null;
+  link_column?: string | null;
+  key_column?: string | null;
   ref_table_versions?: RefTableVersionRow[];
 }
 
@@ -153,7 +157,30 @@ export const refTableFromRow = (row: RefTableRow): RefTableRecord => ({
   name: row.name,
   description: row.description,
   versions: [...(row.ref_table_versions ?? [])].sort(byNumber).map(refVersionFromRow),
+  ...(row.link_table_id && row.link_column && row.key_column ? { link: { tableId: row.link_table_id, column: row.link_column, keyColumn: row.key_column } } : {}),
 });
+
+export interface RefLinkEventRow {
+  id: string;
+  ref_table_id: string;
+  source_table_id: string;
+  link_column: string;
+  draft_version_no: number;
+  new_values: string[];
+  created_at: string;
+}
+
+/** The open notices of the rows of `ref_table_link_events`, with the names of the two tables. A notice whose table is gone is left out. */
+export function noticesFromRows(rows: RefLinkEventRow[], names: ReadonlyMap<string, string>): RefLinkNotice[] {
+  const out: RefLinkNotice[] = [];
+  for (const r of rows) {
+    const tableName = names.get(r.ref_table_id);
+    const sourceName = names.get(r.source_table_id);
+    if (tableName === undefined || sourceName === undefined) continue;
+    out.push({ id: r.id, tableId: r.ref_table_id, tableName, sourceTableId: r.source_table_id, sourceName, column: r.link_column, draftVersionNo: r.draft_version_no, values: [...r.new_values], createdAt: r.created_at });
+  }
+  return out;
+}
 
 export const runLogFromRow = (r: RunLogRow): RunLogEntry => ({
   id: r.id,

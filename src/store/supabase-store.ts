@@ -11,6 +11,7 @@ import {
   groupFromRow,
   namesFromRows,
   refPatchToRow,
+  noticesFromRows,
   refTableFromRow,
   usedByFromRows,
   runLogFromRow,
@@ -21,6 +22,7 @@ import {
   type GroupRow,
   type NameLookup,
   type ProfileRow,
+  type RefLinkEventRow,
   type RefTableRow,
   type RunLogRow,
   type VisibleNameRow,
@@ -220,7 +222,13 @@ export class SupabaseStore implements DataStore {
       this.ok<{ id: string; name: string }[]>(flows, 'load the flows'),
     );
     // The database returns no versions for a table that the caller may not read, so `versions` is empty then.
-    return this.ok<RefTableRow[]>(tables, 'load the reference tables').map((row) => ({ ...refTableFromRow(row), usedBy: used.get(row.name) ?? [] }));
+    // Only an admin sees the links (SPEC 16.2 item 6), as in the local store.
+    const admin = (await this.currentUser()).role === 'admin';
+    return this.ok<RefTableRow[]>(tables, 'load the reference tables').map((row) => {
+      const view = { ...refTableFromRow(row), usedBy: used.get(row.name) ?? [] };
+      if (!admin) delete view.link;
+      return view;
+    });
   }
 
   async listRunLog(flowId: string): Promise<RunLogEntry[]> {
@@ -423,17 +431,28 @@ export class SupabaseStore implements DataStore {
     await this.rpc('delete_ref_table', { p_ref_table_id: tableId }, 'delete the table');
   }
 
-  // T9.11 replaces these three with calls of the functions of migration 21. Until then the database path does not link tables.
-  async linkRefTable(): Promise<RefTableRecord> {
-    throw new StoreError('invalid', 'Linking reference tables is not available on the database yet.');
+  async linkRefTable(tableId: string, input: { sourceTableId: string; column: string; keyColumn: string }): Promise<RefTableRecord> {
+    await this.mustBeAdmin('link reference tables');
+    // The database checks the cycle, the column and the key column, with the same words as the local store (migration 21).
+    await this.rpc('link_ref_table', { p_ref_table_id: tableId, p_source_id: input.sourceTableId, p_column: input.column, p_key_column: input.keyColumn }, 'link the table');
+    return this.refTable(tableId);
   }
 
-  async unlinkRefTable(): Promise<RefTableRecord> {
-    throw new StoreError('invalid', 'Linking reference tables is not available on the database yet.');
+  async unlinkRefTable(tableId: string): Promise<RefTableRecord> {
+    await this.mustBeAdmin('link reference tables');
+    await this.rpc('unlink_ref_table', { p_ref_table_id: tableId }, 'unlink the table');
+    return this.refTable(tableId);
   }
 
   async listRefLinkNotices(): Promise<RefLinkNotice[]> {
-    return [];
+    // The policy of the table lets an admin read the notices and nobody else, so a user gets an empty list from the database too.
+    if ((await this.currentUser()).role !== 'admin') return [];
+    const [events, tables] = await Promise.all([
+      this.client.from('ref_table_link_events').select('*').is('closed_at', null).order('created_at'),
+      this.client.from('ref_tables').select('id, name'),
+    ]);
+    const names = new Map(this.ok<{ id: string; name: string }[]>(tables, 'load the reference tables').map((t) => [t.id, t.name]));
+    return noticesFromRows(this.ok<RefLinkEventRow[]>(events, 'load the notices'), names);
   }
 
   async importRefTable(input: RefImportInput): Promise<RefImportResult> {
