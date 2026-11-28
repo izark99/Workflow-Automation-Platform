@@ -4,6 +4,7 @@ import { Button, Dropdown, Field, Icon, InfoTip, Switch } from '../../components
 import type { IconName } from '../../components';
 import { useT } from '../../i18n';
 import type { MessageKey } from '../../i18n';
+import { SectionLabel } from './column-pickers';
 import { MAX_HEADER_LINES, MAX_SIGNERS, addHeaderLine, addSigner, hasPrintErrors, patchLine, patchSigner, printErrors, switchPrint, tokenList } from './print-logic';
 import type { PrintValue } from './print-logic';
 import styles from './column-pickers.module.css';
@@ -53,7 +54,7 @@ export function PrintGroup({ value, parameterKeys, readOnly, onChange }: PrintGr
       {p && errors ? (
         <>
           <section aria-label={t('builder.print.page')} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <strong>{t('builder.print.page')}</strong>
+            <SectionLabel label={t('builder.print.page')} flush />
             <div className={styles.line}>
               <Choice label={t('builder.print.paper')} prefix="builder.print.papers" list={PAPERS} value={p.paper} disabled={readOnly} onChange={(paper) => change({ ...p, paper })} />
               <Choice label={t('builder.print.orientation')} prefix="builder.print.orientations" list={ORIENTATIONS} value={p.orientation} disabled={readOnly} onChange={(orientation) => change({ ...p, orientation })} />
@@ -65,17 +66,14 @@ export function PrintGroup({ value, parameterKeys, readOnly, onChange }: PrintGr
           </section>
 
           <section aria-label={t('builder.print.headerLines')} style={{ display: 'flex', flexDirection: 'column' }}>
-            <span className={styles.labelRow}>
-              <strong>{t('builder.print.headerLines')}</strong>
-              <InfoTip label={t('builder.print.headerLines')}>{t('builder.print.tokensHint', { tokens: tokenList(), paramToken: '{param:key}' })}</InfoTip>
-            </span>
+            <SectionLabel label={t('builder.print.headerLines')} hint={t('builder.print.tokensHint', { tokens: tokenList(), paramToken: '{param:key}' })} flush />
             {p.header.map((line, i) => (
               <div key={i} className={styles.rowCard}>
                 <div className={styles.line}>
                   <div className={styles.grow}>
                     <Field label={numbered(t('builder.print.lineText'), i + 1)} value={line.text} disabled={readOnly} error={errors.header[i]} onChange={(e) => change(patchLine(p, i, { text: e.target.value }))} />
                   </div>
-                  <Button icon size="sm" disabled={readOnly} aria-label={numbered(t('builder.print.removeLine'), i + 1)} onClick={() => change({ ...p, header: p.header.filter((_, j) => j !== i) })}>
+                  <Button icon disabled={readOnly} aria-label={numbered(t('builder.print.removeLine'), i + 1)} onClick={() => change({ ...p, header: p.header.filter((_, j) => j !== i) })}>
                     <Icon name="x" />
                   </Button>
                 </div>
@@ -99,7 +97,7 @@ export function PrintGroup({ value, parameterKeys, readOnly, onChange }: PrintGr
           </section>
 
           <section aria-label={t('builder.print.signatures')} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <strong>{t('builder.print.signatures')}</strong>
+            <SectionLabel label={t('builder.print.signatures')} flush />
             <Field label={t('builder.print.dateLine')} hint={t('builder.print.dateLineHint', { example: 'Hà Nội, ngày {day} tháng {month} năm {year}' })} value={p.dateLine} disabled={readOnly} error={errors.dateLine} onChange={(e) => change({ ...p, dateLine: e.target.value })} />
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               {p.signers.map((s, i) => (
@@ -108,7 +106,7 @@ export function PrintGroup({ value, parameterKeys, readOnly, onChange }: PrintGr
                     <div className={styles.grow}>
                       <Field label={numbered(t('builder.print.signerTitle'), i + 1)} value={s.title} disabled={readOnly} error={errors.signers[i]?.title} onChange={(e) => change(patchSigner(p, i, { title: e.target.value }))} />
                     </div>
-                    <Button icon size="sm" disabled={readOnly} aria-label={numbered(t('builder.print.removeSigner'), i + 1)} onClick={() => change({ ...p, signers: p.signers.filter((_, j) => j !== i) })}>
+                    <Button icon disabled={readOnly} aria-label={numbered(t('builder.print.removeSigner'), i + 1)} onClick={() => change({ ...p, signers: p.signers.filter((_, j) => j !== i) })}>
                       <Icon name="x" />
                     </Button>
                   </div>

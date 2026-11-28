@@ -186,6 +186,20 @@ export function StepPreview({ flowName, definition, step, files, onFile, refTabl
       {missing.length > 0 && state.status === 'idle' ? <EmptyState title={t('builder.preview.empty')} text={t('builder.preview.emptyText')} action={null} /> : null}
       {state.status === 'loading' ? <SkeletonTable weights={[1, 1, 1]} rows={3} label={t('builder.preview.loading')} /> : null}
       {state.status === 'error' ? <ErrorState what={t('builder.preview.failed')} next={state.message} /> : null}
+      {print ? (
+        <PrintPreview
+          stepName={step.label ?? step.id}
+          print={print}
+          tokens={{ effectiveDate: date, runDate: new Date().toISOString().slice(0, 10), flow: flowName ?? definition.name ?? '', params: Object.fromEntries(Object.entries(values).filter(([, v]) => v !== undefined && v !== null).map(([k, v]) => [k, String(v)])) }}
+          language={getLocale() === 'vi' ? 'vi' : 'en'}
+          first={state.status === 'ready' ? (state.data.part === 'first' ? state.data : other?.part === 'first' ? other : undefined) : undefined}
+          last={state.status === 'ready' ? (state.data.part === 'last' ? state.data : other?.part === 'last' ? other : undefined) : undefined}
+          stale={state.status === 'ready' && state.key !== key}
+          large={printLarge}
+          onOpenLarge={() => setPrintLarge(true)}
+          onCloseLarge={() => setPrintLarge(false)}
+        />
+      ) : null}
       {state.status === 'ready' ? (
         <div className={styles.block}>
           {state.key !== key ? <p className={styles.muted} role="status">{t('builder.preview.stale')}</p> : null}
@@ -202,20 +216,6 @@ export function StepPreview({ flowName, definition, step, files, onFile, refTabl
             </div>
           ) : null}
         </div>
-      ) : null}
-      {print ? (
-        <PrintPreview
-          stepName={step.label ?? step.id}
-          print={print}
-          tokens={{ effectiveDate: date, runDate: new Date().toISOString().slice(0, 10), flow: flowName ?? definition.name ?? '', params: Object.fromEntries(Object.entries(values).filter(([, v]) => v !== undefined && v !== null).map(([k, v]) => [k, String(v)])) }}
-          language={getLocale() === 'vi' ? 'vi' : 'en'}
-          first={state.status === 'ready' ? (state.data.part === 'first' ? state.data : other?.part === 'first' ? other : undefined) : undefined}
-          last={state.status === 'ready' ? (state.data.part === 'last' ? state.data : other?.part === 'last' ? other : undefined) : undefined}
-          stale={state.status === 'ready' && state.key !== key}
-          large={printLarge}
-          onOpenLarge={() => setPrintLarge(true)}
-          onCloseLarge={() => setPrintLarge(false)}
-        />
       ) : null}
       {popup ? (
         <PreviewDialog

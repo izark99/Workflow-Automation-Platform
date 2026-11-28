@@ -374,7 +374,11 @@ Quality pass
 - [x] T9.16 Unit and integration sweep: `npm run check`, `test:acceptance` (including print), `test:db` with the migrations 1 to 21 from zero, `test:functions`, `test:e2e` (drag spec unchanged); `docs/PRINT_PERF.md` is current.
 - [x] T9.17 `docs/DEPLOY.md`: "Upgrade to Phase 9" (back up first; `npx supabase db push` for migration 21 named in the file; no new function; deploy the app after the migration; a check list: a print layout on one flow and the downloaded file printed or previewed in Excel, a linked table and its notice, a published version of A that adds a value).
 - [x] T9.18 The Vietnamese texts of every key of the phase and the catalog test; `docs/DESIGN.md` and `docs/SPEC.md` updated where the build chose something else, with the reason in `docs/DECISIONS.md`.
-- [ ] T9.19 UI review of the new and changed screens in both themes (the print group in each state, the print preview, the link dialog, the notice, the dot, the marked rows, the publish warning); findings in `docs/UI_AUDIT_P9.md` become tasks T9.19a, T9.19b... fixed before the final run; `npm run test:ui-rules` in full.
+- [x] T9.19 UI review of the new and changed screens in both themes (the print group in each state, the print preview, the link dialog, the notice, the dot, the marked rows, the publish warning); findings in `docs/UI_AUDIT_P9.md` become tasks T9.19a, T9.19b... fixed before the final run; `npm run test:ui-rules` in full.
+- [x] T9.19a The print preview is drawn above the table of rows on the Test tab (`docs/UI_AUDIT_P9.md`, finding 1). e2e checks the order.
+- [x] T9.19b The remove buttons of the header lines and the signers are 40 px (finding 2).
+- [x] T9.19c The titles Page, Header lines and Signatures use the label of the form (finding 3).
+- [x] T9.19d The UI audit skips `[data-drawing]` (finding 4).
 - [ ] T9.20 Final run: `npm ci`, then `npm run gates` (seven gates) and `npm run test:acceptance:pages`; set `STATUS: COMPLETE` only if both pass. Consult the advisor before the last tick.
 
 ## Needs Harold
@@ -457,6 +461,13 @@ Decisions with a default. Build with the default unless this list says otherwise
 None. The Pages file size blocker of T3.9 is solved by D71.
 
 ## Log
+
+### 2026-11-28 T9.19 UI review of Phase 9, and T9.19a to T9.19d
+Reviewed: the 38 Phase 9 audits in both themes at 1440 px, the screenshots at a tall viewport, the measurements; `docs/UI_AUDIT_P9.md` has nine findings.
+Fixed: T9.19a the print preview is drawn above the table of 100 rows (it was found only after 4,500 px of rows); T9.19b the remove buttons of the header lines and signers are 40 px like their fields; T9.19c the three titles of the print group use the label of the form; T9.19d the audit skips the drawing of a page. e2e: the order of the preview and the table, and the height of the remove button (`print-preview.spec.ts`, 9 tests). The audit run again after a rebuild of the UI rules build: no height finding on the remove buttons and no 8 px text finding.
+Later (low, in the audit file): the numbers of the drawing are left-aligned, the pages of the large dialog could be larger, the leading chip cell is as wide as any column, the compact add buttons, and the library and old patterns.
+Gates run: check PASS; ui-rules for the print group and print preview routes PASS in light-1440; the full `npm run test:ui-rules` runs in T9.20.
+Next: T9.20.
 
 ### 2026-11-28 T9.18 Vietnamese texts and the documents
 Checked: every key that Phase 9 added to `en.ts` (264) has a text in `vi.ts`, and all of them differ from the English except the names that are the same in both languages (A4, A3, Letter, "Top N"). The catalog tests (`every message of every catalog is well formed`, `has a text for every key, and the same placeholders as English`, the store messages equal to the catalog, the pseudo-locale check of the UI rules) pass in `npm run check`. The Vietnamese footer of a printed file ("Trang n/N") is tested on the writer and on the preview, and the English one ("Page n/N") in the journey.

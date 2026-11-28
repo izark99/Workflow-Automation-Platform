@@ -111,4 +111,23 @@ test.describe('Print preview', () => {
     await expect(box).toHaveCount(1, { timeout: 30_000 });
     await expect(box).not.toContainText('Page 1/1');
   });
+
+  test('is above the table of rows, so a person does not scroll past 100 rows to find it (UI audit P9, finding 1)', async ({ page }) => {
+    await setup(page, 300);
+    await panel(page).getByRole('button', { name: 'Preview first rows' }).click();
+    await expect(preview(page).getByRole('img')).toHaveCount(2, { timeout: 60_000 });
+    const table = panel(page).getByRole('table', { name: 'Preview rows' });
+    await expect(table).toBeVisible();
+    const a = await preview(page).boundingBox();
+    const b = await table.boundingBox();
+    expect(a!.y + a!.height).toBeLessThanOrEqual(b!.y);
+  });
+
+  test('the remove buttons of the print group are 40 px high, like their fields (UI audit P9, finding 2)', async ({ page }) => {
+    await setup(page, 5);
+    await panel(page).getByRole('tab', { name: 'Configure' }).click();
+    // A field is a 40 px control (its input is 38 px inside the border); the remove button is the same 40 px, not 32.
+    const remove = await panel(page).getByRole('button', { name: 'Remove header line 1' }).boundingBox();
+    expect(Math.round(remove!.height)).toBe(40);
+  });
 });

@@ -31,7 +31,7 @@ async function measure(page: import('@playwright/test').Page): Promise<Finding[]
     // 9 Text: nothing under 12 px.
     const small = new Map<string, number>();
     for (const el of Array.from(document.querySelectorAll('body *'))) {
-      if (!visible(el)) continue;
+      if (!visible(el) || el.closest('[data-drawing]')) continue; // the drawing of a printed page is at a scale of 8 px (D138)
       const own = Array.from(el.childNodes).some((n) => n.nodeType === 3 && (n.textContent ?? '').trim() !== '');
       if (!own) continue;
       const px = parseFloat(getComputedStyle(el).fontSize);
