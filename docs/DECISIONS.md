@@ -1299,3 +1299,7 @@ When one xlsx file holds sheets with and without a print layout, the whole workb
 ## D138 The drawing of a printed page is not interface text
 
 The print preview draws a page of the report at a small scale (8 px in the panel, 12 px in the popup, DESIGN "Print layout"), with the sizes of the header lines (1, 1.35 and 1.7 times). These sizes are not in the type table of the interface. The page box carries `data-drawing="print-page"`, and the UI rule "font sizes from the type table" skips what is inside it, as it skips an svg. The box has `role="img"` and a label ("Page 1 of 5"); its content is hidden from the screen reader. All other rules (colours, contrast of the box, one primary, no scroll) still run on it.
+
+## D139 The start of the draft of a linked table
+
+SPEC 16.2 item 3 says the draft starts on the day the new version of A starts when that is after the start of the last published version of B, and otherwise on the day after the end of that version. It does not say what happens when that version has no end and A starts on or before it. The rule is then the day after the start of that version, so that publishing the draft ends the old version after one day instead of before its own start. With no published version of B, the draft starts today. The cases are in `supabase/tests/ref-link-cases.json`, and the migration follows them.

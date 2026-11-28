@@ -1,0 +1,972 @@
+{
+ "distinct": [
+  {
+   "name": "trims, drops blanks and keeps the first order",
+   "input": [
+    "  Sản xuất",
+    "Kho",
+    " ",
+    "",
+    "Sản xuất ",
+    null,
+    "QA"
+   ],
+   "expected": [
+    "Sản xuất",
+    "Kho",
+    "QA"
+   ]
+  },
+  {
+   "name": "case counts",
+   "input": [
+    "a",
+    "A",
+    "a"
+   ],
+   "expected": [
+    "a",
+    "A"
+   ]
+  },
+  {
+   "name": "accents count",
+   "input": [
+    "e",
+    "é",
+    "e"
+   ],
+   "expected": [
+    "e",
+    "é"
+   ]
+  },
+  {
+   "name": "numbers are written as text",
+   "input": [
+    1,
+    "1",
+    2.5,
+    "2.5"
+   ],
+   "expected": [
+    "1",
+    "2.5"
+   ]
+  },
+  {
+   "name": "an empty column has no values",
+   "input": [],
+   "expected": []
+  },
+  {
+   "name": "only blanks has no values",
+   "input": [
+    null,
+    "",
+    "   "
+   ],
+   "expected": []
+  }
+ ],
+ "newValues": [
+  {
+   "name": "values that B does not hold",
+   "values": [
+    "a",
+    "b",
+    "c"
+   ],
+   "keys": [
+    "b"
+   ],
+   "expected": [
+    "a",
+    "c"
+   ]
+  },
+  {
+   "name": "all held",
+   "values": [
+    "a"
+   ],
+   "keys": [
+    "a",
+    "z"
+   ],
+   "expected": []
+  },
+  {
+   "name": "case is exact",
+   "values": [
+    "A"
+   ],
+   "keys": [
+    "a"
+   ],
+   "expected": [
+    "A"
+   ]
+  },
+  {
+   "name": "none held",
+   "values": [
+    "x",
+    "y"
+   ],
+   "keys": [],
+   "expected": [
+    "x",
+    "y"
+   ]
+  }
+ ],
+ "versionInEffect": [
+  {
+   "name": "the published version that covers today",
+   "versions": [
+    {
+     "versionNo": 1,
+     "validFrom": "2026-01-01",
+     "validTo": "2026-06-30",
+     "status": "published"
+    },
+    {
+     "versionNo": 2,
+     "validFrom": "2026-07-01",
+     "validTo": null,
+     "status": "published"
+    }
+   ],
+   "today": "2026-09-30",
+   "expected": 2
+  },
+  {
+   "name": "a draft is not used",
+   "versions": [
+    {
+     "versionNo": 1,
+     "validFrom": "2026-01-01",
+     "validTo": null,
+     "status": "published"
+    },
+    {
+     "versionNo": 2,
+     "validFrom": "2026-07-01",
+     "validTo": null,
+     "status": "draft"
+    }
+   ],
+   "today": "2026-09-30",
+   "expected": 1
+  },
+  {
+   "name": "when none covers today, the last published one",
+   "versions": [
+    {
+     "versionNo": 1,
+     "validFrom": "2026-01-01",
+     "validTo": "2026-03-31",
+     "status": "published"
+    },
+    {
+     "versionNo": 2,
+     "validFrom": "2026-04-01",
+     "validTo": "2026-06-30",
+     "status": "published"
+    }
+   ],
+   "today": "2026-09-30",
+   "expected": 2
+  },
+  {
+   "name": "no published version",
+   "versions": [
+    {
+     "versionNo": 1,
+     "validFrom": "2026-01-01",
+     "validTo": null,
+     "status": "draft"
+    }
+   ],
+   "today": "2026-09-30",
+   "expected": null
+  }
+ ],
+ "draftStart": [
+  {
+   "name": "A starts after B's last version starts",
+   "aStart": "2026-10-01",
+   "last": {
+    "validFrom": "2026-01-01",
+    "validTo": null
+   },
+   "today": "2026-11-17",
+   "expected": "2026-10-01"
+  },
+  {
+   "name": "A starts the day B's last version starts: the day after its end",
+   "aStart": "2026-01-01",
+   "last": {
+    "validFrom": "2026-01-01",
+    "validTo": "2026-06-30"
+   },
+   "today": "2026-11-17",
+   "expected": "2026-07-01"
+  },
+  {
+   "name": "A starts before B's last version: the day after its end",
+   "aStart": "2025-12-01",
+   "last": {
+    "validFrom": "2026-01-01",
+    "validTo": "2026-06-30"
+   },
+   "today": "2026-11-17",
+   "expected": "2026-07-01"
+  },
+  {
+   "name": "B's last version has no end: the day after its start",
+   "aStart": "2026-01-01",
+   "last": {
+    "validFrom": "2026-01-01",
+    "validTo": null
+   },
+   "today": "2026-11-17",
+   "expected": "2026-01-02"
+  },
+  {
+   "name": "B has no published version: today",
+   "aStart": "2026-10-01",
+   "last": null,
+   "today": "2026-11-17",
+   "expected": "2026-11-17"
+  },
+  {
+   "name": "the day after the end crosses a month and a leap day",
+   "aStart": "2028-01-01",
+   "last": {
+    "validFrom": "2028-01-01",
+    "validTo": "2028-02-28"
+   },
+   "today": "2028-05-05",
+   "expected": "2028-02-29"
+  }
+ ],
+ "linkRefusal": [
+  {
+   "name": "a link that is allowed",
+   "tables": [
+    {
+     "id": "a",
+     "name": "Departments",
+     "columns": [
+      {
+       "name": "dept",
+       "type": "text"
+      }
+     ],
+     "link": null
+    },
+    {
+     "id": "b",
+     "name": "Costs",
+     "columns": [
+      {
+       "name": "x",
+       "type": "text"
+      }
+     ],
+     "link": null
+    }
+   ],
+   "b": "b",
+   "a": "a",
+   "column": "dept",
+   "keyColumn": "dept",
+   "expected": null
+  },
+  {
+   "name": "B to itself",
+   "tables": [
+    {
+     "id": "b",
+     "name": "Costs",
+     "columns": [
+      {
+       "name": "dept",
+       "type": "text"
+      }
+     ],
+     "link": null
+    }
+   ],
+   "b": "b",
+   "a": "b",
+   "column": "dept",
+   "keyColumn": "dept",
+   "expected": {
+    "code": "ref_link_self",
+    "params": {
+     "table": "Costs"
+    }
+   }
+  },
+  {
+   "name": "a cycle of two",
+   "tables": [
+    {
+     "id": "a",
+     "name": "Departments",
+     "columns": [
+      {
+       "name": "dept",
+       "type": "text"
+      }
+     ],
+     "link": {
+      "from": "b",
+      "column": "k",
+      "keyColumn": "dept"
+     }
+    },
+    {
+     "id": "b",
+     "name": "Costs",
+     "columns": [
+      {
+       "name": "k",
+       "type": "text"
+      }
+     ],
+     "link": null
+    }
+   ],
+   "b": "b",
+   "a": "a",
+   "column": "dept",
+   "keyColumn": "k",
+   "expected": {
+    "code": "ref_link_cycle",
+    "params": {
+     "tables": "Costs → Departments → Costs"
+    }
+   }
+  },
+  {
+   "name": "a cycle of three",
+   "tables": [
+    {
+     "id": "a",
+     "name": "A",
+     "columns": [
+      {
+       "name": "c",
+       "type": "text"
+      }
+     ],
+     "link": {
+      "from": "c",
+      "column": "c",
+      "keyColumn": "c"
+     }
+    },
+    {
+     "id": "c",
+     "name": "C",
+     "columns": [
+      {
+       "name": "c",
+       "type": "text"
+      }
+     ],
+     "link": {
+      "from": "b",
+      "column": "c",
+      "keyColumn": "c"
+     }
+    },
+    {
+     "id": "b",
+     "name": "B",
+     "columns": [
+      {
+       "name": "c",
+       "type": "text"
+      }
+     ],
+     "link": null
+    }
+   ],
+   "b": "b",
+   "a": "a",
+   "column": "c",
+   "keyColumn": "c",
+   "expected": {
+    "code": "ref_link_cycle",
+    "params": {
+     "tables": "B → A → C → B"
+    }
+   }
+  },
+  {
+   "name": "a chain is allowed",
+   "tables": [
+    {
+     "id": "a",
+     "name": "A",
+     "columns": [
+      {
+       "name": "c",
+       "type": "text"
+      }
+     ],
+     "link": null
+    },
+    {
+     "id": "b",
+     "name": "B",
+     "columns": [
+      {
+       "name": "c",
+       "type": "text"
+      }
+     ],
+     "link": {
+      "from": "a",
+      "column": "c",
+      "keyColumn": "c"
+     }
+    },
+    {
+     "id": "c",
+     "name": "C",
+     "columns": [
+      {
+       "name": "c",
+       "type": "text"
+      }
+     ],
+     "link": null
+    }
+   ],
+   "b": "c",
+   "a": "b",
+   "column": "c",
+   "keyColumn": "c",
+   "expected": null
+  },
+  {
+   "name": "A has no such column",
+   "tables": [
+    {
+     "id": "a",
+     "name": "Departments",
+     "columns": [
+      {
+       "name": "dept",
+       "type": "text"
+      }
+     ],
+     "link": null
+    },
+    {
+     "id": "b",
+     "name": "Costs",
+     "columns": [
+      {
+       "name": "x",
+       "type": "text"
+      }
+     ],
+     "link": null
+    }
+   ],
+   "b": "b",
+   "a": "a",
+   "column": "nope",
+   "keyColumn": "dept",
+   "expected": {
+    "code": "ref_link_column_missing",
+    "params": {
+     "table": "Departments",
+     "column": "nope"
+    }
+   }
+  },
+  {
+   "name": "B is linked already",
+   "tables": [
+    {
+     "id": "a",
+     "name": "Departments",
+     "columns": [
+      {
+       "name": "dept",
+       "type": "text"
+      }
+     ],
+     "link": null
+    },
+    {
+     "id": "a2",
+     "name": "Teams",
+     "columns": [
+      {
+       "name": "t",
+       "type": "text"
+      }
+     ],
+     "link": null
+    },
+    {
+     "id": "b",
+     "name": "Costs",
+     "columns": [
+      {
+       "name": "dept",
+       "type": "text"
+      }
+     ],
+     "link": {
+      "from": "a",
+      "column": "dept",
+      "keyColumn": "dept"
+     }
+    }
+   ],
+   "b": "b",
+   "a": "a2",
+   "column": "t",
+   "keyColumn": "dept",
+   "expected": {
+    "code": "ref_link_already_linked",
+    "params": {
+     "table": "Costs"
+    }
+   }
+  },
+  {
+   "name": "the key column has no name",
+   "tables": [
+    {
+     "id": "a",
+     "name": "Departments",
+     "columns": [
+      {
+       "name": "dept",
+       "type": "text"
+      }
+     ],
+     "link": null
+    },
+    {
+     "id": "b",
+     "name": "Costs",
+     "columns": [
+      {
+       "name": "x",
+       "type": "text"
+      }
+     ],
+     "link": null
+    }
+   ],
+   "b": "b",
+   "a": "a",
+   "column": "dept",
+   "keyColumn": "  ",
+   "expected": {
+    "code": "ref_link_key_name",
+    "params": {
+     "table": "Costs"
+    }
+   }
+  },
+  {
+   "name": "the key column exists and is not text",
+   "tables": [
+    {
+     "id": "a",
+     "name": "Departments",
+     "columns": [
+      {
+       "name": "dept",
+       "type": "text"
+      }
+     ],
+     "link": null
+    },
+    {
+     "id": "b",
+     "name": "Costs",
+     "columns": [
+      {
+       "name": "limit",
+       "type": "number"
+      }
+     ],
+     "link": null
+    }
+   ],
+   "b": "b",
+   "a": "a",
+   "column": "dept",
+   "keyColumn": "limit",
+   "expected": {
+    "code": "ref_link_key_type",
+    "params": {
+     "table": "Costs",
+     "column": "limit"
+    }
+   }
+  },
+  {
+   "name": "A can feed several tables",
+   "tables": [
+    {
+     "id": "a",
+     "name": "A",
+     "columns": [
+      {
+       "name": "c",
+       "type": "text"
+      }
+     ],
+     "link": null
+    },
+    {
+     "id": "b1",
+     "name": "B1",
+     "columns": [
+      {
+       "name": "c",
+       "type": "text"
+      }
+     ],
+     "link": {
+      "from": "a",
+      "column": "c",
+      "keyColumn": "c"
+     }
+    },
+    {
+     "id": "b2",
+     "name": "B2",
+     "columns": [
+      {
+       "name": "c",
+       "type": "text"
+      }
+     ],
+     "link": null
+    }
+   ],
+   "b": "b2",
+   "a": "a",
+   "column": "c",
+   "keyColumn": "c",
+   "expected": null
+  }
+ ],
+ "publishRefusal": [
+  {
+   "name": "the version keeps the linked column",
+   "a": {
+    "id": "a",
+    "name": "Departments",
+    "columns": [
+     {
+      "name": "dept",
+      "type": "text"
+     }
+    ],
+    "link": null
+   },
+   "columns": [
+    {
+     "name": "dept",
+     "type": "text"
+    },
+    {
+     "name": "note",
+     "type": "text"
+    }
+   ],
+   "linked": [
+    {
+     "id": "b",
+     "name": "Costs",
+     "columns": [
+      {
+       "name": "dept",
+       "type": "text"
+      }
+     ],
+     "link": {
+      "from": "a",
+      "column": "dept",
+      "keyColumn": "dept"
+     }
+    }
+   ],
+   "expected": null
+  },
+  {
+   "name": "the version lacks the linked column and names the tables",
+   "a": {
+    "id": "a",
+    "name": "Departments",
+    "columns": [
+     {
+      "name": "dept",
+      "type": "text"
+     }
+    ],
+    "link": null
+   },
+   "columns": [
+    {
+     "name": "note",
+     "type": "text"
+    }
+   ],
+   "linked": [
+    {
+     "id": "b",
+     "name": "Costs",
+     "columns": [
+      {
+       "name": "dept",
+       "type": "text"
+      }
+     ],
+     "link": {
+      "from": "a",
+      "column": "dept",
+      "keyColumn": "dept"
+     }
+    },
+    {
+     "id": "c",
+     "name": "Budgets",
+     "columns": [
+      {
+       "name": "d",
+       "type": "text"
+      }
+     ],
+     "link": {
+      "from": "a",
+      "column": "dept",
+      "keyColumn": "d"
+     }
+    }
+   ],
+   "expected": {
+    "code": "ref_link_publish_column",
+    "params": {
+     "table": "Departments",
+     "columns": "dept",
+     "tables": "Costs, Budgets"
+    }
+   }
+  },
+  {
+   "name": "a table linked to another column is not named",
+   "a": {
+    "id": "a",
+    "name": "Departments",
+    "columns": [
+     {
+      "name": "dept",
+      "type": "text"
+     }
+    ],
+    "link": null
+   },
+   "columns": [
+    {
+     "name": "dept",
+     "type": "text"
+    }
+   ],
+   "linked": [
+    {
+     "id": "b",
+     "name": "Costs",
+     "columns": [
+      {
+       "name": "dept",
+       "type": "text"
+      }
+     ],
+     "link": {
+      "from": "a",
+      "column": "code",
+      "keyColumn": "dept"
+     }
+    }
+   ],
+   "expected": {
+    "code": "ref_link_publish_column",
+    "params": {
+     "table": "Departments",
+     "columns": "code",
+     "tables": "Costs"
+    }
+   }
+  }
+ ],
+ "deleteRefusal": [
+  {
+   "name": "no table is linked",
+   "a": {
+    "id": "a",
+    "name": "Departments",
+    "columns": [
+     {
+      "name": "dept",
+      "type": "text"
+     }
+    ],
+    "link": null
+   },
+   "tables": [
+    {
+     "id": "a",
+     "name": "Departments",
+     "columns": [
+      {
+       "name": "dept",
+       "type": "text"
+      }
+     ],
+     "link": null
+    },
+    {
+     "id": "b",
+     "name": "Costs",
+     "columns": [
+      {
+       "name": "dept",
+       "type": "text"
+      }
+     ],
+     "link": null
+    }
+   ],
+   "expected": null
+  },
+  {
+   "name": "tables are linked and are named",
+   "a": {
+    "id": "a",
+    "name": "Departments",
+    "columns": [
+     {
+      "name": "dept",
+      "type": "text"
+     }
+    ],
+    "link": null
+   },
+   "tables": [
+    {
+     "id": "a",
+     "name": "Departments",
+     "columns": [
+      {
+       "name": "dept",
+       "type": "text"
+      }
+     ],
+     "link": null
+    },
+    {
+     "id": "b",
+     "name": "Costs",
+     "columns": [
+      {
+       "name": "dept",
+       "type": "text"
+      }
+     ],
+     "link": {
+      "from": "a",
+      "column": "dept",
+      "keyColumn": "dept"
+     }
+    },
+    {
+     "id": "c",
+     "name": "Budgets",
+     "columns": [
+      {
+       "name": "d",
+       "type": "text"
+      }
+     ],
+     "link": {
+      "from": "a",
+      "column": "dept",
+      "keyColumn": "d"
+     }
+    }
+   ],
+   "expected": {
+    "code": "ref_link_delete_source",
+    "params": {
+     "table": "Departments",
+     "tables": "Costs, Budgets"
+    }
+   }
+  },
+  {
+   "name": "deleting B, which is linked, is not refused",
+   "a": {
+    "id": "b",
+    "name": "Costs",
+    "columns": [
+     {
+      "name": "dept",
+      "type": "text"
+     }
+    ],
+    "link": {
+     "from": "a",
+     "column": "dept",
+     "keyColumn": "dept"
+    }
+   },
+   "tables": [
+    {
+     "id": "a",
+     "name": "Departments",
+     "columns": [
+      {
+       "name": "dept",
+       "type": "text"
+      }
+     ],
+     "link": null
+    },
+    {
+     "id": "b",
+     "name": "Costs",
+     "columns": [
+      {
+       "name": "dept",
+       "type": "text"
+      }
+     ],
+     "link": {
+      "from": "a",
+      "column": "dept",
+      "keyColumn": "dept"
+     }
+    }
+   ],
+   "expected": null
+  }
+ ]
+}
