@@ -71,7 +71,8 @@ test('a toast is on surface-overlay with shadow-lg at the bottom right, enters i
   await page.getByRole('button', { name: 'Show toast' }).click();
   const toast = page.locator('[role="status"][aria-live="polite"] > div', { hasText: 'Draft saved' }).first();
   await expect(toast).toBeVisible();
-  await page.waitForTimeout(350); // the toast rises 12 px while it enters
+  // The toast rises 12 px while it enters: measure after its animation has finished (not after a fixed wait, which was 1 px short once under load).
+  await toast.evaluate((el) => Promise.all(el.getAnimations().map((a) => a.finished)));
   const look = await toast.evaluate((el) => {
     const cs = getComputedStyle(el);
     const r = el.getBoundingClientRect();
