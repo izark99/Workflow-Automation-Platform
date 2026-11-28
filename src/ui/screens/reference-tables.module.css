@@ -217,3 +217,19 @@
   flex: 1;
   min-width: 0;
 }
+
+.fieldLabel {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+/* The line under the title of a linked table: "Values from A · c" with the link icon. */
+.linkLine {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--ink-muted);
+}

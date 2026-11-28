@@ -91,6 +91,41 @@ const seedBigDraft = async (page: Page): Promise<void> => {
   await page.addInitScript((json) => localStorage.setItem('dfw.seed', json), JSON.stringify(s));
 };
 
+
+/** Tables for the routes of the link dialog: Departments (a source), Costs (to link), Linked (already linked, with a draft), No columns (a table with no column). */
+const seedLinkTables = async (page: Page): Promise<void> => {
+  const s = seedSnapshot();
+  const text = (name: string) => ({ name, type: 'text' as const });
+  const v = (columns: { name: string; type: 'text' | 'number' }[], rows: (string | number | null)[][], status: 'draft' | 'published' = 'published') => ({ versionNo: 1, validFrom: '2026-01-01', validTo: null, status, columns, rows });
+  s.refTables.push(
+    { id: 'ref-dept', name: 'Departments', description: 'The departments.', versions: [v([text('dept'), text('note')], [['Kho', 'a'], ['QA', 'b'], ['Sản xuất', 'c']])] },
+    { id: 'ref-costs', name: 'Costs', description: '', versions: [v([text('dept'), { name: 'limit', type: 'number' }], [])] },
+    { id: 'ref-linked', name: 'Cost limits', description: '', link: { tableId: 'ref-dept', column: 'dept', keyColumn: 'dept' }, versions: [v([text('dept'), { name: 'limit', type: 'number' }], [['Kho', 10]]), { ...v([text('dept'), { name: 'limit', type: 'number' }], [['Kho', 10], ['QA', null], ['Sản xuất', null]], 'draft'), versionNo: 2, validFrom: '2026-12-01' }] },
+    { id: 'ref-nocols', name: 'No columns', description: '', versions: [v([], [])] },
+  );
+  await page.addInitScript((json) => localStorage.setItem('dfw.seed', json), JSON.stringify(s));
+};
+
+/** Opens "Link to a table" on a table of `seedLinkTables`, and chooses a source when given. */
+function linkDialogRoute(name: string, table: string, source?: string): RuleRoute {
+  return {
+    path: `/reference-tables?table=${table}`,
+    name: `/reference-tables (${name})`,
+    sidebar: true,
+    before: seedLinkTables,
+    prepare: async (page) => {
+      await page.getByRole('button', { name: /More actions for this table/ }).click();
+      await page.getByRole('option', { name: /Link to a table/ }).click();
+      const dialog = page.getByRole('dialog');
+      await dialog.waitFor();
+      if (source) {
+        await dialog.getByRole('button', { name: /Take the values from the table/ }).click();
+        await page.getByRole('option', { name: source }).click();
+      }
+    },
+  };
+}
+
 export interface RuleRoute {
   path: string;
   /** Names this state of the route when the same path is listed twice. */
@@ -1043,6 +1078,26 @@ export const ROUTES: RuleRoute[] = [
       for (let i = 0; i < 6; i++) await page.keyboard.press('PageUp');
       await page.keyboard.press('Enter');
       await dialog.getByRole('alert').waitFor();
+    },
+  },
+  // The link of a reference table (SPEC 16.2 item 1): the line of a linked table, the dialog in its states, the New table dialog with the switch.
+  { path: '/reference-tables?table=ref-linked&v=2', name: '/reference-tables (a linked table: the line and its draft)', sidebar: true, table: true, before: seedLinkTables },
+  linkDialogRoute('link dialog: nothing chosen', 'ref-costs'),
+  linkDialogRoute('link dialog: a table and a column, the count of rows', 'ref-costs', 'Departments'),
+  linkDialogRoute('link dialog: a table that would make a cycle is left out', 'ref-dept'),
+  linkDialogRoute('link dialog: a table with no column', 'ref-costs', 'No columns'),
+  {
+    path: '/reference-tables',
+    name: '/reference-tables (New table dialog: the values from another table)',
+    sidebar: true,
+    before: seedLinkTables,
+    prepare: async (page) => {
+      await page.getByRole('button', { name: /New table/ }).first().click();
+      const dialog = page.getByRole('dialog');
+      await dialog.waitFor();
+      await dialog.getByRole('switch').click();
+      await dialog.getByRole('button', { name: /Take the values from the table/ }).click();
+      await page.getByRole('option', { name: 'Departments' }).click();
     },
   },
   {
