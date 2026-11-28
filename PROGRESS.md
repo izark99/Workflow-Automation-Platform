@@ -371,7 +371,7 @@ Linked reference tables (SPEC 16.2)
 - [x] T9.15 Regressions and edge journeys: a Lookup that reads B runs; a chain A to B to C updates both in one publish; a cycle is refused with the names; publishing A without the column and deleting A while linked are refused; a non-admin sees no notice and no link controls but reads B as before; the same journeys on `LocalStore` and on the `SupabaseStore` path of `test:db`.
 
 Quality pass
-- [ ] T9.16 Unit and integration sweep: `npm run check`, `test:acceptance` (including print), `test:db` with the migrations 1 to 21 from zero, `test:functions`, `test:e2e` (drag spec unchanged); `docs/PRINT_PERF.md` is current.
+- [x] T9.16 Unit and integration sweep: `npm run check`, `test:acceptance` (including print), `test:db` with the migrations 1 to 21 from zero, `test:functions`, `test:e2e` (drag spec unchanged); `docs/PRINT_PERF.md` is current.
 - [ ] T9.17 `docs/DEPLOY.md`: "Upgrade to Phase 9" (back up first; `npx supabase db push` for migration 21 named in the file; no new function; deploy the app after the migration; a check list: a print layout on one flow and the downloaded file printed or previewed in Excel, a linked table and its notice, a published version of A that adds a value).
 - [ ] T9.18 The Vietnamese texts of every key of the phase and the catalog test; `docs/DESIGN.md` and `docs/SPEC.md` updated where the build chose something else, with the reason in `docs/DECISIONS.md`.
 - [ ] T9.19 UI review of the new and changed screens in both themes (the print group in each state, the print preview, the link dialog, the notice, the dot, the marked rows, the publish warning); findings in `docs/UI_AUDIT_P9.md` become tasks T9.19a, T9.19b... fixed before the final run; `npm run test:ui-rules` in full.
@@ -457,6 +457,12 @@ Decisions with a default. Build with the default unless this list says otherwise
 None. The Pages file size blocker of T3.9 is solved by D71.
 
 ## Log
+
+### 2026-11-28 T9.16 Unit and integration sweep
+Ran, after T9.15, one after the other: `npm run test:acceptance` exit 0 (44 passed: both datasets, the layout files, the generated flow of each Phase 8 step, the print layout flow and the privacy tests); `npm run test:e2e` exit 0 (529 passed in 10.2 min, the canvas drag spec inside it and unchanged; the toast spec of T9.6 passed in this run); `npm run test:functions` exit 0 (14 passed); `npm run test:db` exit 0 (migrations 1 to 21 from zero, PASS); `npm run check` exit 0 (2787 tests).
+Changed: `acceptance/print-probe.ts` now writes with the real writer (`buildPrintWorkbook`: two header lines, the page, the repeated header, the signature block with the page-break check, the footer) and `docs/PRINT_PERF.md` was regenerated with it: 20,000 rows 1.6 s, 176 MB, 1.1 MB file; 50,000 rows 3.4 s, 402 MB. The limit of 20,000 rows stays. `acceptance/print.spec.ts` has the test of 20,000 rows within 30 s (4.0 s measured) and of the 20,001st row refused with the message.
+Gates run: the five above PASS. `test:ui-rules` in full, `test:acceptance:pages` and the full `npm run gates` after `npm ci` run in T9.20.
+Next: T9.17.
 
 ### 2026-11-28 T9.15 Regressions and edge journeys
 Changed: `e2e/ref-link-edges.spec.ts` 3 journeys on the screens: a flow with a Lookup that reads a linked table (the seeded flow and "OT limits" linked to "Periods") runs on the draft that the admin published and gives the same limit; a chain A to B to C where one publish of A gives both drafts the new value, opens two notices and shows "2 tables need attention"; publishing a version of A without the linked column is refused in the publish dialog with the name of the linked table, and deleting A while B is linked is refused with the name.

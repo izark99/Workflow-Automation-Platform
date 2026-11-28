@@ -79,4 +79,20 @@ test.describe('Print layout', () => {
     expect(wb.Sheets.Plain!.A1!.v).toBe('Id');
     expect(wb.Sheets.Report!.A1!.v).toBe('DANH SÁCH THÁNG 09/2026');
   });
+
+  // docs/PRINT_PERF.md measured 1.6 s to write 20,000 rows (the limit of a layout); the whole run through the engine has a budget of 30 s.
+  test('a table of 20,000 rows is written within the budget, and the row after it is refused', async ({ page }) => {
+    const big = Array.from({ length: 20_000 }, (_, i) => [`E${i + 1}`, 'x', (i % 8) + 0.5, '2026-09-01']);
+    const started = Date.now();
+    const printed = bytesOf(await runGenerated(page, { ...base, files: { File: { name: 'big.csv', text: csvOf(columns, big) } }, outputs: [{ sheet: 'Report', from: 'in_File', print }] }));
+    expect(Date.now() - started).toBeLessThan(30_000);
+    const ws = XLSX.read(printed, { type: 'array' }).Sheets.Report!;
+    expect(ws.A4!.v).toBe('Id');
+    expect(ws.A5!.v).toBe('E1');
+    expect(ws.A20004!.v).toBe('E20000');
+    const tooMany = [...big, ['E20001', 'x', 1, '2026-09-01']];
+    const reply = await runGenerated(page, { ...base, files: { File: { name: 'big.csv', text: csvOf(columns, tooMany) } }, outputs: [{ sheet: 'Report', from: 'in_File', print }] });
+    expect(reply.ok).toBe(false);
+    if (!reply.ok) expect(reply.message).toContain('up to 20,000 rows');
+  });
 });
