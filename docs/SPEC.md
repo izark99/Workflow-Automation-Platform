@@ -783,13 +783,15 @@ file exactly as before.
    ghi rõ họ tên)"), a space of four rows to sign, and an optional name. If the block would not fit on what is left of
    the last page, a page break is put before it, so the block is never cut in two. (The number of rows of a page is estimated from the paper, the
    orientation and the row height; the check is a rule of the writer, tested on the estimate.)
-6. **Page numbers.** "Trang 1/5" in the middle of the footer of every page (a switch, on by default). It follows the language of the app.
+6. **Page numbers.** "Trang 1/5" in the middle of the footer of every page (a switch, on by default). It follows the language of the app: "Page 1/5" when the app is in English.
 7. **Size.** A print layout is for reports of up to 20,000 rows; a larger table is refused with a message that says to turn the
    layout off. T9.1 measures the time and the memory and can lower the limit.
 8. **Print preview.** The Test tab of an Output step with a print layout shows the first page and the last page drawn from the
    settings and the first and last rows of the preview (the header block, the header row, a few rows, the signature block, the
    footer), marked as approximate: the page breaks in the middle are Excel's. It can be opened in the large popup of 15.3.
 9. **Privacy.** The file is made in the browser. The ExcelJS file is a static asset, and no request carries file content.
+   A file with no layout is written as before, byte for byte. When one xlsx file holds a sheet with a layout and a sheet without, the whole
+   file is written by ExcelJS: the plain sheet has the same cells and the table style of the writer (D137).
 
 ### 16.2 Reference tables that take their values from another table
 
@@ -808,9 +810,9 @@ When new values appear in A, B gets them without anyone typing, and the admin is
    column does not hold yet (in any version of B, draft or published). They are added as rows to the draft of B; if B has no
    draft, one is made as a copy of its latest published version. The draft starts on the day the new version of A starts when
    that is after the start of B's last published version, otherwise on the day after the end of B's latest published range
-   (today when there is none). B is never published by this: the admin does it. A draft of A does not change B. The publish
+   (the day after its start when that range has no end, D139; today when B has no published version). B is never published by this: the admin does it. A draft of A does not change B. The publish
    of A and the update of B happen together, or neither happens. A value that leaves A stays in B and is shown as "Not in A
-   any more" (information, nothing is deleted).
+   any more" (information, nothing is deleted); the values that A holds are those of its latest published version (D140).
 4. **The notice.** The admin sees it in the app, nowhere else (there is no email). Each time rows were added, B has an open
    notice "{n} new values from {A} · {c} need their other columns: {first values}". It shows on the Reference tables screen
    (on the table, with "Open the draft"), as a dot on "Reference tables" in the sidebar, and in the draft the new rows are marked

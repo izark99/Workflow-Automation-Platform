@@ -373,7 +373,7 @@ Linked reference tables (SPEC 16.2)
 Quality pass
 - [x] T9.16 Unit and integration sweep: `npm run check`, `test:acceptance` (including print), `test:db` with the migrations 1 to 21 from zero, `test:functions`, `test:e2e` (drag spec unchanged); `docs/PRINT_PERF.md` is current.
 - [x] T9.17 `docs/DEPLOY.md`: "Upgrade to Phase 9" (back up first; `npx supabase db push` for migration 21 named in the file; no new function; deploy the app after the migration; a check list: a print layout on one flow and the downloaded file printed or previewed in Excel, a linked table and its notice, a published version of A that adds a value).
-- [ ] T9.18 The Vietnamese texts of every key of the phase and the catalog test; `docs/DESIGN.md` and `docs/SPEC.md` updated where the build chose something else, with the reason in `docs/DECISIONS.md`.
+- [x] T9.18 The Vietnamese texts of every key of the phase and the catalog test; `docs/DESIGN.md` and `docs/SPEC.md` updated where the build chose something else, with the reason in `docs/DECISIONS.md`.
 - [ ] T9.19 UI review of the new and changed screens in both themes (the print group in each state, the print preview, the link dialog, the notice, the dot, the marked rows, the publish warning); findings in `docs/UI_AUDIT_P9.md` become tasks T9.19a, T9.19b... fixed before the final run; `npm run test:ui-rules` in full.
 - [ ] T9.20 Final run: `npm ci`, then `npm run gates` (seven gates) and `npm run test:acceptance:pages`; set `STATUS: COMPLETE` only if both pass. Consult the advisor before the last tick.
 
@@ -457,6 +457,12 @@ Decisions with a default. Build with the default unless this list says otherwise
 None. The Pages file size blocker of T3.9 is solved by D71.
 
 ## Log
+
+### 2026-11-28 T9.18 Vietnamese texts and the documents
+Checked: every key that Phase 9 added to `en.ts` (264) has a text in `vi.ts`, and all of them differ from the English except the names that are the same in both languages (A4, A3, Letter, "Top N"). The catalog tests (`every message of every catalog is well formed`, `has a text for every key, and the same placeholders as English`, the store messages equal to the catalog, the pseudo-locale check of the UI rules) pass in `npm run check`. The Vietnamese footer of a printed file ("Trang n/N") is tested on the writer and on the preview, and the English one ("Page n/N") in the journey.
+Changed: `docs/DESIGN.md` (how the alignment buttons, the group and the page drawing were built, the leading chip cell of a linked table, the notice button, the left-out tables in the link dialog), `docs/SPEC.md` (16.1 item 6 footer in English, item 9 the file with a layout and a sheet without one, 16.2 item 3 the start of the draft when there is no end, the values that A holds), with the reasons in `docs/DECISIONS.md` (D137 to D140).
+Gates run: check PASS.
+Next: T9.19.
 
 ### 2026-11-28 T9.17 DEPLOY.md: Upgrade to Phase 9
 Changed: `docs/DEPLOY.md` has the section "Upgrade to Phase 9" (back up first; `npx supabase db push` with migration 21 named and what it does; no new function; deploy the app after the migration, ExcelJS as a separate file; the check list: a print layout run and opened in Excel, a linked table with its draft, a published version of the source with a new value and the notice, the dot and the "New" marks, a user who sees none of it; the rollback and `schemaVersion` 5) and a line in "Limits" about the 20,000 rows and the page breaks.
